@@ -33,11 +33,17 @@ the user to analyze, learn, or solve life decisions during an acute wave.
 REQ-004: Provide four accessible Care entrances: angry or overloaded, heavy or
 low, need space, and physical pain. Icons must have visible text labels.
 
-REQ-005: Design anger support to reduce arousal and delay impulsive action.
-Exclude aggressive catharsis as the therapeutic mechanism.
+REQ-005: Let angry/overloaded users enter an optional 20-second Shatter ritual
+followed by an immediate low-stimulation transition. Treat it as expressive
+interaction and an impulse interruption, not evidence that aggression has been
+discharged. Provide skip, reduced-motion, sensory controls, and a stable
+urgent-safety route.
 
-REQ-006: Let users save private drafts and choose a cooling-off time while
-retaining the ability to access, edit, export, or delete their own content.
+REQ-006: Let users write a private no-recipient draft and explicitly seal it
+for a fixed 24-hour cooldown. During the cooldown Letter must prevent reading,
+copying, sharing, and exporting inside the app, but allow deletion without
+opening. Afterward, restore full user access and offer keep, delete, rewrite, or
+future-self-note choices.
 
 REQ-007: Return the user's own saved comfort actions and messages before
 generic content during a similar future context.
@@ -74,8 +80,10 @@ journey is accepted; do not discard the validated persistence and privacy work.
 ## Non-Goals
 
 - implementing all Care modes in one feature
-- a 3D shatter chamber or pain-melting visual
-- an irreversible 24-hour content lock
+- claiming the Shatter ritual reduces anger through catharsis
+- claiming the 24-hour cooldown is cryptographically unbreakable or prevents
+  action outside Letter
+- hiding or deleting a sealed draft without the user's explicit action
 - automatically controlling device focus mode or other apps
 - a universal painkiller countdown
 - automatic mapping from people or work keywords to an unmet need

@@ -94,16 +94,45 @@ prediction.
 
 ### Angry Or Overloaded
 
-The goal is to lower arousal and add time before action, not to intensify rage.
+The experience may begin with energy and attitude, but its product goal is to
+interrupt an impulsive action and move toward lower stimulation.
 
-- start with a brief pause or steady tactile anchor
-- offer a private draft for words the user does not want to send yet
-- let the user choose a revisit time
-- keep the draft accessible and deletable because it belongs to the user
-- offer a saved no-major-decisions reminder
+#### Shatter Ritual
 
-Aggressive shattering, punching, revenge imagery, and claims that venting
-discharges anger are excluded.
+- show one large abstract crystal or glass surface
+- let the user tap repeatedly for up to 20 seconds
+- confine visual shaking to the interactive object; navigation and safety
+  controls must remain stable
+- use optional sound, haptics, and motion that respect system settings and the
+  user's reduced-motion preference
+- provide an immediate skip control and an always-visible urgent-safety route
+- end with a deliberate cut to a quiet, dim surface
+
+This is an expressive game and attention-interruption ritual, not a therapeutic
+claim that aggression has been discharged. The product must measure whether
+users feel calmer or more activated after it and remove or alter the interaction
+if it commonly escalates distress.
+
+#### 24-Hour Impulse Buffer
+
+After the transition, Letter:
+
+1. names the purpose directly: do not send, post, resign, purchase, or make a
+   relationship decision from this screen state
+2. offers a private text or voice draft with no send target
+3. shows the exact consequence before sealing
+4. seals the draft for a fixed 24 hours when the user confirms
+5. prevents reading, copying, exporting, or sharing the sealed text inside
+   Letter until the period ends
+6. always permits deleting the sealed envelope without opening it
+
+The draft is encrypted at rest with the rest of the local health store. Letter
+must describe the feature as an app-enforced cooldown, not an unbreakable
+cryptographic time lock or a guarantee that the user cannot act elsewhere.
+
+When the period ends, Letter does not reveal the text in a notification. The
+user can open it privately, keep it sealed, delete it, rewrite it as a calmer
+message, or turn the underlying need into a note for the next cycle.
 
 ### Heavy Or Low
 
@@ -150,9 +179,11 @@ Letter has three distinct artifacts:
 
 ### A Private Draft
 
-Words written during a hard moment. The user may revisit, edit, export, or
-delete them. A chosen cooling-off time changes how the app presents the draft;
-it does not remove ownership or create an irreversible lock.
+Words written during a hard moment. Before sealing, the user can edit or delete
+them. After explicitly starting the 24-hour protocol, Letter hides and disables
+copy/share/export of the content until the timer ends, while still allowing the
+unopened envelope to be deleted. After the timer, the user may revisit, edit,
+export, keep, or delete it.
 
 ### A Note From Clearer Me
 
@@ -214,8 +245,9 @@ requires concept testing with target users.
 
 - Prospective cycle and symptom records help reduce recall bias and distinguish
   recurring premenstrual patterns from symptoms occurring throughout a cycle.
-- Anger support should favor arousal-reducing activities; aggressive venting is
-  not treated as a therapeutic mechanism.
+- The energetic Shatter ritual is not treated as a therapeutic mechanism.
+  Letter's defensible intervention is the immediate downshift, removal of send
+  affordances, explicit delay, and later user-directed review.
 - Different over-the-counter pain medicines and products have different label
   intervals and warnings, so there is no universal four-hour timer.
 - Safety and red-flag routing remains deterministic and locale-aware.
