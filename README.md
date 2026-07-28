@@ -42,9 +42,13 @@ uses a finite Shatter interaction, low-stimulation transition, private unsent
 draft, exact 24-hour seal, hidden locked and ready-envelope states, and
 unopened deletion. `I feel heavy` now uses a one-tap light, at most three
 bounded lines, an optional foreground-only two-minute presence interval, and a
-practical hand-off. The other three entrances remain non-persistent response
-shells until their dedicated features are specified. No Care behavior creates
-a clinical score, report value, analytics event, API request, or LLM request.
+practical hand-off. `My mind won't stop` now turns scattered fragments into one
+calm point after one tap, then offers optional current-screen-only naming,
+unnamed set-down, or immediate exit. Entered text is cleared on set-down,
+discard, reconstruction, or leave and is never saved for tomorrow. The other
+two entrances remain non-persistent response shells until their dedicated
+features are specified. No Care behavior creates a clinical score, report
+value, analytics event, API request, or LLM request.
 
 The current product direction is defined in
 [`specs/product-philosophy.md`](specs/product-philosophy.md). Letter combines

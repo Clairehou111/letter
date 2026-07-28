@@ -228,26 +228,26 @@ Suggested copy:
 
 > The rest can wait outside this minute.
 
-### Tomorrow Tray
+### Current-Session Set-Down
 
-The user can place one thought into a temporary tray by speaking, typing, or
-tapping `I don't want to name it`.
+The user may type one thought or tap `I don't want to name it`. In P0 this text
+exists only on the current screen and is cleared when set down, discarded, or
+left. Letter does not save or bring it back tomorrow.
 
 Choices:
 
-- `Bring this back tomorrow`
-- `Put this in my next clear-day review`
-- `Discard it`
+- `Set it down for now`
+- `I don't want to name it`
+- `Nothing now`
 
-The tray is not a task manager. Its job is to stop one thought from demanding
-continuous rehearsal.
+This is not a task manager or future reminder. Its job is to make naming
+optional while keeping the interaction finite.
 
 ### Hand-Off
 
-- show one saved grounding environment
-- message a trusted person
-- start a quiet two-minute interval
-- close Letter with no further action
+P0 returns to the Care choices or closes Letter with no further action. Saved
+grounding environments, trusted contacts, and cross-session memory remain
+separate features.
 
 ## Mode 4: Close The Curtain
 

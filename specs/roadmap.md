@@ -47,7 +47,7 @@ and goals require a separate revision after the Care-loop redesign is approved.
 | 1 | Five-way Care entrance and finite reward shell | validated ([spec](features/2026-07-28-five-way-care-shell/)) |
 | 2 | Angry/overloaded impulse buffer | validated ([spec](features/2026-07-28-angry-impulse-buffer/)) |
 | 3 | Heavy/low presence flow | validated ([spec](features/2026-07-28-heavy-low-presence-flow/)) |
-| 4 | Racing-thoughts convergence flow | proposed |
+| 4 | Racing-thoughts convergence flow | validated ([spec](features/2026-07-28-racing-thoughts-convergence-flow/)) |
 | 5 | Need-space messages and boundary plan | proposed |
 | 6 | Physical-pain comfort flow and medical boundary | proposed |
 | 7 | Care action check-back and personal kit | proposed |
@@ -61,9 +61,12 @@ local draft, and an honest app-enforced 24-hour cooldown. Shared logic, schema
 migration, and Web behavior are validated; native cipher-at-rest runtime checks
 remain deferred under the approved native validation gate. Heavy/low Care now
 adds a one-tap light, finite protective copy, optional foreground-only
-two-minute presence, and a practical hand-off without storing an episode. The
-other mode-specific mechanics, check-backs, and personal memory remain in their
-dedicated roadmap features.
+two-minute presence, and a practical hand-off without storing an episode.
+Racing-thoughts Care now uses one-tap visual convergence, then allows optional
+one-thought naming, unnamed set-down, or immediate exit. Any entered text lives
+only on the current screen and is cleared rather than saved or resurfaced the
+next day. The other mode-specific mechanics, check-backs, and personal memory
+remain in their dedicated roadmap features.
 
 ## Phase 3: Effortless Logging And Learning
 

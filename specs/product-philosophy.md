@@ -155,7 +155,8 @@ supports it. It must not say that biology is the only explanation.
 The goal is to turn simultaneous demands into one controllable point:
 
 - visual complexity must decrease after the first interaction
-- the user may park one thought for tomorrow without creating a task list
+- the user may set one thought down inside the current session without creating
+  a task list; P0 does not save or bring it back tomorrow
 - breathing, holding, and typing remain optional
 - the flow ends with one next action or permission to do nothing now
 

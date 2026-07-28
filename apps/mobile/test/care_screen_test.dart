@@ -6,6 +6,7 @@ import 'package:letter_mobile/features/care/domain/care_mode.dart';
 import 'package:letter_mobile/features/care/domain/impulse_buffer_repository.dart';
 import 'package:letter_mobile/features/care/presentation/care_screen.dart';
 import 'package:letter_mobile/features/care/presentation/heavy_presence_flow.dart';
+import 'package:letter_mobile/features/care/presentation/racing_thoughts_flow.dart';
 
 Future<void> pumpCare(
   WidgetTester tester, {
@@ -51,7 +52,9 @@ Future<void> openMode(WidgetTester tester, CareMode mode) async {
   );
   await tester.pumpAndSettle();
   await tester.tap(finder);
-  if (mode == CareMode.explode || mode == CareMode.heavy) {
+  if (mode == CareMode.explode ||
+      mode == CareMode.heavy ||
+      mode == CareMode.racing) {
     await tester.pump();
     await tester.pump();
   } else {
@@ -77,7 +80,10 @@ void main() {
   });
 
   for (final mode in CareMode.values.where(
-    (mode) => mode != CareMode.explode && mode != CareMode.heavy,
+    (mode) =>
+        mode != CareMode.explode &&
+        mode != CareMode.heavy &&
+        mode != CareMode.racing,
   )) {
     testWidgets('${mode.name} follows one finite response and hand-off', (
       tester,
@@ -136,6 +142,17 @@ void main() {
     expect(find.byType(HeavyPresenceFlow), findsOneWidget);
     expect(find.byKey(const Key('heavy-light')), findsOneWidget);
     expect(find.byKey(const Key('care-respond-heavy')), findsNothing);
+  });
+
+  testWidgets('racing entrance opens the dedicated convergence flow', (
+    tester,
+  ) async {
+    await pumpCare(tester);
+    await openMode(tester, CareMode.racing);
+
+    expect(find.byType(RacingThoughtsFlow), findsOneWidget);
+    expect(find.byKey(const Key('racing-convergence-surface')), findsOneWidget);
+    expect(find.byKey(const Key('care-respond-racing')), findsNothing);
   });
 
   testWidgets('emotional safety route interrupts and can return', (
@@ -211,24 +228,20 @@ void main() {
       textScale: 2,
       disableAnimations: true,
     );
-    await openMode(tester, CareMode.racing);
+    await openMode(tester, CareMode.space);
     expect(tester.takeException(), isNull);
 
-    await tester.scrollUntilVisible(
-      find.byKey(const Key('care-respond-racing')),
-      220,
-      scrollable: find.byType(Scrollable).first,
-    );
-    await tester.tap(find.byKey(const Key('care-respond-racing')));
+    final scene = find.byKey(const Key('care-scene-space'));
+    final respond = find.byKey(const Key('care-respond-space'));
+    await tester.drag(scene, const Offset(0, -180));
+    await tester.pump();
+    await tester.tap(respond);
     await tester.pumpAndSettle();
-    await tester.scrollUntilVisible(
-      find.byKey(const Key('care-handoff-racing')),
-      220,
-      scrollable: find.byType(Scrollable).first,
-    );
+    await tester.drag(scene, const Offset(0, -260));
+    await tester.pump();
 
-    expect(find.text(CareMode.racing.protectiveLine), findsOneWidget);
-    expect(find.text(CareMode.racing.handOff), findsOneWidget);
+    expect(find.text(CareMode.space.protectiveLine), findsOneWidget);
+    expect(find.text(CareMode.space.handOff), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 
@@ -262,13 +275,13 @@ void main() {
     tester,
   ) async {
     await pumpCare(tester);
-    await openMode(tester, CareMode.racing);
-    await tester.tap(find.byKey(const Key('care-respond-racing')));
+    await openMode(tester, CareMode.space);
+    await tester.tap(find.byKey(const Key('care-respond-space')));
     await tester.pumpAndSettle();
 
     await expectLater(
       find.byType(CareScreen),
-      matchesGoldenFile('goldens/care_racing_transformed_390x844.png'),
+      matchesGoldenFile('goldens/care_space_transformed_390x844.png'),
     );
   });
 }
