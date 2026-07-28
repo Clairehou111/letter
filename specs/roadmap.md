@@ -86,17 +86,24 @@ clinical score, cloud request, analytics event, or LLM request.
 
 | Order | Feature | Status |
 | --- | --- | --- |
-| 1 | Confirmed health-record foundation | proposed ([spec](features/2026-07-28-health-record-foundation/)) |
-| 2 | Care-linked recovery receipt | proposed ([spec](features/2026-07-28-care-recovery-receipt/)) |
-| 3 | Text and on-device voice capture | proposed ([spec](features/2026-07-28-text-voice-capture/)) |
-| 4 | NLP-first candidate confirmation | proposed ([spec](features/2026-07-28-nlp-candidate-confirmation/)) |
-| 5 | Personal patterns and support-action matching | proposed ([spec](features/2026-07-28-personal-patterns-support-matching/)) |
-| 6 | Archive Story and Pattern views | proposed ([spec](features/2026-07-28-archive-story-pattern-views/)) |
+| 1 | Confirmed health-record foundation | validated ([spec](features/2026-07-28-health-record-foundation/)) |
+| 2 | Care-linked recovery receipt | in_progress ([spec](features/2026-07-28-care-recovery-receipt/)) |
+| 3 | Text and on-device voice capture | in_progress ([spec](features/2026-07-28-text-voice-capture/)) |
+| 4 | NLP-first candidate confirmation | in_progress ([spec](features/2026-07-28-nlp-candidate-confirmation/)) |
+| 5 | Personal patterns and support-action matching | in_progress ([spec](features/2026-07-28-personal-patterns-support-matching/)) |
+| 6 | Archive Story and Pattern views | in_progress ([spec](features/2026-07-28-archive-story-pattern-views/)) |
 
 Phase 3 is usable without cloud processing or LLM access. Direct structured
 records are the source of truth. Care becomes a delayed, user-confirmed input
 to the same record model through Recovery Receipt. NLP and optional LLM output
 remain editable candidates and never assign severity, diagnosis, or function.
+
+The first Phase 3 implementation slice is now present as local-first modules:
+the health-record foundation is wired into Today, while Recovery Receipt,
+text/voice capture, NLP review, personal patterns, and archive views are
+implemented behind explicit interfaces and focused tests. Their navigation and
+repository integration remain the next implementation step; they are not yet
+claimed as end-to-end released capabilities.
 
 ## Phase 4: Reports And Commercial Readiness
 

@@ -1,6 +1,6 @@
 # Archive Story And Pattern Views Requirements
 
-Status: proposed
+Status: in_progress
 Dependencies: Cycle Letters archive, confirmed health records, reflections,
 and personal patterns
 

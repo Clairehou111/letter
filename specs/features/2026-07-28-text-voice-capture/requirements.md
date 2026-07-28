@@ -1,6 +1,6 @@
 # Text And On-Device Voice Capture Requirements
 
-Status: proposed
+Status: in_progress
 Dependencies: confirmed health-record foundation
 
 ## Goal

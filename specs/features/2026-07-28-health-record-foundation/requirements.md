@@ -1,6 +1,6 @@
 # Confirmed Health Record Foundation Requirements
 
-Status: proposed
+Status: validated
 Dependencies: Phase 1 local repositories and Phase 2 encrypted Care memory
 
 ## Goal

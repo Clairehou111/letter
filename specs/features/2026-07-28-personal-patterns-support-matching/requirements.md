@@ -1,6 +1,6 @@
 # Personal Patterns And Support-Action Matching Requirements
 
-Status: proposed
+Status: in_progress
 Dependencies: health records, Care outcomes, Care Kit, and Cycle history
 
 ## Goal

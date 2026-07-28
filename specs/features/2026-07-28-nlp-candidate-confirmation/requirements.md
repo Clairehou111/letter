@@ -1,6 +1,6 @@
 # NLP-First Candidate Confirmation Requirements
 
-Status: proposed
+Status: in_progress
 Dependencies: health-record foundation, Care Receipt, and text/voice capture
 
 ## Goal

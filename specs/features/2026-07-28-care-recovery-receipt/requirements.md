@@ -1,6 +1,6 @@
 # Care-Linked Recovery Receipt Requirements
 
-Status: proposed
+Status: in_progress
 Dependencies: confirmed health-record foundation and Phase 2 Care records
 
 ## Goal
