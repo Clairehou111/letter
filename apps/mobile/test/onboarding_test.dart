@@ -5,6 +5,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:letter_mobile/app/letter_app.dart';
 import 'package:letter_mobile/design_system/letter_theme.dart';
 import 'package:letter_mobile/features/cycle/data/in_memory_period_repository.dart';
+import 'package:letter_mobile/features/cycle/domain/period_repository.dart';
 import 'package:letter_mobile/features/onboarding/data/onboarding_repository.dart';
 import 'package:letter_mobile/features/onboarding/domain/onboarding_profile.dart';
 import 'package:letter_mobile/features/onboarding/presentation/onboarding_flow.dart';
@@ -55,6 +56,7 @@ Future<void> pumpLetter(
   FakeOnboardingRepository repository, {
   Size size = const Size(390, 844),
   double textScale = 1,
+  PeriodRepository? periodRepository,
 }) async {
   tester.view.devicePixelRatio = 1;
   tester.view.physicalSize = size;
@@ -68,7 +70,8 @@ Future<void> pumpLetter(
       ),
       child: LetterApp(
         onboardingRepository: repository,
-        periodRepository: InMemoryPeriodRepository(),
+        periodRepository: periodRepository ?? InMemoryPeriodRepository(),
+        now: () => DateTime(2026, 7, 28, 12),
       ),
     ),
   );
@@ -240,6 +243,37 @@ void main() {
 
     expect(find.text('Your cycle record'), findsOneWidget);
     expect(find.byKey(const Key('start-period-today')), findsOneWidget);
+  });
+
+  testWidgets('returning from Cycle reloads the new period on Today', (
+    tester,
+  ) async {
+    final onboardingRepository = FakeOnboardingRepository(
+      profile: OnboardingProfile(
+        cloudToolsPreference: CloudToolsPreference.off,
+        selectedGoals: const {},
+      ),
+    );
+    final periodRepository = InMemoryPeriodRepository(
+      idGenerator: () => 'current',
+    );
+    await pumpLetter(
+      tester,
+      onboardingRepository,
+      periodRepository: periodRepository,
+    );
+
+    expect(find.text('Start with a real cycle record.'), findsOneWidget);
+
+    await tester.tap(find.byKey(const Key('navigation-cycle')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('start-period-today')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('navigation-today')));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Your period is in progress.'), findsOneWidget);
+    expect(find.textContaining('Period day 1.'), findsOneWidget);
   });
 
   testWidgets('all steps fit at 320 width and 200 percent text scale', (

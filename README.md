@@ -26,6 +26,13 @@ date range from recent history. The range includes Low, Medium, or Higher
 confidence and the observed cycle-length evidence. It does not calculate
 fertility, ovulation, cycle phases, or PMDD windows.
 
+Today now reads the same local period repository. It shows the real local date,
+inclusive period or cycle day, and the shared prediction range when supported.
+No-history and insufficient-history states stay explicit. Prototype phase
+claims, fake Recent entries, personal notes, remedies, contacts, and Care plans
+have been removed. Quick-state input remains session-only until the dedicated
+health-record feature defines persistence, editing, deletion, and provenance.
+
 The current product direction is defined in
 [`specs/product-philosophy.md`](specs/product-philosophy.md). Letter combines
 period tracking with a cross-cycle Care loop: contain a hard moment, check back

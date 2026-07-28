@@ -3,6 +3,11 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 
 import '../../design_system/letter_theme.dart';
+import '../cycle/domain/cycle_prediction.dart';
+import '../cycle/domain/local_date.dart';
+import '../cycle/domain/period_record.dart';
+import '../cycle/domain/period_repository.dart';
+import 'today_cycle_context.dart';
 
 enum TodayState {
   good(
@@ -46,9 +51,16 @@ enum TodayState {
 }
 
 class TodayScreen extends StatefulWidget {
-  const TodayScreen({super.key, this.onNavigationSelected});
+  const TodayScreen({
+    required this.repository,
+    super.key,
+    this.onNavigationSelected,
+    this.now,
+  });
 
+  final PeriodRepository repository;
   final ValueChanged<int>? onNavigationSelected;
+  final DateTime Function()? now;
 
   @override
   State<TodayScreen> createState() => _TodayScreenState();
@@ -56,6 +68,43 @@ class TodayScreen extends StatefulWidget {
 
 class _TodayScreenState extends State<TodayScreen> {
   TodayState? selectedState;
+  List<PeriodRecord> _records = const [];
+  bool _loading = true;
+  bool _loadFailed = false;
+
+  LocalDate get _today =>
+      LocalDate.fromDateTime((widget.now ?? DateTime.now)());
+
+  @override
+  void initState() {
+    super.initState();
+    _load();
+  }
+
+  Future<void> _load() async {
+    setState(() {
+      _loading = true;
+      _loadFailed = false;
+    });
+    try {
+      final records = await widget.repository.getAll();
+      if (!mounted) {
+        return;
+      }
+      setState(() {
+        _records = records;
+        _loading = false;
+      });
+    } on Object {
+      if (!mounted) {
+        return;
+      }
+      setState(() {
+        _loading = false;
+        _loadFailed = true;
+      });
+    }
+  }
 
   Future<void> _openStateSheet(TodayState state) async {
     setState(() => selectedState = state);
@@ -78,58 +127,69 @@ class _TodayScreenState extends State<TodayScreen> {
     );
   }
 
+  Future<void> _openQuickStateSheet() async {
+    final state = await showModalBottomSheet<TodayState>(
+      context: context,
+      isScrollControlled: true,
+      useSafeArea: true,
+      barrierColor: LetterColors.ink.withValues(alpha: 0.35),
+      builder: (context) => QuickStateSheet(selectedState: selectedState),
+    );
+    if (state != null && mounted) {
+      await _openStateSheet(state);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       bottomNavigationBar: LetterBottomNavigation(
         onSelected: widget.onNavigationSelected,
       ),
-      body: Center(
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 480),
-          child: CustomScrollView(
-            key: const Key('today-scroll'),
-            slivers: [
-              SliverPadding(
-                padding: const EdgeInsets.fromLTRB(18, 0, 18, 32),
-                sliver: SliverList.list(
-                  children: [
-                    const MockStatusBar(),
-                    const AppHeader(),
-                    const SizedBox(height: LetterSpacing.md),
-                    const CycleHero(),
-                    const SizedBox(height: LetterSpacing.xl),
-                    CarePlanPreview(onOpenCare: _openCareSheet),
-                    const SizedBox(height: LetterSpacing.xl),
-                    LetterSectionTitle(
-                      eyebrow: 'Good days count too',
-                      title: 'What is your body saying today?',
-                      action: TextButton(
-                        onPressed: () => _openStateSheet(TodayState.steady),
-                        style: TextButton.styleFrom(
-                          foregroundColor: LetterColors.teal,
-                          minimumSize: const Size(44, 44),
-                          padding: const EdgeInsets.symmetric(horizontal: 4),
-                        ),
-                        child: const Text(
-                          'Add details',
-                          style: TextStyle(fontWeight: FontWeight.w800),
+      body: SafeArea(
+        child: Center(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 480),
+            child: _loading
+                ? const Center(
+                    child: CircularProgressIndicator(color: LetterColors.teal),
+                  )
+                : _loadFailed
+                ? _TodayLoadError(onRetry: _load)
+                : CustomScrollView(
+                    key: const Key('today-scroll'),
+                    slivers: [
+                      SliverPadding(
+                        padding: const EdgeInsets.fromLTRB(18, 0, 18, 32),
+                        sliver: SliverList.list(
+                          children: [
+                            AppHeader(onLog: _openQuickStateSheet),
+                            const SizedBox(height: LetterSpacing.md),
+                            CycleHero(
+                              cycleContext: TodayCycleContext.fromRecords(
+                                records: _records,
+                                today: _today,
+                              ),
+                              onOpenCycle: () =>
+                                  widget.onNavigationSelected?.call(0),
+                            ),
+                            const SizedBox(height: LetterSpacing.xl),
+                            TodayCareEntry(onOpenCare: _openCareSheet),
+                            const SizedBox(height: LetterSpacing.xl),
+                            const LetterSectionTitle(
+                              eyebrow: 'A quick check-in',
+                              title: 'How are you right now?',
+                            ),
+                            const SizedBox(height: LetterSpacing.sm),
+                            StateGrid(
+                              selectedState: selectedState,
+                              onSelected: _openStateSheet,
+                            ),
+                          ],
                         ),
                       ),
-                    ),
-                    const SizedBox(height: LetterSpacing.sm),
-                    StateGrid(
-                      selectedState: selectedState,
-                      onSelected: _openStateSheet,
-                    ),
-                    const SizedBox(height: LetterSpacing.lg),
-                    const CalmNote(),
-                    const SizedBox(height: LetterSpacing.xl),
-                    const RecentEntry(),
-                  ],
-                ),
-              ),
-            ],
+                    ],
+                  ),
           ),
         ),
       ),
@@ -137,37 +197,67 @@ class _TodayScreenState extends State<TodayScreen> {
   }
 }
 
-class MockStatusBar extends StatelessWidget {
-  const MockStatusBar({super.key});
+class _TodayLoadError extends StatelessWidget {
+  const _TodayLoadError({required this.onRetry});
+
+  final VoidCallback onRetry;
 
   @override
   Widget build(BuildContext context) {
-    return const SizedBox(
-      height: 36,
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Text(
-            '9:41',
-            style: TextStyle(fontSize: 12, fontWeight: FontWeight.w800),
-          ),
-          Row(
-            children: [
-              Icon(Icons.signal_cellular_alt, size: 15),
-              SizedBox(width: 4),
-              Icon(Icons.wifi, size: 15),
-              SizedBox(width: 4),
-              Icon(Icons.battery_full, size: 17),
-            ],
-          ),
-        ],
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(LetterSpacing.xl),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Icon(Icons.lock_outline, size: 34, color: LetterColors.teal),
+            const SizedBox(height: LetterSpacing.md),
+            const Text(
+              'Today could not open your private cycle context.',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontFamily: 'Newsreader',
+                fontSize: 25,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+            const SizedBox(height: LetterSpacing.lg),
+            FilledButton.icon(
+              key: const Key('retry-today-load'),
+              onPressed: onRetry,
+              icon: const Icon(Icons.refresh),
+              label: const Text('Try again'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class QuickStateSheet extends StatelessWidget {
+  const QuickStateSheet({required this.selectedState, super.key});
+
+  final TodayState? selectedState;
+
+  @override
+  Widget build(BuildContext context) {
+    return LetterSheetFrame(
+      title: 'How are you right now?',
+      subtitle:
+          'Choose one starting point. Nothing is saved to your health record yet.',
+      child: StateGrid(
+        selectedState: selectedState,
+        onSelected: (state) => Navigator.pop(context, state),
       ),
     );
   }
 }
 
 class AppHeader extends StatelessWidget {
-  const AppHeader({super.key});
+  const AppHeader({required this.onLog, super.key});
+
+  final VoidCallback onLog;
 
   @override
   Widget build(BuildContext context) {
@@ -208,14 +298,14 @@ class AppHeader extends StatelessWidget {
           if (compact)
             IconButton.outlined(
               key: const Key('header-log-button'),
-              tooltip: 'Log symptoms',
-              onPressed: () {},
+              tooltip: 'Log today',
+              onPressed: onLog,
               icon: const Icon(Icons.add),
             )
           else
             OutlinedButton.icon(
               key: const Key('header-log-button'),
-              onPressed: () {},
+              onPressed: onLog,
               style: OutlinedButton.styleFrom(
                 foregroundColor: LetterColors.ink,
                 side: const BorderSide(color: LetterColors.line),
@@ -237,11 +327,55 @@ class AppHeader extends StatelessWidget {
 }
 
 class CycleHero extends StatelessWidget {
-  const CycleHero({super.key});
+  const CycleHero({
+    required this.cycleContext,
+    required this.onOpenCycle,
+    super.key,
+  });
+
+  final TodayCycleContext cycleContext;
+  final VoidCallback onOpenCycle;
 
   @override
   Widget build(BuildContext context) {
     final textScale = MediaQuery.textScalerOf(context).scale(1);
+    final prediction = cycleContext.prediction;
+    final timing = prediction?.timingFor(cycleContext.today);
+    final range = prediction == null
+        ? null
+        : '${_formatContextDate(context, prediction.rangeStart)} - '
+              '${_formatContextDate(context, prediction.rangeEnd)}';
+    final title = switch (cycleContext.kind) {
+      TodayCycleKind.noHistory => 'Start with a real cycle record.',
+      TodayCycleKind.periodInProgress => 'Your period is in progress.',
+      TodayCycleKind.betweenPeriods when prediction == null =>
+        'Your cycle record is taking shape.',
+      TodayCycleKind.betweenPeriods
+          when timing == PredictionTiming.currentWindow =>
+        'Your estimate window is here.',
+      TodayCycleKind.betweenPeriods
+          when timing == PredictionTiming.laterThanEstimate =>
+        'Later than the current estimate.',
+      TodayCycleKind.betweenPeriods => 'Your next estimate is ahead.',
+    };
+    final body = switch (cycleContext.kind) {
+      TodayCycleKind.noHistory =>
+        'No period history yet. Add a start date in Cycle when you are ready.',
+      TodayCycleKind.periodInProgress =>
+        'Period day ${cycleContext.dayNumber}. Started '
+            '${_formatContextDate(context, cycleContext.latestStart!)}.',
+      TodayCycleKind.betweenPeriods when prediction == null =>
+        'Cycle day ${cycleContext.dayNumber}. Letter needs two complete '
+            'cycle intervals before estimating a range.',
+      TodayCycleKind.betweenPeriods
+          when timing == PredictionTiming.currentWindow =>
+        'Cycle day ${cycleContext.dayNumber}. Today falls within $range.',
+      TodayCycleKind.betweenPeriods
+          when timing == PredictionTiming.laterThanEstimate =>
+        'Cycle day ${cycleContext.dayNumber}. The recorded estimate was $range.',
+      TodayCycleKind.betweenPeriods =>
+        'Cycle day ${cycleContext.dayNumber}. Estimated next period: $range.',
+    };
 
     return LayoutBuilder(
       builder: (context, constraints) {
@@ -249,44 +383,55 @@ class CycleHero extends StatelessWidget {
         final copy = Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const LetterEyebrow('Monday, July 27', color: Color(0xFFA7D4D1)),
+            LetterEyebrow(
+              MaterialLocalizations.of(
+                context,
+              ).formatFullDate(cycleContext.today.asLocalDateTime),
+              color: const Color(0xFFA7D4D1),
+            ),
             const SizedBox(height: LetterSpacing.sm),
-            const Text(
-              'Your body may be asking for a softer day.',
-              style: TextStyle(
+            Text(
+              title,
+              style: const TextStyle(
                 color: Colors.white,
                 fontFamily: 'Newsreader',
                 fontSize: 27,
-                height: 0.98,
+                height: 1.05,
                 fontWeight: FontWeight.w800,
                 letterSpacing: 0,
               ),
             ),
             const SizedBox(height: LetterSpacing.sm),
-            const Text(
-              'You are on cycle day 24. In recent cycles, mood and energy '
-              'shifted around days 23-27.',
-              style: TextStyle(color: Colors.white, fontSize: 12, height: 1.45),
+            Text(
+              body,
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 12,
+                height: 1.45,
+              ),
             ),
             const SizedBox(height: LetterSpacing.sm),
-            TextButton(
-              onPressed: () {},
+            TextButton.icon(
+              key: const Key('today-open-cycle'),
+              onPressed: onOpenCycle,
               style: TextButton.styleFrom(
                 foregroundColor: Colors.white,
                 padding: EdgeInsets.zero,
                 minimumSize: const Size(44, 44),
                 alignment: Alignment.centerLeft,
               ),
-              child: const Text(
-                "Read today's signals  ›",
-                maxLines: 2,
+              icon: const Icon(Icons.calendar_today_outlined, size: 17),
+              label: const Text(
+                'Open Cycle',
                 style: TextStyle(fontWeight: FontWeight.w800),
               ),
             ),
           ],
         );
+        final ring = CycleRing(cycleContext: cycleContext, size: 114);
 
         return Container(
+          key: const Key('today-cycle-context'),
           width: double.infinity,
           padding: const EdgeInsets.fromLTRB(16, 21, 16, 18),
           decoration: BoxDecoration(
@@ -298,10 +443,7 @@ class CycleHero extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     copy,
-                    const Align(
-                      alignment: Alignment.centerRight,
-                      child: CycleRing(size: 112),
-                    ),
+                    Align(alignment: Alignment.centerRight, child: ring),
                   ],
                 )
               : Row(
@@ -309,7 +451,7 @@ class CycleHero extends StatelessWidget {
                   children: [
                     Expanded(child: copy),
                     const SizedBox(width: LetterSpacing.sm),
-                    const CycleRing(size: 114),
+                    ring,
                   ],
                 ),
         );
@@ -319,46 +461,59 @@ class CycleHero extends StatelessWidget {
 }
 
 class CycleRing extends StatelessWidget {
-  const CycleRing({required this.size, super.key});
+  const CycleRing({required this.cycleContext, required this.size, super.key});
 
+  final TodayCycleContext cycleContext;
   final double size;
 
   @override
   Widget build(BuildContext context) {
+    final day = cycleContext.dayNumber;
+    final progress = day == null || cycleContext.prediction == null
+        ? null
+        : ((day - 1) / cycleContext.prediction!.medianCycleDays)
+              .clamp(0.0, 1.0)
+              .toDouble();
+    final label = switch (cycleContext.kind) {
+      TodayCycleKind.noHistory => 'Start',
+      TodayCycleKind.periodInProgress => 'Period',
+      TodayCycleKind.betweenPeriods => 'Cycle',
+    };
+
     return Semantics(
-      label: 'Cycle day 24, luteal phase',
+      label: day == null ? 'No cycle history' : '$label day $day',
       child: ExcludeSemantics(
         child: SizedBox.square(
           dimension: size,
           child: CustomPaint(
-            painter: const CycleRingPainter(),
+            painter: CycleRingPainter(progress: progress),
             child: MediaQuery.withClampedTextScaling(
               maxScaleFactor: 1.2,
-              child: const Center(
+              child: Center(
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Text(
-                      'DAY',
-                      style: TextStyle(
+                      day == null ? 'NO DAY' : 'DAY',
+                      style: const TextStyle(
                         color: Colors.white,
                         fontSize: 9,
                         fontWeight: FontWeight.w800,
                       ),
                     ),
                     Text(
-                      '24',
-                      style: TextStyle(
+                      day?.toString() ?? '--',
+                      style: const TextStyle(
                         color: Colors.white,
                         fontFamily: 'Newsreader',
                         fontSize: 34,
-                        height: 1.0,
+                        height: 1,
                         fontWeight: FontWeight.w700,
                       ),
                     ),
                     Text(
-                      'Luteal',
-                      style: TextStyle(color: Colors.white, fontSize: 9),
+                      label,
+                      style: const TextStyle(color: Colors.white, fontSize: 9),
                     ),
                   ],
                 ),
@@ -372,7 +527,9 @@ class CycleRing extends StatelessWidget {
 }
 
 class CycleRingPainter extends CustomPainter {
-  const CycleRingPainter();
+  const CycleRingPainter({required this.progress});
+
+  final double? progress;
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -383,70 +540,40 @@ class CycleRingPainter extends CustomPainter {
       ..color = const Color(0xFF4C8D88)
       ..style = PaintingStyle.stroke
       ..strokeWidth = 10;
-    final progress = Paint()
-      ..color = LetterColors.coral
-      ..style = PaintingStyle.stroke
-      ..strokeCap = StrokeCap.butt
-      ..strokeWidth = 10;
-
     canvas.drawCircle(center, radius, track);
-    const start = math.pi;
-    const sweep = math.pi * 1.33;
-    canvas.drawArc(rect, start, sweep, false, progress);
+    if (progress case final value?) {
+      final progressPaint = Paint()
+        ..color = LetterColors.coral
+        ..style = PaintingStyle.stroke
+        ..strokeCap = StrokeCap.butt
+        ..strokeWidth = 10;
+      const start = -math.pi / 2;
+      final sweep = math.pi * 2 * value;
+      canvas.drawArc(rect, start, sweep, false, progressPaint);
 
-    final markerAngle = start + sweep;
-    final marker = Offset(
-      center.dx + radius * math.cos(markerAngle),
-      center.dy + radius * math.sin(markerAngle),
-    );
-    canvas.drawCircle(marker, 4.2, Paint()..color = Colors.white);
-    canvas.drawCircle(marker, 2.2, Paint()..color = LetterColors.tealDark);
+      final markerAngle = start + sweep;
+      final marker = Offset(
+        center.dx + radius * math.cos(markerAngle),
+        center.dy + radius * math.sin(markerAngle),
+      );
+      canvas.drawCircle(marker, 4.2, Paint()..color = Colors.white);
+      canvas.drawCircle(marker, 2.2, Paint()..color = LetterColors.tealDark);
+    }
   }
 
   @override
-  bool shouldRepaint(CycleRingPainter oldDelegate) => false;
+  bool shouldRepaint(CycleRingPainter oldDelegate) {
+    return progress != oldDelegate.progress;
+  }
 }
 
-class CarePlanPreview extends StatelessWidget {
-  const CarePlanPreview({required this.onOpenCare, super.key});
+class TodayCareEntry extends StatelessWidget {
+  const TodayCareEntry({required this.onOpenCare, super.key});
 
   final VoidCallback onOpenCare;
 
   @override
   Widget build(BuildContext context) {
-    final stackActions =
-        MediaQuery.textScalerOf(context).scale(1) > 1.45 ||
-        MediaQuery.sizeOf(context).width < 340;
-    final primary = FilledButton.icon(
-      key: const Key('open-care-button'),
-      onPressed: onOpenCare,
-      style: FilledButton.styleFrom(
-        backgroundColor: LetterColors.teal,
-        foregroundColor: Colors.white,
-        minimumSize: const Size.fromHeight(44),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(LetterRadius.control),
-        ),
-      ),
-      icon: const Icon(Icons.volunteer_activism_outlined, size: 19),
-      label: const Text('Find comfort now'),
-    );
-    final secondary = OutlinedButton(
-      onPressed: () {},
-      style: OutlinedButton.styleFrom(
-        foregroundColor: LetterColors.ink,
-        side: const BorderSide(color: LetterColors.line),
-        minimumSize: const Size.fromHeight(44),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(LetterRadius.control),
-        ),
-      ),
-      child: const Text(
-        'View plan',
-        style: TextStyle(fontWeight: FontWeight.w800),
-      ),
-    );
-
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -460,7 +587,7 @@ class CarePlanPreview extends StatelessWidget {
                 borderRadius: BorderRadius.circular(LetterRadius.panel),
               ),
               child: const Icon(
-                Icons.health_and_safety_outlined,
+                Icons.volunteer_activism_outlined,
                 color: LetterColors.teal,
                 size: 21,
               ),
@@ -470,10 +597,10 @@ class CarePlanPreview extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  LetterEyebrow('Your care plan is ready'),
+                  LetterEyebrow('Care'),
                   SizedBox(height: LetterSpacing.xxs),
                   Text(
-                    'Comfort, without figuring it out.',
+                    'Need support right now?',
                     style: TextStyle(
                       fontSize: 16,
                       height: 1.1,
@@ -485,83 +612,31 @@ class CarePlanPreview extends StatelessWidget {
             ),
           ],
         ),
-        const SizedBox(height: LetterSpacing.sm),
-        const Row(
-          children: [
-            Expanded(
-              child: PlanPreviewItem(
-                icon: Icons.local_cafe_outlined,
-                label: 'Warm drink',
-              ),
-            ),
-            SizedBox(width: LetterSpacing.xs),
-            Expanded(
-              child: PlanPreviewItem(
-                icon: Icons.bathtub_outlined,
-                label: 'Heat + quiet',
-              ),
-            ),
-            SizedBox(width: LetterSpacing.xs),
-            Expanded(
-              child: PlanPreviewItem(
-                icon: Icons.chat_bubble_outline,
-                label: 'Message Maya',
-              ),
-            ),
-          ],
+        const SizedBox(height: LetterSpacing.md),
+        const Text(
+          'Choose what feels most urgent. You can leave at any time.',
+          style: TextStyle(
+            color: LetterColors.muted,
+            fontSize: 12,
+            height: 1.45,
+          ),
         ),
         const SizedBox(height: LetterSpacing.md),
-        if (stackActions) ...[
-          primary,
-          const SizedBox(height: LetterSpacing.xs),
-          secondary,
-        ] else
-          Row(
-            children: [
-              Expanded(flex: 3, child: primary),
-              const SizedBox(width: LetterSpacing.xs),
-              Expanded(flex: 2, child: secondary),
-            ],
-          ),
-      ],
-    );
-  }
-}
-
-class PlanPreviewItem extends StatelessWidget {
-  const PlanPreviewItem({required this.icon, required this.label, super.key});
-
-  final IconData icon;
-  final String label;
-
-  @override
-  Widget build(BuildContext context) {
-    final largeText = MediaQuery.textScalerOf(context).scale(1) > 1.45;
-    return Container(
-      height: largeText ? 76 : 56,
-      padding: const EdgeInsets.all(10),
-      decoration: BoxDecoration(
-        color: LetterColors.surface,
-        border: Border.all(color: LetterColors.line),
-        borderRadius: BorderRadius.circular(LetterRadius.control),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Icon(icon, size: 18, color: LetterColors.teal),
-          Text(
-            label,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: const TextStyle(
-              color: LetterColors.muted,
-              fontSize: 10,
-              fontWeight: FontWeight.w700,
+        FilledButton.icon(
+          key: const Key('open-care-button'),
+          onPressed: onOpenCare,
+          style: FilledButton.styleFrom(
+            backgroundColor: LetterColors.teal,
+            foregroundColor: Colors.white,
+            minimumSize: const Size.fromHeight(44),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(LetterRadius.control),
             ),
           ),
-        ],
-      ),
+          icon: const Icon(Icons.volunteer_activism_outlined, size: 19),
+          label: const Text('Open Care'),
+        ),
+      ],
     );
   }
 }
@@ -661,98 +736,6 @@ class StateButton extends StatelessWidget {
           ),
         ),
       ),
-    );
-  }
-}
-
-class CalmNote extends StatelessWidget {
-  const CalmNote({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(LetterSpacing.md),
-      decoration: BoxDecoration(
-        color: LetterColors.amberSoft,
-        borderRadius: BorderRadius.circular(LetterRadius.panel),
-      ),
-      child: const Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Icon(Icons.wb_sunny_outlined, color: LetterColors.amber, size: 21),
-          SizedBox(width: LetterSpacing.sm),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                LetterEyebrow('A note from calm-you'),
-                SizedBox(height: LetterSpacing.xs),
-                Text(
-                  'Do not make relationship decisions in this window. '
-                  'Sleep first.',
-                  style: TextStyle(fontWeight: FontWeight.w700),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class RecentEntry extends StatelessWidget {
-  const RecentEntry({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const Text(
-          'Recent',
-          style: TextStyle(fontSize: 17, fontWeight: FontWeight.w800),
-        ),
-        const SizedBox(height: LetterSpacing.sm),
-        Container(
-          padding: const EdgeInsets.all(LetterSpacing.sm),
-          decoration: BoxDecoration(
-            color: LetterColors.surface,
-            border: Border.all(color: LetterColors.line),
-            borderRadius: BorderRadius.circular(LetterRadius.panel),
-          ),
-          child: const Row(
-            children: [
-              CircleAvatar(radius: 5, backgroundColor: LetterColors.coral),
-              SizedBox(width: LetterSpacing.sm),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Low mood and poor focus',
-                      style: TextStyle(fontWeight: FontWeight.w800),
-                    ),
-                    Text(
-                      'Yesterday, cycle day 23',
-                      style: TextStyle(color: LetterColors.muted, fontSize: 11),
-                    ),
-                  ],
-                ),
-              ),
-              Text(
-                'Heat helped',
-                style: TextStyle(
-                  color: LetterColors.teal,
-                  fontSize: 11,
-                  fontWeight: FontWeight.w800,
-                ),
-              ),
-              Icon(Icons.chevron_right, size: 18),
-            ],
-          ),
-        ),
-      ],
     );
   }
 }
@@ -902,8 +885,9 @@ class _StateDetailSheetState extends State<StateDetailSheet> {
           ? 'Where does your body hurt?'
           : 'How ${widget.state.label.toLowerCase()} do you feel?',
       subtitle: isPhysical
-          ? 'Choose every pain that applies. Give each one its own severity.'
-          : 'One tap is enough. You can add context later.',
+          ? 'Choose every pain that applies. This is not saved to your '
+                'health record yet.'
+          : 'One tap is enough. This is not saved to your health record yet.',
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
@@ -979,7 +963,7 @@ class _StateDetailSheetState extends State<StateDetailSheet> {
                 borderRadius: BorderRadius.circular(LetterRadius.control),
               ),
             ),
-            child: const Text('Save today'),
+            child: const Text('Done'),
           ),
         ],
       ),
@@ -1243,4 +1227,10 @@ class LetterSheetFrame extends StatelessWidget {
       ),
     );
   }
+}
+
+String _formatContextDate(BuildContext context, LocalDate date) {
+  return MaterialLocalizations.of(
+    context,
+  ).formatMediumDate(date.asLocalDateTime);
 }

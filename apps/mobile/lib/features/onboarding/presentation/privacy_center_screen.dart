@@ -56,7 +56,11 @@ class _LetterHomeState extends State<LetterHome> {
         onNavigationSelected: _selectTab,
       );
     }
-    return TodayScreen(onNavigationSelected: _selectTab);
+    return TodayScreen(
+      repository: widget.periodRepository,
+      onNavigationSelected: _selectTab,
+      now: widget.now,
+    );
   }
 }
 

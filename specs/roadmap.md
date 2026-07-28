@@ -23,7 +23,7 @@ confirmed mobile stack.
 | 1 | Local onboarding and privacy choices | validated |
 | 2 | Period logging and history editing | validated ([spec](features/2026-07-28-period-logging-history/)) |
 | 3 | Cycle prediction and confidence display | validated ([spec](features/2026-07-28-cycle-prediction-confidence/)) |
-| 4 | Today context and low-effort logging entry | proposed |
+| 4 | Today context and low-effort logging entry | validated ([spec](features/2026-07-28-today-cycle-context/)) |
 
 Period logging is validated for shared logic, widget behavior, visual baseline,
 and the non-persistent web preview. Native cipher-at-rest verification remains
@@ -32,6 +32,10 @@ deferred under the approved native validation gate.
 Cycle prediction is a derived, local-only date range based on at least two
 observed start-to-start intervals. It shows confidence and recorded variation
 without fertility, phase, or diagnostic claims.
+
+Today now derives its date, period or cycle day, and supported prediction from
+the same local period repository. Quick-state choices are intentionally
+session-only and cannot appear in history or reports yet.
 
 The validated onboarding persistence and privacy architecture remains. Its copy
 and goals require a separate revision after the Care-loop redesign is approved.
