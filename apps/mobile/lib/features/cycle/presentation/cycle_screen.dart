@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../../design_system/letter_theme.dart';
 import '../../today/today_screen.dart';
+import '../domain/cycle_prediction.dart';
 import '../domain/local_date.dart';
 import '../domain/period_record.dart';
 import '../domain/period_repository.dart';
@@ -373,6 +374,8 @@ class _CycleContent extends StatelessWidget {
                   onStartToday: onStartToday,
                 ),
               const SizedBox(height: LetterSpacing.xl),
+              _PredictionSection(records: records, today: today),
+              const SizedBox(height: LetterSpacing.xl),
               LetterSectionTitle(
                 eyebrow: 'Your record',
                 title: 'Past periods',
@@ -607,6 +610,228 @@ class _CurrentPeriodPanel extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+}
+
+class _PredictionSection extends StatelessWidget {
+  const _PredictionSection({required this.records, required this.today});
+
+  final List<PeriodRecord> records;
+  final LocalDate today;
+
+  @override
+  Widget build(BuildContext context) {
+    final prediction = CyclePredictionEngine.calculate(records);
+    if (prediction == null) {
+      return _PredictionLearning(
+        intervalCount: CyclePredictionEngine.observedIntervalCount(records),
+      );
+    }
+    return _PredictionAvailable(prediction: prediction, today: today);
+  }
+}
+
+class _PredictionLearning extends StatelessWidget {
+  const _PredictionLearning({required this.intervalCount});
+
+  final int intervalCount;
+
+  @override
+  Widget build(BuildContext context) {
+    final progress = intervalCount / CyclePredictionEngine.minimumIntervals;
+    return Container(
+      key: const Key('prediction-learning'),
+      padding: const EdgeInsets.symmetric(vertical: LetterSpacing.lg),
+      decoration: const BoxDecoration(
+        border: Border(
+          top: BorderSide(color: LetterColors.line),
+          bottom: BorderSide(color: LetterColors.line),
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Row(
+            children: [
+              Icon(
+                Icons.event_repeat_outlined,
+                size: 21,
+                color: LetterColors.teal,
+              ),
+              SizedBox(width: LetterSpacing.sm),
+              Expanded(
+                child: Text(
+                  'Learning your rhythm',
+                  style: TextStyle(
+                    fontFamily: 'Newsreader',
+                    fontSize: 21,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: LetterSpacing.sm),
+          Text(
+            intervalCount == 1
+                ? 'One more period start will complete the minimum history.'
+                : 'Letter needs two complete start-to-start cycle intervals.',
+            style: const TextStyle(color: LetterColors.muted, height: 1.45),
+          ),
+          const SizedBox(height: LetterSpacing.md),
+          Semantics(
+            label: 'Cycle prediction history progress',
+            value:
+                '$intervalCount of '
+                '${CyclePredictionEngine.minimumIntervals} intervals',
+            child: LinearProgressIndicator(
+              value: progress,
+              minHeight: 5,
+              borderRadius: BorderRadius.circular(3),
+              color: LetterColors.teal,
+              backgroundColor: LetterColors.tealSoft,
+            ),
+          ),
+          const SizedBox(height: LetterSpacing.xs),
+          Text(
+            '$intervalCount of '
+            '${CyclePredictionEngine.minimumIntervals} cycle intervals',
+            style: const TextStyle(
+              color: LetterColors.muted,
+              fontSize: 11,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _PredictionAvailable extends StatelessWidget {
+  const _PredictionAvailable({required this.prediction, required this.today});
+
+  final CyclePrediction prediction;
+  final LocalDate today;
+
+  @override
+  Widget build(BuildContext context) {
+    final timing = prediction.timingFor(today);
+    final status = switch (timing) {
+      PredictionTiming.upcoming => 'Next period estimate',
+      PredictionTiming.currentWindow => 'Estimate window is now',
+      PredictionTiming.laterThanEstimate => 'Later than this estimate',
+    };
+    final explanation = switch (timing) {
+      PredictionTiming.upcoming =>
+        'A range based only on your recorded period starts.',
+      PredictionTiming.currentWindow =>
+        'Today falls within this estimate. It may still shift.',
+      PredictionTiming.laterThanEstimate =>
+        'No new start is recorded. Letter will not invent another cycle.',
+    };
+    final cycleRange =
+        prediction.minimumCycleDays == prediction.maximumCycleDays
+        ? '${prediction.minimumCycleDays} days'
+        : '${prediction.minimumCycleDays}-'
+              '${prediction.maximumCycleDays} days';
+
+    return Container(
+      key: const Key('prediction-available'),
+      padding: const EdgeInsets.symmetric(vertical: LetterSpacing.lg),
+      decoration: const BoxDecoration(
+        border: Border(
+          top: BorderSide(color: LetterColors.line),
+          bottom: BorderSide(color: LetterColors.line),
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          LetterEyebrow(status),
+          const SizedBox(height: LetterSpacing.xs),
+          Text(
+            '${_formatDate(context, prediction.rangeStart)} - '
+            '${_formatDate(context, prediction.rangeEnd)}',
+            key: const Key('prediction-date-range'),
+            style: const TextStyle(
+              fontFamily: 'Newsreader',
+              fontSize: 24,
+              height: 1.12,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+          const SizedBox(height: LetterSpacing.sm),
+          Text(
+            explanation,
+            style: const TextStyle(color: LetterColors.muted, height: 1.4),
+          ),
+          const SizedBox(height: LetterSpacing.md),
+          _PredictionEvidence(
+            icon: Icons.insights_outlined,
+            label: '${prediction.confidence.label} confidence',
+          ),
+          const SizedBox(height: LetterSpacing.xs),
+          _PredictionEvidence(
+            icon: Icons.history,
+            label: '${prediction.intervalCount} recent intervals',
+          ),
+          const SizedBox(height: LetterSpacing.xs),
+          _PredictionEvidence(
+            icon: Icons.date_range_outlined,
+            label: 'Recorded cycles: $cycleRange',
+          ),
+          if (prediction.hasWideVariation) ...[
+            const SizedBox(height: LetterSpacing.md),
+            const Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Icon(Icons.open_in_full, size: 17, color: LetterColors.amber),
+                SizedBox(width: LetterSpacing.xs),
+                Expanded(
+                  child: Text(
+                    'Your recorded cycles vary, so this estimate is wider.',
+                    style: TextStyle(
+                      color: LetterColors.muted,
+                      fontSize: 12,
+                      height: 1.4,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+class _PredictionEvidence extends StatelessWidget {
+  const _PredictionEvidence({required this.icon, required this.label});
+
+  final IconData icon;
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Icon(icon, size: 16, color: LetterColors.teal),
+        const SizedBox(width: LetterSpacing.xxs),
+        Expanded(
+          child: Text(
+            label,
+            style: const TextStyle(
+              color: LetterColors.muted,
+              fontSize: 11,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+        ),
+      ],
     );
   }
 }

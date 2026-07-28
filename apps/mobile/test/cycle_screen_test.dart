@@ -97,6 +97,8 @@ void main() {
 
     await tester.pumpAndSettle();
     expect(find.byKey(const Key('no-current-period')), findsOneWidget);
+    expect(find.byKey(const Key('prediction-learning')), findsOneWidget);
+    expect(find.text('0 of 2 cycle intervals'), findsOneWidget);
   });
 
   testWidgets('shows an explicit storage error and retries loading', (
@@ -113,6 +115,70 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.byKey(const Key('no-current-period')), findsOneWidget);
+  });
+
+  testWidgets('shows a transparent range after two complete intervals', (
+    tester,
+  ) async {
+    final repository = InMemoryPeriodRepository(
+      seed: [
+        record(id: 'current', start: const LocalDate(2026, 7, 26)),
+        record(
+          id: 'past',
+          start: const LocalDate(2026, 6, 27),
+          end: const LocalDate(2026, 7, 1),
+        ),
+        record(
+          id: 'older',
+          start: const LocalDate(2026, 5, 29),
+          end: const LocalDate(2026, 6, 2),
+        ),
+      ],
+    );
+    await pumpCycle(tester, repository: repository);
+    await tester.pumpAndSettle();
+
+    expect(find.byKey(const Key('prediction-available')), findsOneWidget);
+    expect(find.text('Low confidence'), findsOneWidget);
+    expect(find.text('2 recent intervals'), findsOneWidget);
+    expect(find.text('Recorded cycles: 29 days'), findsOneWidget);
+    expect(find.textContaining('fertile'), findsNothing);
+    expect(find.textContaining('ovulation'), findsNothing);
+    expect(find.textContaining('PMDD'), findsNothing);
+  });
+
+  testWidgets('does not roll a later estimate into an invented cycle', (
+    tester,
+  ) async {
+    final repository = InMemoryPeriodRepository(
+      seed: [
+        record(
+          id: 'one',
+          start: const LocalDate(2026, 1, 1),
+          end: const LocalDate(2026, 1, 5),
+        ),
+        record(
+          id: 'two',
+          start: const LocalDate(2026, 1, 29),
+          end: const LocalDate(2026, 2, 2),
+        ),
+        record(
+          id: 'three',
+          start: const LocalDate(2026, 2, 26),
+          end: const LocalDate(2026, 3, 2),
+        ),
+      ],
+    );
+    await pumpCycle(tester, repository: repository);
+    await tester.pumpAndSettle();
+
+    expect(find.text('LATER THAN THIS ESTIMATE'), findsOneWidget);
+    expect(
+      find.text(
+        'No new start is recorded. Letter will not invent another cycle.',
+      ),
+      findsOneWidget,
+    );
   });
 
   testWidgets('starts and ends a period from the empty state', (tester) async {
@@ -207,6 +273,12 @@ void main() {
     await pumpCycle(tester, repository: repository);
     await tester.pumpAndSettle();
 
+    await tester.scrollUntilVisible(
+      find.byKey(const Key('period-menu-delete-me')),
+      240,
+      scrollable: find.byType(Scrollable).first,
+    );
+    await tester.pumpAndSettle();
     await tester.tap(find.byKey(const Key('period-menu-delete-me')));
     await tester.pumpAndSettle();
     await tester.tap(find.text('Delete'));
@@ -222,6 +294,46 @@ void main() {
     expect(find.byKey(const Key('period-history-empty')), findsOneWidget);
   });
 
+  testWidgets('removes the estimate when deleted history is insufficient', (
+    tester,
+  ) async {
+    final repository = InMemoryPeriodRepository(
+      seed: [
+        record(id: 'current', start: const LocalDate(2026, 7, 26)),
+        record(
+          id: 'past',
+          start: const LocalDate(2026, 6, 27),
+          end: const LocalDate(2026, 7, 1),
+        ),
+        record(
+          id: 'oldest',
+          start: const LocalDate(2026, 5, 29),
+          end: const LocalDate(2026, 6, 2),
+        ),
+      ],
+    );
+    await pumpCycle(tester, repository: repository);
+    await tester.pumpAndSettle();
+    expect(find.byKey(const Key('prediction-available')), findsOneWidget);
+
+    await tester.scrollUntilVisible(
+      find.byKey(const Key('period-menu-oldest')),
+      240,
+      scrollable: find.byType(Scrollable).first,
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('period-menu-oldest')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Delete'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('confirm-delete-period')));
+    await tester.pumpAndSettle();
+
+    expect(find.byKey(const Key('prediction-available')), findsNothing);
+    expect(find.byKey(const Key('prediction-learning')), findsOneWidget);
+    expect(find.text('1 of 2 cycle intervals'), findsOneWidget);
+  });
+
   testWidgets('keeps controls usable at narrow width and large text', (
     tester,
   ) async {
@@ -230,8 +342,13 @@ void main() {
         record(id: 'current', start: const LocalDate(2026, 7, 26)),
         record(
           id: 'past',
-          start: const LocalDate(2026, 6, 20),
-          end: const LocalDate(2026, 6, 25),
+          start: const LocalDate(2026, 6, 27),
+          end: const LocalDate(2026, 7, 1),
+        ),
+        record(
+          id: 'older',
+          start: const LocalDate(2026, 5, 29),
+          end: const LocalDate(2026, 6, 2),
         ),
       ],
     );
@@ -265,8 +382,13 @@ void main() {
         record(id: 'current', start: const LocalDate(2026, 7, 26)),
         record(
           id: 'past',
-          start: const LocalDate(2026, 6, 20),
-          end: const LocalDate(2026, 6, 25),
+          start: const LocalDate(2026, 6, 27),
+          end: const LocalDate(2026, 7, 1),
+        ),
+        record(
+          id: 'older',
+          start: const LocalDate(2026, 5, 29),
+          end: const LocalDate(2026, 6, 2),
         ),
       ],
     );

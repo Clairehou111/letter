@@ -21,6 +21,11 @@ uses a non-persistent in-memory repository. The API foundation contains only
 non-sensitive operational routes and must not receive health records or
 synthetic Today-screen state.
 
+After two complete start-to-start intervals, Cycle derives a local next-period
+date range from recent history. The range includes Low, Medium, or Higher
+confidence and the observed cycle-length evidence. It does not calculate
+fertility, ovulation, cycle phases, or PMDD windows.
+
 The current product direction is defined in
 [`specs/product-philosophy.md`](specs/product-philosophy.md). Letter combines
 period tracking with a cross-cycle Care loop: contain a hard moment, check back
