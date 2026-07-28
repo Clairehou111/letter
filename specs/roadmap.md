@@ -11,34 +11,44 @@ Only one product feature should normally be `in_progress`.
 | --- | --- | --- | --- |
 | 1 | Flutter UI fidelity spike | validated | `features/2026-07-27-flutter-ui-fidelity/` |
 | 2 | Production workspace foundation | validated | `features/2026-07-27-production-workspace-foundation/` |
+| 3 | Letter Care-loop product redesign | in_progress | `features/2026-07-28-letter-care-loop-redesign/` |
 
 The user accepted the Flutter visual result on 2026-07-27. Flutter is the
 confirmed mobile stack.
 
-## Phase 1: Cycle Foundation
+## Phase 1: Period And Context Foundation
 
 | Order | Feature | Status |
 | --- | --- | --- |
 | 1 | Local onboarding and privacy choices | validated |
 | 2 | Period logging and history editing | proposed |
 | 3 | Cycle prediction and confidence display | proposed |
-| 4 | Today cycle-state summary | proposed |
+| 4 | Today context and low-effort logging entry | proposed |
 
-## Phase 2: Effortless Logging
+The validated onboarding persistence and privacy architecture remains. Its copy
+and goals require a separate revision after the Care-loop redesign is approved.
+
+## Phase 2: Personal Care Memory
+
+| Order | Feature | Status |
+| --- | --- | --- |
+| 1 | Four-way Care entrance and low-stimulation shell | proposed |
+| 2 | Angry/overloaded impulse buffer | proposed |
+| 3 | Heavy/low presence flow | proposed |
+| 4 | Need-space messages and boundary plan | proposed |
+| 5 | Physical-pain comfort flow and medical boundary | proposed |
+| 6 | Care action check-back and personal kit | proposed |
+| 7 | Clearer-day reflection and future-self note | proposed |
+| 8 | Cycle Letters archive | proposed |
+
+## Phase 3: Effortless Logging And Learning
 
 | Order | Feature | Status |
 | --- | --- | --- |
 | 1 | Symptom, severity, pain-location, mood, and energy logging | proposed |
 | 2 | Text and on-device voice capture | proposed |
 | 3 | LLM-assisted structured confirmation | proposed |
-
-## Phase 3: Care And Learning
-
-| Order | Feature | Status |
-| --- | --- | --- |
-| 1 | Emotional and physical Care flows | proposed |
-| 2 | Prepared Care plan | proposed |
-| 3 | Coping outcome memory and personal patterns | proposed |
+| 4 | Cautious personal patterns and remedy matching | proposed |
 
 ## Phase 4: Reports And Commercial Readiness
 

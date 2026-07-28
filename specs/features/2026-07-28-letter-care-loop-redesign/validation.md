@@ -1,0 +1,47 @@
+# Letter Care Loop Redesign Validation
+
+Status: active
+
+## Document Review
+
+- [x] period tracking remains an explicit foundation
+- [x] hard-moment support and later reflection are separated
+- [x] the user's own successful actions form the personalization loop
+- [x] personal drafts remain user-owned and recoverable
+- [x] anger support does not rely on aggressive catharsis
+- [x] medication behavior does not invent a universal interval
+- [x] haptics are optional and make no treatment claim
+- [x] needs and causal interpretations remain user-approved hypotheses
+- [x] moon and cultural language remains metaphorical
+- [x] local-first and deterministic safety boundaries remain intact
+
+## Research Checks
+
+| Claim | Result |
+| --- | --- |
+| prospective symptom recording matters | supported by ACOG guidance |
+| aggressive venting reduces anger | rejected as a product mechanism |
+| every painkiller can use a four-hour timer | rejected; labels differ |
+| PMS reveals an objective hidden truth | unsupported; reframe as optional reflection |
+| haptics can be sold as pain treatment | unsupported; keep as optional sensory support |
+| moon/TCM framing drives North American payment | unvalidated market hypothesis |
+
+## Prototype Validation Required
+
+Test with target users before deep implementation:
+
+1. Can a distressed user choose the right Care entrance in under ten seconds?
+2. Does the anger flow feel containing rather than patronizing or stimulating?
+3. Does `note from clearer me` feel supportive rather than automated or eerie?
+4. Do users understand that a need suggestion is not a diagnosis or fact?
+5. Can physical-pain users distinguish comfort support from medication advice?
+6. Does `Letters` communicate both personal meaning and useful health history?
+7. Which sensory modes should default on: dim theme, haptics, sound, or none?
+
+## Acceptance Gate
+
+- user approves the revised product direction
+- affected roadmap features have independent specifications
+- no implementation treats the source discussion as clinical evidence
+- no existing validated feature is silently rewritten
+- the next feature begins only after its requirements are reviewed

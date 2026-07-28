@@ -18,6 +18,12 @@ Readable health records remain on the device. The API foundation contains only
 non-sensitive operational routes and must not receive synthetic Today-screen
 state.
 
+The current product direction is defined in
+[`specs/product-philosophy.md`](specs/product-philosophy.md). Letter combines
+period tracking with a cross-cycle Care loop: contain a hard moment, check back
+later, let the user author what it meant, and return their own helpful actions
+and words next time.
+
 ## Mobile
 
 ```bash
