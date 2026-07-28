@@ -1,0 +1,64 @@
+name: Validate
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  api-and-mobile:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: astral-sh/setup-uv@v7
+        with:
+          version: "0.11.3"
+          enable-cache: true
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.13"
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          flutter-version: "3.44.8"
+          cache: true
+      - run: uv sync --project apps/api --locked
+      - run: uv run ruff format --check . ../../tools
+        working-directory: apps/api
+      - run: uv run ruff check . ../../tools
+        working-directory: apps/api
+      - run: uv run pyright src migrations ../../tools
+        working-directory: apps/api
+      - run: uv run pytest
+        working-directory: apps/api
+      - run: uv run --project apps/api python tools/export_openapi.py --check
+      - run: python3 tools/generate_dart_client.py --check
+      - run: python3 tools/check_foundation.py
+      - run: python3 tools/check_repository_hygiene.py
+      - run: flutter pub get
+        working-directory: apps/mobile
+      - run: dart format --output=none --set-exit-if-changed lib test
+        working-directory: apps/mobile
+      - run: flutter analyze
+        working-directory: apps/mobile
+      - run: flutter test
+        working-directory: apps/mobile
+      - run: flutter build apk --debug
+        working-directory: apps/mobile
+
+  ios-smoke-build:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          flutter-version: "3.44.8"
+          cache: true
+      - run: flutter pub get
+        working-directory: apps/mobile
+      - run: flutter build ios --simulator --no-codesign
+        working-directory: apps/mobile

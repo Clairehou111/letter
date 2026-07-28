@@ -1,0 +1,16 @@
+.DS_Store
+.idea/
+.vscode/
+artifacts/
+coverage/
+.cache/
+.env
+.env.*
+!.env.example
+.venv/
+**/__pycache__/
+**/.pytest_cache/
+**/.ruff_cache/
+**/.mypy_cache/
+**/.pyright/
+*.py[cod]
