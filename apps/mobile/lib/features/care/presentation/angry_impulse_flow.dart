@@ -4,10 +4,12 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 
 import '../../../design_system/letter_theme.dart';
+import '../domain/care_memory.dart';
 import '../domain/care_mode.dart';
 import '../domain/impulse_buffer_repository.dart';
 import '../domain/impulse_draft_record.dart';
 import 'care_safety_boundary_sheet.dart';
+import 'future_self_note_card.dart';
 
 enum AngryImpulseStage {
   loading,
@@ -28,12 +30,16 @@ class AngryImpulseFlow extends StatefulWidget {
     required this.onExitCare,
     super.key,
     this.now,
+    this.onActionCompleted,
+    this.futureSelfNote,
   });
 
   final ImpulseBufferRepository repository;
   final VoidCallback onReturnToGate;
   final VoidCallback onExitCare;
   final DateTime Function()? now;
+  final ValueChanged<CareActionCompletion>? onActionCompleted;
+  final String? futureSelfNote;
 
   @override
   State<AngryImpulseFlow> createState() => _AngryImpulseFlowState();
@@ -54,6 +60,22 @@ class _AngryImpulseFlowState extends State<AngryImpulseFlow> {
   bool _busy = false;
 
   DateTime get _now => (widget.now ?? DateTime.now)().toUtc();
+
+  void _completeQuietAction() {
+    final callback = widget.onActionCompleted;
+    if (callback == null) {
+      widget.onReturnToGate();
+      return;
+    }
+    callback(
+      CareActionCompletion(
+        mode: CareMode.explode,
+        actionId: 'explode.shatter-and-pause',
+        actionLabel: 'Shatter and pause',
+        occurredAt: _now,
+      ),
+    );
+  }
 
   @override
   void initState() {
@@ -532,6 +554,10 @@ class _AngryImpulseFlowState extends State<AngryImpulseFlow> {
         ),
       ),
       const SizedBox(height: LetterSpacing.xl),
+      if (widget.futureSelfNote case final note?) ...[
+        FutureSelfNoteCard(note: note),
+        const SizedBox(height: LetterSpacing.lg),
+      ],
       FilledButton.icon(
         key: const Key('open-private-draft'),
         onPressed: () => setState(() => _stage = AngryImpulseStage.draft),
@@ -541,7 +567,7 @@ class _AngryImpulseFlowState extends State<AngryImpulseFlow> {
       ),
       TextButton(
         key: const Key('leave-after-quiet'),
-        onPressed: widget.onReturnToGate,
+        onPressed: _completeQuietAction,
         style: TextButton.styleFrom(
           minimumSize: const Size.fromHeight(48),
           foregroundColor: LetterColors.muted,

@@ -49,10 +49,10 @@ and goals require a separate revision after the Care-loop redesign is approved.
 | 3 | Heavy/low presence flow | validated ([spec](features/2026-07-28-heavy-low-presence-flow/)) |
 | 4 | Racing-thoughts convergence flow | validated ([spec](features/2026-07-28-racing-thoughts-convergence-flow/)) |
 | 5 | Need-space safe cocoon and boundary card | validated ([integration spec](features/2026-07-28-need-space-flow-integration/)) |
-| 6 | Physical-pain comfort flow and medical boundary | in_progress ([spec](features/2026-07-28-physical-pain-comfort-flow/)) |
-| 7 | Care action check-back and personal kit | in_progress ([spec](features/2026-07-28-care-checkback-personal-kit/)) |
-| 8 | Clearer-day reflection and future-self note | in_progress ([spec](features/2026-07-28-clearer-day-reflection/)) |
-| 9 | Cycle Letters archive | in_progress ([spec](features/2026-07-28-cycle-letters-archive/)) |
+| 6 | Physical-pain comfort flow and medical boundary | validated ([spec](features/2026-07-28-physical-pain-comfort-flow/)) |
+| 7 | Care action check-back and personal kit | validated ([spec](features/2026-07-28-care-checkback-personal-kit/)) |
+| 8 | Clearer-day reflection and future-self note | validated ([spec](features/2026-07-28-clearer-day-reflection/)) |
+| 9 | Cycle Letters archive | validated ([spec](features/2026-07-28-cycle-letters-archive/)) |
 
 The Care gate is now a working primary destination. All five experiential
 entrances use a finite, escapable response shell with explicit emotional or
@@ -68,8 +68,14 @@ only on the current screen and is cleared rather than saved or resurfaced the
 next day. Need-space Care now closes one symbolic curtain, then offers an
 optional session-only boundary card with explicit clipboard copy and no
 contact, recipient, send, share, or phone-isolation capability. The
-physical-pain mode-specific mechanics, check-backs, and personal memory
-remain in their dedicated roadmap features.
+physical-pain flow now provides five low-effort comfort paths and a persistent
+medical boundary without medication guidance or treatment claims. A completed
+Care action offers one optional Better/Same/Worse check-back; only an explicit
+outcome becomes a local record, and pinning into the Care Kit is also explicit.
+The Letters tab now groups completed cycles from real period starts, opens
+user-authored clearer-day reflections, and can return matching future-self
+notes only after the first acute response. No Phase 2 feature creates a
+clinical score, cloud request, analytics event, or LLM request.
 
 ## Phase 3: Effortless Logging And Learning
 

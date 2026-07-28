@@ -50,9 +50,19 @@ everyone away` now closes one symbolic curtain around a protected cocoon, then
 offers either immediate rest or an optional session-only boundary card. Copying
 is explicit and discloses the device clipboard boundary; Letter never reads
 contacts, chooses a recipient, sends, shares, silences other apps, or persists
-the text. The physical-pain entrance remains a non-persistent response shell
-until its dedicated feature is specified. No Care behavior creates a clinical
-score, report value, analytics event, API request, or LLM request.
+the text. `My body hurts` now offers five symptom-appropriate, low-effort
+comfort paths with an always-available medical boundary and no medication
+guidance or treatment claim.
+
+After a completed Care action, Letter offers one optional Better/Same/Worse
+check-back. Skipping creates no record; an explicit outcome is stored only in
+the local health database and can be explicitly pinned into the Care Kit.
+The enabled Letters tab groups completed cycles from real period starts,
+supports user-authored clearer-day reflections, and returns matching
+future-self notes only after acute feedback has already occurred. It never
+fabricates missing history, narrative, symptoms, or clinical conclusions. No
+Care behavior creates an inferred severity, analytics event, API request, or
+LLM request.
 
 The current product direction is defined in
 [`specs/product-philosophy.md`](specs/product-philosophy.md). Letter combines

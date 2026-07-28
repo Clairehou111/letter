@@ -8,6 +8,7 @@ import 'package:path/path.dart' as path;
 import 'package:path_provider/path_provider.dart';
 
 import '../../care/data/drift_impulse_buffer_repository.dart';
+import '../../care/data/drift_care_memory_repository.dart';
 import '../../cycle/data/drift_period_repository.dart';
 import '../../cycle/data/letter_health_database.dart';
 import 'local_health_store.dart';
@@ -37,6 +38,10 @@ LocalHealthStore createDefaultLocalHealthStore() {
   return LocalHealthStore(
     periodRepository: DriftPeriodRepository(database, closeDatabase: false),
     impulseBufferRepository: DriftImpulseBufferRepository(
+      database,
+      closeDatabase: false,
+    ),
+    careMemoryRepository: DriftCareMemoryRepository(
       database,
       closeDatabase: false,
     ),

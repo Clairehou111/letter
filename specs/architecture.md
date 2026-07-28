@@ -14,6 +14,12 @@ Readable health data remains on the device:
 - symptoms, severity, pain, mood, energy, notes, and transcripts
 - Care plans, coping actions, outcomes, predictions, patterns, and reports
 
+Phase 2 Care memory uses the same encrypted local database as period and
+impulse records. A Care action is not stored on entry or interaction; the first
+persisted Care record is created only when the user explicitly selects Better,
+Same, or Worse. Clearer-day reflections and future-self notes are also
+user-confirmed local records. The Web preview uses in-memory repositories.
+
 The server may store:
 
 - account or pseudonymous user ID
@@ -32,4 +38,3 @@ retain or log the request body.
 P0 provides encrypted export and import. Mandatory cloud synchronization is out
 of scope. Optional end-to-end encrypted backup may be added only after demand
 is validated and a recovery-key design is approved.
-

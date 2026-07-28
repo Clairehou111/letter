@@ -3,8 +3,10 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 
 import '../../../design_system/letter_theme.dart';
+import '../domain/care_memory.dart';
 import '../domain/care_mode.dart';
 import 'care_safety_boundary_sheet.dart';
+import 'future_self_note_card.dart';
 
 enum HeavyPresenceStage { dim, awake, message2, message3, presence, handoff }
 
@@ -13,11 +15,17 @@ class HeavyPresenceFlow extends StatefulWidget {
     required this.onReturnToGate,
     required this.onExitCare,
     super.key,
+    this.onActionCompleted,
+    this.futureSelfNote,
+    this.now,
     this.elapsedNow,
   });
 
   final VoidCallback onReturnToGate;
   final VoidCallback onExitCare;
+  final ValueChanged<CareActionCompletion>? onActionCompleted;
+  final String? futureSelfNote;
+  final DateTime Function()? now;
 
   /// Monotonic elapsed time used to make the finite presence interval testable.
   final Duration Function()? elapsedNow;
@@ -426,6 +434,10 @@ class _HeavyPresenceFlowState extends State<HeavyPresenceFlow>
         ),
       ),
       const SizedBox(height: 44),
+      if (widget.futureSelfNote case final note?) ...[
+        FutureSelfNoteCard(note: note),
+        const SizedBox(height: LetterSpacing.lg),
+      ],
       FilledButton(
         key: const Key('heavy-handoff-return'),
         onPressed: _leaveForGate,
@@ -445,6 +457,18 @@ class _HeavyPresenceFlowState extends State<HeavyPresenceFlow>
   void _leaveForGate() {
     _leavingFlow = true;
     _pausePresenceClock();
+    final callback = widget.onActionCompleted;
+    if (_stage == HeavyPresenceStage.handoff && callback != null) {
+      callback(
+        CareActionCompletion(
+          mode: CareMode.heavy,
+          actionId: 'heavy.quiet-presence',
+          actionLabel: 'Quiet presence',
+          occurredAt: (widget.now ?? DateTime.now)(),
+        ),
+      );
+      return;
+    }
     widget.onReturnToGate();
   }
 

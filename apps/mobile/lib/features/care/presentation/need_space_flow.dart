@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 
 import '../../../design_system/letter_theme.dart';
+import '../domain/care_memory.dart';
 import '../domain/care_mode.dart';
 import 'care_safety_boundary_sheet.dart';
+import 'future_self_note_card.dart';
 import 'need_space_boundary_card.dart';
 import 'safe_cocoon_stage.dart';
 
@@ -13,10 +15,16 @@ class NeedSpaceFlow extends StatefulWidget {
     required this.onReturnToGate,
     required this.onExitCare,
     super.key,
+    this.onActionCompleted,
+    this.futureSelfNote,
+    this.now,
   });
 
   final VoidCallback onReturnToGate;
   final VoidCallback onExitCare;
+  final ValueChanged<CareActionCompletion>? onActionCompleted;
+  final String? futureSelfNote;
+  final DateTime Function()? now;
 
   @override
   State<NeedSpaceFlow> createState() => _NeedSpaceFlowState();
@@ -62,6 +70,18 @@ class _NeedSpaceFlowState extends State<NeedSpaceFlow> {
 
   void _returnToGate() {
     _clearBoundaryText();
+    final callback = widget.onActionCompleted;
+    if (_stage == NeedSpaceStage.handoff && callback != null) {
+      callback(
+        CareActionCompletion(
+          mode: CareMode.space,
+          actionId: 'space.quiet-boundary',
+          actionLabel: 'Create a quiet boundary',
+          occurredAt: (widget.now ?? DateTime.now)(),
+        ),
+      );
+      return;
+    }
     widget.onReturnToGate();
   }
 
@@ -165,6 +185,7 @@ class _NeedSpaceFlowState extends State<NeedSpaceFlow> {
                                   key: const ValueKey('need-space-handoff'),
                                   onReturnToGate: _returnToGate,
                                   onExitCare: _exitCare,
+                                  futureSelfNote: widget.futureSelfNote,
                                 ),
                               },
                             ),
@@ -225,11 +246,13 @@ class _NeedSpaceHandoff extends StatelessWidget {
   const _NeedSpaceHandoff({
     required this.onReturnToGate,
     required this.onExitCare,
+    required this.futureSelfNote,
     super.key,
   });
 
   final VoidCallback onReturnToGate;
   final VoidCallback onExitCare;
+  final String? futureSelfNote;
 
   @override
   Widget build(BuildContext context) {
@@ -270,6 +293,10 @@ class _NeedSpaceHandoff extends StatelessWidget {
           ),
         ),
         const SizedBox(height: LetterSpacing.xl),
+        if (futureSelfNote case final note?) ...[
+          FutureSelfNoteCard(note: note),
+          const SizedBox(height: LetterSpacing.lg),
+        ],
         FilledButton.icon(
           key: const Key('need-space-handoff-return'),
           onPressed: onReturnToGate,

@@ -3,9 +3,11 @@ import 'package:flutter/material.dart';
 import '../../../design_system/letter_bottom_navigation.dart';
 import '../../../design_system/letter_theme.dart';
 import '../../care/domain/impulse_buffer_repository.dart';
+import '../../care/domain/care_memory_repository.dart';
 import '../../care/presentation/care_screen.dart';
 import '../../cycle/domain/period_repository.dart';
 import '../../cycle/presentation/cycle_screen.dart';
+import '../../letters/presentation/letters_home_screen.dart';
 import '../../today/today_screen.dart';
 import '../domain/onboarding_profile.dart';
 
@@ -17,6 +19,7 @@ class LetterHome extends StatefulWidget {
     required this.profile,
     required this.periodRepository,
     required this.impulseBufferRepository,
+    required this.careMemoryRepository,
     required this.onProfileChanged,
     required this.onReset,
     this.now,
@@ -26,6 +29,7 @@ class LetterHome extends StatefulWidget {
   final OnboardingProfile profile;
   final PeriodRepository periodRepository;
   final ImpulseBufferRepository impulseBufferRepository;
+  final CareMemoryRepository careMemoryRepository;
   final UpdateOnboardingProfile onProfileChanged;
   final Future<void> Function() onReset;
   final DateTime Function()? now;
@@ -38,7 +42,7 @@ class _LetterHomeState extends State<LetterHome> {
   int _selectedIndex = 2;
 
   void _selectTab(int index) {
-    if (index != 0 && index != 2 && index != 3 && index != 4) {
+    if (index < 0 || index > 4) {
       return;
     }
     setState(() => _selectedIndex = index);
@@ -61,10 +65,18 @@ class _LetterHomeState extends State<LetterHome> {
         onNavigationSelected: _selectTab,
       );
     }
+    if (_selectedIndex == 1) {
+      return LettersHomeScreen(
+        periodRepository: widget.periodRepository,
+        careMemoryRepository: widget.careMemoryRepository,
+        onNavigationSelected: _selectTab,
+      );
+    }
     if (_selectedIndex == 3) {
       return CareScreen(
         onNavigationSelected: _selectTab,
         impulseBufferRepository: widget.impulseBufferRepository,
+        careMemoryRepository: widget.careMemoryRepository,
         now: widget.now,
       );
     }

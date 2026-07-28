@@ -1,24 +1,31 @@
 # Care Check-Back And Personal Kit Validation
 
-Status: approved
+Status: validated
 
 ## Automated Checks
 
-- [ ] completed Care actions can open an optional check-back
-- [ ] Skip and ordinary Care exit create no record
-- [ ] Better, Same, and Worse persist exactly as selected
-- [ ] pinning is explicit and never inferred
-- [ ] Care Kit counts are derived from real records
-- [ ] unpin preserves history and delete removes it
-- [ ] repository failures preserve user-visible state
-- [ ] native data uses the shared encrypted database
-- [ ] Web data is memory-only
-- [ ] no health data reaches logs, analytics, API, or LLM
-- [ ] accessibility and responsive checks pass
-- [ ] focused and repository-wide validation pass
+- [x] completed Care actions can open an optional check-back
+- [x] Skip and ordinary Care exit create no record
+- [x] Better, Same, and Worse persist exactly as selected
+- [x] pinning is explicit and never inferred
+- [x] Care Kit counts are derived from real records
+- [x] unpin preserves history and delete removes it
+- [x] repository failures preserve user-visible state
+- [x] native data uses the shared encrypted database
+- [x] Web data is memory-only
+- [x] no health data reaches logs, analytics, API, or LLM
+- [x] accessibility and responsive checks pass
+- [x] focused and repository-wide validation pass
 
 ## Merge Gate
 
-- [ ] behavior and persistence are validated
-- [ ] local changes are committed
+- [x] behavior and persistence are validated
+- [x] local changes are committed
 - [ ] user explicitly requests merge
+
+## Evidence
+
+- focused Check-back and Care Kit tests: 21 passed
+- explicit-outcome, pinning, deletion, Drift, and integration tests passed
+- full Flutter validation: analyze clean, 244 tests passed
+- repository validation: 6 API tests; Flutter Web build passed

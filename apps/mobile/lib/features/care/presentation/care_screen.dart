@@ -2,24 +2,31 @@ import 'package:flutter/material.dart';
 
 import '../../../design_system/letter_bottom_navigation.dart';
 import '../../../design_system/letter_theme.dart';
+import '../domain/care_memory.dart';
+import '../domain/care_memory_repository.dart';
 import '../domain/care_mode.dart';
 import '../domain/impulse_buffer_repository.dart';
 import 'angry_impulse_flow.dart';
+import 'care_checkback_flow.dart';
 import 'care_safety_boundary_sheet.dart';
 import 'heavy_presence_flow.dart';
 import 'need_space_flow.dart';
+import 'personal_care_kit_view.dart';
+import 'physical_pain_flow.dart';
 import 'racing_thoughts_flow.dart';
 
 class CareScreen extends StatefulWidget {
   const CareScreen({
     required this.onNavigationSelected,
     required this.impulseBufferRepository,
+    required this.careMemoryRepository,
     super.key,
     this.now,
   });
 
   final ValueChanged<int> onNavigationSelected;
   final ImpulseBufferRepository impulseBufferRepository;
+  final CareMemoryRepository careMemoryRepository;
   final DateTime Function()? now;
 
   @override
@@ -28,17 +35,305 @@ class CareScreen extends StatefulWidget {
 
 class _CareScreenState extends State<CareScreen> {
   CareMode? _activeMode;
+  CareActionCompletion? _pendingCompletion;
+  CareActionCompletion? _pendingPhysicalCompletion;
+  CareRecord? _recordedCheckBack;
+  List<CareRecord> _records = const [];
+  List<CareReflection> _reflections = const [];
+  bool _showCareKit = false;
+  bool _memoryBusy = false;
+  bool _memoryError = false;
+  Future<void> Function()? _retryMemoryOperation;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadMemory();
+  }
+
+  Future<void> _loadMemory() async {
+    try {
+      final records = await widget.careMemoryRepository.getRecords();
+      final reflections = await widget.careMemoryRepository.getReflections();
+      if (!mounted) {
+        return;
+      }
+      setState(() {
+        _records = records;
+        _reflections = reflections;
+        _memoryError = false;
+      });
+    } on Object {
+      if (mounted) {
+        setState(() => _memoryError = true);
+      }
+    }
+  }
 
   void _openMode(CareMode mode) {
     setState(() => _activeMode = mode);
   }
 
   void _returnToGate() {
-    setState(() => _activeMode = null);
+    setState(() {
+      _activeMode = null;
+      _showCareKit = false;
+      _pendingPhysicalCompletion = null;
+    });
+  }
+
+  void _openCheckBack(CareActionCompletion completion) {
+    setState(() {
+      _activeMode = null;
+      _showCareKit = false;
+      _pendingCompletion = completion;
+      _pendingPhysicalCompletion = null;
+      _recordedCheckBack = null;
+      _memoryError = false;
+      _retryMemoryOperation = null;
+    });
+  }
+
+  void _capturePhysicalAction(PhysicalPainAction action) {
+    _pendingPhysicalCompletion = CareActionCompletion(
+      mode: CareMode.physical,
+      actionId: 'physical.${action.actionId.replaceAll('_', '-')}',
+      actionLabel: action.actionLabel,
+      occurredAt: (widget.now ?? DateTime.now)(),
+    );
+  }
+
+  void _returnFromPhysical() {
+    final completion = _pendingPhysicalCompletion;
+    if (completion == null) {
+      _returnToGate();
+      return;
+    }
+    _openCheckBack(completion);
+  }
+
+  Future<void> _recordOutcome(CareOutcome outcome) async {
+    final completion = _pendingCompletion;
+    if (completion == null || _memoryBusy) {
+      return;
+    }
+    setState(() {
+      _memoryBusy = true;
+      _memoryError = false;
+      _retryMemoryOperation = null;
+    });
+    try {
+      final record = await widget.careMemoryRepository.saveOutcome(
+        completion,
+        outcome,
+      );
+      final records = await widget.careMemoryRepository.getRecords();
+      if (!mounted) {
+        return;
+      }
+      setState(() {
+        _recordedCheckBack = record;
+        _records = records;
+        _memoryBusy = false;
+      });
+    } on Object {
+      if (!mounted) {
+        return;
+      }
+      setState(() {
+        _memoryBusy = false;
+        _memoryError = true;
+        _retryMemoryOperation = () => _recordOutcome(outcome);
+      });
+    }
+  }
+
+  Future<void> _keepCurrentInKit() async {
+    final record = _recordedCheckBack;
+    if (record == null || _memoryBusy) {
+      return;
+    }
+    setState(() {
+      _memoryBusy = true;
+      _memoryError = false;
+      _retryMemoryOperation = null;
+    });
+    try {
+      for (final existing in _records.where(
+        (item) =>
+            item.pinned &&
+            item.actionId == record.actionId &&
+            item.id != record.id,
+      )) {
+        await widget.careMemoryRepository.setPinned(existing.id, pinned: false);
+      }
+      final pinned = await widget.careMemoryRepository.setPinned(
+        record.id,
+        pinned: true,
+      );
+      final records = await widget.careMemoryRepository.getRecords();
+      if (!mounted) {
+        return;
+      }
+      setState(() {
+        _recordedCheckBack = pinned;
+        _records = records;
+        _memoryBusy = false;
+      });
+    } on Object {
+      if (!mounted) {
+        return;
+      }
+      setState(() {
+        _memoryBusy = false;
+        _memoryError = true;
+        _retryMemoryOperation = _keepCurrentInKit;
+      });
+    }
+  }
+
+  void _finishCheckBack() {
+    setState(() {
+      _pendingCompletion = null;
+      _recordedCheckBack = null;
+      _memoryError = false;
+      _retryMemoryOperation = null;
+    });
+  }
+
+  Future<void> _setKitPinned(String recordId, bool pinned) async {
+    if (_memoryBusy) {
+      return;
+    }
+    setState(() {
+      _memoryBusy = true;
+      _memoryError = false;
+    });
+    try {
+      await widget.careMemoryRepository.setPinned(recordId, pinned: pinned);
+      await _loadMemory();
+    } on Object {
+      if (mounted) {
+        setState(() => _memoryError = true);
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _memoryBusy = false);
+      }
+    }
+  }
+
+  Future<void> _deleteKitRecord(String recordId) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Delete this Care record?'),
+        content: const Text(
+          'This removes its check-back and reflection from this device.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            key: const Key('confirm-delete-care-record'),
+            onPressed: () => Navigator.of(context).pop(true),
+            style: FilledButton.styleFrom(backgroundColor: LetterColors.ink),
+            child: const Text('Delete permanently'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true || !mounted) {
+      return;
+    }
+    setState(() => _memoryBusy = true);
+    try {
+      await widget.careMemoryRepository.deleteRecord(recordId);
+      await _loadMemory();
+    } on Object {
+      if (mounted) {
+        setState(() => _memoryError = true);
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _memoryBusy = false);
+      }
+    }
+  }
+
+  String? _futureNoteFor(CareMode mode) {
+    for (final reflection in _reflections) {
+      final note = reflection.futureSelfNote;
+      if (reflection.mode == mode && note != null && note.isNotEmpty) {
+        return note;
+      }
+    }
+    return null;
+  }
+
+  List<PersonalCareKitItemViewModel> _careKitItems() {
+    final pinned = _records.where((record) => record.pinned);
+    return [
+      for (final record in pinned)
+        PersonalCareKitItemViewModel(
+          id: record.id,
+          actionLabel: record.actionLabel,
+          modeLabel: record.mode.label,
+          betterCount: _records
+              .where(
+                (item) =>
+                    item.actionId == record.actionId &&
+                    item.outcome == CareOutcome.better,
+              )
+              .length,
+          sameCount: _records
+              .where(
+                (item) =>
+                    item.actionId == record.actionId &&
+                    item.outcome == CareOutcome.same,
+              )
+              .length,
+          worseCount: _records
+              .where(
+                (item) =>
+                    item.actionId == record.actionId &&
+                    item.outcome == CareOutcome.worse,
+              )
+              .length,
+        ),
+    ];
   }
 
   @override
   Widget build(BuildContext context) {
+    if (_showCareKit) {
+      return PersonalCareKitView(
+        items: _careKitItems(),
+        onBack: _returnToGate,
+        onUnpin: (id) => _setKitPinned(id, false),
+        onDelete: _deleteKitRecord,
+        busyItemIds: _memoryBusy
+            ? _careKitItems().map((item) => item.id).toSet()
+            : const {},
+        hasError: _memoryError,
+        onRetry: _loadMemory,
+      );
+    }
+    if (_pendingCompletion != null) {
+      return CareCheckBackFlow(
+        onOutcome: _recordOutcome,
+        onSkip: _finishCheckBack,
+        onKeepInKit: _keepCurrentInKit,
+        onDone: _finishCheckBack,
+        recordedOutcome: _recordedCheckBack?.outcome,
+        isPinned: _recordedCheckBack?.pinned ?? false,
+        isBusy: _memoryBusy,
+        hasError: _memoryError,
+        onRetry: _retryMemoryOperation,
+      );
+    }
     final activeMode = _activeMode;
     if (activeMode != null) {
       if (activeMode == CareMode.explode) {
@@ -47,30 +342,42 @@ class _CareScreenState extends State<CareScreen> {
           onReturnToGate: _returnToGate,
           onExitCare: () => widget.onNavigationSelected(2),
           now: widget.now,
+          onActionCompleted: _openCheckBack,
+          futureSelfNote: _futureNoteFor(CareMode.explode),
         );
       }
       if (activeMode == CareMode.heavy) {
         return HeavyPresenceFlow(
           onReturnToGate: _returnToGate,
           onExitCare: () => widget.onNavigationSelected(2),
+          onActionCompleted: _openCheckBack,
+          futureSelfNote: _futureNoteFor(CareMode.heavy),
+          now: widget.now,
         );
       }
       if (activeMode == CareMode.racing) {
         return RacingThoughtsFlow(
           onReturnToGate: _returnToGate,
           onExitCare: () => widget.onNavigationSelected(2),
+          onActionCompleted: _openCheckBack,
+          futureSelfNote: _futureNoteFor(CareMode.racing),
+          now: widget.now,
         );
       }
       if (activeMode == CareMode.space) {
         return NeedSpaceFlow(
           onReturnToGate: _returnToGate,
           onExitCare: () => widget.onNavigationSelected(2),
+          onActionCompleted: _openCheckBack,
+          futureSelfNote: _futureNoteFor(CareMode.space),
+          now: widget.now,
         );
       }
-      return CareModeScene(
-        mode: activeMode,
-        onReturnToGate: _returnToGate,
+      return PhysicalPainFlow(
+        onReturnToGate: _returnFromPhysical,
         onExitCare: () => widget.onNavigationSelected(2),
+        onActionCompleted: _capturePhysicalAction,
+        futureSelfNote: _futureNoteFor(CareMode.physical),
       );
     }
 
@@ -112,6 +419,28 @@ class _CareScreenState extends State<CareScreen> {
                         ),
                       ),
                       const SizedBox(height: LetterSpacing.xl),
+                      OutlinedButton.icon(
+                        key: const Key('open-personal-care-kit'),
+                        onPressed: () => setState(() => _showCareKit = true),
+                        style: OutlinedButton.styleFrom(
+                          minimumSize: const Size.fromHeight(48),
+                          foregroundColor: LetterColors.ink,
+                          backgroundColor: LetterColors.surface,
+                          side: const BorderSide(color: LetterColors.line),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(
+                              LetterRadius.control,
+                            ),
+                          ),
+                        ),
+                        icon: const Icon(Icons.bookmarks_outlined),
+                        label: Text(
+                          _careKitItems().isEmpty
+                              ? 'My Care Kit'
+                              : 'My Care Kit (${_careKitItems().length})',
+                        ),
+                      ),
+                      const SizedBox(height: LetterSpacing.md),
                       ...CareMode.values.map(
                         (mode) => Padding(
                           padding: const EdgeInsets.only(

@@ -1,12 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:letter_mobile/design_system/letter_theme.dart';
+import 'package:letter_mobile/features/care/data/in_memory_care_memory_repository.dart';
 import 'package:letter_mobile/features/care/data/in_memory_impulse_buffer_repository.dart';
+import 'package:letter_mobile/features/care/domain/care_memory.dart';
+import 'package:letter_mobile/features/care/domain/care_memory_repository.dart';
 import 'package:letter_mobile/features/care/domain/care_mode.dart';
 import 'package:letter_mobile/features/care/domain/impulse_buffer_repository.dart';
 import 'package:letter_mobile/features/care/presentation/care_screen.dart';
 import 'package:letter_mobile/features/care/presentation/heavy_presence_flow.dart';
 import 'package:letter_mobile/features/care/presentation/need_space_flow.dart';
+import 'package:letter_mobile/features/care/presentation/physical_pain_flow.dart';
 import 'package:letter_mobile/features/care/presentation/racing_thoughts_flow.dart';
 import 'package:letter_mobile/features/care/presentation/safe_cocoon_stage.dart';
 
@@ -17,6 +21,7 @@ Future<void> pumpCare(
   bool disableAnimations = false,
   ValueChanged<int>? onNavigationSelected,
   ImpulseBufferRepository? impulseBufferRepository,
+  CareMemoryRepository? careMemoryRepository,
   DateTime Function()? now,
 }) async {
   tester.view.devicePixelRatio = 1;
@@ -37,6 +42,8 @@ Future<void> pumpCare(
           onNavigationSelected: onNavigationSelected ?? (_) {},
           impulseBufferRepository:
               impulseBufferRepository ?? InMemoryImpulseBufferRepository(),
+          careMemoryRepository:
+              careMemoryRepository ?? InMemoryCareMemoryRepository(),
           now: now ?? () => DateTime.utc(2026, 7, 28, 8),
         ),
       ),
@@ -88,61 +95,6 @@ void main() {
     expect(find.byKey(const Key('navigation-care')), findsOneWidget);
   });
 
-  for (final mode in CareMode.values.where(
-    (mode) =>
-        mode != CareMode.explode &&
-        mode != CareMode.heavy &&
-        mode != CareMode.racing &&
-        mode != CareMode.space,
-  )) {
-    testWidgets('${mode.name} follows one finite response and hand-off', (
-      tester,
-    ) async {
-      await pumpCare(tester);
-      await openMode(tester, mode);
-
-      expect(find.text(mode.sceneTitle), findsOneWidget);
-      expect(find.text(mode.protectiveLine), findsNothing);
-      expect(find.byKey(Key('care-respond-${mode.name}')), findsOneWidget);
-
-      await tester.tap(find.byKey(Key('care-respond-${mode.name}')));
-      await tester.pumpAndSettle();
-
-      expect(find.text(mode.transformedLabel), findsOneWidget);
-      expect(find.text(mode.protectiveLine), findsOneWidget);
-      expect(find.text(mode.handOff), findsOneWidget);
-      expect(find.byKey(Key('care-respond-${mode.name}')), findsNothing);
-
-      await tester.tap(find.byKey(Key('care-handoff-${mode.name}')));
-      await tester.pumpAndSettle();
-
-      expect(find.text('What is closest to this moment?'), findsOneWidget);
-      expect(find.text(mode.protectiveLine), findsNothing);
-    });
-  }
-
-  testWidgets('Not now returns to the gate and close exits to Today', (
-    tester,
-  ) async {
-    int? selectedNavigation;
-    await pumpCare(
-      tester,
-      onNavigationSelected: (index) => selectedNavigation = index,
-    );
-    await openMode(tester, CareMode.physical);
-    await tester.tap(find.byKey(const Key('care-respond-physical')));
-    await tester.pumpAndSettle();
-    await tester.tap(find.byKey(const Key('care-not-now')));
-    await tester.pumpAndSettle();
-
-    expect(find.text('What is closest to this moment?'), findsOneWidget);
-
-    await openMode(tester, CareMode.physical);
-    await tester.tap(find.byKey(const Key('care-exit')));
-
-    expect(selectedNavigation, 2);
-  });
-
   testWidgets('heavy entrance opens the dedicated presence flow', (
     tester,
   ) async {
@@ -176,6 +128,17 @@ void main() {
     expect(find.byKey(const Key('care-respond-space')), findsNothing);
   });
 
+  testWidgets('physical entrance opens the dedicated comfort flow', (
+    tester,
+  ) async {
+    await pumpCare(tester);
+    await openMode(tester, CareMode.physical);
+
+    expect(find.byType(PhysicalPainFlow), findsOneWidget);
+    expect(find.byKey(const Key('physical-path-cramps')), findsOneWidget);
+    expect(find.byKey(const Key('care-respond-physical')), findsNothing);
+  });
+
   testWidgets('emotional safety route interrupts and can return', (
     tester,
   ) async {
@@ -206,7 +169,7 @@ void main() {
     );
     await openMode(tester, CareMode.physical);
 
-    await tester.tap(find.byKey(const Key('care-safety-physical')));
+    await tester.tap(find.byKey(const Key('physical-safety')));
     await tester.pumpAndSettle();
 
     expect(
@@ -240,50 +203,12 @@ void main() {
     );
   });
 
-  testWidgets('supports reduced motion at 320 width and 200 percent text', (
+  testWidgets('does not show fabricated contacts or prior outcomes', (
     tester,
   ) async {
-    await pumpCare(
-      tester,
-      size: const Size(320, 700),
-      textScale: 2,
-      disableAnimations: true,
-    );
-    await openMode(tester, CareMode.physical);
-    expect(tester.takeException(), isNull);
-
-    final respond = find.byKey(const Key('care-respond-physical'));
-    await tester.scrollUntilVisible(
-      respond,
-      180,
-      scrollable: find.byType(Scrollable).first,
-    );
-    await tester.pump();
-    await Scrollable.ensureVisible(
-      tester.element(respond),
-      alignment: 0.5,
-      duration: Duration.zero,
-    );
-    await tester.pump();
-    await tester.tap(respond);
-    await tester.pumpAndSettle();
-
-    await tester.scrollUntilVisible(
-      find.byKey(const Key('care-handoff-physical')),
-      180,
-      scrollable: find.byType(Scrollable).first,
-    );
-    await tester.pump();
-    expect(find.text(CareMode.physical.protectiveLine), findsOneWidget);
-    expect(find.text(CareMode.physical.handOff), findsOneWidget);
-    expect(tester.takeException(), isNull);
-  });
-
-  testWidgets('does not show fabricated personal support', (tester) async {
     await pumpCare(tester);
 
     for (final text in [
-      'Care Kit',
       'My person',
       'Last time',
       'saved action',
@@ -294,6 +219,93 @@ void main() {
     }
   });
 
+  testWidgets(
+    'physical completion checks back and persists only after outcome',
+    (tester) async {
+      final repository = InMemoryCareMemoryRepository(
+        clock: () => DateTime.utc(2026, 7, 28, 9),
+        idGenerator: () => 'care-record',
+      );
+      await pumpCare(tester, careMemoryRepository: repository);
+      await openMode(tester, CareMode.physical);
+
+      await tester.tap(find.byKey(const Key('physical-path-cramps')));
+      await tester.pump();
+      await tester.tap(find.byKey(const Key('physical-auto-complete')));
+      await tester.pump();
+      await tester.tap(
+        find.byKey(const Key('physical-action-cramps_familiar_warmth')),
+      );
+      await tester.pump();
+      expect(await repository.getRecords(), isEmpty);
+
+      await tester.tap(find.byKey(const Key('physical-handoff-return')));
+      await tester.pump();
+      expect(find.text('How is this moment now?'), findsOneWidget);
+
+      await tester.tap(find.byKey(const Key('care-checkback-better')));
+      await tester.pump();
+      expect((await repository.getRecords()).single.outcome.name, 'better');
+
+      await tester.tap(find.byKey(const Key('care-checkback-keep')));
+      await tester.pump();
+      expect((await repository.getRecords()).single.pinned, isTrue);
+
+      await tester.tap(find.byKey(const Key('care-checkback-done')));
+      await tester.pump();
+      expect(find.text('What is closest to this moment?'), findsOneWidget);
+    },
+  );
+
+  testWidgets('future-self note appears only after acute feedback', (
+    tester,
+  ) async {
+    final occurredAt = DateTime.utc(2026, 7, 27, 8);
+    final record = CareRecord(
+      id: 'racing-record',
+      mode: CareMode.racing,
+      actionId: 'racing.one-calm-point',
+      actionLabel: 'Bring thoughts to one calm point',
+      outcome: CareOutcome.better,
+      occurredAt: occurredAt,
+      createdAt: occurredAt,
+      updatedAt: occurredAt,
+      pinned: false,
+    );
+    final repository = InMemoryCareMemoryRepository(
+      records: [record],
+      reflections: [
+        CareReflection(
+          id: 'reflection',
+          careRecordId: record.id,
+          mode: CareMode.racing,
+          observation: null,
+          need: ReflectionNeed.restOrPhysicalCapacity,
+          whatHelped: null,
+          futureSelfNote: 'Close the laptop before choosing the next thing.',
+          createdAt: occurredAt,
+          updatedAt: occurredAt,
+        ),
+      ],
+    );
+    await pumpCare(tester, careMemoryRepository: repository);
+    await openMode(tester, CareMode.racing);
+
+    expect(
+      find.text('Close the laptop before choosing the next thing.'),
+      findsNothing,
+    );
+    await tester.tap(find.byKey(const Key('racing-convergence-surface')));
+    await tester.pump();
+    await tester.tap(find.byKey(const Key('racing-nothing-now')));
+    await tester.pump();
+
+    expect(
+      find.text('Close the laptop before choosing the next thing.'),
+      findsOneWidget,
+    );
+  });
+
   testWidgets('Care gate matches the 390 by 844 visual baseline', (
     tester,
   ) async {
@@ -302,20 +314,6 @@ void main() {
     await expectLater(
       find.byType(CareScreen),
       matchesGoldenFile('goldens/care_gate_390x844.png'),
-    );
-  });
-
-  testWidgets('generic transformed scene matches the visual baseline', (
-    tester,
-  ) async {
-    await pumpCare(tester);
-    await openMode(tester, CareMode.physical);
-    await tester.tap(find.byKey(const Key('care-respond-physical')));
-    await tester.pumpAndSettle();
-
-    await expectLater(
-      find.byType(CareScreen),
-      matchesGoldenFile('goldens/care_physical_transformed_390x844.png'),
     );
   });
 }

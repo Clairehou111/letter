@@ -1,24 +1,31 @@
 # Clearer-Day Reflection And Future-Self Note Validation
 
-Status: approved
+Status: validated
 
 ## Automated Checks
 
-- [ ] only real Care records can be reflected on
-- [ ] no clearer-day or hormone state is inferred
-- [ ] reflection contains no more than three optional questions
-- [ ] text limits and input privacy settings are enforced
-- [ ] save is explicit and back/discard do not persist
-- [ ] saved reflections can be edited and deleted
-- [ ] future notes appear only for matching modes after acute feedback
-- [ ] notes never obstruct exit or safety
-- [ ] no acute private draft is copied into reflection
-- [ ] local encrypted and Web memory boundaries hold
-- [ ] accessibility, responsive, and visual checks pass
-- [ ] focused and repository-wide validation pass
+- [x] only real Care records can be reflected on
+- [x] no clearer-day or hormone state is inferred
+- [x] reflection contains no more than three optional questions
+- [x] text limits and input privacy settings are enforced
+- [x] save is explicit and back/discard do not persist
+- [x] saved reflections can be edited and deleted
+- [x] future notes appear only for matching modes after acute feedback
+- [x] notes never obstruct exit or safety
+- [x] no acute private draft is copied into reflection
+- [x] local encrypted and Web memory boundaries hold
+- [x] accessibility, responsive, and visual checks pass
+- [x] focused and repository-wide validation pass
 
 ## Merge Gate
 
-- [ ] behavior and persistence are validated
-- [ ] local changes are committed
+- [x] behavior and persistence are validated
+- [x] local changes are committed
 - [ ] user explicitly requests merge
+
+## Evidence
+
+- focused Clearer-day Reflection tests: 13 passed
+- Archive-to-reflection save and future-note return integration tests passed
+- full Flutter validation: analyze clean, 244 tests passed
+- repository validation: 6 API tests; Flutter Web build passed

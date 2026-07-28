@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 
 import '../../../design_system/letter_theme.dart';
+import '../domain/care_memory.dart';
 import '../domain/care_mode.dart';
 import 'care_safety_boundary_sheet.dart';
+import 'future_self_note_card.dart';
 
 enum RacingThoughtsStage { scattered, converged, naming, setDown, handoff }
 
@@ -11,10 +13,16 @@ class RacingThoughtsFlow extends StatefulWidget {
     required this.onReturnToGate,
     required this.onExitCare,
     super.key,
+    this.onActionCompleted,
+    this.futureSelfNote,
+    this.now,
   });
 
   final VoidCallback onReturnToGate;
   final VoidCallback onExitCare;
+  final ValueChanged<CareActionCompletion>? onActionCompleted;
+  final String? futureSelfNote;
+  final DateTime Function()? now;
 
   @override
   State<RacingThoughtsFlow> createState() => _RacingThoughtsFlowState();
@@ -105,6 +113,18 @@ class _RacingThoughtsFlowState extends State<RacingThoughtsFlow> {
 
   void _returnToGate() {
     _clearThought();
+    final callback = widget.onActionCompleted;
+    if (_stage == RacingThoughtsStage.handoff && callback != null) {
+      callback(
+        CareActionCompletion(
+          mode: CareMode.racing,
+          actionId: 'racing.one-calm-point',
+          actionLabel: 'Bring thoughts to one calm point',
+          occurredAt: (widget.now ?? DateTime.now)(),
+        ),
+      );
+      return;
+    }
     widget.onReturnToGate();
   }
 
@@ -425,6 +445,10 @@ class _RacingThoughtsFlowState extends State<RacingThoughtsFlow> {
         ),
       ),
       const SizedBox(height: LetterSpacing.xl),
+      if (widget.futureSelfNote case final note?) ...[
+        FutureSelfNoteCard(note: note),
+        const SizedBox(height: LetterSpacing.lg),
+      ],
       FilledButton(
         key: const Key('racing-handoff-return'),
         onPressed: _returnToGate,
