@@ -49,10 +49,10 @@ and goals require a separate revision after the Care-loop redesign is approved.
 | 3 | Heavy/low presence flow | validated ([spec](features/2026-07-28-heavy-low-presence-flow/)) |
 | 4 | Racing-thoughts convergence flow | validated ([spec](features/2026-07-28-racing-thoughts-convergence-flow/)) |
 | 5 | Need-space safe cocoon and boundary card | validated ([integration spec](features/2026-07-28-need-space-flow-integration/)) |
-| 6 | Physical-pain comfort flow and medical boundary | proposed |
-| 7 | Care action check-back and personal kit | proposed |
-| 8 | Clearer-day reflection and future-self note | proposed |
-| 9 | Cycle Letters archive | proposed |
+| 6 | Physical-pain comfort flow and medical boundary | in_progress ([spec](features/2026-07-28-physical-pain-comfort-flow/)) |
+| 7 | Care action check-back and personal kit | in_progress ([spec](features/2026-07-28-care-checkback-personal-kit/)) |
+| 8 | Clearer-day reflection and future-self note | in_progress ([spec](features/2026-07-28-clearer-day-reflection/)) |
+| 9 | Cycle Letters archive | in_progress ([spec](features/2026-07-28-cycle-letters-archive/)) |
 
 The Care gate is now a working primary destination. All five experiential
 entrances use a finite, escapable response shell with explicit emotional or
