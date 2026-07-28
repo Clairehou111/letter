@@ -8,9 +8,84 @@ import 'package:letter_mobile/features/cycle/data/in_memory_period_repository.da
 import 'package:letter_mobile/features/cycle/domain/local_date.dart';
 import 'package:letter_mobile/features/cycle/domain/period_record.dart';
 import 'package:letter_mobile/features/health_records/data/in_memory_health_record_repository.dart';
+import 'package:letter_mobile/features/health_records/domain/health_record.dart';
 import 'package:letter_mobile/features/letters/presentation/letters_home_screen.dart';
 
 void main() {
+  testWidgets('opens factual Patterns from Letter with local repositories', (
+    tester,
+  ) async {
+    final recordedAt = DateTime.utc(2026, 7, 15);
+    final healthRepository = InMemoryHealthRecordRepository(
+      seed: [
+        HealthRecord(
+          id: 'cramps-one',
+          symptom: SymptomType.cramps,
+          severity: SymptomSeverity.moderate,
+          painRating: null,
+          painLocations: const {},
+          functionalImpacts: const {},
+          experiencedDate: const LocalDate(2026, 7, 10),
+          recordedAt: recordedAt,
+          updatedAt: recordedAt,
+          provenance: HealthRecordProvenance.sameDay,
+          userConfirmed: true,
+          vocabularyVersion: healthRecordVocabularyVersion,
+        ),
+        HealthRecord(
+          id: 'cramps-two',
+          symptom: SymptomType.cramps,
+          severity: SymptomSeverity.severe,
+          painRating: null,
+          painLocations: const {},
+          functionalImpacts: const {},
+          experiencedDate: const LocalDate(2026, 7, 14),
+          recordedAt: recordedAt,
+          updatedAt: recordedAt,
+          provenance: HealthRecordProvenance.laterRecall,
+          userConfirmed: true,
+          vocabularyVersion: healthRecordVocabularyVersion,
+        ),
+      ],
+    );
+    final periodRepository = InMemoryPeriodRepository(
+      seed: [
+        PeriodRecord(
+          id: 'july',
+          startDate: const LocalDate(2026, 7, 8),
+          endDate: const LocalDate(2026, 7, 12),
+          createdAt: recordedAt,
+          updatedAt: recordedAt,
+        ),
+      ],
+    );
+
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: LetterTheme.light,
+        home: LettersHomeScreen(
+          periodRepository: periodRepository,
+          careMemoryRepository: InMemoryCareMemoryRepository(),
+          healthRecordRepository: healthRepository,
+          onNavigationSelected: (_) {},
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('Open observed Patterns'), findsOneWidget);
+    expect(find.text('Open Story and Clinical archive'), findsOneWidget);
+    await tester.tap(find.byKey(const Key('open-personal-patterns')));
+    await tester.pumpAndSettle();
+
+    expect(find.byKey(const Key('personal-patterns-screen')), findsOneWidget);
+    expect(find.text('What has repeated'), findsOneWidget);
+    expect(find.text('Cramps'), findsOneWidget);
+    expect(find.text('2 confirmed records'), findsOneWidget);
+    expect(find.textContaining('diagnos'), findsNothing);
+    expect(find.textContaining('cause'), findsNothing);
+  });
+
   testWidgets('opens a Care record and saves a clearer-day reflection', (
     tester,
   ) async {

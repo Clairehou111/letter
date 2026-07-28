@@ -8,6 +8,10 @@ import '../cycle/domain/cycle_prediction.dart';
 import '../cycle/domain/local_date.dart';
 import '../cycle/domain/period_record.dart';
 import '../cycle/domain/period_repository.dart';
+import '../capture/application/text_voice_capture_controller.dart';
+import '../capture/domain/capture_models.dart';
+import '../capture/domain/speech_to_text_adapter.dart';
+import '../capture/presentation/text_voice_capture_flow.dart';
 import '../health_records/domain/health_record_repository.dart';
 import '../health_records/presentation/health_records_screen.dart';
 import 'today_cycle_context.dart';
@@ -60,12 +64,14 @@ class TodayScreen extends StatefulWidget {
     this.onNavigationSelected,
     this.now,
     this.healthRecordRepository,
+    this.captureNoteStore,
   });
 
   final PeriodRepository repository;
   final ValueChanged<int>? onNavigationSelected;
   final DateTime Function()? now;
   final HealthRecordRepository? healthRecordRepository;
+  final CaptureNoteStore? captureNoteStore;
 
   @override
   State<TodayScreen> createState() => _TodayScreenState();
@@ -139,6 +145,27 @@ class _TodayScreenState extends State<TodayScreen> {
     );
   }
 
+  Future<void> _openCapture() async {
+    final noteStore = widget.captureNoteStore;
+    if (noteStore == null) {
+      return;
+    }
+    final controller = TextVoiceCaptureController(
+      speechAdapter: const UnsupportedSpeechToTextAdapter(),
+      noteStore: noteStore,
+      clock: widget.now,
+    );
+    try {
+      await Navigator.of(context).push(
+        MaterialPageRoute<void>(
+          builder: (context) => TextVoiceCaptureFlow(controller: controller),
+        ),
+      );
+    } finally {
+      controller.dispose();
+    }
+  }
+
   Future<void> _openQuickStateSheet() async {
     final state = await showModalBottomSheet<TodayState>(
       context: context,
@@ -192,6 +219,10 @@ class _TodayScreenState extends State<TodayScreen> {
                               TodayHealthRecordEntry(
                                 onOpenRecords: _openHealthRecords,
                               ),
+                              const SizedBox(height: LetterSpacing.xl),
+                            ],
+                            if (widget.captureNoteStore != null) ...[
+                              TodayCaptureEntry(onOpenCapture: _openCapture),
                               const SizedBox(height: LetterSpacing.xl),
                             ],
                             const LetterSectionTitle(
@@ -700,6 +731,62 @@ class TodayHealthRecordEntry extends StatelessWidget {
             onPressed: onOpenRecords,
             icon: const Icon(Icons.add),
             label: const Text('Open health record'),
+            style: OutlinedButton.styleFrom(
+              foregroundColor: LetterColors.teal,
+              minimumSize: const Size.fromHeight(44),
+              side: const BorderSide(color: LetterColors.teal),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(LetterRadius.control),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class TodayCaptureEntry extends StatelessWidget {
+  const TodayCaptureEntry({required this.onOpenCapture, super.key});
+
+  final VoidCallback onOpenCapture;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      key: const Key('today-capture-entry'),
+      padding: const EdgeInsets.all(LetterSpacing.md),
+      decoration: BoxDecoration(
+        color: LetterColors.tealSoft,
+        border: Border.all(color: LetterColors.teal.withValues(alpha: 0.28)),
+        borderRadius: BorderRadius.circular(LetterRadius.panel),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          const Row(
+            children: [
+              Icon(Icons.edit_outlined, color: LetterColors.teal),
+              SizedBox(width: LetterSpacing.sm),
+              Expanded(
+                child: Text(
+                  'Put today into words',
+                  style: TextStyle(fontWeight: FontWeight.w800),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: LetterSpacing.xs),
+          const Text(
+            'A private note stays on this device. It is not added to reports or insights.',
+            style: TextStyle(color: LetterColors.muted, fontSize: 12),
+          ),
+          const SizedBox(height: LetterSpacing.sm),
+          OutlinedButton.icon(
+            key: const Key('open-text-voice-capture'),
+            onPressed: onOpenCapture,
+            icon: const Icon(Icons.edit_note_outlined),
+            label: const Text('Write a private note'),
             style: OutlinedButton.styleFrom(
               foregroundColor: LetterColors.teal,
               minimumSize: const Size.fromHeight(44),

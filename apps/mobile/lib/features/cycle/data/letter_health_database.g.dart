@@ -2737,6 +2737,319 @@ class HealthRecordRowsCompanion extends UpdateCompanion<HealthRecordRow> {
   }
 }
 
+class $CaptureNoteRowsTable extends CaptureNoteRows
+    with TableInfo<$CaptureNoteRowsTable, CaptureNoteRow> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $CaptureNoteRowsTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<String> id = GeneratedColumn<String>(
+    'id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _contentMeta = const VerificationMeta(
+    'content',
+  );
+  @override
+  late final GeneratedColumn<String> content = GeneratedColumn<String>(
+    'content',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _sourceMeta = const VerificationMeta('source');
+  @override
+  late final GeneratedColumn<String> source = GeneratedColumn<String>(
+    'source',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _createdAtMillisMeta = const VerificationMeta(
+    'createdAtMillis',
+  );
+  @override
+  late final GeneratedColumn<int> createdAtMillis = GeneratedColumn<int>(
+    'created_at_millis',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [id, content, source, createdAtMillis];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'capture_note_rows';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<CaptureNoteRow> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    } else if (isInserting) {
+      context.missing(_idMeta);
+    }
+    if (data.containsKey('content')) {
+      context.handle(
+        _contentMeta,
+        content.isAcceptableOrUnknown(data['content']!, _contentMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_contentMeta);
+    }
+    if (data.containsKey('source')) {
+      context.handle(
+        _sourceMeta,
+        source.isAcceptableOrUnknown(data['source']!, _sourceMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_sourceMeta);
+    }
+    if (data.containsKey('created_at_millis')) {
+      context.handle(
+        _createdAtMillisMeta,
+        createdAtMillis.isAcceptableOrUnknown(
+          data['created_at_millis']!,
+          _createdAtMillisMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_createdAtMillisMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  CaptureNoteRow map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return CaptureNoteRow(
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}id'],
+      )!,
+      content: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}content'],
+      )!,
+      source: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}source'],
+      )!,
+      createdAtMillis: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}created_at_millis'],
+      )!,
+    );
+  }
+
+  @override
+  $CaptureNoteRowsTable createAlias(String alias) {
+    return $CaptureNoteRowsTable(attachedDatabase, alias);
+  }
+}
+
+class CaptureNoteRow extends DataClass implements Insertable<CaptureNoteRow> {
+  final String id;
+  final String content;
+  final String source;
+  final int createdAtMillis;
+  const CaptureNoteRow({
+    required this.id,
+    required this.content,
+    required this.source,
+    required this.createdAtMillis,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<String>(id);
+    map['content'] = Variable<String>(content);
+    map['source'] = Variable<String>(source);
+    map['created_at_millis'] = Variable<int>(createdAtMillis);
+    return map;
+  }
+
+  CaptureNoteRowsCompanion toCompanion(bool nullToAbsent) {
+    return CaptureNoteRowsCompanion(
+      id: Value(id),
+      content: Value(content),
+      source: Value(source),
+      createdAtMillis: Value(createdAtMillis),
+    );
+  }
+
+  factory CaptureNoteRow.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return CaptureNoteRow(
+      id: serializer.fromJson<String>(json['id']),
+      content: serializer.fromJson<String>(json['content']),
+      source: serializer.fromJson<String>(json['source']),
+      createdAtMillis: serializer.fromJson<int>(json['createdAtMillis']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<String>(id),
+      'content': serializer.toJson<String>(content),
+      'source': serializer.toJson<String>(source),
+      'createdAtMillis': serializer.toJson<int>(createdAtMillis),
+    };
+  }
+
+  CaptureNoteRow copyWith({
+    String? id,
+    String? content,
+    String? source,
+    int? createdAtMillis,
+  }) => CaptureNoteRow(
+    id: id ?? this.id,
+    content: content ?? this.content,
+    source: source ?? this.source,
+    createdAtMillis: createdAtMillis ?? this.createdAtMillis,
+  );
+  CaptureNoteRow copyWithCompanion(CaptureNoteRowsCompanion data) {
+    return CaptureNoteRow(
+      id: data.id.present ? data.id.value : this.id,
+      content: data.content.present ? data.content.value : this.content,
+      source: data.source.present ? data.source.value : this.source,
+      createdAtMillis: data.createdAtMillis.present
+          ? data.createdAtMillis.value
+          : this.createdAtMillis,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('CaptureNoteRow(')
+          ..write('id: $id, ')
+          ..write('content: $content, ')
+          ..write('source: $source, ')
+          ..write('createdAtMillis: $createdAtMillis')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(id, content, source, createdAtMillis);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is CaptureNoteRow &&
+          other.id == this.id &&
+          other.content == this.content &&
+          other.source == this.source &&
+          other.createdAtMillis == this.createdAtMillis);
+}
+
+class CaptureNoteRowsCompanion extends UpdateCompanion<CaptureNoteRow> {
+  final Value<String> id;
+  final Value<String> content;
+  final Value<String> source;
+  final Value<int> createdAtMillis;
+  final Value<int> rowid;
+  const CaptureNoteRowsCompanion({
+    this.id = const Value.absent(),
+    this.content = const Value.absent(),
+    this.source = const Value.absent(),
+    this.createdAtMillis = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  CaptureNoteRowsCompanion.insert({
+    required String id,
+    required String content,
+    required String source,
+    required int createdAtMillis,
+    this.rowid = const Value.absent(),
+  }) : id = Value(id),
+       content = Value(content),
+       source = Value(source),
+       createdAtMillis = Value(createdAtMillis);
+  static Insertable<CaptureNoteRow> custom({
+    Expression<String>? id,
+    Expression<String>? content,
+    Expression<String>? source,
+    Expression<int>? createdAtMillis,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (content != null) 'content': content,
+      if (source != null) 'source': source,
+      if (createdAtMillis != null) 'created_at_millis': createdAtMillis,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  CaptureNoteRowsCompanion copyWith({
+    Value<String>? id,
+    Value<String>? content,
+    Value<String>? source,
+    Value<int>? createdAtMillis,
+    Value<int>? rowid,
+  }) {
+    return CaptureNoteRowsCompanion(
+      id: id ?? this.id,
+      content: content ?? this.content,
+      source: source ?? this.source,
+      createdAtMillis: createdAtMillis ?? this.createdAtMillis,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<String>(id.value);
+    }
+    if (content.present) {
+      map['content'] = Variable<String>(content.value);
+    }
+    if (source.present) {
+      map['source'] = Variable<String>(source.value);
+    }
+    if (createdAtMillis.present) {
+      map['created_at_millis'] = Variable<int>(createdAtMillis.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('CaptureNoteRowsCompanion(')
+          ..write('id: $id, ')
+          ..write('content: $content, ')
+          ..write('source: $source, ')
+          ..write('createdAtMillis: $createdAtMillis, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
 abstract class _$LetterHealthDatabase extends GeneratedDatabase {
   _$LetterHealthDatabase(QueryExecutor e) : super(e);
   $LetterHealthDatabaseManager get managers =>
@@ -2751,6 +3064,9 @@ abstract class _$LetterHealthDatabase extends GeneratedDatabase {
   late final $HealthRecordRowsTable healthRecordRows = $HealthRecordRowsTable(
     this,
   );
+  late final $CaptureNoteRowsTable captureNoteRows = $CaptureNoteRowsTable(
+    this,
+  );
   @override
   Iterable<TableInfo<Table, Object?>> get allTables =>
       allSchemaEntities.whereType<TableInfo<Table, Object?>>();
@@ -2761,6 +3077,7 @@ abstract class _$LetterHealthDatabase extends GeneratedDatabase {
     careRecordRows,
     careReflectionRows,
     healthRecordRows,
+    captureNoteRows,
   ];
 }
 
@@ -4163,6 +4480,199 @@ typedef $$HealthRecordRowsTableProcessedTableManager =
       HealthRecordRow,
       PrefetchHooks Function()
     >;
+typedef $$CaptureNoteRowsTableCreateCompanionBuilder =
+    CaptureNoteRowsCompanion Function({
+      required String id,
+      required String content,
+      required String source,
+      required int createdAtMillis,
+      Value<int> rowid,
+    });
+typedef $$CaptureNoteRowsTableUpdateCompanionBuilder =
+    CaptureNoteRowsCompanion Function({
+      Value<String> id,
+      Value<String> content,
+      Value<String> source,
+      Value<int> createdAtMillis,
+      Value<int> rowid,
+    });
+
+class $$CaptureNoteRowsTableFilterComposer
+    extends Composer<_$LetterHealthDatabase, $CaptureNoteRowsTable> {
+  $$CaptureNoteRowsTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get content => $composableBuilder(
+    column: $table.content,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get source => $composableBuilder(
+    column: $table.source,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get createdAtMillis => $composableBuilder(
+    column: $table.createdAtMillis,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$CaptureNoteRowsTableOrderingComposer
+    extends Composer<_$LetterHealthDatabase, $CaptureNoteRowsTable> {
+  $$CaptureNoteRowsTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get content => $composableBuilder(
+    column: $table.content,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get source => $composableBuilder(
+    column: $table.source,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get createdAtMillis => $composableBuilder(
+    column: $table.createdAtMillis,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$CaptureNoteRowsTableAnnotationComposer
+    extends Composer<_$LetterHealthDatabase, $CaptureNoteRowsTable> {
+  $$CaptureNoteRowsTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<String> get content =>
+      $composableBuilder(column: $table.content, builder: (column) => column);
+
+  GeneratedColumn<String> get source =>
+      $composableBuilder(column: $table.source, builder: (column) => column);
+
+  GeneratedColumn<int> get createdAtMillis => $composableBuilder(
+    column: $table.createdAtMillis,
+    builder: (column) => column,
+  );
+}
+
+class $$CaptureNoteRowsTableTableManager
+    extends
+        RootTableManager<
+          _$LetterHealthDatabase,
+          $CaptureNoteRowsTable,
+          CaptureNoteRow,
+          $$CaptureNoteRowsTableFilterComposer,
+          $$CaptureNoteRowsTableOrderingComposer,
+          $$CaptureNoteRowsTableAnnotationComposer,
+          $$CaptureNoteRowsTableCreateCompanionBuilder,
+          $$CaptureNoteRowsTableUpdateCompanionBuilder,
+          (
+            CaptureNoteRow,
+            BaseReferences<
+              _$LetterHealthDatabase,
+              $CaptureNoteRowsTable,
+              CaptureNoteRow
+            >,
+          ),
+          CaptureNoteRow,
+          PrefetchHooks Function()
+        > {
+  $$CaptureNoteRowsTableTableManager(
+    _$LetterHealthDatabase db,
+    $CaptureNoteRowsTable table,
+  ) : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$CaptureNoteRowsTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$CaptureNoteRowsTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$CaptureNoteRowsTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<String> id = const Value.absent(),
+                Value<String> content = const Value.absent(),
+                Value<String> source = const Value.absent(),
+                Value<int> createdAtMillis = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => CaptureNoteRowsCompanion(
+                id: id,
+                content: content,
+                source: source,
+                createdAtMillis: createdAtMillis,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required String id,
+                required String content,
+                required String source,
+                required int createdAtMillis,
+                Value<int> rowid = const Value.absent(),
+              }) => CaptureNoteRowsCompanion.insert(
+                id: id,
+                content: content,
+                source: source,
+                createdAtMillis: createdAtMillis,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$CaptureNoteRowsTableProcessedTableManager =
+    ProcessedTableManager<
+      _$LetterHealthDatabase,
+      $CaptureNoteRowsTable,
+      CaptureNoteRow,
+      $$CaptureNoteRowsTableFilterComposer,
+      $$CaptureNoteRowsTableOrderingComposer,
+      $$CaptureNoteRowsTableAnnotationComposer,
+      $$CaptureNoteRowsTableCreateCompanionBuilder,
+      $$CaptureNoteRowsTableUpdateCompanionBuilder,
+      (
+        CaptureNoteRow,
+        BaseReferences<
+          _$LetterHealthDatabase,
+          $CaptureNoteRowsTable,
+          CaptureNoteRow
+        >,
+      ),
+      CaptureNoteRow,
+      PrefetchHooks Function()
+    >;
 
 class $LetterHealthDatabaseManager {
   final _$LetterHealthDatabase _db;
@@ -4177,4 +4687,6 @@ class $LetterHealthDatabaseManager {
       $$CareReflectionRowsTableTableManager(_db, _db.careReflectionRows);
   $$HealthRecordRowsTableTableManager get healthRecordRows =>
       $$HealthRecordRowsTableTableManager(_db, _db.healthRecordRows);
+  $$CaptureNoteRowsTableTableManager get captureNoteRows =>
+      $$CaptureNoteRowsTableTableManager(_db, _db.captureNoteRows);
 }

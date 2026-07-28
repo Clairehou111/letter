@@ -118,7 +118,7 @@ class PersonalPatternsScreen extends StatelessWidget {
                           _SupportActionCard(
                             action: action,
                             onDismiss: onDismissPattern,
-                            onUnpin: onUnpinAction,
+                            onUnpin: action.pinned ? onUnpinAction : null,
                             onDeleteSource: onDeleteSource,
                           ),
                           const SizedBox(height: LetterSpacing.sm),

@@ -5,6 +5,7 @@ import '../features/care/data/in_memory_impulse_buffer_repository.dart';
 import '../features/care/data/in_memory_care_memory_repository.dart';
 import '../features/care/domain/care_memory_repository.dart';
 import '../features/care/domain/impulse_buffer_repository.dart';
+import '../features/capture/domain/capture_models.dart';
 import '../features/cycle/data/in_memory_period_repository.dart';
 import '../features/cycle/domain/period_repository.dart';
 import '../features/health_data/data/local_health_store.dart';
@@ -24,6 +25,7 @@ class LetterApp extends StatefulWidget {
     this.impulseBufferRepository,
     this.careMemoryRepository,
     this.healthRecordRepository,
+    this.captureNoteStore,
     this.now,
   });
 
@@ -32,6 +34,7 @@ class LetterApp extends StatefulWidget {
   final ImpulseBufferRepository? impulseBufferRepository;
   final CareMemoryRepository? careMemoryRepository;
   final HealthRecordRepository? healthRecordRepository;
+  final CaptureNoteStore? captureNoteStore;
   final DateTime Function()? now;
 
   @override
@@ -44,6 +47,7 @@ class _LetterAppState extends State<LetterApp> {
   late final ImpulseBufferRepository _impulseBufferRepository;
   late final CareMemoryRepository _careMemoryRepository;
   late final HealthRecordRepository _healthRecordRepository;
+  late final CaptureNoteStore _captureNoteStore;
   LocalHealthStore? _ownedHealthStore;
   OnboardingProfile? _profile;
   bool _loaded = false;
@@ -56,13 +60,15 @@ class _LetterAppState extends State<LetterApp> {
     if (widget.periodRepository == null &&
         widget.impulseBufferRepository == null &&
         widget.careMemoryRepository == null &&
-        widget.healthRecordRepository == null) {
+        widget.healthRecordRepository == null &&
+        widget.captureNoteStore == null) {
       final healthStore = createDefaultLocalHealthStore();
       _ownedHealthStore = healthStore;
       _periodRepository = healthStore.periodRepository;
       _impulseBufferRepository = healthStore.impulseBufferRepository;
       _careMemoryRepository = healthStore.careMemoryRepository;
       _healthRecordRepository = healthStore.healthRecordRepository;
+      _captureNoteStore = healthStore.captureNoteStore;
     } else {
       _periodRepository = widget.periodRepository ?? InMemoryPeriodRepository();
       _impulseBufferRepository =
@@ -74,6 +80,7 @@ class _LetterAppState extends State<LetterApp> {
       _healthRecordRepository =
           widget.healthRecordRepository ??
           InMemoryHealthRecordRepository(clock: widget.now);
+      _captureNoteStore = widget.captureNoteStore ?? InMemoryCaptureNoteStore();
     }
     _load();
   }
@@ -151,6 +158,7 @@ class _LetterAppState extends State<LetterApp> {
               impulseBufferRepository: _impulseBufferRepository,
               careMemoryRepository: _careMemoryRepository,
               healthRecordRepository: _healthRecordRepository,
+              captureNoteStore: _captureNoteStore,
               onProfileChanged: _updateProfile,
               onReset: _resetOnboarding,
               now: widget.now,

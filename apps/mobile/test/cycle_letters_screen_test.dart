@@ -78,6 +78,8 @@ Future<void> pumpArchive(
   ValueChanged<String>? onLetterOpen,
   VoidCallback? onLetterClose,
   ValueChanged<String>? onReflectionOpen,
+  VoidCallback? onOpenArchiveViews,
+  VoidCallback? onOpenPersonalPatterns,
 }) async {
   tester.view.devicePixelRatio = 1;
   tester.view.physicalSize = size;
@@ -101,6 +103,8 @@ Future<void> pumpArchive(
           onLetterOpen: onLetterOpen,
           onLetterClose: onLetterClose,
           onReflectionOpen: onReflectionOpen,
+          onOpenArchiveViews: onOpenArchiveViews,
+          onOpenPersonalPatterns: onOpenPersonalPatterns,
         ),
       ),
     ),
@@ -118,6 +122,27 @@ Future<void> scrollTo(WidgetTester tester, Key key) async {
 }
 
 void main() {
+  testWidgets('keeps observed Patterns separate from Story and Clinical', (
+    tester,
+  ) async {
+    var patternsOpened = 0;
+    var archiveOpened = 0;
+    await pumpArchive(
+      tester,
+      onOpenPersonalPatterns: () => patternsOpened += 1,
+      onOpenArchiveViews: () => archiveOpened += 1,
+    );
+
+    expect(find.text('Open observed Patterns'), findsOneWidget);
+    expect(find.text('Open Story and Clinical archive'), findsOneWidget);
+    expect(find.textContaining('Story, Pattern, Clinical'), findsNothing);
+
+    await tester.tap(find.byKey(const Key('open-personal-patterns')));
+    await tester.tap(find.byKey(const Key('open-archive-views')));
+    expect(patternsOpened, 1);
+    expect(archiveOpened, 1);
+  });
+
   testWidgets('shows an explicit loading state without archive content', (
     tester,
   ) async {

@@ -1,16 +1,24 @@
 import 'package:flutter/material.dart';
 
 import '../../../design_system/letter_theme.dart';
+import '../../summary_export/domain/local_file_share_adapter.dart';
+import '../../summary_export/domain/summary_export_repository.dart';
+import '../../summary_export/presentation/summary_export_screen.dart';
 import '../domain/archive_repository.dart';
+import '../domain/archive_summary_export_input.dart';
 import '../domain/archive_view_models.dart';
 import 'clinical_view.dart';
-import 'pattern_view.dart';
 import 'story_view.dart';
 
 class ArchiveViewsScreen extends StatefulWidget {
-  const ArchiveViewsScreen({required this.repository, super.key});
+  const ArchiveViewsScreen({
+    required this.repository,
+    super.key,
+    this.fileShareAdapter = const UnavailableLocalFileShareAdapter(),
+  });
 
   final ArchiveRepository repository;
+  final LocalFileShareAdapter fileShareAdapter;
 
   @override
   State<ArchiveViewsScreen> createState() => _ArchiveViewsScreenState();
@@ -21,6 +29,7 @@ class _ArchiveViewsScreenState extends State<ArchiveViewsScreen> {
   String _query = '';
   String? _selectedCycleId;
   ArchiveViewTab _selectedTab = ArchiveViewTab.story;
+  ArchiveInput? _input;
 
   @override
   void initState() {
@@ -33,7 +42,10 @@ class _ArchiveViewsScreenState extends State<ArchiveViewsScreen> {
     try {
       final input = await widget.repository.load();
       if (!mounted) return;
-      setState(() => _viewModel = buildArchiveViewsViewModel(input));
+      setState(() {
+        _input = input;
+        _viewModel = buildArchiveViewsViewModel(input);
+      });
     } on Object {
       if (!mounted) return;
       setState(() => _viewModel = const ArchiveViewsViewModel.error());
@@ -78,9 +90,25 @@ class _ArchiveViewsScreenState extends State<ArchiveViewsScreen> {
                         onBack: () => setState(() => _selectedCycleId = null),
                         onTabChanged: (tab) =>
                             setState(() => _selectedTab = tab),
+                        onCreateSummary: _input == null
+                            ? null
+                            : () => _openSummary(_input!),
                       ),
             },
           ),
+        ),
+      ),
+    );
+  }
+
+  void _openSummary(ArchiveInput input) {
+    Navigator.of(context).push(
+      MaterialPageRoute<void>(
+        builder: (context) => SummaryExportScreen(
+          repository: InMemorySummaryExportRepository(
+            summaryExportInputFromArchive(input),
+          ),
+          fileShareAdapter: widget.fileShareAdapter,
         ),
       ),
     );
@@ -290,12 +318,14 @@ class _ArchiveDetail extends StatelessWidget {
     required this.selectedTab,
     required this.onBack,
     required this.onTabChanged,
+    this.onCreateSummary,
   });
 
   final ArchiveCycleSummaryViewModel cycle;
   final ArchiveViewTab selectedTab;
   final VoidCallback onBack;
   final ValueChanged<ArchiveViewTab> onTabChanged;
+  final VoidCallback? onCreateSummary;
 
   @override
   Widget build(BuildContext context) {
@@ -343,11 +373,6 @@ class _ArchiveDetail extends StatelessWidget {
                 icon: Icon(Icons.auto_stories_outlined),
               ),
               ButtonSegment(
-                value: ArchiveViewTab.pattern,
-                label: Text('Pattern'),
-                icon: Icon(Icons.insights_outlined),
-              ),
-              ButtonSegment(
                 value: ArchiveViewTab.clinical,
                 label: Text('Clinical'),
                 icon: Icon(Icons.table_chart_outlined),
@@ -360,11 +385,9 @@ class _ArchiveDetail extends StatelessWidget {
         Expanded(
           child: switch (selectedTab) {
             ArchiveViewTab.story => ArchiveStoryView(viewModel: cycle.story),
-            ArchiveViewTab.pattern => ArchivePatternView(
-              viewModel: cycle.pattern,
-            ),
             ArchiveViewTab.clinical => ArchiveClinicalView(
               viewModel: cycle.clinical,
+              onCreateSummary: onCreateSummary,
             ),
           },
         ),

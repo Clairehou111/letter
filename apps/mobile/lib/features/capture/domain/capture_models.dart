@@ -46,35 +46,46 @@ final class SpeechCaptureFailure {
 @immutable
 final class CaptureNote {
   const CaptureNote({
+    required this.id,
     required this.text,
     required this.source,
     required this.createdAt,
   });
 
+  final String id;
   final String text;
   final CaptureSource source;
   final DateTime createdAt;
 }
 
 abstract interface class CaptureNoteStore {
-  Future<void> save(CaptureNote note);
+  /// Returns only user-authored text and metadata. Raw audio is never accepted
+  /// by this local storage boundary.
+  Future<CaptureNote> save(CaptureNote note);
+
+  Future<List<CaptureNote>> getAll();
 
   Future<void> delete(CaptureNote note);
 }
 
-/// A local-only seam for this feature. It deliberately stores notes in memory
-/// until the health-record foundation provides an approved local repository.
 final class InMemoryCaptureNoteStore implements CaptureNoteStore {
   final List<CaptureNote> notes = [];
 
   @override
-  Future<void> save(CaptureNote note) async {
+  Future<CaptureNote> save(CaptureNote note) async {
     notes.add(note);
+    return note;
+  }
+
+  @override
+  Future<List<CaptureNote>> getAll() async {
+    return [...notes]
+      ..sort((left, right) => right.createdAt.compareTo(left.createdAt));
   }
 
   @override
   Future<void> delete(CaptureNote note) async {
-    notes.remove(note);
+    notes.removeWhere((entry) => entry.id == note.id);
   }
 }
 

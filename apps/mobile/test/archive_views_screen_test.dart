@@ -17,7 +17,7 @@ Future<void> pumpArchive(WidgetTester tester, ArchiveInput input) async {
 }
 
 void main() {
-  testWidgets('keeps incomplete cycle separate and opens the three views', (
+  testWidgets('keeps incomplete cycle separate and opens Story and Clinical', (
     tester,
   ) async {
     await tester.binding.setSurfaceSize(const Size(390, 844));
@@ -33,10 +33,7 @@ void main() {
     expect(find.byKey(const Key('archive-view-tabs')), findsOneWidget);
     expect(find.text('The warmth made the next hour easier.'), findsOneWidget);
 
-    await tester.tap(find.byIcon(Icons.insights_outlined));
-    await tester.pumpAndSettle();
-    expect(find.text('Confirmed symptoms'), findsOneWidget);
-    expect(find.textContaining('Cramps'), findsWidgets);
+    expect(find.text('Pattern'), findsNothing);
 
     await tester.tap(find.byIcon(Icons.table_chart_outlined));
     await tester.pumpAndSettle();

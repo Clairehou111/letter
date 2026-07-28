@@ -4,6 +4,7 @@ import '../../../design_system/letter_bottom_navigation.dart';
 import '../../../design_system/letter_theme.dart';
 import '../../care/domain/impulse_buffer_repository.dart';
 import '../../care/domain/care_memory_repository.dart';
+import '../../capture/domain/capture_models.dart';
 import '../../care/presentation/care_screen.dart';
 import '../../cycle/domain/period_repository.dart';
 import '../../cycle/presentation/cycle_screen.dart';
@@ -22,6 +23,7 @@ class LetterHome extends StatefulWidget {
     required this.impulseBufferRepository,
     required this.careMemoryRepository,
     required this.healthRecordRepository,
+    required this.captureNoteStore,
     required this.onProfileChanged,
     required this.onReset,
     this.now,
@@ -33,6 +35,7 @@ class LetterHome extends StatefulWidget {
   final ImpulseBufferRepository impulseBufferRepository;
   final CareMemoryRepository careMemoryRepository;
   final HealthRecordRepository healthRecordRepository;
+  final CaptureNoteStore captureNoteStore;
   final UpdateOnboardingProfile onProfileChanged;
   final Future<void> Function() onReset;
   final DateTime Function()? now;
@@ -88,6 +91,7 @@ class _LetterHomeState extends State<LetterHome> {
     return TodayScreen(
       repository: widget.periodRepository,
       healthRecordRepository: widget.healthRecordRepository,
+      captureNoteStore: widget.captureNoteStore,
       onNavigationSelected: _selectTab,
       now: widget.now,
     );

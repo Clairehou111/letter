@@ -9,6 +9,8 @@ import '../../cycle/domain/local_date.dart';
 import '../../cycle/domain/period_record.dart';
 import '../../cycle/domain/period_repository.dart';
 import '../../health_records/domain/health_record_repository.dart';
+import '../../patterns/data/repository_pattern_source.dart';
+import '../../patterns/presentation/personal_patterns_route.dart';
 import '../domain/cycle_letter.dart';
 import '../domain/cycle_letters_aggregator.dart';
 import 'cycle_letters_screen.dart';
@@ -161,6 +163,20 @@ class _LettersHomeScreenState extends State<LettersHomeScreen> {
     }
   }
 
+  Future<void> _openPersonalPatterns() async {
+    await Navigator.of(context).push<void>(
+      MaterialPageRoute(
+        builder: (context) => PersonalPatternsRoute(
+          source: RepositoryPatternSource(
+            healthRecords: widget.healthRecordRepository,
+            careMemory: widget.careMemoryRepository,
+            periods: widget.periodRepository,
+          ),
+        ),
+      ),
+    );
+  }
+
   Future<void> _reloadSourcesWithoutClosingReflection() async {
     final periods = await widget.periodRepository.getAll();
     final records = await widget.careMemoryRepository.getRecords();
@@ -227,6 +243,7 @@ class _LettersHomeScreenState extends State<LettersHomeScreen> {
         setState(() => _reflectionRecordId = recordId);
       },
       onOpenArchiveViews: _openArchiveViews,
+      onOpenPersonalPatterns: _openPersonalPatterns,
     );
   }
 

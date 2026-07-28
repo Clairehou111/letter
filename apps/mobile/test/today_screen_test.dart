@@ -7,6 +7,7 @@ import 'package:letter_mobile/features/cycle/data/in_memory_period_repository.da
 import 'package:letter_mobile/features/cycle/domain/local_date.dart';
 import 'package:letter_mobile/features/cycle/domain/period_record.dart';
 import 'package:letter_mobile/features/cycle/domain/period_repository.dart';
+import 'package:letter_mobile/features/capture/domain/capture_models.dart';
 import 'package:letter_mobile/features/today/today_screen.dart';
 
 PeriodRecord period({
@@ -89,6 +90,7 @@ Future<void> pumpToday(
   double textScale = 1,
   PeriodRepository? repository,
   ValueChanged<int>? onNavigationSelected,
+  CaptureNoteStore? captureNoteStore,
   bool settle = true,
 }) async {
   tester.view.devicePixelRatio = 1;
@@ -108,6 +110,7 @@ Future<void> pumpToday(
           repository: repository ?? seededRepository(),
           onNavigationSelected: onNavigationSelected,
           now: () => DateTime(2026, 7, 28, 12),
+          captureNoteStore: captureNoteStore,
         ),
       ),
     ),
@@ -381,6 +384,42 @@ void main() {
     expect(stateSize.height, greaterThanOrEqualTo(44));
     expect(careSize.height, greaterThanOrEqualTo(44));
     expect(logSize.height, greaterThanOrEqualTo(44));
+  });
+
+  testWidgets('opens the local text capture flow from Today', (tester) async {
+    final notes = InMemoryCaptureNoteStore();
+    await pumpToday(
+      tester,
+      captureNoteStore: notes,
+      size: const Size(390, 1200),
+    );
+
+    await tester.scrollUntilVisible(
+      find.byKey(const Key('open-text-voice-capture')),
+      240,
+      scrollable: find.byType(Scrollable).first,
+    );
+    await tester.tap(find.byKey(const Key('open-text-voice-capture')));
+    await tester.pumpAndSettle();
+
+    expect(find.byKey(const Key('capture-flow')), findsOneWidget);
+    expect(find.byKey(const Key('capture-text-field')), findsOneWidget);
+    await tester.tap(find.byKey(const Key('capture-start-voice')));
+    await tester.pumpAndSettle();
+    expect(
+      find.text('Voice capture is unavailable here. You can keep typing.'),
+      findsOneWidget,
+    );
+
+    await tester.enterText(
+      find.byKey(const Key('capture-text-field')),
+      'A note that stays local.',
+    );
+    await tester.pump();
+    await tester.tap(find.byKey(const Key('capture-save-note')));
+    await tester.pumpAndSettle();
+
+    expect((await notes.getAll()).single.text, 'A note that stays local.');
   });
 
   testWidgets('does not overflow at 320 width and 200 percent text scale', (

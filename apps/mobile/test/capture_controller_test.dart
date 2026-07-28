@@ -12,7 +12,8 @@ TextVoiceCaptureController createController({
     speechAdapter: adapter ?? FakeSpeechToTextAdapter(),
     noteStore: store ?? InMemoryCaptureNoteStore(),
     initialText: initialText,
-    clock: () => DateTime(2026, 7, 28),
+    clock: () => DateTime.utc(2026, 7, 28),
+    idGenerator: () => 'capture-note',
   );
 }
 
@@ -29,7 +30,8 @@ void main() {
     expect(controller.state.status, CaptureStatus.saved);
     expect(store.notes.single.text, 'My own words, not a checkbox.');
     expect(store.notes.single.source, CaptureSource.typed);
-    expect(store.notes.single.createdAt, DateTime(2026, 7, 28));
+    expect(store.notes.single.id, 'capture-note');
+    expect(store.notes.single.createdAt, DateTime.utc(2026, 7, 28));
   });
 
   test('permission denial leaves text capture fully usable', () async {

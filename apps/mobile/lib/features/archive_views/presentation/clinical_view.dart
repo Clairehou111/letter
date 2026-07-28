@@ -4,9 +4,14 @@ import '../../../design_system/letter_theme.dart';
 import '../domain/archive_view_models.dart';
 
 class ArchiveClinicalView extends StatelessWidget {
-  const ArchiveClinicalView({required this.viewModel, super.key});
+  const ArchiveClinicalView({
+    required this.viewModel,
+    super.key,
+    this.onCreateSummary,
+  });
 
   final ArchiveClinicalViewModel viewModel;
+  final VoidCallback? onCreateSummary;
 
   @override
   Widget build(BuildContext context) {
@@ -16,6 +21,15 @@ class ArchiveClinicalView extends StatelessWidget {
       children: [
         const _ClinicalNote(),
         const SizedBox(height: LetterSpacing.md),
+        if (onCreateSummary != null) ...[
+          OutlinedButton.icon(
+            key: const Key('archive-create-summary'),
+            onPressed: onCreateSummary,
+            icon: const Icon(Icons.file_download_outlined),
+            label: const Text('Create Cycle and Care Summary'),
+          ),
+          const SizedBox(height: LetterSpacing.md),
+        ],
         if (viewModel.healthRows.isNotEmpty) ...[
           const Text(
             'Confirmed health records',

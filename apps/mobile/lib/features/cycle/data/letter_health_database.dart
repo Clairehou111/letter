@@ -73,6 +73,18 @@ class HealthRecordRows extends Table {
   Set<Column<Object>> get primaryKey => {id};
 }
 
+/// Private, user-authored note text only. There is deliberately no audio,
+/// analysis, clinical, or analytics field on this table.
+class CaptureNoteRows extends Table {
+  TextColumn get id => text()();
+  TextColumn get content => text()();
+  TextColumn get source => text()();
+  IntColumn get createdAtMillis => integer()();
+
+  @override
+  Set<Column<Object>> get primaryKey => {id};
+}
+
 @DriftDatabase(
   tables: [
     PeriodRows,
@@ -80,13 +92,14 @@ class HealthRecordRows extends Table {
     CareRecordRows,
     CareReflectionRows,
     HealthRecordRows,
+    CaptureNoteRows,
   ],
 )
 class LetterHealthDatabase extends _$LetterHealthDatabase {
   LetterHealthDatabase(super.executor);
 
   @override
-  int get schemaVersion => 4;
+  int get schemaVersion => 5;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -100,6 +113,9 @@ class LetterHealthDatabase extends _$LetterHealthDatabase {
       }
       if (from < 4) {
         await migrator.createTable(healthRecordRows);
+      }
+      if (from < 5) {
+        await migrator.createTable(captureNoteRows);
       }
     },
   );

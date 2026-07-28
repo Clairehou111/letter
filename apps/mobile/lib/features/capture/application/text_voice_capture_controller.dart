@@ -4,19 +4,23 @@ import '../domain/capture_models.dart';
 import '../domain/speech_to_text_adapter.dart';
 
 typedef CaptureClock = DateTime Function();
+typedef CaptureIdGenerator = String Function();
 
 final class TextVoiceCaptureController extends ChangeNotifier {
   TextVoiceCaptureController({
     required this.speechAdapter,
     required this.noteStore,
     CaptureClock? clock,
+    CaptureIdGenerator? idGenerator,
     String initialText = '',
   }) : _clock = clock ?? DateTime.now,
+       _idGenerator = idGenerator ?? _defaultId,
        _state = CaptureState(draftText: _limitText(initialText));
 
   final SpeechToTextAdapter speechAdapter;
   final CaptureNoteStore noteStore;
   final CaptureClock _clock;
+  final CaptureIdGenerator _idGenerator;
 
   CaptureState _state;
   bool _voiceSessionActive = false;
@@ -169,11 +173,16 @@ final class TextVoiceCaptureController extends ChangeNotifier {
     final source = _state.transcriptText.trim().isNotEmpty
         ? CaptureSource.voiceTranscript
         : CaptureSource.typed;
-    final note = CaptureNote(text: text, source: source, createdAt: _clock());
+    final note = CaptureNote(
+      id: _idGenerator(),
+      text: text,
+      source: source,
+      createdAt: _clock().toUtc(),
+    );
     _setState(_state.copyWith(status: CaptureStatus.saving, clearError: true));
     try {
-      await noteStore.save(note);
-      _setState(_state.copyWith(status: CaptureStatus.saved, savedNote: note));
+      final saved = await noteStore.save(note);
+      _setState(_state.copyWith(status: CaptureStatus.saved, savedNote: saved));
     } catch (_) {
       _setState(
         _state.copyWith(
@@ -292,4 +301,7 @@ final class TextVoiceCaptureController extends ChangeNotifier {
     }
     return text.substring(0, captureTextLimit);
   }
+
+  static String _defaultId() =>
+      DateTime.now().microsecondsSinceEpoch.toRadixString(16);
 }

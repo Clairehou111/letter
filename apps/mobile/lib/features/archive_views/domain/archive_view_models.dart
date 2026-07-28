@@ -5,7 +5,7 @@ import 'archive_repository.dart';
 
 enum ArchiveViewStatus { loading, ready, error }
 
-enum ArchiveViewTab { story, pattern, clinical }
+enum ArchiveViewTab { story, clinical }
 
 enum ArchiveEvidenceState { observed, limited, notRecorded }
 
