@@ -769,7 +769,7 @@ class LetterBottomNavigation extends StatelessWidget {
 
   static const items = [
     ('Cycle', Icons.calendar_today_outlined),
-    ('Insights', Icons.bar_chart_outlined),
+    ('Letters', Icons.mail_outline),
     ('Today', Icons.home_outlined),
     ('Care', Icons.volunteer_activism_outlined),
     ('You', Icons.person_outline),

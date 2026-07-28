@@ -14,9 +14,12 @@ tools/                 Contract generation and repository validation
 specs/                 Product roadmap, architecture, and feature specifications
 ```
 
-Readable health records remain on the device. The API foundation contains only
-non-sensitive operational routes and must not receive synthetic Today-screen
-state.
+Readable health records remain on the device. Period start/end records and
+history editing are implemented in the Cycle tab. Native builds use a Drift
+database configured for SQLite3MultipleCiphers; the web development preview
+uses a non-persistent in-memory repository. The API foundation contains only
+non-sensitive operational routes and must not receive health records or
+synthetic Today-screen state.
 
 The current product direction is defined in
 [`specs/product-philosophy.md`](specs/product-philosophy.md). Letter combines

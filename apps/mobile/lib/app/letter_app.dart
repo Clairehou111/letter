@@ -1,15 +1,24 @@
 import 'package:flutter/material.dart';
 
 import '../design_system/letter_theme.dart';
+import '../features/cycle/data/period_repository_factory.dart';
+import '../features/cycle/domain/period_repository.dart';
 import '../features/onboarding/data/onboarding_repository.dart';
 import '../features/onboarding/domain/onboarding_profile.dart';
 import '../features/onboarding/presentation/onboarding_flow.dart';
 import '../features/onboarding/presentation/privacy_center_screen.dart';
 
 class LetterApp extends StatefulWidget {
-  const LetterApp({super.key, this.onboardingRepository});
+  const LetterApp({
+    super.key,
+    this.onboardingRepository,
+    this.periodRepository,
+    this.now,
+  });
 
   final OnboardingRepository? onboardingRepository;
+  final PeriodRepository? periodRepository;
+  final DateTime Function()? now;
 
   @override
   State<LetterApp> createState() => _LetterAppState();
@@ -17,6 +26,8 @@ class LetterApp extends StatefulWidget {
 
 class _LetterAppState extends State<LetterApp> {
   late final OnboardingRepository _repository;
+  late final PeriodRepository _periodRepository;
+  late final bool _ownsPeriodRepository;
   OnboardingProfile? _profile;
   bool _loaded = false;
   bool _loadFailed = false;
@@ -25,7 +36,18 @@ class _LetterAppState extends State<LetterApp> {
   void initState() {
     super.initState();
     _repository = widget.onboardingRepository ?? SecureOnboardingRepository();
+    _ownsPeriodRepository = widget.periodRepository == null;
+    _periodRepository =
+        widget.periodRepository ?? createDefaultPeriodRepository();
     _load();
+  }
+
+  @override
+  void dispose() {
+    if (_ownsPeriodRepository) {
+      _periodRepository.close();
+    }
+    super.dispose();
   }
 
   Future<void> _load() async {
@@ -91,8 +113,10 @@ class _LetterAppState extends State<LetterApp> {
           ? OnboardingFlow(onComplete: _completeOnboarding)
           : LetterHome(
               profile: _profile!,
+              periodRepository: _periodRepository,
               onProfileChanged: _updateProfile,
               onReset: _resetOnboarding,
+              now: widget.now,
             ),
     );
   }

@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 
 import '../../../design_system/letter_theme.dart';
+import '../../cycle/domain/period_repository.dart';
+import '../../cycle/presentation/cycle_screen.dart';
 import '../../today/today_screen.dart';
 import '../domain/onboarding_profile.dart';
 
@@ -10,14 +12,18 @@ typedef UpdateOnboardingProfile =
 class LetterHome extends StatefulWidget {
   const LetterHome({
     required this.profile,
+    required this.periodRepository,
     required this.onProfileChanged,
     required this.onReset,
+    this.now,
     super.key,
   });
 
   final OnboardingProfile profile;
+  final PeriodRepository periodRepository;
   final UpdateOnboardingProfile onProfileChanged;
   final Future<void> Function() onReset;
+  final DateTime Function()? now;
 
   @override
   State<LetterHome> createState() => _LetterHomeState();
@@ -27,7 +33,7 @@ class _LetterHomeState extends State<LetterHome> {
   int _selectedIndex = 2;
 
   void _selectTab(int index) {
-    if (index != 2 && index != 4) {
+    if (index != 0 && index != 2 && index != 4) {
       return;
     }
     setState(() => _selectedIndex = index);
@@ -35,6 +41,13 @@ class _LetterHomeState extends State<LetterHome> {
 
   @override
   Widget build(BuildContext context) {
+    if (_selectedIndex == 0) {
+      return CycleScreen(
+        repository: widget.periodRepository,
+        onNavigationSelected: _selectTab,
+        now: widget.now,
+      );
+    }
     if (_selectedIndex == 4) {
       return PrivacyCenterScreen(
         profile: widget.profile,

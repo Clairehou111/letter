@@ -52,7 +52,7 @@ void main() {
     }
 
     expect(find.text('Cycle'), findsOneWidget);
-    expect(find.text('Insights'), findsOneWidget);
+    expect(find.text('Letters'), findsOneWidget);
     expect(find.text('Today'), findsOneWidget);
     expect(find.text('Care'), findsOneWidget);
     expect(find.text('You'), findsOneWidget);

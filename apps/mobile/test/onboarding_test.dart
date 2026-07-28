@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:letter_mobile/app/letter_app.dart';
 import 'package:letter_mobile/design_system/letter_theme.dart';
+import 'package:letter_mobile/features/cycle/data/in_memory_period_repository.dart';
 import 'package:letter_mobile/features/onboarding/data/onboarding_repository.dart';
 import 'package:letter_mobile/features/onboarding/domain/onboarding_profile.dart';
 import 'package:letter_mobile/features/onboarding/presentation/onboarding_flow.dart';
@@ -65,7 +66,10 @@ Future<void> pumpLetter(
         size: size,
         textScaler: TextScaler.linear(textScale),
       ),
-      child: LetterApp(onboardingRepository: repository),
+      child: LetterApp(
+        onboardingRepository: repository,
+        periodRepository: InMemoryPeriodRepository(),
+      ),
     ),
   );
   await tester.pumpAndSettle();
@@ -220,6 +224,22 @@ void main() {
 
     expect(repository.profile, isNull);
     expect(find.text("Read your body's letter."), findsOneWidget);
+  });
+
+  testWidgets('returning user can open the Cycle destination', (tester) async {
+    final repository = FakeOnboardingRepository(
+      profile: OnboardingProfile(
+        cloudToolsPreference: CloudToolsPreference.off,
+        selectedGoals: const {},
+      ),
+    );
+    await pumpLetter(tester, repository);
+
+    await tester.tap(find.byKey(const Key('navigation-cycle')));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Your cycle record'), findsOneWidget);
+    expect(find.byKey(const Key('start-period-today')), findsOneWidget);
   });
 
   testWidgets('all steps fit at 320 width and 200 percent text scale', (

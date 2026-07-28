@@ -1,0 +1,51 @@
+import 'dart:io';
+import 'dart:math';
+
+import 'package:drift/drift.dart';
+import 'package:drift/native.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:path/path.dart' as path;
+import 'package:path_provider/path_provider.dart';
+
+import '../domain/period_repository.dart';
+import 'drift_period_repository.dart';
+import 'letter_health_database.dart';
+
+const _databaseKeyName = 'letter.health_database.key.v1';
+
+PeriodRepository createDefaultPeriodRepository() {
+  const secureStorage = FlutterSecureStorage();
+  final executor = LazyDatabase(() async {
+    final directory = await getApplicationSupportDirectory();
+    final databaseFile = File(
+      path.join(directory.path, 'letter-health.sqlite'),
+    );
+    final key = await _loadOrCreateKey(secureStorage);
+
+    return NativeDatabase.createInBackground(
+      databaseFile,
+      setup: (database) {
+        if (database.select('PRAGMA cipher;').isEmpty) {
+          throw StateError('Encrypted SQLite support is unavailable.');
+        }
+        database.execute("PRAGMA key = '$key';");
+      },
+    );
+  });
+  return DriftPeriodRepository(LetterHealthDatabase(executor));
+}
+
+Future<String> _loadOrCreateKey(FlutterSecureStorage storage) async {
+  final existing = await storage.read(key: _databaseKeyName);
+  if (existing != null && existing.isNotEmpty) {
+    return existing;
+  }
+
+  final random = Random.secure();
+  final key = List.generate(
+    32,
+    (_) => random.nextInt(256).toRadixString(16).padLeft(2, '0'),
+  ).join();
+  await storage.write(key: _databaseKeyName, value: key);
+  return key;
+}
