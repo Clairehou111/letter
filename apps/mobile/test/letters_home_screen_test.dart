@@ -7,6 +7,7 @@ import 'package:letter_mobile/features/care/domain/care_mode.dart';
 import 'package:letter_mobile/features/cycle/data/in_memory_period_repository.dart';
 import 'package:letter_mobile/features/cycle/domain/local_date.dart';
 import 'package:letter_mobile/features/cycle/domain/period_record.dart';
+import 'package:letter_mobile/features/health_records/data/in_memory_health_record_repository.dart';
 import 'package:letter_mobile/features/letters/presentation/letters_home_screen.dart';
 
 void main() {
@@ -55,6 +56,7 @@ void main() {
         home: LettersHomeScreen(
           periodRepository: periodRepository,
           careMemoryRepository: careRepository,
+          healthRecordRepository: InMemoryHealthRecordRepository(),
           onNavigationSelected: (_) {},
         ),
       ),

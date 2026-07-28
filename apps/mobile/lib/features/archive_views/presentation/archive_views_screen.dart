@@ -53,6 +53,7 @@ class _ArchiveViewsScreenState extends State<ArchiveViewsScreen> {
   Widget build(BuildContext context) {
     final selected = _selectedCycle();
     return Scaffold(
+      appBar: AppBar(title: const Text('Archive views')),
       body: SafeArea(
         child: Center(
           child: ConstrainedBox(

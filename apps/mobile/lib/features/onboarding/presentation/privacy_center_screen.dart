@@ -72,6 +72,7 @@ class _LetterHomeState extends State<LetterHome> {
       return LettersHomeScreen(
         periodRepository: widget.periodRepository,
         careMemoryRepository: widget.careMemoryRepository,
+        healthRecordRepository: widget.healthRecordRepository,
         onNavigationSelected: _selectTab,
       );
     }

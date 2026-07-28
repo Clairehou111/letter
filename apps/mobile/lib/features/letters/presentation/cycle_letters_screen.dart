@@ -126,6 +126,7 @@ class CycleLettersScreen extends StatelessWidget {
     this.onLetterClose,
     this.onReflectionOpen,
     this.onCareRecordReflect,
+    this.onOpenArchiveViews,
   });
 
   final CycleLettersViewModel viewModel;
@@ -136,6 +137,7 @@ class CycleLettersScreen extends StatelessWidget {
   final VoidCallback? onLetterClose;
   final ValueChanged<String>? onReflectionOpen;
   final ValueChanged<String>? onCareRecordReflect;
+  final VoidCallback? onOpenArchiveViews;
 
   CycleLetterDisplay? _selectedLetter() {
     final id = selectedLetterId;
@@ -173,6 +175,7 @@ class CycleLettersScreen extends StatelessWidget {
                     ? _ArchiveList(
                         viewModel: viewModel,
                         onLetterOpen: onLetterOpen,
+                        onOpenArchiveViews: onOpenArchiveViews,
                       )
                     : selectedLetter == null
                     ? _MissingLetter(onBack: onLetterClose)
@@ -250,10 +253,15 @@ class _ArchiveError extends StatelessWidget {
 }
 
 class _ArchiveList extends StatelessWidget {
-  const _ArchiveList({required this.viewModel, required this.onLetterOpen});
+  const _ArchiveList({
+    required this.viewModel,
+    required this.onLetterOpen,
+    required this.onOpenArchiveViews,
+  });
 
   final CycleLettersViewModel viewModel;
   final ValueChanged<String>? onLetterOpen;
+  final VoidCallback? onOpenArchiveViews;
 
   @override
   Widget build(BuildContext context) {
@@ -267,6 +275,15 @@ class _ArchiveList extends StatelessWidget {
           sliver: SliverList.list(
             children: [
               const _ArchiveHeader(),
+              if (onOpenArchiveViews != null) ...[
+                const SizedBox(height: LetterSpacing.sm),
+                OutlinedButton.icon(
+                  key: const Key('open-archive-views'),
+                  onPressed: onOpenArchiveViews,
+                  icon: const Icon(Icons.insights_outlined),
+                  label: const Text('Open Story, Pattern, Clinical views'),
+                ),
+              ],
               const SizedBox(height: LetterSpacing.xl),
               if (!hasCycleRecord) const _NoPeriodsRecorded(),
               if (viewModel.currentCycle case final current?) ...[

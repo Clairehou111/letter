@@ -1,11 +1,14 @@
 import 'package:flutter/material.dart';
 
+import '../../archive_views/domain/archive_repository.dart';
+import '../../archive_views/presentation/archive_views_screen.dart';
 import '../../care/domain/care_memory.dart';
 import '../../care/domain/care_memory_repository.dart';
 import '../../care/presentation/clearer_day_reflection_flow.dart';
 import '../../cycle/domain/local_date.dart';
 import '../../cycle/domain/period_record.dart';
 import '../../cycle/domain/period_repository.dart';
+import '../../health_records/domain/health_record_repository.dart';
 import '../domain/cycle_letter.dart';
 import '../domain/cycle_letters_aggregator.dart';
 import 'cycle_letters_screen.dart';
@@ -15,12 +18,14 @@ class LettersHomeScreen extends StatefulWidget {
     required this.periodRepository,
     required this.careMemoryRepository,
     required this.onNavigationSelected,
+    required this.healthRecordRepository,
     super.key,
   });
 
   final PeriodRepository periodRepository;
   final CareMemoryRepository careMemoryRepository;
   final ValueChanged<int> onNavigationSelected;
+  final HealthRecordRepository healthRecordRepository;
 
   @override
   State<LettersHomeScreen> createState() => _LettersHomeScreenState();
@@ -102,6 +107,60 @@ class _LettersHomeScreenState extends State<LettersHomeScreen> {
     await _reloadSourcesWithoutClosingReflection();
   }
 
+  Future<void> _openArchiveViews() async {
+    try {
+      final periods = await widget.periodRepository.getAll();
+      final records = await widget.careMemoryRepository.getRecords();
+      final reflections = await widget.careMemoryRepository.getReflections();
+      final healthRecords = await widget.healthRecordRepository.getAll();
+      final sorted = [...periods]
+        ..sort((left, right) => left.startDate.compareTo(right.startDate));
+      final cycles = [
+        for (var index = 0; index < sorted.length; index += 1)
+          ArchiveCycleInput(
+            id: sorted[index].id,
+            number: index + 1,
+            startDate: sorted[index].startDate,
+            endDate: index + 1 < sorted.length
+                ? sorted[index + 1].startDate.addDays(-1)
+                : null,
+            periodDates: [
+              for (
+                var day = 0;
+                day < (sorted[index].durationDays ?? 1);
+                day += 1
+              )
+                sorted[index].startDate.addDays(day),
+            ],
+            isComplete: index + 1 < sorted.length,
+          ),
+      ];
+      if (!mounted) {
+        return;
+      }
+      await Navigator.of(context).push<void>(
+        MaterialPageRoute(
+          builder: (context) => ArchiveViewsScreen(
+            repository: InMemoryArchiveRepository(
+              ArchiveInput(
+                cycles: cycles,
+                healthRecords: healthRecords,
+                careRecords: records,
+                reflections: reflections,
+              ),
+            ),
+          ),
+        ),
+      );
+    } on Object {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Archive views could not be opened.')),
+        );
+      }
+    }
+  }
+
   Future<void> _reloadSourcesWithoutClosingReflection() async {
     final periods = await widget.periodRepository.getAll();
     final records = await widget.careMemoryRepository.getRecords();
@@ -167,6 +226,7 @@ class _LettersHomeScreenState extends State<LettersHomeScreen> {
       onCareRecordReflect: (recordId) {
         setState(() => _reflectionRecordId = recordId);
       },
+      onOpenArchiveViews: _openArchiveViews,
     );
   }
 
