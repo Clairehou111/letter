@@ -13,12 +13,14 @@ final class DriftPeriodRepository implements PeriodRepository {
     this._database, {
     DateTime Function()? clock,
     String Function()? idGenerator,
+    this.closeDatabase = true,
   }) : _clock = clock ?? DateTime.now,
        _idGenerator = idGenerator ?? _randomId;
 
   final LetterHealthDatabase _database;
   final DateTime Function() _clock;
   final String Function() _idGenerator;
+  final bool closeDatabase;
 
   @override
   Future<List<PeriodRecord>> getAll() async {
@@ -96,7 +98,11 @@ final class DriftPeriodRepository implements PeriodRepository {
   }
 
   @override
-  Future<void> close() => _database.close();
+  Future<void> close() async {
+    if (closeDatabase) {
+      await _database.close();
+    }
+  }
 
   Future<T> _guardStorage<T>(Future<T> Function() operation) async {
     try {

@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:letter_mobile/design_system/letter_theme.dart';
+import 'package:letter_mobile/features/care/data/in_memory_impulse_buffer_repository.dart';
 import 'package:letter_mobile/features/care/domain/care_mode.dart';
+import 'package:letter_mobile/features/care/domain/impulse_buffer_repository.dart';
 import 'package:letter_mobile/features/care/presentation/care_screen.dart';
 
 Future<void> pumpCare(
@@ -10,6 +12,8 @@ Future<void> pumpCare(
   double textScale = 1,
   bool disableAnimations = false,
   ValueChanged<int>? onNavigationSelected,
+  ImpulseBufferRepository? impulseBufferRepository,
+  DateTime Function()? now,
 }) async {
   tester.view.devicePixelRatio = 1;
   tester.view.physicalSize = size;
@@ -25,7 +29,12 @@ Future<void> pumpCare(
           textScaler: TextScaler.linear(textScale),
           disableAnimations: disableAnimations,
         ),
-        child: CareScreen(onNavigationSelected: onNavigationSelected ?? (_) {}),
+        child: CareScreen(
+          onNavigationSelected: onNavigationSelected ?? (_) {},
+          impulseBufferRepository:
+              impulseBufferRepository ?? InMemoryImpulseBufferRepository(),
+          now: now ?? () => DateTime.utc(2026, 7, 28, 8),
+        ),
       ),
     ),
   );
@@ -41,7 +50,12 @@ Future<void> openMode(WidgetTester tester, CareMode mode) async {
   );
   await tester.pumpAndSettle();
   await tester.tap(finder);
-  await tester.pumpAndSettle();
+  if (mode == CareMode.explode) {
+    await tester.pump();
+    await tester.pump();
+  } else {
+    await tester.pumpAndSettle();
+  }
 }
 
 void main() {
@@ -61,7 +75,9 @@ void main() {
     expect(find.byKey(const Key('navigation-care')), findsOneWidget);
   });
 
-  for (final mode in CareMode.values) {
+  for (final mode in CareMode.values.where(
+    (mode) => mode != CareMode.explode,
+  )) {
     testWidgets('${mode.name} follows one finite response and hand-off', (
       tester,
     ) async {
@@ -116,7 +132,7 @@ void main() {
     await pumpCare(tester);
     await openMode(tester, CareMode.explode);
 
-    await tester.tap(find.byKey(const Key('care-safety-explode')));
+    await tester.tap(find.byKey(const Key('angry-safety')));
     await tester.pumpAndSettle();
 
     expect(find.text('Immediate safety comes first.'), findsOneWidget);
@@ -127,7 +143,7 @@ void main() {
 
     await tester.tap(find.byKey(const Key('return-to-care-scene')));
     await tester.pumpAndSettle();
-    expect(find.text(CareMode.explode.sceneTitle), findsOneWidget);
+    expect(find.byKey(const Key('shatter-crystal')), findsOneWidget);
   });
 
   testWidgets('physical safety route stops normal Care and can leave', (
@@ -165,11 +181,11 @@ void main() {
 
     await openMode(tester, CareMode.explode);
     expect(
-      tester.getSize(find.byKey(const Key('care-respond-explode'))).height,
+      tester.getSize(find.byKey(const Key('shatter-crystal'))).height,
       greaterThanOrEqualTo(44),
     );
     expect(
-      tester.getSize(find.byKey(const Key('care-safety-explode'))).height,
+      tester.getSize(find.byKey(const Key('angry-safety'))).height,
       greaterThanOrEqualTo(44),
     );
   });

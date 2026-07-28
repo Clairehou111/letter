@@ -134,8 +134,9 @@ must describe the feature as an app-enforced cooldown, not an unbreakable
 cryptographic time lock or a guarantee that the user cannot act elsewhere.
 
 When the period ends, Letter does not reveal the text in a notification. The
-user can open it privately, keep it sealed, delete it, rewrite it as a calmer
-message, or turn the underlying need into a note for the next cycle.
+user can open it privately, keep it sealed, delete it, or rewrite it as a
+calmer message. A later clearer-day feature may let the user explicitly turn
+the underlying need into a note for the next cycle.
 
 ### Heavy Or Low
 

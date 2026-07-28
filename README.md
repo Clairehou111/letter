@@ -15,11 +15,13 @@ specs/                 Product roadmap, architecture, and feature specifications
 ```
 
 Readable health records remain on the device. Period start/end records and
-history editing are implemented in the Cycle tab. Native builds use a Drift
-database configured for SQLite3MultipleCiphers; the web development preview
-uses a non-persistent in-memory repository. The API foundation contains only
-non-sensitive operational routes and must not receive health records or
-synthetic Today-screen state.
+history editing are implemented in the Cycle tab. The angry Care flow can also
+hold one private unsent draft and apply an app-enforced 24-hour cooldown.
+Native builds share one Drift database configured for
+SQLite3MultipleCiphers across period and impulse-buffer records; the web
+development preview uses non-persistent in-memory repositories. The API
+foundation contains only non-sensitive operational routes and must not receive
+health records, private drafts, or synthetic Today-screen state.
 
 After two complete start-to-start intervals, Cycle derives a local next-period
 date range from recent history. The range includes Low, Medium, or Higher
@@ -35,10 +37,12 @@ health-record feature defines persistence, editing, deletion, and provenance.
 
 Care is now a working primary destination with five direct entrances:
 exploding, heavy, racing thoughts, needing everyone away, and physical pain.
-Each entrance demonstrates one finite immediate-response loop, one protective
-line, one real-world hand-off, and explicit exit and safety boundaries. These
-shell interactions do not persist data or imply that personal Care history
-already exists. Dedicated mode mechanics and memory remain separate features.
+Each entrance has explicit exit and safety boundaries. `I want to explode` now
+uses a finite Shatter interaction, low-stimulation transition, private unsent
+draft, exact 24-hour seal, hidden locked and ready-envelope states, and
+unopened deletion. The other four entrances remain non-persistent response
+shells until their dedicated features are specified. No Care behavior creates
+a clinical score, report value, analytics event, API request, or LLM request.
 
 The current product direction is defined in
 [`specs/product-philosophy.md`](specs/product-philosophy.md). Letter combines

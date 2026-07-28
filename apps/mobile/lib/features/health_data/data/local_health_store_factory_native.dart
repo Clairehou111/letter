@@ -7,13 +7,14 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:path/path.dart' as path;
 import 'package:path_provider/path_provider.dart';
 
-import '../domain/period_repository.dart';
-import 'drift_period_repository.dart';
-import 'letter_health_database.dart';
+import '../../care/data/drift_impulse_buffer_repository.dart';
+import '../../cycle/data/drift_period_repository.dart';
+import '../../cycle/data/letter_health_database.dart';
+import 'local_health_store.dart';
 
 const _databaseKeyName = 'letter.health_database.key.v1';
 
-PeriodRepository createDefaultPeriodRepository() {
+LocalHealthStore createDefaultLocalHealthStore() {
   const secureStorage = FlutterSecureStorage();
   final executor = LazyDatabase(() async {
     final directory = await getApplicationSupportDirectory();
@@ -32,7 +33,15 @@ PeriodRepository createDefaultPeriodRepository() {
       },
     );
   });
-  return DriftPeriodRepository(LetterHealthDatabase(executor));
+  final database = LetterHealthDatabase(executor);
+  return LocalHealthStore(
+    periodRepository: DriftPeriodRepository(database, closeDatabase: false),
+    impulseBufferRepository: DriftImpulseBufferRepository(
+      database,
+      closeDatabase: false,
+    ),
+    closeStore: database.close,
+  );
 }
 
 Future<String> _loadOrCreateKey(FlutterSecureStorage storage) async {

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../../design_system/letter_bottom_navigation.dart';
 import '../../../design_system/letter_theme.dart';
+import '../../care/domain/impulse_buffer_repository.dart';
 import '../../care/presentation/care_screen.dart';
 import '../../cycle/domain/period_repository.dart';
 import '../../cycle/presentation/cycle_screen.dart';
@@ -15,6 +16,7 @@ class LetterHome extends StatefulWidget {
   const LetterHome({
     required this.profile,
     required this.periodRepository,
+    required this.impulseBufferRepository,
     required this.onProfileChanged,
     required this.onReset,
     this.now,
@@ -23,6 +25,7 @@ class LetterHome extends StatefulWidget {
 
   final OnboardingProfile profile;
   final PeriodRepository periodRepository;
+  final ImpulseBufferRepository impulseBufferRepository;
   final UpdateOnboardingProfile onProfileChanged;
   final Future<void> Function() onReset;
   final DateTime Function()? now;
@@ -59,7 +62,11 @@ class _LetterHomeState extends State<LetterHome> {
       );
     }
     if (_selectedIndex == 3) {
-      return CareScreen(onNavigationSelected: _selectTab);
+      return CareScreen(
+        onNavigationSelected: _selectTab,
+        impulseBufferRepository: widget.impulseBufferRepository,
+        now: widget.now,
+      );
     }
     return TodayScreen(
       repository: widget.periodRepository,

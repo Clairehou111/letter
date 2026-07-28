@@ -1,8 +1,12 @@
 import 'package:flutter/material.dart';
 
 import '../design_system/letter_theme.dart';
-import '../features/cycle/data/period_repository_factory.dart';
+import '../features/care/data/in_memory_impulse_buffer_repository.dart';
+import '../features/care/domain/impulse_buffer_repository.dart';
+import '../features/cycle/data/in_memory_period_repository.dart';
 import '../features/cycle/domain/period_repository.dart';
+import '../features/health_data/data/local_health_store.dart';
+import '../features/health_data/data/local_health_store_factory.dart';
 import '../features/onboarding/data/onboarding_repository.dart';
 import '../features/onboarding/domain/onboarding_profile.dart';
 import '../features/onboarding/presentation/onboarding_flow.dart';
@@ -13,11 +17,13 @@ class LetterApp extends StatefulWidget {
     super.key,
     this.onboardingRepository,
     this.periodRepository,
+    this.impulseBufferRepository,
     this.now,
   });
 
   final OnboardingRepository? onboardingRepository;
   final PeriodRepository? periodRepository;
+  final ImpulseBufferRepository? impulseBufferRepository;
   final DateTime Function()? now;
 
   @override
@@ -27,7 +33,8 @@ class LetterApp extends StatefulWidget {
 class _LetterAppState extends State<LetterApp> {
   late final OnboardingRepository _repository;
   late final PeriodRepository _periodRepository;
-  late final bool _ownsPeriodRepository;
+  late final ImpulseBufferRepository _impulseBufferRepository;
+  LocalHealthStore? _ownedHealthStore;
   OnboardingProfile? _profile;
   bool _loaded = false;
   bool _loadFailed = false;
@@ -36,17 +43,24 @@ class _LetterAppState extends State<LetterApp> {
   void initState() {
     super.initState();
     _repository = widget.onboardingRepository ?? SecureOnboardingRepository();
-    _ownsPeriodRepository = widget.periodRepository == null;
-    _periodRepository =
-        widget.periodRepository ?? createDefaultPeriodRepository();
+    if (widget.periodRepository == null &&
+        widget.impulseBufferRepository == null) {
+      final healthStore = createDefaultLocalHealthStore();
+      _ownedHealthStore = healthStore;
+      _periodRepository = healthStore.periodRepository;
+      _impulseBufferRepository = healthStore.impulseBufferRepository;
+    } else {
+      _periodRepository = widget.periodRepository ?? InMemoryPeriodRepository();
+      _impulseBufferRepository =
+          widget.impulseBufferRepository ??
+          InMemoryImpulseBufferRepository(clock: widget.now);
+    }
     _load();
   }
 
   @override
   void dispose() {
-    if (_ownsPeriodRepository) {
-      _periodRepository.close();
-    }
+    _ownedHealthStore?.close();
     super.dispose();
   }
 
@@ -114,6 +128,7 @@ class _LetterAppState extends State<LetterApp> {
           : LetterHome(
               profile: _profile!,
               periodRepository: _periodRepository,
+              impulseBufferRepository: _impulseBufferRepository,
               onProfileChanged: _updateProfile,
               onReset: _resetOnboarding,
               now: widget.now,
