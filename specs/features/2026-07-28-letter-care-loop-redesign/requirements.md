@@ -30,8 +30,9 @@ Prepare -> Remember`.
 REQ-003: Separate hard-moment support from clearer-day reflection. Do not ask
 the user to analyze, learn, or solve life decisions during an acute wave.
 
-REQ-004: Provide four accessible Care entrances: angry or overloaded, heavy or
-low, need space, and physical pain. Icons must have visible text labels.
+REQ-004: Provide five accessible Care entrances: `I want to explode`, `I feel
+heavy`, `My mind won't stop`, `I need everyone away`, and `My body hurts`.
+Icons must have visible text labels.
 
 REQ-005: Let angry/overloaded users enter an optional 20-second Shatter ritual
 followed by an immediate low-stimulation transition. Treat it as expressive
@@ -76,6 +77,19 @@ Care history, and personal letters stay on device by default.
 
 REQ-016: Update onboarding language and goals only after the redesigned core
 journey is accepted; do not discard the validated persistence and privacy work.
+
+REQ-017: Every acute scene must use a finite reward loop: immediate response,
+visible transformation, one protective line, one personal or practical
+hand-off, and an easy exit within 20 to 90 seconds.
+
+REQ-018: Do not optimize Care for time spent, cards consumed, or repeated
+distress entry. Exclude infinite feeds, streaks, coins, leaderboards, failure
+states, and notifications that pull stable users back into distress content.
+
+REQ-019: Match interaction energy to the state: energetic then quiet for rage,
+near-zero effort for heavy/low, chaos-to-order for racing thoughts,
+outside-to-closed for social overload, and low-stimulation plus practical
+handoff for physical pain.
 
 ## Non-Goals
 

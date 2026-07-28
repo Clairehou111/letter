@@ -14,6 +14,8 @@ Status: active
 - [x] needs and causal interpretations remain user-approved hypotheses
 - [x] moon and cultural language remains metaphorical
 - [x] local-first and deterministic safety boundaries remain intact
+- [x] acute game loops are finite and end in a real-world hand-off
+- [x] game rewards do not depend on greater suffering or longer sessions
 
 ## Research Checks
 
@@ -40,6 +42,9 @@ Test with target users before deep implementation:
 7. Which sensory modes should default on: dim theme, haptics, sound, or none?
 8. Do users understand the 24-hour seal before confirming it, and do they trust
    that deletion remains available?
+9. Does each mode produce meaningful feedback after one low-effort gesture?
+10. Can users leave the experience without completing a game or reflection?
+11. Does the physical-pain route make unusual/severe symptoms easy to escalate?
 
 ## Acceptance Gate
 

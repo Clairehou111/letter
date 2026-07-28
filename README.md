@@ -24,6 +24,11 @@ period tracking with a cross-cycle Care loop: contain a hard moment, check back
 later, let the user author what it meant, and return their own helpful actions
 and words next time.
 
+The acute interaction model is defined in
+[`specs/care-experience-system.md`](specs/care-experience-system.md). Care uses
+finite, one-thumb game loops that produce immediate feedback and then hand the
+user back to a practical action; it does not optimize for time spent.
+
 ## Mobile
 
 ```bash

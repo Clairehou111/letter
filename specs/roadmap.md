@@ -32,14 +32,15 @@ and goals require a separate revision after the Care-loop redesign is approved.
 
 | Order | Feature | Status |
 | --- | --- | --- |
-| 1 | Four-way Care entrance and low-stimulation shell | proposed |
+| 1 | Five-way Care entrance and finite reward shell | proposed |
 | 2 | Angry/overloaded impulse buffer | proposed |
 | 3 | Heavy/low presence flow | proposed |
-| 4 | Need-space messages and boundary plan | proposed |
-| 5 | Physical-pain comfort flow and medical boundary | proposed |
-| 6 | Care action check-back and personal kit | proposed |
-| 7 | Clearer-day reflection and future-self note | proposed |
-| 8 | Cycle Letters archive | proposed |
+| 4 | Racing-thoughts convergence flow | proposed |
+| 5 | Need-space messages and boundary plan | proposed |
+| 6 | Physical-pain comfort flow and medical boundary | proposed |
+| 7 | Care action check-back and personal kit | proposed |
+| 8 | Clearer-day reflection and future-self note | proposed |
+| 9 | Cycle Letters archive | proposed |
 
 ## Phase 3: Effortless Logging And Learning
 

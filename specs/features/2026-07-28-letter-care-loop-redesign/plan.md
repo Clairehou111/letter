@@ -12,6 +12,7 @@ Status: in progress
    - [x] Define the cross-cycle Letter loop.
    - [x] Define hard-moment and clearer-moment responsibilities.
    - [x] Define Care entrances and the role of personal memory.
+   - [x] Define finite game loops for emotional and physical Care scenes.
    - [x] Define brand, AI, medication, haptic, and safety boundaries.
 
 3. Information Architecture And Roadmap

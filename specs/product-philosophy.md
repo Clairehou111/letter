@@ -80,17 +80,20 @@ The interface acts as a user-directed mirror:
 Do not call these contexts `sane` and `insane`, or imply that every day outside
 the follicular phase is a bad day.
 
-## Four Care Entrances
+## Five Care Entrances
 
 Icons support the labels but never replace them:
 
-1. `Angry or overloaded`
-2. `Heavy or low`
-3. `Need space`
-4. `Physical pain`
+1. `I want to explode`
+2. `I feel heavy`
+3. `My mind won't stop`
+4. `I need everyone away`
+5. `My body hurts`
 
 The user names their state. Letter must not infer or declare it from a cycle
 prediction.
+
+See `care-experience-system.md` for the finite reward loop and detailed scenes.
 
 ### Angry Or Overloaded
 
@@ -146,7 +149,16 @@ The goal is presence with minimal effort:
 The product may say that a state has passed before when the user's history
 supports it. It must not say that biology is the only explanation.
 
-### Need Space
+### Racing Or Overwhelmed
+
+The goal is to turn simultaneous demands into one controllable point:
+
+- visual complexity must decrease after the first interaction
+- the user may park one thought for tomorrow without creating a task list
+- breathing, holding, and typing remain optional
+- the flow ends with one next action or permission to do nothing now
+
+### Need Everyone Away
 
 The goal is a truthful, low-effort boundary:
 
