@@ -5,6 +5,7 @@ import 'package:letter_mobile/features/care/data/in_memory_impulse_buffer_reposi
 import 'package:letter_mobile/features/care/domain/care_mode.dart';
 import 'package:letter_mobile/features/care/domain/impulse_buffer_repository.dart';
 import 'package:letter_mobile/features/care/presentation/care_screen.dart';
+import 'package:letter_mobile/features/care/presentation/heavy_presence_flow.dart';
 
 Future<void> pumpCare(
   WidgetTester tester, {
@@ -50,7 +51,7 @@ Future<void> openMode(WidgetTester tester, CareMode mode) async {
   );
   await tester.pumpAndSettle();
   await tester.tap(finder);
-  if (mode == CareMode.explode) {
+  if (mode == CareMode.explode || mode == CareMode.heavy) {
     await tester.pump();
     await tester.pump();
   } else {
@@ -76,7 +77,7 @@ void main() {
   });
 
   for (final mode in CareMode.values.where(
-    (mode) => mode != CareMode.explode,
+    (mode) => mode != CareMode.explode && mode != CareMode.heavy,
   )) {
     testWidgets('${mode.name} follows one finite response and hand-off', (
       tester,
@@ -112,8 +113,8 @@ void main() {
       tester,
       onNavigationSelected: (index) => selectedNavigation = index,
     );
-    await openMode(tester, CareMode.heavy);
-    await tester.tap(find.byKey(const Key('care-respond-heavy')));
+    await openMode(tester, CareMode.space);
+    await tester.tap(find.byKey(const Key('care-respond-space')));
     await tester.pumpAndSettle();
     await tester.tap(find.byKey(const Key('care-not-now')));
     await tester.pumpAndSettle();
@@ -124,6 +125,17 @@ void main() {
     await tester.tap(find.byKey(const Key('care-exit')));
 
     expect(selectedNavigation, 2);
+  });
+
+  testWidgets('heavy entrance opens the dedicated presence flow', (
+    tester,
+  ) async {
+    await pumpCare(tester);
+    await openMode(tester, CareMode.heavy);
+
+    expect(find.byType(HeavyPresenceFlow), findsOneWidget);
+    expect(find.byKey(const Key('heavy-light')), findsOneWidget);
+    expect(find.byKey(const Key('care-respond-heavy')), findsNothing);
   });
 
   testWidgets('emotional safety route interrupts and can return', (
@@ -246,15 +258,17 @@ void main() {
     );
   });
 
-  testWidgets('transformed scene matches the visual baseline', (tester) async {
+  testWidgets('generic transformed scene matches the visual baseline', (
+    tester,
+  ) async {
     await pumpCare(tester);
-    await openMode(tester, CareMode.heavy);
-    await tester.tap(find.byKey(const Key('care-respond-heavy')));
+    await openMode(tester, CareMode.racing);
+    await tester.tap(find.byKey(const Key('care-respond-racing')));
     await tester.pumpAndSettle();
 
     await expectLater(
       find.byType(CareScreen),
-      matchesGoldenFile('goldens/care_heavy_transformed_390x844.png'),
+      matchesGoldenFile('goldens/care_racing_transformed_390x844.png'),
     );
   });
 }

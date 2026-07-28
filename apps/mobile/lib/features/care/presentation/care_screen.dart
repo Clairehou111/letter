@@ -6,6 +6,7 @@ import '../domain/care_mode.dart';
 import '../domain/impulse_buffer_repository.dart';
 import 'angry_impulse_flow.dart';
 import 'care_safety_boundary_sheet.dart';
+import 'heavy_presence_flow.dart';
 
 class CareScreen extends StatefulWidget {
   const CareScreen({
@@ -44,6 +45,12 @@ class _CareScreenState extends State<CareScreen> {
           onReturnToGate: _returnToGate,
           onExitCare: () => widget.onNavigationSelected(2),
           now: widget.now,
+        );
+      }
+      if (activeMode == CareMode.heavy) {
+        return HeavyPresenceFlow(
+          onReturnToGate: _returnToGate,
+          onExitCare: () => widget.onNavigationSelected(2),
         );
       }
       return CareModeScene(

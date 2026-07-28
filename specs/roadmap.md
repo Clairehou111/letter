@@ -46,7 +46,7 @@ and goals require a separate revision after the Care-loop redesign is approved.
 | --- | --- | --- |
 | 1 | Five-way Care entrance and finite reward shell | validated ([spec](features/2026-07-28-five-way-care-shell/)) |
 | 2 | Angry/overloaded impulse buffer | validated ([spec](features/2026-07-28-angry-impulse-buffer/)) |
-| 3 | Heavy/low presence flow | proposed |
+| 3 | Heavy/low presence flow | validated ([spec](features/2026-07-28-heavy-low-presence-flow/)) |
 | 4 | Racing-thoughts convergence flow | proposed |
 | 5 | Need-space messages and boundary plan | proposed |
 | 6 | Physical-pain comfort flow and medical boundary | proposed |
@@ -59,8 +59,10 @@ entrances use a finite, escapable response shell with explicit emotional or
 physical safety boundaries. Angry/overloaded Care now adds Shatter, a private
 local draft, and an honest app-enforced 24-hour cooldown. Shared logic, schema
 migration, and Web behavior are validated; native cipher-at-rest runtime checks
-remain deferred under the approved native validation gate. The other
-mode-specific mechanics, check-backs, and personal memory remain in their
+remain deferred under the approved native validation gate. Heavy/low Care now
+adds a one-tap light, finite protective copy, optional foreground-only
+two-minute presence, and a practical hand-off without storing an episode. The
+other mode-specific mechanics, check-backs, and personal memory remain in their
 dedicated roadmap features.
 
 ## Phase 3: Effortless Logging And Learning
