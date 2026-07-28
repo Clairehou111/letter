@@ -50,8 +50,8 @@ REQ-007: Return the user's own saved comfort actions and messages before
 generic content during a similar future context.
 
 REQ-008: Keep physical Care symptom-specific and medically bounded. Do not
-invent medication doses, universal dose intervals, onset times, or analgesic
-claims for haptics.
+provide medication logging, names, doses, intervals, reminders, or interaction
+advice, and do not make analgesic claims for haptics.
 
 REQ-009: Ask only a lightweight `better`, `same`, or `worse` check-back after a
 Care action, with `not now` always available.
@@ -109,8 +109,8 @@ until the exact instrument, licensing, wording, scoring, daily completion, and
 clinical review requirements are satisfied.
 
 REQ-024: Every report value must identify whether it came from a prospective
-user rating, same-day user rating, later recall, factual Care event, or
-user-entered medication event. AI candidates cannot appear until confirmed.
+user rating, same-day user rating, later recall, or factual Care event. AI
+candidates cannot appear until confirmed.
 
 REQ-025: Apply the Letter metaphor in three layers: ritual for emotional
 meaning, familiar utility controls for repeated tasks, and plain clinical

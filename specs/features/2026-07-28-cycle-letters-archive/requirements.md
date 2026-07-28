@@ -54,4 +54,4 @@ REQ-011: Support Reduced Motion, 320px at 200 percent text, screen readers, and
 - clinician report, PDF export, DRSP scoring, symptom heatmap, or diagnosis
 - AI narrative, cloud sync, sharing, or analytics
 - editing period records directly in the archive
-- future Phase 3 symptom and medication aggregation
+- future Phase 3 symptom aggregation

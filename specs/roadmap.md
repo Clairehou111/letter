@@ -5,6 +5,11 @@ Status values: `proposed`, `specifying`, `approved`, `in_progress`,
 
 Only one product feature should normally be `in_progress`.
 
+Current roadmap exclusions:
+
+- contact access, trusted-contact management, or direct messaging
+- medication history, medication reminders, or medication guidance
+
 ## Phase 0: Architecture Validation
 
 | Order | Feature | Status | Specification |
@@ -81,17 +86,39 @@ clinical score, cloud request, analytics event, or LLM request.
 
 | Order | Feature | Status |
 | --- | --- | --- |
-| 1 | Symptom, severity, pain-location, mood, and energy logging | proposed |
-| 2 | Text and on-device voice capture | proposed |
-| 3 | LLM-assisted structured confirmation | proposed |
-| 4 | Recovery receipt and confirmed clinical ratings | proposed |
-| 5 | Cautious personal patterns and remedy matching | proposed |
+| 1 | Confirmed health-record foundation | proposed ([spec](features/2026-07-28-health-record-foundation/)) |
+| 2 | Care-linked recovery receipt | proposed ([spec](features/2026-07-28-care-recovery-receipt/)) |
+| 3 | Text and on-device voice capture | proposed ([spec](features/2026-07-28-text-voice-capture/)) |
+| 4 | NLP-first candidate confirmation | proposed ([spec](features/2026-07-28-nlp-candidate-confirmation/)) |
+| 5 | Personal patterns and support-action matching | proposed ([spec](features/2026-07-28-personal-patterns-support-matching/)) |
+| 6 | Archive Story and Pattern views | proposed ([spec](features/2026-07-28-archive-story-pattern-views/)) |
+
+Phase 3 is usable without cloud processing or LLM access. Direct structured
+records are the source of truth. Care becomes a delayed, user-confirmed input
+to the same record model through Recovery Receipt. NLP and optional LLM output
+remain editable candidates and never assign severity, diagnosis, or function.
 
 ## Phase 4: Reports And Commercial Readiness
 
 | Order | Feature | Status |
 | --- | --- | --- |
-| 1 | Doctor Mode, provenance-safe report, and export | proposed |
-| 2 | Authentication and subscription entitlement | proposed |
-| 3 | Privacy-safe operational analytics | proposed |
-| 4 | Optional encrypted backup demand test | proposed |
+| 1 | Encrypted local export and import | proposed ([spec](features/2026-07-28-encrypted-local-export-import/)) |
+| 2 | Cycle and Care Summary export | proposed ([spec](features/2026-07-28-cycle-care-summary-export/)) |
+| 3 | Doctor Mode, prospective diary, and clinical report | proposed ([spec](features/2026-07-28-doctor-mode-prospective-diary/)) |
+| 4 | Authentication and subscription entitlement | proposed ([spec](features/2026-07-28-auth-subscription-entitlement/)) |
+| 5 | Privacy-safe operational analytics | proposed ([spec](features/2026-07-28-privacy-safe-operational-analytics/)) |
+| 6 | Optional encrypted-backup demand test | proposed ([spec](features/2026-07-28-encrypted-backup-demand-test/)) |
+
+Local export/import is separate from optional cloud backup. Reports are
+generated from local, user-confirmed data. Doctor Mode cannot use DRSP wording
+or claim diagnostic equivalence until clinical review, wording, scoring, and
+licensing requirements are satisfied.
+
+## Release Acceptance Gates
+
+| Order | Gate | Status |
+| --- | --- | --- |
+| 1 | Native encryption, migration, and recovery validation | proposed ([spec](features/2026-07-28-release-acceptance-gates/)) |
+| 2 | Target-user Care usability and adverse-response validation | proposed ([spec](features/2026-07-28-release-acceptance-gates/)) |
+| 3 | Clinical report provenance and clinician comprehension validation | proposed ([spec](features/2026-07-28-release-acceptance-gates/)) |
+| 4 | Accessibility, privacy, billing, and store-readiness validation | proposed ([spec](features/2026-07-28-release-acceptance-gates/)) |

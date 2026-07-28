@@ -196,7 +196,7 @@ Offer three large choices:
 
 - `Stay with me for 2 minutes`
 - `Bring me my Care Kit`
-- `Message my person`
+- `Nothing else right now`
 
 `I may not be safe` remains visible and replaces the normal flow with
 deterministic locale-aware support.
@@ -246,8 +246,7 @@ optional while keeping the interaction finite.
 ### Hand-Off
 
 P0 returns to the Care choices or closes Letter with no further action. Saved
-grounding environments, trusted contacts, and cross-session memory remain
-separate features.
+grounding environments and cross-session memory remain separate features.
 
 ## Mode 4: Close The Curtain
 
@@ -372,17 +371,10 @@ must route to urgent medical guidance.
 - start the user's saved rest setup
 - offer a truthful work or social boundary message
 
-### Medication Boundary
+### Medication Scope
 
-Letter can record:
-
-- user-entered product or medication
-- amount as entered by the user
-- time taken
-- the exact schedule source the user chose to save from a label or clinician
-
-Letter does not invent dose, onset, next-dose timing, interaction advice, or a
-universal medication timer.
+Letter does not record medication history or provide medication names, doses,
+intervals, reminders, interaction advice, or medication timers.
 
 ## Later Reflection
 
@@ -429,7 +421,7 @@ The acute ranking order is:
 1. a user-pinned action for this state
 2. an action reported helpful in a similar context
 3. a user-authored future-self note
-4. a prepared trusted-person or boundary message
+4. a prepared boundary message
 5. cautious generic content
 
 Do not use a hidden score to state that an action works. Show observed history:

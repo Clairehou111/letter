@@ -61,7 +61,6 @@ Used for doctor-facing evidence:
 - scale legends
 - missingness
 - data provenance
-- medication events
 - export controls
 
 The clinical layer can carry Letter typography and restrained color, but it
@@ -337,8 +336,8 @@ Each Letter has three views:
 
 `Pattern` contains cautious trends, action history, and confidence.
 
-`Clinical` contains confirmed ratings, functional impact, medication events,
-provenance, and export.
+`Clinical` contains confirmed ratings, functional impact, provenance, and
+export.
 
 The app may create an optional warm narrative:
 
@@ -356,7 +355,7 @@ PDF and CSV exports use the clinical layer:
 - prospective versus recalled data
 - confirmed symptom heatmap
 - functional impact
-- medication and Care action history
+- Care action history
 - missingness and provenance legend
 - optional user-selected notes
 

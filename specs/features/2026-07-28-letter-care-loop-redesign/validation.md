@@ -9,7 +9,7 @@ Status: product direction approved; prototype validation pending
 - [x] the user's own successful actions form the personalization loop
 - [x] sealed drafts remain user-owned, deletable, and recoverable after cooldown
 - [x] the Shatter ritual is separated from unsupported catharsis claims
-- [x] medication behavior does not invent a universal interval
+- [x] physical Care contains no medication logging or guidance
 - [x] haptics are optional and make no treatment claim
 - [x] needs and causal interpretations remain user-approved hypotheses
 - [x] moon and cultural language remains metaphorical
@@ -47,7 +47,8 @@ Test with target users before deep implementation:
    cooldown transition?
 3. Does `note from clearer me` feel supportive rather than automated or eerie?
 4. Do users understand that a need suggestion is not a diagnosis or fact?
-5. Can physical-pain users distinguish comfort support from medication advice?
+5. Do physical-pain users understand Care as comfort support rather than
+   medical treatment?
 6. Does `Letters` communicate both personal meaning and useful health history?
 7. Which sensory modes should default on: dim theme, haptics, sound, or none?
 8. Do users understand the 24-hour seal before confirming it, and do they trust

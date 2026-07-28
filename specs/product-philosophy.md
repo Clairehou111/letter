@@ -180,16 +180,14 @@ focus-mode integrations require separate feasibility work.
 
 The goal is practical comfort with an explicit medical boundary:
 
-- identify pain type and severity
+- identify the nearest pain type without requiring a form
 - ask whether it is familiar or new, unusual, or severe
 - return the user's saved comfort action and location-specific note
 - allow a later effect check-back
-- record a medication only as user-entered history
 
-Letter must not invent dose timing, tell a user when another dose is safe, or
-claim haptics treat pain. Medication reminders may only reproduce a schedule
-the user explicitly saved from a product label or clinician instruction, with
-clear editing and source context.
+Letter does not record medication history or provide medication names, doses,
+intervals, reminders, interaction advice, or timers. It does not claim haptics
+treat pain.
 
 ## Letters Across Time
 
@@ -273,15 +271,13 @@ and commercial boundaries.
 - Prospective cycle and symptom records help reduce recall bias and distinguish
   recurring premenstrual patterns from symptoms occurring throughout a cycle.
 - Interaction behavior is not a clinical severity score. Tap count, pressure,
-  duration, Care-mode use, medication logging, or app absence may create a
-  candidate for later confirmation but never a reportable symptom rating.
+  duration, Care-mode use, or app absence may create a candidate for later
+  confirmation but never a reportable symptom rating.
 - Clinical reports distinguish prospective user ratings, same-day ratings,
-  later recall, factual Care events, and user-entered medication events.
+  later recall, and factual Care events.
 - The energetic Shatter ritual is not treated as a therapeutic mechanism.
   Letter's defensible intervention is the immediate downshift, removal of send
   affordances, explicit delay, and later user-directed review.
-- Different over-the-counter pain medicines and products have different label
-  intervals and warnings, so there is no universal four-hour timer.
 - Safety and red-flag routing remains deterministic and locale-aware.
 - The product does not diagnose PMS/PMDD, prescribe, or replace clinical care.
 
@@ -291,10 +287,6 @@ Clinical anchors:
   https://www.acog.org/clinical/clinical-guidance/clinical-practice-guideline/articles/2023/12/management-of-premenstrual-disorders
 - Anger arousal meta-analysis:
   https://pubmed.ncbi.nlm.nih.gov/38518585/
-- U.S. DailyMed ibuprofen menstrual-pain label:
-  https://dailymed.nlm.nih.gov/dailymed/drugInfo.cfm?setid=ae1625f4-ef32-4d4f-bf54-c44085843e41
-- U.S. DailyMed naproxen menstrual-pain label:
-  https://dailymed.nlm.nih.gov/dailymed/lookup.cfm?setid=2b4135b3-389c-46e2-ae86-7674c2ab9a32
 
 See `clinical-data-and-reporting.md` for the clinical provenance model, recovery
 receipt, Doctor Mode, and report structure.

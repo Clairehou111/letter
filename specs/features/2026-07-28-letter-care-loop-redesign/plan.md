@@ -15,7 +15,7 @@ Status: completed
    - [x] Define finite game loops for emotional and physical Care scenes.
    - [x] Define clinical data provenance, recovery receipts, and report tiers.
    - [x] Define the global Letter brand, Reply Ritual, Archive, and metaphor boundaries.
-   - [x] Define brand, AI, medication, haptic, and safety boundaries.
+   - [x] Define brand, AI, physical-Care, haptic, and safety boundaries.
 
 3. Information Architecture And Roadmap
    - [x] Update the product mission.

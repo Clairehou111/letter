@@ -19,6 +19,9 @@ The product has two reporting promises:
 Only the second can claim alignment with a validated daily symptom instrument,
 and only after wording, scoring, licensing, and implementation are reviewed.
 
+Medication history is outside Letter's product scope. Neither report includes
+medication events or turns medication mentions into structured records.
+
 ## Non-Negotiable Measurement Rule
 
 A patient-reported outcome comes directly from the patient without another
@@ -29,7 +32,6 @@ Therefore Letter must not map:
 - tap count to anger severity
 - tap speed, pressure, or acceleration to a DRSP score
 - time spent touching a pain scene to pain severity
-- using a medication log to `severe` or `disabling`
 - copying a boundary message to severe social withdrawal
 - not reopening Letter to any symptom or impairment score
 - haptic use to clinical improvement
@@ -49,7 +51,6 @@ The app may record factual product events locally:
 - scene started, skipped, or completed
 - draft sealed
 - personal action selected
-- medication event entered by the user
 - later `better`, `same`, or `worse` response
 
 This layer answers `what happened in Letter`, not `how clinically severe the
@@ -86,7 +87,7 @@ Only the user can confirm:
 - which symptom was present
 - symptom severity
 - functional impact
-- whether a medication or action was used
+- whether a Care action was used
 - perceived outcome
 
 This layer is eligible for the clinical report. Every rating stores when it was
@@ -278,20 +279,6 @@ provenance
 confirmed_by_user: true
 ```
 
-### MedicationEvent
-
-```text
-id
-user_entered_name
-user_entered_amount?
-taken_at
-schedule_source?
-notes?
-```
-
-Medication use does not imply severity, necessity, effectiveness, or correct
-dosing.
-
 ### CareOutcome
 
 ```text
@@ -337,17 +324,13 @@ This is available from normal Letter use.
 - social activity
 - sleep
 
-### Care And Medication History
+### Care History
 
 Use factual language:
-
-> User reported taking ibuprofen at 14:10.
 
 > User selected heat and later reported `better`.
 
 Do not write:
-
-> Medication was required for severe pain.
 
 > Heat effectively treated the symptom.
 
@@ -366,7 +349,6 @@ This report is available only from Doctor Mode.
 - late-luteal and follicular views
 - functional-impairment ratings
 - completion and missingness
-- medication events shown as self-reported context
 - no automatic diagnosis
 
 The report can help a clinician evaluate timing, severity, impairment, and
@@ -381,7 +363,6 @@ Every reportable value has one visible source:
 - `S` same-day user rating
 - `R` later user recall
 - `E` factual Care event without a symptom score
-- `M` user-entered medication event
 
 AI-generated candidates have no report code because they are not exported
 until the user confirms them.
@@ -399,7 +380,7 @@ LLM must not:
 
 - assign severity from language intensity or interaction behavior
 - fill missing days
-- infer a medication was medically necessary
+- turn medication mentions into structured history or advice
 - infer treatment effectiveness
 - diagnose PMS or PMDD
 - convert an unresolved candidate into a report fact
