@@ -112,6 +112,29 @@ REQ-024: Every report value must identify whether it came from a prospective
 user rating, same-day user rating, later recall, factual Care event, or
 user-entered medication event. AI candidates cannot appear until confirmed.
 
+REQ-025: Apply the Letter metaphor in three layers: ritual for emotional
+meaning, familiar utility controls for repeated tasks, and plain clinical
+presentation for doctor-facing evidence.
+
+REQ-026: Use moonlight as brand rhythm only. Do not map cycle phases or Care
+states to astronomical moon phases as physiological fact or replace direct
+health labels with mystical names.
+
+REQ-027: Trigger Reply Rituals when a cooldown ends and the user chooses they
+are ready. Do not assume cycle day 4 or 5 means the user is happy, rational, or
+able to reflect.
+
+REQ-028: Keep NLP keyword highlighting optional and user-confirmed. Raw Care
+language may be worth revisiting but is not automatically the body's truth.
+
+REQ-029: Present the Archive as scannable cycle folios with separate `Story`,
+`Pattern`, and `Clinical` views. Narrative styling must not replace comparable
+data or report provenance.
+
+REQ-030: Defer physical subscriptions, supplements, and cycle-timed fulfillment
+until the software loop has market evidence and separate regulatory, privacy,
+fulfillment, and product-liability review.
+
 ## Non-Goals
 
 - implementing all Care modes in one feature

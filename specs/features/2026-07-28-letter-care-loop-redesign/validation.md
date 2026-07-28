@@ -19,6 +19,11 @@ Status: active
 - [x] behavior data and clinical ratings remain separate
 - [x] reportable symptom severity comes directly from the user
 - [x] normal-use and prospective Doctor Mode reports have distinct claims
+- [x] ritual, utility, and clinical presentation have distinct responsibilities
+- [x] moon imagery is separated from cycle prediction and medical causality
+- [x] Reply Ritual waits for user readiness rather than a fixed phase claim
+- [x] Archive narrative does not replace clinical comparability
+- [x] physical subscriptions and supplements are outside P0
 
 ## Research Checks
 
@@ -53,6 +58,11 @@ Test with target users before deep implementation:
 12. Can users distinguish a candidate symptom from a confirmed report value?
 13. Can clinicians identify prospective, same-day, and recalled ratings?
 14. Does every report value trace back to a user-confirmed local record?
+15. Can users find Record, Care, and cycle status without understanding the
+    letter metaphor?
+16. Do users interpret moon imagery as decoration or as a biological claim?
+17. Does the Archive remain easy to compare across six or more cycles?
+18. Can users distinguish Story, Pattern, and Clinical views?
 
 ## Acceptance Gate
 

@@ -34,6 +34,11 @@ Clinical reporting is defined in
 Care behavior may propose a symptom for later confirmation but never becomes an
 inferred clinical severity score.
 
+The global Letter metaphor and visual responsibilities are defined in
+[`specs/brand-and-experience-system.md`](specs/brand-and-experience-system.md).
+Ritual styling never replaces familiar health controls or clinician-readable
+evidence.
+
 ## Mobile
 
 ```bash

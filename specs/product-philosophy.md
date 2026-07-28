@@ -253,6 +253,15 @@ not claim:
 The North American appeal of any cultural framing is a market hypothesis that
 requires concept testing with target users.
 
+The product uses a three-layer design system:
+
+- ritual language for emotional meaning
+- direct utility controls for repeated health tasks
+- plain clinical presentation for reports
+
+See `brand-and-experience-system.md` for visual, copy, archive, Reply Ritual,
+and commercial boundaries.
+
 ## Evidence And Safety
 
 - Prospective cycle and symptom records help reduce recall bias and distinguish
