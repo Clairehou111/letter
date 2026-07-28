@@ -164,10 +164,14 @@ The goal is to turn simultaneous demands into one controllable point:
 
 The goal is a truthful, low-effort boundary:
 
-- offer user-edited messages for a partner, friend, or work context
+- first create a symbolic, low-stimulation cocoon inside Letter
+- offer at most two truthful, user-edited boundary cards only as an optional
+  next step
 - never invent a migraine, illness, or safety claim
-- let the user choose the duration and recipient
-- prepare messages on a clearer day where possible
+- let the user choose a bounded duration without choosing a recipient
+- allow explicit clipboard copy, but do not read contacts, send, share, open a
+  composer, or claim that anyone received the words
+- clear all Letter-side text when the Care session ends
 
 Letter cannot promise to disconnect the phone or control other apps. Platform
 focus-mode integrations require separate feasibility work.

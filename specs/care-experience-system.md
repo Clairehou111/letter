@@ -262,10 +262,9 @@ EVERYONE HAS ACCESS -> I CLOSE A BOUNDARY -> THE BOUNDARY HAS AN END
 
 ### Immediate Scene
 
-A single downward pull closes a heavy curtain across the screen.
+A short downward pull or one tap closes a heavy curtain across the screen.
 
 - the curtain follows the user's finger
-- completion produces one optional low, firm haptic
 - background silhouettes and sound disappear
 - reduced-motion users receive a simple crossfade
 
@@ -273,33 +272,35 @@ Suggested copy:
 
 > The door is closed. You are allowed to be unavailable.
 
+The experience is symbolic and must state:
+
+> Letter can quiet this screen. It cannot silence calls or other apps.
+
 ### Prepared Boundary
 
-Show at most two user-approved messages:
-
-- partner or close person
-- work, group, or plans
-
-Messages must be truthful and editable. Letter does not invent a migraine,
+After the cocoon closes, the user may choose `Prepare words` or
+`Nothing else right now`. The words path shows at most two static, truthful,
+editable templates and three bounded durations: `30 minutes`, `2 hours`, and
+`4 hours`. It has no recipient field. Letter does not invent a migraine,
 illness, or claim of safety.
 
 Example:
 
-> I'm overloaded and need quiet tonight. I am not asking you to fix it. I will
-> check in tomorrow.
+> I need some quiet time for the next 2 hours. I will not be available to
+> reply.
 
-The operating system still performs the final share/send confirmation. Letter
-never sends automatically.
+An explicit `Copy text` action may write only the visible text to the operating
+system clipboard after disclosing that it may remain there after Letter closes.
+Letter does not read contacts or the existing clipboard, send or share,
+open a composer or another app, or claim delivery. Letter-side text is cleared
+when the Care session ends.
 
 ### Hand-Off
 
-Choose `30 minutes`, `2 hours`, or `until tomorrow`, then:
-
-- open supported system focus controls where technically possible
-- keep the prepared message available
-- show one quiet screen with an explicit exit
-
-Later, ask whether the boundary helped and whether the message needs revision.
+The user may finish directly from the cocoon without preparing or copying
+words. Every path ends on one quiet screen with explicit return-to-Care and
+leave-Care actions. P0 does not control Focus settings, keep a prepared message,
+schedule a reminder, or record whether the boundary helped.
 
 ## Mode 5: Physical Care
 

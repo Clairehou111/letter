@@ -6,7 +6,9 @@ import 'package:letter_mobile/features/care/domain/care_mode.dart';
 import 'package:letter_mobile/features/care/domain/impulse_buffer_repository.dart';
 import 'package:letter_mobile/features/care/presentation/care_screen.dart';
 import 'package:letter_mobile/features/care/presentation/heavy_presence_flow.dart';
+import 'package:letter_mobile/features/care/presentation/need_space_flow.dart';
 import 'package:letter_mobile/features/care/presentation/racing_thoughts_flow.dart';
+import 'package:letter_mobile/features/care/presentation/safe_cocoon_stage.dart';
 
 Future<void> pumpCare(
   WidgetTester tester, {
@@ -50,11 +52,18 @@ Future<void> openMode(WidgetTester tester, CareMode mode) async {
     180,
     scrollable: find.byType(Scrollable).first,
   );
+  await tester.pump();
+  await Scrollable.ensureVisible(
+    tester.element(finder),
+    alignment: 0.5,
+    duration: Duration.zero,
+  );
   await tester.pumpAndSettle();
   await tester.tap(finder);
   if (mode == CareMode.explode ||
       mode == CareMode.heavy ||
-      mode == CareMode.racing) {
+      mode == CareMode.racing ||
+      mode == CareMode.space) {
     await tester.pump();
     await tester.pump();
   } else {
@@ -83,7 +92,8 @@ void main() {
     (mode) =>
         mode != CareMode.explode &&
         mode != CareMode.heavy &&
-        mode != CareMode.racing,
+        mode != CareMode.racing &&
+        mode != CareMode.space,
   )) {
     testWidgets('${mode.name} follows one finite response and hand-off', (
       tester,
@@ -119,15 +129,15 @@ void main() {
       tester,
       onNavigationSelected: (index) => selectedNavigation = index,
     );
-    await openMode(tester, CareMode.space);
-    await tester.tap(find.byKey(const Key('care-respond-space')));
+    await openMode(tester, CareMode.physical);
+    await tester.tap(find.byKey(const Key('care-respond-physical')));
     await tester.pumpAndSettle();
     await tester.tap(find.byKey(const Key('care-not-now')));
     await tester.pumpAndSettle();
 
     expect(find.text('What is closest to this moment?'), findsOneWidget);
 
-    await openMode(tester, CareMode.space);
+    await openMode(tester, CareMode.physical);
     await tester.tap(find.byKey(const Key('care-exit')));
 
     expect(selectedNavigation, 2);
@@ -153,6 +163,17 @@ void main() {
     expect(find.byType(RacingThoughtsFlow), findsOneWidget);
     expect(find.byKey(const Key('racing-convergence-surface')), findsOneWidget);
     expect(find.byKey(const Key('care-respond-racing')), findsNothing);
+  });
+
+  testWidgets('space entrance opens the dedicated safe cocoon flow', (
+    tester,
+  ) async {
+    await pumpCare(tester);
+    await openMode(tester, CareMode.space);
+
+    expect(find.byType(NeedSpaceFlow), findsOneWidget);
+    expect(find.byType(SafeCocoonStage), findsOneWidget);
+    expect(find.byKey(const Key('care-respond-space')), findsNothing);
   });
 
   testWidgets('emotional safety route interrupts and can return', (
@@ -228,20 +249,33 @@ void main() {
       textScale: 2,
       disableAnimations: true,
     );
-    await openMode(tester, CareMode.space);
+    await openMode(tester, CareMode.physical);
     expect(tester.takeException(), isNull);
 
-    final scene = find.byKey(const Key('care-scene-space'));
-    final respond = find.byKey(const Key('care-respond-space'));
-    await tester.drag(scene, const Offset(0, -180));
+    final respond = find.byKey(const Key('care-respond-physical'));
+    await tester.scrollUntilVisible(
+      respond,
+      180,
+      scrollable: find.byType(Scrollable).first,
+    );
+    await tester.pump();
+    await Scrollable.ensureVisible(
+      tester.element(respond),
+      alignment: 0.5,
+      duration: Duration.zero,
+    );
     await tester.pump();
     await tester.tap(respond);
     await tester.pumpAndSettle();
-    await tester.drag(scene, const Offset(0, -260));
-    await tester.pump();
 
-    expect(find.text(CareMode.space.protectiveLine), findsOneWidget);
-    expect(find.text(CareMode.space.handOff), findsOneWidget);
+    await tester.scrollUntilVisible(
+      find.byKey(const Key('care-handoff-physical')),
+      180,
+      scrollable: find.byType(Scrollable).first,
+    );
+    await tester.pump();
+    expect(find.text(CareMode.physical.protectiveLine), findsOneWidget);
+    expect(find.text(CareMode.physical.handOff), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 
@@ -275,13 +309,13 @@ void main() {
     tester,
   ) async {
     await pumpCare(tester);
-    await openMode(tester, CareMode.space);
-    await tester.tap(find.byKey(const Key('care-respond-space')));
+    await openMode(tester, CareMode.physical);
+    await tester.tap(find.byKey(const Key('care-respond-physical')));
     await tester.pumpAndSettle();
 
     await expectLater(
       find.byType(CareScreen),
-      matchesGoldenFile('goldens/care_space_transformed_390x844.png'),
+      matchesGoldenFile('goldens/care_physical_transformed_390x844.png'),
     );
   });
 }

@@ -45,10 +45,14 @@ bounded lines, an optional foreground-only two-minute presence interval, and a
 practical hand-off. `My mind won't stop` now turns scattered fragments into one
 calm point after one tap, then offers optional current-screen-only naming,
 unnamed set-down, or immediate exit. Entered text is cleared on set-down,
-discard, reconstruction, or leave and is never saved for tomorrow. The other
-two entrances remain non-persistent response shells until their dedicated
-features are specified. No Care behavior creates a clinical score, report
-value, analytics event, API request, or LLM request.
+discard, reconstruction, or leave and is never saved for tomorrow. `I need
+everyone away` now closes one symbolic curtain around a protected cocoon, then
+offers either immediate rest or an optional session-only boundary card. Copying
+is explicit and discloses the device clipboard boundary; Letter never reads
+contacts, chooses a recipient, sends, shares, silences other apps, or persists
+the text. The physical-pain entrance remains a non-persistent response shell
+until its dedicated feature is specified. No Care behavior creates a clinical
+score, report value, analytics event, API request, or LLM request.
 
 The current product direction is defined in
 [`specs/product-philosophy.md`](specs/product-philosophy.md). Letter combines

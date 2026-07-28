@@ -48,7 +48,7 @@ and goals require a separate revision after the Care-loop redesign is approved.
 | 2 | Angry/overloaded impulse buffer | validated ([spec](features/2026-07-28-angry-impulse-buffer/)) |
 | 3 | Heavy/low presence flow | validated ([spec](features/2026-07-28-heavy-low-presence-flow/)) |
 | 4 | Racing-thoughts convergence flow | validated ([spec](features/2026-07-28-racing-thoughts-convergence-flow/)) |
-| 5 | Need-space messages and boundary plan | proposed |
+| 5 | Need-space safe cocoon and boundary card | validated ([integration spec](features/2026-07-28-need-space-flow-integration/)) |
 | 6 | Physical-pain comfort flow and medical boundary | proposed |
 | 7 | Care action check-back and personal kit | proposed |
 | 8 | Clearer-day reflection and future-self note | proposed |
@@ -65,7 +65,10 @@ two-minute presence, and a practical hand-off without storing an episode.
 Racing-thoughts Care now uses one-tap visual convergence, then allows optional
 one-thought naming, unnamed set-down, or immediate exit. Any entered text lives
 only on the current screen and is cleared rather than saved or resurfaced the
-next day. The other mode-specific mechanics, check-backs, and personal memory
+next day. Need-space Care now closes one symbolic curtain, then offers an
+optional session-only boundary card with explicit clipboard copy and no
+contact, recipient, send, share, or phone-isolation capability. The
+physical-pain mode-specific mechanics, check-backs, and personal memory
 remain in their dedicated roadmap features.
 
 ## Phase 3: Effortless Logging And Learning
