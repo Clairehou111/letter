@@ -1,6 +1,6 @@
 # Letter Care Experience System
 
-Status: design draft
+Status: approved product direction; usability validation pending
 Date: 2026-07-28
 
 ## Product Objective

@@ -1,6 +1,6 @@
 # Letter Care Loop Redesign Plan
 
-Status: in progress
+Status: completed
 
 1. Product Synthesis
    - [x] Read the new first-aid and Letter philosophy discussion.
@@ -21,10 +21,10 @@ Status: in progress
    - [x] Update the product mission.
    - [x] Update primary navigation and product philosophy.
    - [x] Reorder roadmap features around the new loop.
-   - [ ] Review the redesigned product direction with the user.
+   - [x] Review the redesigned product direction with the user.
 
-4. Implementation Preparation
-   - [ ] Approve the redesign requirements.
-   - [ ] Specify the next roadmap feature separately.
-   - [ ] Revise affected onboarding copy and UI only in its own feature branch.
-   - [ ] Implement and validate each Care-loop feature independently.
+4. Implementation Handoff
+   - [x] Approve the redesign requirements.
+   - [x] Keep the next roadmap feature as a separate specification.
+   - [x] Record onboarding copy and UI revision as separate future work.
+   - [x] Split Care-loop implementation into independently validated features.

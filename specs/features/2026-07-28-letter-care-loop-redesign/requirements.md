@@ -1,6 +1,6 @@
 # Letter Care Loop Redesign Requirements
 
-Status: specifying
+Status: approved
 Branch: `feature/letter-care-loop-redesign`
 
 ## Context

@@ -11,7 +11,7 @@ Only one product feature should normally be `in_progress`.
 | --- | --- | --- | --- |
 | 1 | Flutter UI fidelity spike | validated | `features/2026-07-27-flutter-ui-fidelity/` |
 | 2 | Production workspace foundation | validated | `features/2026-07-27-production-workspace-foundation/` |
-| 3 | Letter Care-loop product redesign | in_progress | `features/2026-07-28-letter-care-loop-redesign/` |
+| 3 | Letter Care-loop product redesign | approved | `features/2026-07-28-letter-care-loop-redesign/` |
 
 The user accepted the Flutter visual result on 2026-07-27. Flutter is the
 confirmed mobile stack.

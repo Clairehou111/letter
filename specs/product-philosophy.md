@@ -1,6 +1,6 @@
 # Letter Product Philosophy
 
-Status: redesign draft
+Status: approved
 Date: 2026-07-28
 
 ## Core Idea

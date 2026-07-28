@@ -1,6 +1,6 @@
 # Letter Care Loop Redesign Validation
 
-Status: active
+Status: product direction approved; prototype validation pending
 
 ## Document Review
 
@@ -66,8 +66,8 @@ Test with target users before deep implementation:
 
 ## Acceptance Gate
 
-- user approves the revised product direction
-- affected roadmap features have independent specifications
-- no implementation treats the source discussion as clinical evidence
-- no existing validated feature is silently rewritten
-- the next feature begins only after its requirements are reviewed
+- [x] user approves the revised product direction
+- [x] affected roadmap work is split into independent proposed features
+- [x] no implementation treats the source discussion as clinical evidence
+- [x] no existing validated feature was silently rewritten
+- [x] the next feature will begin only after its requirements are reviewed

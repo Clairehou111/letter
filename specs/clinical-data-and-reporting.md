@@ -1,6 +1,6 @@
 # Letter Clinical Data And Reporting
 
-Status: design draft
+Status: approved product direction; clinical review pending
 Date: 2026-07-28
 
 ## Goal
