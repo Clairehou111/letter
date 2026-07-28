@@ -11,6 +11,7 @@ import '../../care/data/drift_impulse_buffer_repository.dart';
 import '../../care/data/drift_care_memory_repository.dart';
 import '../../cycle/data/drift_period_repository.dart';
 import '../../cycle/data/letter_health_database.dart';
+import '../../health_records/data/drift_health_record_repository.dart';
 import 'local_health_store.dart';
 
 const _databaseKeyName = 'letter.health_database.key.v1';
@@ -42,6 +43,10 @@ LocalHealthStore createDefaultLocalHealthStore() {
       closeDatabase: false,
     ),
     careMemoryRepository: DriftCareMemoryRepository(
+      database,
+      closeDatabase: false,
+    ),
+    healthRecordRepository: DriftHealthRecordRepository(
       database,
       closeDatabase: false,
     ),

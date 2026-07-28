@@ -8,6 +8,8 @@ import '../cycle/domain/cycle_prediction.dart';
 import '../cycle/domain/local_date.dart';
 import '../cycle/domain/period_record.dart';
 import '../cycle/domain/period_repository.dart';
+import '../health_records/domain/health_record_repository.dart';
+import '../health_records/presentation/health_records_screen.dart';
 import 'today_cycle_context.dart';
 
 enum TodayState {
@@ -57,11 +59,13 @@ class TodayScreen extends StatefulWidget {
     super.key,
     this.onNavigationSelected,
     this.now,
+    this.healthRecordRepository,
   });
 
   final PeriodRepository repository;
   final ValueChanged<int>? onNavigationSelected;
   final DateTime Function()? now;
+  final HealthRecordRepository? healthRecordRepository;
 
   @override
   State<TodayScreen> createState() => _TodayScreenState();
@@ -122,6 +126,19 @@ class _TodayScreenState extends State<TodayScreen> {
     widget.onNavigationSelected?.call(3);
   }
 
+  Future<void> _openHealthRecords() async {
+    final repository = widget.healthRecordRepository;
+    if (repository == null) {
+      return;
+    }
+    await Navigator.of(context).push(
+      MaterialPageRoute<void>(
+        builder: (context) =>
+            HealthRecordsScreen(repository: repository, now: widget.now),
+      ),
+    );
+  }
+
   Future<void> _openQuickStateSheet() async {
     final state = await showModalBottomSheet<TodayState>(
       context: context,
@@ -171,6 +188,12 @@ class _TodayScreenState extends State<TodayScreen> {
                             const SizedBox(height: LetterSpacing.xl),
                             TodayCareEntry(onOpenCare: _openCare),
                             const SizedBox(height: LetterSpacing.xl),
+                            if (widget.healthRecordRepository != null) ...[
+                              TodayHealthRecordEntry(
+                                onOpenRecords: _openHealthRecords,
+                              ),
+                              const SizedBox(height: LetterSpacing.xl),
+                            ],
                             const LetterSectionTitle(
                               eyebrow: 'A quick check-in',
                               title: 'How are you right now?',
@@ -632,6 +655,62 @@ class TodayCareEntry extends StatelessWidget {
           label: const Text('Open Care'),
         ),
       ],
+    );
+  }
+}
+
+class TodayHealthRecordEntry extends StatelessWidget {
+  const TodayHealthRecordEntry({required this.onOpenRecords, super.key});
+
+  final VoidCallback onOpenRecords;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(LetterSpacing.md),
+      decoration: BoxDecoration(
+        color: LetterColors.surface,
+        border: Border.all(color: LetterColors.line),
+        borderRadius: BorderRadius.circular(LetterRadius.panel),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Row(
+            children: [
+              const Icon(Icons.edit_note_outlined, color: LetterColors.teal),
+              const SizedBox(width: LetterSpacing.sm),
+              const Expanded(
+                child: Text(
+                  'Record what your body is telling you',
+                  style: TextStyle(fontWeight: FontWeight.w800),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: LetterSpacing.xs),
+          const Text(
+            'Choose a symptom and its intensity when you are ready. '
+            'Nothing is inferred from Care.',
+            style: TextStyle(color: LetterColors.muted, fontSize: 12),
+          ),
+          const SizedBox(height: LetterSpacing.sm),
+          OutlinedButton.icon(
+            key: const Key('open-health-records'),
+            onPressed: onOpenRecords,
+            icon: const Icon(Icons.add),
+            label: const Text('Open health record'),
+            style: OutlinedButton.styleFrom(
+              foregroundColor: LetterColors.teal,
+              minimumSize: const Size.fromHeight(44),
+              side: const BorderSide(color: LetterColors.teal),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(LetterRadius.control),
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

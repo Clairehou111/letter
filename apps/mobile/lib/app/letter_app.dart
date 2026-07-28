@@ -9,6 +9,8 @@ import '../features/cycle/data/in_memory_period_repository.dart';
 import '../features/cycle/domain/period_repository.dart';
 import '../features/health_data/data/local_health_store.dart';
 import '../features/health_data/data/local_health_store_factory.dart';
+import '../features/health_records/data/in_memory_health_record_repository.dart';
+import '../features/health_records/domain/health_record_repository.dart';
 import '../features/onboarding/data/onboarding_repository.dart';
 import '../features/onboarding/domain/onboarding_profile.dart';
 import '../features/onboarding/presentation/onboarding_flow.dart';
@@ -21,6 +23,7 @@ class LetterApp extends StatefulWidget {
     this.periodRepository,
     this.impulseBufferRepository,
     this.careMemoryRepository,
+    this.healthRecordRepository,
     this.now,
   });
 
@@ -28,6 +31,7 @@ class LetterApp extends StatefulWidget {
   final PeriodRepository? periodRepository;
   final ImpulseBufferRepository? impulseBufferRepository;
   final CareMemoryRepository? careMemoryRepository;
+  final HealthRecordRepository? healthRecordRepository;
   final DateTime Function()? now;
 
   @override
@@ -39,6 +43,7 @@ class _LetterAppState extends State<LetterApp> {
   late final PeriodRepository _periodRepository;
   late final ImpulseBufferRepository _impulseBufferRepository;
   late final CareMemoryRepository _careMemoryRepository;
+  late final HealthRecordRepository _healthRecordRepository;
   LocalHealthStore? _ownedHealthStore;
   OnboardingProfile? _profile;
   bool _loaded = false;
@@ -50,12 +55,14 @@ class _LetterAppState extends State<LetterApp> {
     _repository = widget.onboardingRepository ?? SecureOnboardingRepository();
     if (widget.periodRepository == null &&
         widget.impulseBufferRepository == null &&
-        widget.careMemoryRepository == null) {
+        widget.careMemoryRepository == null &&
+        widget.healthRecordRepository == null) {
       final healthStore = createDefaultLocalHealthStore();
       _ownedHealthStore = healthStore;
       _periodRepository = healthStore.periodRepository;
       _impulseBufferRepository = healthStore.impulseBufferRepository;
       _careMemoryRepository = healthStore.careMemoryRepository;
+      _healthRecordRepository = healthStore.healthRecordRepository;
     } else {
       _periodRepository = widget.periodRepository ?? InMemoryPeriodRepository();
       _impulseBufferRepository =
@@ -64,6 +71,9 @@ class _LetterAppState extends State<LetterApp> {
       _careMemoryRepository =
           widget.careMemoryRepository ??
           InMemoryCareMemoryRepository(clock: widget.now);
+      _healthRecordRepository =
+          widget.healthRecordRepository ??
+          InMemoryHealthRecordRepository(clock: widget.now);
     }
     _load();
   }
@@ -140,6 +150,7 @@ class _LetterAppState extends State<LetterApp> {
               periodRepository: _periodRepository,
               impulseBufferRepository: _impulseBufferRepository,
               careMemoryRepository: _careMemoryRepository,
+              healthRecordRepository: _healthRecordRepository,
               onProfileChanged: _updateProfile,
               onReset: _resetOnboarding,
               now: widget.now,

@@ -1983,6 +1983,760 @@ class CareReflectionRowsCompanion extends UpdateCompanion<CareReflectionRow> {
   }
 }
 
+class $HealthRecordRowsTable extends HealthRecordRows
+    with TableInfo<$HealthRecordRowsTable, HealthRecordRow> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $HealthRecordRowsTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<String> id = GeneratedColumn<String>(
+    'id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _symptomMeta = const VerificationMeta(
+    'symptom',
+  );
+  @override
+  late final GeneratedColumn<String> symptom = GeneratedColumn<String>(
+    'symptom',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _severityMeta = const VerificationMeta(
+    'severity',
+  );
+  @override
+  late final GeneratedColumn<int> severity = GeneratedColumn<int>(
+    'severity',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _painRatingMeta = const VerificationMeta(
+    'painRating',
+  );
+  @override
+  late final GeneratedColumn<int> painRating = GeneratedColumn<int>(
+    'pain_rating',
+    aliasedName,
+    true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _painLocationsJsonMeta = const VerificationMeta(
+    'painLocationsJson',
+  );
+  @override
+  late final GeneratedColumn<String> painLocationsJson =
+      GeneratedColumn<String>(
+        'pain_locations_json',
+        aliasedName,
+        false,
+        type: DriftSqlType.string,
+        requiredDuringInsert: true,
+      );
+  static const VerificationMeta _functionalImpactsJsonMeta =
+      const VerificationMeta('functionalImpactsJson');
+  @override
+  late final GeneratedColumn<String> functionalImpactsJson =
+      GeneratedColumn<String>(
+        'functional_impacts_json',
+        aliasedName,
+        false,
+        type: DriftSqlType.string,
+        requiredDuringInsert: true,
+      );
+  static const VerificationMeta _experiencedDayMeta = const VerificationMeta(
+    'experiencedDay',
+  );
+  @override
+  late final GeneratedColumn<int> experiencedDay = GeneratedColumn<int>(
+    'experienced_day',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _recordedAtMillisMeta = const VerificationMeta(
+    'recordedAtMillis',
+  );
+  @override
+  late final GeneratedColumn<int> recordedAtMillis = GeneratedColumn<int>(
+    'recorded_at_millis',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _updatedAtMillisMeta = const VerificationMeta(
+    'updatedAtMillis',
+  );
+  @override
+  late final GeneratedColumn<int> updatedAtMillis = GeneratedColumn<int>(
+    'updated_at_millis',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _provenanceMeta = const VerificationMeta(
+    'provenance',
+  );
+  @override
+  late final GeneratedColumn<String> provenance = GeneratedColumn<String>(
+    'provenance',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _userConfirmedMeta = const VerificationMeta(
+    'userConfirmed',
+  );
+  @override
+  late final GeneratedColumn<bool> userConfirmed = GeneratedColumn<bool>(
+    'user_confirmed',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: true,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("user_confirmed" IN (0, 1))',
+    ),
+  );
+  static const VerificationMeta _vocabularyVersionMeta = const VerificationMeta(
+    'vocabularyVersion',
+  );
+  @override
+  late final GeneratedColumn<int> vocabularyVersion = GeneratedColumn<int>(
+    'vocabulary_version',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    id,
+    symptom,
+    severity,
+    painRating,
+    painLocationsJson,
+    functionalImpactsJson,
+    experiencedDay,
+    recordedAtMillis,
+    updatedAtMillis,
+    provenance,
+    userConfirmed,
+    vocabularyVersion,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'health_record_rows';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<HealthRecordRow> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    } else if (isInserting) {
+      context.missing(_idMeta);
+    }
+    if (data.containsKey('symptom')) {
+      context.handle(
+        _symptomMeta,
+        symptom.isAcceptableOrUnknown(data['symptom']!, _symptomMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_symptomMeta);
+    }
+    if (data.containsKey('severity')) {
+      context.handle(
+        _severityMeta,
+        severity.isAcceptableOrUnknown(data['severity']!, _severityMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_severityMeta);
+    }
+    if (data.containsKey('pain_rating')) {
+      context.handle(
+        _painRatingMeta,
+        painRating.isAcceptableOrUnknown(data['pain_rating']!, _painRatingMeta),
+      );
+    }
+    if (data.containsKey('pain_locations_json')) {
+      context.handle(
+        _painLocationsJsonMeta,
+        painLocationsJson.isAcceptableOrUnknown(
+          data['pain_locations_json']!,
+          _painLocationsJsonMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_painLocationsJsonMeta);
+    }
+    if (data.containsKey('functional_impacts_json')) {
+      context.handle(
+        _functionalImpactsJsonMeta,
+        functionalImpactsJson.isAcceptableOrUnknown(
+          data['functional_impacts_json']!,
+          _functionalImpactsJsonMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_functionalImpactsJsonMeta);
+    }
+    if (data.containsKey('experienced_day')) {
+      context.handle(
+        _experiencedDayMeta,
+        experiencedDay.isAcceptableOrUnknown(
+          data['experienced_day']!,
+          _experiencedDayMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_experiencedDayMeta);
+    }
+    if (data.containsKey('recorded_at_millis')) {
+      context.handle(
+        _recordedAtMillisMeta,
+        recordedAtMillis.isAcceptableOrUnknown(
+          data['recorded_at_millis']!,
+          _recordedAtMillisMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_recordedAtMillisMeta);
+    }
+    if (data.containsKey('updated_at_millis')) {
+      context.handle(
+        _updatedAtMillisMeta,
+        updatedAtMillis.isAcceptableOrUnknown(
+          data['updated_at_millis']!,
+          _updatedAtMillisMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_updatedAtMillisMeta);
+    }
+    if (data.containsKey('provenance')) {
+      context.handle(
+        _provenanceMeta,
+        provenance.isAcceptableOrUnknown(data['provenance']!, _provenanceMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_provenanceMeta);
+    }
+    if (data.containsKey('user_confirmed')) {
+      context.handle(
+        _userConfirmedMeta,
+        userConfirmed.isAcceptableOrUnknown(
+          data['user_confirmed']!,
+          _userConfirmedMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_userConfirmedMeta);
+    }
+    if (data.containsKey('vocabulary_version')) {
+      context.handle(
+        _vocabularyVersionMeta,
+        vocabularyVersion.isAcceptableOrUnknown(
+          data['vocabulary_version']!,
+          _vocabularyVersionMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_vocabularyVersionMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  HealthRecordRow map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return HealthRecordRow(
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}id'],
+      )!,
+      symptom: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}symptom'],
+      )!,
+      severity: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}severity'],
+      )!,
+      painRating: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}pain_rating'],
+      ),
+      painLocationsJson: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}pain_locations_json'],
+      )!,
+      functionalImpactsJson: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}functional_impacts_json'],
+      )!,
+      experiencedDay: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}experienced_day'],
+      )!,
+      recordedAtMillis: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}recorded_at_millis'],
+      )!,
+      updatedAtMillis: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}updated_at_millis'],
+      )!,
+      provenance: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}provenance'],
+      )!,
+      userConfirmed: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}user_confirmed'],
+      )!,
+      vocabularyVersion: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}vocabulary_version'],
+      )!,
+    );
+  }
+
+  @override
+  $HealthRecordRowsTable createAlias(String alias) {
+    return $HealthRecordRowsTable(attachedDatabase, alias);
+  }
+}
+
+class HealthRecordRow extends DataClass implements Insertable<HealthRecordRow> {
+  final String id;
+  final String symptom;
+  final int severity;
+  final int? painRating;
+  final String painLocationsJson;
+  final String functionalImpactsJson;
+  final int experiencedDay;
+  final int recordedAtMillis;
+  final int updatedAtMillis;
+  final String provenance;
+  final bool userConfirmed;
+  final int vocabularyVersion;
+  const HealthRecordRow({
+    required this.id,
+    required this.symptom,
+    required this.severity,
+    this.painRating,
+    required this.painLocationsJson,
+    required this.functionalImpactsJson,
+    required this.experiencedDay,
+    required this.recordedAtMillis,
+    required this.updatedAtMillis,
+    required this.provenance,
+    required this.userConfirmed,
+    required this.vocabularyVersion,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<String>(id);
+    map['symptom'] = Variable<String>(symptom);
+    map['severity'] = Variable<int>(severity);
+    if (!nullToAbsent || painRating != null) {
+      map['pain_rating'] = Variable<int>(painRating);
+    }
+    map['pain_locations_json'] = Variable<String>(painLocationsJson);
+    map['functional_impacts_json'] = Variable<String>(functionalImpactsJson);
+    map['experienced_day'] = Variable<int>(experiencedDay);
+    map['recorded_at_millis'] = Variable<int>(recordedAtMillis);
+    map['updated_at_millis'] = Variable<int>(updatedAtMillis);
+    map['provenance'] = Variable<String>(provenance);
+    map['user_confirmed'] = Variable<bool>(userConfirmed);
+    map['vocabulary_version'] = Variable<int>(vocabularyVersion);
+    return map;
+  }
+
+  HealthRecordRowsCompanion toCompanion(bool nullToAbsent) {
+    return HealthRecordRowsCompanion(
+      id: Value(id),
+      symptom: Value(symptom),
+      severity: Value(severity),
+      painRating: painRating == null && nullToAbsent
+          ? const Value.absent()
+          : Value(painRating),
+      painLocationsJson: Value(painLocationsJson),
+      functionalImpactsJson: Value(functionalImpactsJson),
+      experiencedDay: Value(experiencedDay),
+      recordedAtMillis: Value(recordedAtMillis),
+      updatedAtMillis: Value(updatedAtMillis),
+      provenance: Value(provenance),
+      userConfirmed: Value(userConfirmed),
+      vocabularyVersion: Value(vocabularyVersion),
+    );
+  }
+
+  factory HealthRecordRow.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return HealthRecordRow(
+      id: serializer.fromJson<String>(json['id']),
+      symptom: serializer.fromJson<String>(json['symptom']),
+      severity: serializer.fromJson<int>(json['severity']),
+      painRating: serializer.fromJson<int?>(json['painRating']),
+      painLocationsJson: serializer.fromJson<String>(json['painLocationsJson']),
+      functionalImpactsJson: serializer.fromJson<String>(
+        json['functionalImpactsJson'],
+      ),
+      experiencedDay: serializer.fromJson<int>(json['experiencedDay']),
+      recordedAtMillis: serializer.fromJson<int>(json['recordedAtMillis']),
+      updatedAtMillis: serializer.fromJson<int>(json['updatedAtMillis']),
+      provenance: serializer.fromJson<String>(json['provenance']),
+      userConfirmed: serializer.fromJson<bool>(json['userConfirmed']),
+      vocabularyVersion: serializer.fromJson<int>(json['vocabularyVersion']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<String>(id),
+      'symptom': serializer.toJson<String>(symptom),
+      'severity': serializer.toJson<int>(severity),
+      'painRating': serializer.toJson<int?>(painRating),
+      'painLocationsJson': serializer.toJson<String>(painLocationsJson),
+      'functionalImpactsJson': serializer.toJson<String>(functionalImpactsJson),
+      'experiencedDay': serializer.toJson<int>(experiencedDay),
+      'recordedAtMillis': serializer.toJson<int>(recordedAtMillis),
+      'updatedAtMillis': serializer.toJson<int>(updatedAtMillis),
+      'provenance': serializer.toJson<String>(provenance),
+      'userConfirmed': serializer.toJson<bool>(userConfirmed),
+      'vocabularyVersion': serializer.toJson<int>(vocabularyVersion),
+    };
+  }
+
+  HealthRecordRow copyWith({
+    String? id,
+    String? symptom,
+    int? severity,
+    Value<int?> painRating = const Value.absent(),
+    String? painLocationsJson,
+    String? functionalImpactsJson,
+    int? experiencedDay,
+    int? recordedAtMillis,
+    int? updatedAtMillis,
+    String? provenance,
+    bool? userConfirmed,
+    int? vocabularyVersion,
+  }) => HealthRecordRow(
+    id: id ?? this.id,
+    symptom: symptom ?? this.symptom,
+    severity: severity ?? this.severity,
+    painRating: painRating.present ? painRating.value : this.painRating,
+    painLocationsJson: painLocationsJson ?? this.painLocationsJson,
+    functionalImpactsJson: functionalImpactsJson ?? this.functionalImpactsJson,
+    experiencedDay: experiencedDay ?? this.experiencedDay,
+    recordedAtMillis: recordedAtMillis ?? this.recordedAtMillis,
+    updatedAtMillis: updatedAtMillis ?? this.updatedAtMillis,
+    provenance: provenance ?? this.provenance,
+    userConfirmed: userConfirmed ?? this.userConfirmed,
+    vocabularyVersion: vocabularyVersion ?? this.vocabularyVersion,
+  );
+  HealthRecordRow copyWithCompanion(HealthRecordRowsCompanion data) {
+    return HealthRecordRow(
+      id: data.id.present ? data.id.value : this.id,
+      symptom: data.symptom.present ? data.symptom.value : this.symptom,
+      severity: data.severity.present ? data.severity.value : this.severity,
+      painRating: data.painRating.present
+          ? data.painRating.value
+          : this.painRating,
+      painLocationsJson: data.painLocationsJson.present
+          ? data.painLocationsJson.value
+          : this.painLocationsJson,
+      functionalImpactsJson: data.functionalImpactsJson.present
+          ? data.functionalImpactsJson.value
+          : this.functionalImpactsJson,
+      experiencedDay: data.experiencedDay.present
+          ? data.experiencedDay.value
+          : this.experiencedDay,
+      recordedAtMillis: data.recordedAtMillis.present
+          ? data.recordedAtMillis.value
+          : this.recordedAtMillis,
+      updatedAtMillis: data.updatedAtMillis.present
+          ? data.updatedAtMillis.value
+          : this.updatedAtMillis,
+      provenance: data.provenance.present
+          ? data.provenance.value
+          : this.provenance,
+      userConfirmed: data.userConfirmed.present
+          ? data.userConfirmed.value
+          : this.userConfirmed,
+      vocabularyVersion: data.vocabularyVersion.present
+          ? data.vocabularyVersion.value
+          : this.vocabularyVersion,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('HealthRecordRow(')
+          ..write('id: $id, ')
+          ..write('symptom: $symptom, ')
+          ..write('severity: $severity, ')
+          ..write('painRating: $painRating, ')
+          ..write('painLocationsJson: $painLocationsJson, ')
+          ..write('functionalImpactsJson: $functionalImpactsJson, ')
+          ..write('experiencedDay: $experiencedDay, ')
+          ..write('recordedAtMillis: $recordedAtMillis, ')
+          ..write('updatedAtMillis: $updatedAtMillis, ')
+          ..write('provenance: $provenance, ')
+          ..write('userConfirmed: $userConfirmed, ')
+          ..write('vocabularyVersion: $vocabularyVersion')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(
+    id,
+    symptom,
+    severity,
+    painRating,
+    painLocationsJson,
+    functionalImpactsJson,
+    experiencedDay,
+    recordedAtMillis,
+    updatedAtMillis,
+    provenance,
+    userConfirmed,
+    vocabularyVersion,
+  );
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is HealthRecordRow &&
+          other.id == this.id &&
+          other.symptom == this.symptom &&
+          other.severity == this.severity &&
+          other.painRating == this.painRating &&
+          other.painLocationsJson == this.painLocationsJson &&
+          other.functionalImpactsJson == this.functionalImpactsJson &&
+          other.experiencedDay == this.experiencedDay &&
+          other.recordedAtMillis == this.recordedAtMillis &&
+          other.updatedAtMillis == this.updatedAtMillis &&
+          other.provenance == this.provenance &&
+          other.userConfirmed == this.userConfirmed &&
+          other.vocabularyVersion == this.vocabularyVersion);
+}
+
+class HealthRecordRowsCompanion extends UpdateCompanion<HealthRecordRow> {
+  final Value<String> id;
+  final Value<String> symptom;
+  final Value<int> severity;
+  final Value<int?> painRating;
+  final Value<String> painLocationsJson;
+  final Value<String> functionalImpactsJson;
+  final Value<int> experiencedDay;
+  final Value<int> recordedAtMillis;
+  final Value<int> updatedAtMillis;
+  final Value<String> provenance;
+  final Value<bool> userConfirmed;
+  final Value<int> vocabularyVersion;
+  final Value<int> rowid;
+  const HealthRecordRowsCompanion({
+    this.id = const Value.absent(),
+    this.symptom = const Value.absent(),
+    this.severity = const Value.absent(),
+    this.painRating = const Value.absent(),
+    this.painLocationsJson = const Value.absent(),
+    this.functionalImpactsJson = const Value.absent(),
+    this.experiencedDay = const Value.absent(),
+    this.recordedAtMillis = const Value.absent(),
+    this.updatedAtMillis = const Value.absent(),
+    this.provenance = const Value.absent(),
+    this.userConfirmed = const Value.absent(),
+    this.vocabularyVersion = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  HealthRecordRowsCompanion.insert({
+    required String id,
+    required String symptom,
+    required int severity,
+    this.painRating = const Value.absent(),
+    required String painLocationsJson,
+    required String functionalImpactsJson,
+    required int experiencedDay,
+    required int recordedAtMillis,
+    required int updatedAtMillis,
+    required String provenance,
+    required bool userConfirmed,
+    required int vocabularyVersion,
+    this.rowid = const Value.absent(),
+  }) : id = Value(id),
+       symptom = Value(symptom),
+       severity = Value(severity),
+       painLocationsJson = Value(painLocationsJson),
+       functionalImpactsJson = Value(functionalImpactsJson),
+       experiencedDay = Value(experiencedDay),
+       recordedAtMillis = Value(recordedAtMillis),
+       updatedAtMillis = Value(updatedAtMillis),
+       provenance = Value(provenance),
+       userConfirmed = Value(userConfirmed),
+       vocabularyVersion = Value(vocabularyVersion);
+  static Insertable<HealthRecordRow> custom({
+    Expression<String>? id,
+    Expression<String>? symptom,
+    Expression<int>? severity,
+    Expression<int>? painRating,
+    Expression<String>? painLocationsJson,
+    Expression<String>? functionalImpactsJson,
+    Expression<int>? experiencedDay,
+    Expression<int>? recordedAtMillis,
+    Expression<int>? updatedAtMillis,
+    Expression<String>? provenance,
+    Expression<bool>? userConfirmed,
+    Expression<int>? vocabularyVersion,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (symptom != null) 'symptom': symptom,
+      if (severity != null) 'severity': severity,
+      if (painRating != null) 'pain_rating': painRating,
+      if (painLocationsJson != null) 'pain_locations_json': painLocationsJson,
+      if (functionalImpactsJson != null)
+        'functional_impacts_json': functionalImpactsJson,
+      if (experiencedDay != null) 'experienced_day': experiencedDay,
+      if (recordedAtMillis != null) 'recorded_at_millis': recordedAtMillis,
+      if (updatedAtMillis != null) 'updated_at_millis': updatedAtMillis,
+      if (provenance != null) 'provenance': provenance,
+      if (userConfirmed != null) 'user_confirmed': userConfirmed,
+      if (vocabularyVersion != null) 'vocabulary_version': vocabularyVersion,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  HealthRecordRowsCompanion copyWith({
+    Value<String>? id,
+    Value<String>? symptom,
+    Value<int>? severity,
+    Value<int?>? painRating,
+    Value<String>? painLocationsJson,
+    Value<String>? functionalImpactsJson,
+    Value<int>? experiencedDay,
+    Value<int>? recordedAtMillis,
+    Value<int>? updatedAtMillis,
+    Value<String>? provenance,
+    Value<bool>? userConfirmed,
+    Value<int>? vocabularyVersion,
+    Value<int>? rowid,
+  }) {
+    return HealthRecordRowsCompanion(
+      id: id ?? this.id,
+      symptom: symptom ?? this.symptom,
+      severity: severity ?? this.severity,
+      painRating: painRating ?? this.painRating,
+      painLocationsJson: painLocationsJson ?? this.painLocationsJson,
+      functionalImpactsJson:
+          functionalImpactsJson ?? this.functionalImpactsJson,
+      experiencedDay: experiencedDay ?? this.experiencedDay,
+      recordedAtMillis: recordedAtMillis ?? this.recordedAtMillis,
+      updatedAtMillis: updatedAtMillis ?? this.updatedAtMillis,
+      provenance: provenance ?? this.provenance,
+      userConfirmed: userConfirmed ?? this.userConfirmed,
+      vocabularyVersion: vocabularyVersion ?? this.vocabularyVersion,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<String>(id.value);
+    }
+    if (symptom.present) {
+      map['symptom'] = Variable<String>(symptom.value);
+    }
+    if (severity.present) {
+      map['severity'] = Variable<int>(severity.value);
+    }
+    if (painRating.present) {
+      map['pain_rating'] = Variable<int>(painRating.value);
+    }
+    if (painLocationsJson.present) {
+      map['pain_locations_json'] = Variable<String>(painLocationsJson.value);
+    }
+    if (functionalImpactsJson.present) {
+      map['functional_impacts_json'] = Variable<String>(
+        functionalImpactsJson.value,
+      );
+    }
+    if (experiencedDay.present) {
+      map['experienced_day'] = Variable<int>(experiencedDay.value);
+    }
+    if (recordedAtMillis.present) {
+      map['recorded_at_millis'] = Variable<int>(recordedAtMillis.value);
+    }
+    if (updatedAtMillis.present) {
+      map['updated_at_millis'] = Variable<int>(updatedAtMillis.value);
+    }
+    if (provenance.present) {
+      map['provenance'] = Variable<String>(provenance.value);
+    }
+    if (userConfirmed.present) {
+      map['user_confirmed'] = Variable<bool>(userConfirmed.value);
+    }
+    if (vocabularyVersion.present) {
+      map['vocabulary_version'] = Variable<int>(vocabularyVersion.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('HealthRecordRowsCompanion(')
+          ..write('id: $id, ')
+          ..write('symptom: $symptom, ')
+          ..write('severity: $severity, ')
+          ..write('painRating: $painRating, ')
+          ..write('painLocationsJson: $painLocationsJson, ')
+          ..write('functionalImpactsJson: $functionalImpactsJson, ')
+          ..write('experiencedDay: $experiencedDay, ')
+          ..write('recordedAtMillis: $recordedAtMillis, ')
+          ..write('updatedAtMillis: $updatedAtMillis, ')
+          ..write('provenance: $provenance, ')
+          ..write('userConfirmed: $userConfirmed, ')
+          ..write('vocabularyVersion: $vocabularyVersion, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
 abstract class _$LetterHealthDatabase extends GeneratedDatabase {
   _$LetterHealthDatabase(QueryExecutor e) : super(e);
   $LetterHealthDatabaseManager get managers =>
@@ -1994,6 +2748,9 @@ abstract class _$LetterHealthDatabase extends GeneratedDatabase {
   late final $CareRecordRowsTable careRecordRows = $CareRecordRowsTable(this);
   late final $CareReflectionRowsTable careReflectionRows =
       $CareReflectionRowsTable(this);
+  late final $HealthRecordRowsTable healthRecordRows = $HealthRecordRowsTable(
+    this,
+  );
   @override
   Iterable<TableInfo<Table, Object?>> get allTables =>
       allSchemaEntities.whereType<TableInfo<Table, Object?>>();
@@ -2003,6 +2760,7 @@ abstract class _$LetterHealthDatabase extends GeneratedDatabase {
     impulseDraftRows,
     careRecordRows,
     careReflectionRows,
+    healthRecordRows,
   ];
 }
 
@@ -3044,6 +3802,367 @@ typedef $$CareReflectionRowsTableProcessedTableManager =
       CareReflectionRow,
       PrefetchHooks Function()
     >;
+typedef $$HealthRecordRowsTableCreateCompanionBuilder =
+    HealthRecordRowsCompanion Function({
+      required String id,
+      required String symptom,
+      required int severity,
+      Value<int?> painRating,
+      required String painLocationsJson,
+      required String functionalImpactsJson,
+      required int experiencedDay,
+      required int recordedAtMillis,
+      required int updatedAtMillis,
+      required String provenance,
+      required bool userConfirmed,
+      required int vocabularyVersion,
+      Value<int> rowid,
+    });
+typedef $$HealthRecordRowsTableUpdateCompanionBuilder =
+    HealthRecordRowsCompanion Function({
+      Value<String> id,
+      Value<String> symptom,
+      Value<int> severity,
+      Value<int?> painRating,
+      Value<String> painLocationsJson,
+      Value<String> functionalImpactsJson,
+      Value<int> experiencedDay,
+      Value<int> recordedAtMillis,
+      Value<int> updatedAtMillis,
+      Value<String> provenance,
+      Value<bool> userConfirmed,
+      Value<int> vocabularyVersion,
+      Value<int> rowid,
+    });
+
+class $$HealthRecordRowsTableFilterComposer
+    extends Composer<_$LetterHealthDatabase, $HealthRecordRowsTable> {
+  $$HealthRecordRowsTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get symptom => $composableBuilder(
+    column: $table.symptom,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get severity => $composableBuilder(
+    column: $table.severity,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get painRating => $composableBuilder(
+    column: $table.painRating,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get painLocationsJson => $composableBuilder(
+    column: $table.painLocationsJson,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get functionalImpactsJson => $composableBuilder(
+    column: $table.functionalImpactsJson,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get experiencedDay => $composableBuilder(
+    column: $table.experiencedDay,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get recordedAtMillis => $composableBuilder(
+    column: $table.recordedAtMillis,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get updatedAtMillis => $composableBuilder(
+    column: $table.updatedAtMillis,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get provenance => $composableBuilder(
+    column: $table.provenance,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get userConfirmed => $composableBuilder(
+    column: $table.userConfirmed,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get vocabularyVersion => $composableBuilder(
+    column: $table.vocabularyVersion,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$HealthRecordRowsTableOrderingComposer
+    extends Composer<_$LetterHealthDatabase, $HealthRecordRowsTable> {
+  $$HealthRecordRowsTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get symptom => $composableBuilder(
+    column: $table.symptom,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get severity => $composableBuilder(
+    column: $table.severity,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get painRating => $composableBuilder(
+    column: $table.painRating,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get painLocationsJson => $composableBuilder(
+    column: $table.painLocationsJson,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get functionalImpactsJson => $composableBuilder(
+    column: $table.functionalImpactsJson,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get experiencedDay => $composableBuilder(
+    column: $table.experiencedDay,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get recordedAtMillis => $composableBuilder(
+    column: $table.recordedAtMillis,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get updatedAtMillis => $composableBuilder(
+    column: $table.updatedAtMillis,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get provenance => $composableBuilder(
+    column: $table.provenance,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<bool> get userConfirmed => $composableBuilder(
+    column: $table.userConfirmed,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get vocabularyVersion => $composableBuilder(
+    column: $table.vocabularyVersion,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$HealthRecordRowsTableAnnotationComposer
+    extends Composer<_$LetterHealthDatabase, $HealthRecordRowsTable> {
+  $$HealthRecordRowsTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<String> get symptom =>
+      $composableBuilder(column: $table.symptom, builder: (column) => column);
+
+  GeneratedColumn<int> get severity =>
+      $composableBuilder(column: $table.severity, builder: (column) => column);
+
+  GeneratedColumn<int> get painRating => $composableBuilder(
+    column: $table.painRating,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get painLocationsJson => $composableBuilder(
+    column: $table.painLocationsJson,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get functionalImpactsJson => $composableBuilder(
+    column: $table.functionalImpactsJson,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get experiencedDay => $composableBuilder(
+    column: $table.experiencedDay,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get recordedAtMillis => $composableBuilder(
+    column: $table.recordedAtMillis,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get updatedAtMillis => $composableBuilder(
+    column: $table.updatedAtMillis,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get provenance => $composableBuilder(
+    column: $table.provenance,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<bool> get userConfirmed => $composableBuilder(
+    column: $table.userConfirmed,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get vocabularyVersion => $composableBuilder(
+    column: $table.vocabularyVersion,
+    builder: (column) => column,
+  );
+}
+
+class $$HealthRecordRowsTableTableManager
+    extends
+        RootTableManager<
+          _$LetterHealthDatabase,
+          $HealthRecordRowsTable,
+          HealthRecordRow,
+          $$HealthRecordRowsTableFilterComposer,
+          $$HealthRecordRowsTableOrderingComposer,
+          $$HealthRecordRowsTableAnnotationComposer,
+          $$HealthRecordRowsTableCreateCompanionBuilder,
+          $$HealthRecordRowsTableUpdateCompanionBuilder,
+          (
+            HealthRecordRow,
+            BaseReferences<
+              _$LetterHealthDatabase,
+              $HealthRecordRowsTable,
+              HealthRecordRow
+            >,
+          ),
+          HealthRecordRow,
+          PrefetchHooks Function()
+        > {
+  $$HealthRecordRowsTableTableManager(
+    _$LetterHealthDatabase db,
+    $HealthRecordRowsTable table,
+  ) : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$HealthRecordRowsTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$HealthRecordRowsTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$HealthRecordRowsTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<String> id = const Value.absent(),
+                Value<String> symptom = const Value.absent(),
+                Value<int> severity = const Value.absent(),
+                Value<int?> painRating = const Value.absent(),
+                Value<String> painLocationsJson = const Value.absent(),
+                Value<String> functionalImpactsJson = const Value.absent(),
+                Value<int> experiencedDay = const Value.absent(),
+                Value<int> recordedAtMillis = const Value.absent(),
+                Value<int> updatedAtMillis = const Value.absent(),
+                Value<String> provenance = const Value.absent(),
+                Value<bool> userConfirmed = const Value.absent(),
+                Value<int> vocabularyVersion = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => HealthRecordRowsCompanion(
+                id: id,
+                symptom: symptom,
+                severity: severity,
+                painRating: painRating,
+                painLocationsJson: painLocationsJson,
+                functionalImpactsJson: functionalImpactsJson,
+                experiencedDay: experiencedDay,
+                recordedAtMillis: recordedAtMillis,
+                updatedAtMillis: updatedAtMillis,
+                provenance: provenance,
+                userConfirmed: userConfirmed,
+                vocabularyVersion: vocabularyVersion,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required String id,
+                required String symptom,
+                required int severity,
+                Value<int?> painRating = const Value.absent(),
+                required String painLocationsJson,
+                required String functionalImpactsJson,
+                required int experiencedDay,
+                required int recordedAtMillis,
+                required int updatedAtMillis,
+                required String provenance,
+                required bool userConfirmed,
+                required int vocabularyVersion,
+                Value<int> rowid = const Value.absent(),
+              }) => HealthRecordRowsCompanion.insert(
+                id: id,
+                symptom: symptom,
+                severity: severity,
+                painRating: painRating,
+                painLocationsJson: painLocationsJson,
+                functionalImpactsJson: functionalImpactsJson,
+                experiencedDay: experiencedDay,
+                recordedAtMillis: recordedAtMillis,
+                updatedAtMillis: updatedAtMillis,
+                provenance: provenance,
+                userConfirmed: userConfirmed,
+                vocabularyVersion: vocabularyVersion,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$HealthRecordRowsTableProcessedTableManager =
+    ProcessedTableManager<
+      _$LetterHealthDatabase,
+      $HealthRecordRowsTable,
+      HealthRecordRow,
+      $$HealthRecordRowsTableFilterComposer,
+      $$HealthRecordRowsTableOrderingComposer,
+      $$HealthRecordRowsTableAnnotationComposer,
+      $$HealthRecordRowsTableCreateCompanionBuilder,
+      $$HealthRecordRowsTableUpdateCompanionBuilder,
+      (
+        HealthRecordRow,
+        BaseReferences<
+          _$LetterHealthDatabase,
+          $HealthRecordRowsTable,
+          HealthRecordRow
+        >,
+      ),
+      HealthRecordRow,
+      PrefetchHooks Function()
+    >;
 
 class $LetterHealthDatabaseManager {
   final _$LetterHealthDatabase _db;
@@ -3056,4 +4175,6 @@ class $LetterHealthDatabaseManager {
       $$CareRecordRowsTableTableManager(_db, _db.careRecordRows);
   $$CareReflectionRowsTableTableManager get careReflectionRows =>
       $$CareReflectionRowsTableTableManager(_db, _db.careReflectionRows);
+  $$HealthRecordRowsTableTableManager get healthRecordRows =>
+      $$HealthRecordRowsTableTableManager(_db, _db.healthRecordRows);
 }

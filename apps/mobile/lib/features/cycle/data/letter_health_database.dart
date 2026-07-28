@@ -55,14 +55,38 @@ class CareReflectionRows extends Table {
   Set<Column<Object>> get primaryKey => {id};
 }
 
+class HealthRecordRows extends Table {
+  TextColumn get id => text()();
+  TextColumn get symptom => text()();
+  IntColumn get severity => integer()();
+  IntColumn get painRating => integer().nullable()();
+  TextColumn get painLocationsJson => text()();
+  TextColumn get functionalImpactsJson => text()();
+  IntColumn get experiencedDay => integer()();
+  IntColumn get recordedAtMillis => integer()();
+  IntColumn get updatedAtMillis => integer()();
+  TextColumn get provenance => text()();
+  BoolColumn get userConfirmed => boolean()();
+  IntColumn get vocabularyVersion => integer()();
+
+  @override
+  Set<Column<Object>> get primaryKey => {id};
+}
+
 @DriftDatabase(
-  tables: [PeriodRows, ImpulseDraftRows, CareRecordRows, CareReflectionRows],
+  tables: [
+    PeriodRows,
+    ImpulseDraftRows,
+    CareRecordRows,
+    CareReflectionRows,
+    HealthRecordRows,
+  ],
 )
 class LetterHealthDatabase extends _$LetterHealthDatabase {
   LetterHealthDatabase(super.executor);
 
   @override
-  int get schemaVersion => 3;
+  int get schemaVersion => 4;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -73,6 +97,9 @@ class LetterHealthDatabase extends _$LetterHealthDatabase {
       if (from < 3) {
         await migrator.createTable(careRecordRows);
         await migrator.createTable(careReflectionRows);
+      }
+      if (from < 4) {
+        await migrator.createTable(healthRecordRows);
       }
     },
   );
