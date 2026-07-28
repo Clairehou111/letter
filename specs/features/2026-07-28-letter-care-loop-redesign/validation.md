@@ -16,6 +16,9 @@ Status: active
 - [x] local-first and deterministic safety boundaries remain intact
 - [x] acute game loops are finite and end in a real-world hand-off
 - [x] game rewards do not depend on greater suffering or longer sessions
+- [x] behavior data and clinical ratings remain separate
+- [x] reportable symptom severity comes directly from the user
+- [x] normal-use and prospective Doctor Mode reports have distinct claims
 
 ## Research Checks
 
@@ -27,6 +30,8 @@ Status: active
 | PMS reveals an objective hidden truth | unsupported; reframe as optional reflection |
 | haptics can be sold as pain treatment | unsupported; keep as optional sensory support |
 | moon/TCM framing drives North American payment | unvalidated market hypothesis |
+| tap behavior can become DRSP severity | rejected; it is not a patient rating |
+| later review can recreate prospective daily data | rejected; mark as recall |
 
 ## Prototype Validation Required
 
@@ -45,6 +50,9 @@ Test with target users before deep implementation:
 9. Does each mode produce meaningful feedback after one low-effort gesture?
 10. Can users leave the experience without completing a game or reflection?
 11. Does the physical-pain route make unusual/severe symptoms easy to escalate?
+12. Can users distinguish a candidate symptom from a confirmed report value?
+13. Can clinicians identify prospective, same-day, and recalled ratings?
+14. Does every report value trace back to a user-confirmed local record?
 
 ## Acceptance Gate
 

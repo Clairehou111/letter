@@ -29,6 +29,11 @@ The acute interaction model is defined in
 finite, one-thumb game loops that produce immediate feedback and then hand the
 user back to a practical action; it does not optimize for time spent.
 
+Clinical reporting is defined in
+[`specs/clinical-data-and-reporting.md`](specs/clinical-data-and-reporting.md).
+Care behavior may propose a symptom for later confirmation but never becomes an
+inferred clinical severity score.
+
 ## Mobile
 
 ```bash

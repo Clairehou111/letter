@@ -257,6 +257,11 @@ requires concept testing with target users.
 
 - Prospective cycle and symptom records help reduce recall bias and distinguish
   recurring premenstrual patterns from symptoms occurring throughout a cycle.
+- Interaction behavior is not a clinical severity score. Tap count, pressure,
+  duration, Care-mode use, medication logging, or app absence may create a
+  candidate for later confirmation but never a reportable symptom rating.
+- Clinical reports distinguish prospective user ratings, same-day ratings,
+  later recall, factual Care events, and user-entered medication events.
 - The energetic Shatter ritual is not treated as a therapeutic mechanism.
   Letter's defensible intervention is the immediate downshift, removal of send
   affordances, explicit delay, and later user-directed review.
@@ -275,6 +280,9 @@ Clinical anchors:
   https://dailymed.nlm.nih.gov/dailymed/drugInfo.cfm?setid=ae1625f4-ef32-4d4f-bf54-c44085843e41
 - U.S. DailyMed naproxen menstrual-pain label:
   https://dailymed.nlm.nih.gov/dailymed/lookup.cfm?setid=2b4135b3-389c-46e2-ae86-7674c2ab9a32
+
+See `clinical-data-and-reporting.md` for the clinical provenance model, recovery
+receipt, Doctor Mode, and report structure.
 
 ## Experience Architecture
 

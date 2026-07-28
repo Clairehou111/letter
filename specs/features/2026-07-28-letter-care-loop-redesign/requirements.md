@@ -91,6 +91,27 @@ near-zero effort for heavy/low, chaos-to-order for racing thoughts,
 outside-to-closed for social overload, and low-stimulation plus practical
 handoff for physical pain.
 
+REQ-020: Keep observed Care events, unconfirmed symptom candidates, and
+user-confirmed clinical ratings as separate data layers. Never map interaction
+frequency, pressure, duration, app absence, or Care-mode use directly to a
+clinical severity score.
+
+REQ-021: Offer an optional recovery receipt that lets the user confirm symptom,
+six-point severity, functional impact, and other signals after an acute event.
+Mark ratings entered later as recall rather than prospective data.
+
+REQ-022: Provide two report tiers: a provenance-safe Cycle and Care Summary for
+normal use and a Prospective Clinical Diary for an optional two-cycle Doctor
+Mode.
+
+REQ-023: Do not use `DRSP`, `DRSP-compatible`, or diagnostic-equivalence claims
+until the exact instrument, licensing, wording, scoring, daily completion, and
+clinical review requirements are satisfied.
+
+REQ-024: Every report value must identify whether it came from a prospective
+user rating, same-day user rating, later recall, factual Care event, or
+user-entered medication event. AI candidates cannot appear until confirmed.
+
 ## Non-Goals
 
 - implementing all Care modes in one feature

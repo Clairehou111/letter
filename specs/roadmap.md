@@ -49,13 +49,14 @@ and goals require a separate revision after the Care-loop redesign is approved.
 | 1 | Symptom, severity, pain-location, mood, and energy logging | proposed |
 | 2 | Text and on-device voice capture | proposed |
 | 3 | LLM-assisted structured confirmation | proposed |
-| 4 | Cautious personal patterns and remedy matching | proposed |
+| 4 | Recovery receipt and confirmed clinical ratings | proposed |
+| 5 | Cautious personal patterns and remedy matching | proposed |
 
 ## Phase 4: Reports And Commercial Readiness
 
 | Order | Feature | Status |
 | --- | --- | --- |
-| 1 | Doctor-ready report generation and export | proposed |
+| 1 | Doctor Mode, provenance-safe report, and export | proposed |
 | 2 | Authentication and subscription entitlement | proposed |
 | 3 | Privacy-safe operational analytics | proposed |
 | 4 | Optional encrypted backup demand test | proposed |
