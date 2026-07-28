@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:letter_mobile/app/letter_app.dart';
 import 'package:letter_mobile/design_system/letter_theme.dart';
+import 'package:letter_mobile/features/care/presentation/care_screen.dart';
 import 'package:letter_mobile/features/cycle/data/in_memory_period_repository.dart';
 import 'package:letter_mobile/features/cycle/domain/period_repository.dart';
 import 'package:letter_mobile/features/onboarding/data/onboarding_repository.dart';
@@ -243,6 +244,32 @@ void main() {
 
     expect(find.text('Your cycle record'), findsOneWidget);
     expect(find.byKey(const Key('start-period-today')), findsOneWidget);
+  });
+
+  testWidgets('Today action and bottom tab open the same Care destination', (
+    tester,
+  ) async {
+    final repository = FakeOnboardingRepository(
+      profile: OnboardingProfile(
+        cloudToolsPreference: CloudToolsPreference.off,
+        selectedGoals: const {},
+      ),
+    );
+    await pumpLetter(tester, repository);
+
+    await tester.tap(find.byKey(const Key('open-care-button')));
+    await tester.pumpAndSettle();
+    expect(find.byType(CareScreen), findsOneWidget);
+    expect(find.text('What is closest to this moment?'), findsOneWidget);
+
+    await tester.tap(find.byKey(const Key('navigation-today')));
+    await tester.pumpAndSettle();
+    expect(find.byType(TodayScreen), findsOneWidget);
+
+    await tester.tap(find.byKey(const Key('navigation-care')));
+    await tester.pumpAndSettle();
+    expect(find.byType(CareScreen), findsOneWidget);
+    expect(find.text('What is closest to this moment?'), findsOneWidget);
   });
 
   testWidgets('returning from Cycle reloads the new period on Today', (

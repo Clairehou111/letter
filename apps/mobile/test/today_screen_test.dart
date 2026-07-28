@@ -348,21 +348,18 @@ void main() {
     }
   });
 
-  testWidgets('opens the low-effort Care sheet', (tester) async {
-    await pumpToday(tester);
+  testWidgets('routes the Care action to the primary Care destination', (
+    tester,
+  ) async {
+    int? selectedNavigation;
+    await pumpToday(
+      tester,
+      onNavigationSelected: (index) => selectedNavigation = index,
+    );
 
     await tester.tap(find.byKey(const Key('open-care-button')));
-    await tester.pumpAndSettle();
 
-    expect(find.text('What would feel easier right now?'), findsOneWidget);
-    expect(find.text('Ease pain'), findsOneWidget);
-    expect(find.text('Settle my body'), findsOneWidget);
-    expect(find.text('Feel less alone'), findsOneWidget);
-    expect(find.text('Use my plan'), findsOneWidget);
-
-    await tester.tap(find.byKey(const Key('care-ease-pain')));
-    await tester.pumpAndSettle();
-    expect(find.text('Start gently'), findsOneWidget);
+    expect(selectedNavigation, 3);
   });
 
   testWidgets('keeps primary touch targets at least 44 logical pixels', (

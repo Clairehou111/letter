@@ -33,6 +33,13 @@ claims, fake Recent entries, personal notes, remedies, contacts, and Care plans
 have been removed. Quick-state input remains session-only until the dedicated
 health-record feature defines persistence, editing, deletion, and provenance.
 
+Care is now a working primary destination with five direct entrances:
+exploding, heavy, racing thoughts, needing everyone away, and physical pain.
+Each entrance demonstrates one finite immediate-response loop, one protective
+line, one real-world hand-off, and explicit exit and safety boundaries. These
+shell interactions do not persist data or imply that personal Care history
+already exists. Dedicated mode mechanics and memory remain separate features.
+
 The current product direction is defined in
 [`specs/product-philosophy.md`](specs/product-philosophy.md). Letter combines
 period tracking with a cross-cycle Care loop: contain a hard moment, check back

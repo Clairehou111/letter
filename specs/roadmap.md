@@ -44,7 +44,7 @@ and goals require a separate revision after the Care-loop redesign is approved.
 
 | Order | Feature | Status |
 | --- | --- | --- |
-| 1 | Five-way Care entrance and finite reward shell | proposed |
+| 1 | Five-way Care entrance and finite reward shell | validated ([spec](features/2026-07-28-five-way-care-shell/)) |
 | 2 | Angry/overloaded impulse buffer | proposed |
 | 3 | Heavy/low presence flow | proposed |
 | 4 | Racing-thoughts convergence flow | proposed |
@@ -53,6 +53,11 @@ and goals require a separate revision after the Care-loop redesign is approved.
 | 7 | Care action check-back and personal kit | proposed |
 | 8 | Clearer-day reflection and future-self note | proposed |
 | 9 | Cycle Letters archive | proposed |
+
+The Care gate is now a working primary destination. All five experiential
+entrances use a finite, escapable response shell with explicit emotional or
+physical safety boundaries. Mode-specific mechanics, persistence, check-backs,
+and personal memory remain in their dedicated roadmap features.
 
 ## Phase 3: Effortless Logging And Learning
 

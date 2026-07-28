@@ -2,6 +2,7 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 
+import '../../design_system/letter_bottom_navigation.dart';
 import '../../design_system/letter_theme.dart';
 import '../cycle/domain/cycle_prediction.dart';
 import '../cycle/domain/local_date.dart';
@@ -117,14 +118,8 @@ class _TodayScreenState extends State<TodayScreen> {
     );
   }
 
-  Future<void> _openCareSheet() {
-    return showModalBottomSheet<void>(
-      context: context,
-      isScrollControlled: true,
-      useSafeArea: true,
-      barrierColor: LetterColors.ink.withValues(alpha: 0.35),
-      builder: (context) => const CareSheet(),
-    );
+  void _openCare() {
+    widget.onNavigationSelected?.call(3);
   }
 
   Future<void> _openQuickStateSheet() async {
@@ -174,7 +169,7 @@ class _TodayScreenState extends State<TodayScreen> {
                                   widget.onNavigationSelected?.call(0),
                             ),
                             const SizedBox(height: LetterSpacing.xl),
-                            TodayCareEntry(onOpenCare: _openCareSheet),
+                            TodayCareEntry(onOpenCare: _openCare),
                             const SizedBox(height: LetterSpacing.xl),
                             const LetterSectionTitle(
                               eyebrow: 'A quick check-in',
@@ -740,94 +735,6 @@ class StateButton extends StatelessWidget {
   }
 }
 
-class LetterBottomNavigation extends StatelessWidget {
-  const LetterBottomNavigation({
-    super.key,
-    this.selectedIndex = 2,
-    this.onSelected,
-  });
-
-  final int selectedIndex;
-  final ValueChanged<int>? onSelected;
-
-  static const items = [
-    ('Cycle', Icons.calendar_today_outlined),
-    ('Letters', Icons.mail_outline),
-    ('Today', Icons.home_outlined),
-    ('Care', Icons.volunteer_activism_outlined),
-    ('You', Icons.person_outline),
-  ];
-
-  @override
-  Widget build(BuildContext context) {
-    return SafeArea(
-      top: false,
-      child: Container(
-        height: 70,
-        decoration: const BoxDecoration(
-          color: LetterColors.surface,
-          border: Border(top: BorderSide(color: LetterColors.line)),
-        ),
-        child: Row(
-          children: List.generate(items.length, (index) {
-            final item = items[index];
-            final active = index == selectedIndex;
-            return Expanded(
-              child: Semantics(
-                button: true,
-                selected: active,
-                label: '${item.$1} tab',
-                child: InkWell(
-                  key: Key('navigation-${item.$1.toLowerCase()}'),
-                  onTap: () => onSelected?.call(index),
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Container(
-                        width: 30,
-                        height: 30,
-                        decoration: BoxDecoration(
-                          color: active
-                              ? LetterColors.teal
-                              : Colors.transparent,
-                          borderRadius: BorderRadius.circular(7),
-                        ),
-                        child: Icon(
-                          item.$2,
-                          size: 20,
-                          color: active ? Colors.white : LetterColors.muted,
-                        ),
-                      ),
-                      const SizedBox(height: 3),
-                      MediaQuery.withClampedTextScaling(
-                        maxScaleFactor: 1.3,
-                        child: Text(
-                          item.$1,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: TextStyle(
-                            color: active
-                                ? LetterColors.teal
-                                : LetterColors.muted,
-                            fontSize: 9,
-                            fontWeight: active
-                                ? FontWeight.w800
-                                : FontWeight.w600,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            );
-          }).toList(),
-        ),
-      ),
-    );
-  }
-}
-
 class StateDetailSheet extends StatefulWidget {
   const StateDetailSheet({required this.state, super.key});
 
@@ -1035,120 +942,6 @@ class SeveritySelector extends StatelessWidget {
             ),
           );
         }).toList(),
-      ),
-    );
-  }
-}
-
-class CareSheet extends StatefulWidget {
-  const CareSheet({super.key});
-
-  @override
-  State<CareSheet> createState() => _CareSheetState();
-}
-
-class _CareSheetState extends State<CareSheet> {
-  String? selectedAction;
-
-  static const actions = [
-    ('Ease pain', Icons.thermostat_outlined, 'Heat, position, and quiet'),
-    ('Settle my body', Icons.spa_outlined, 'Breathing without a lesson'),
-    ('Feel less alone', Icons.chat_bubble_outline, 'A saved message or person'),
-    ('Use my plan', Icons.bookmark_outline, 'What helped in past cycles'),
-  ];
-
-  @override
-  Widget build(BuildContext context) {
-    return LetterSheetFrame(
-      title: 'What would feel easier right now?',
-      subtitle:
-          'No lesson. No perfect choice. Start with the smallest comfort.',
-      child: Column(
-        children: [
-          ...actions.map(
-            (action) => Padding(
-              padding: const EdgeInsets.only(bottom: LetterSpacing.xs),
-              child: Semantics(
-                button: true,
-                selected: selectedAction == action.$1,
-                child: InkWell(
-                  key: Key(
-                    'care-${action.$1.toLowerCase().replaceAll(' ', '-')}',
-                  ),
-                  onTap: () => setState(() => selectedAction = action.$1),
-                  borderRadius: BorderRadius.circular(LetterRadius.panel),
-                  child: AnimatedContainer(
-                    duration: const Duration(milliseconds: 160),
-                    constraints: const BoxConstraints(minHeight: 64),
-                    padding: const EdgeInsets.all(LetterSpacing.sm),
-                    decoration: BoxDecoration(
-                      color: selectedAction == action.$1
-                          ? LetterColors.tealSoft
-                          : LetterColors.surface,
-                      border: Border.all(
-                        color: selectedAction == action.$1
-                            ? LetterColors.teal
-                            : LetterColors.line,
-                      ),
-                      borderRadius: BorderRadius.circular(LetterRadius.panel),
-                    ),
-                    child: Row(
-                      children: [
-                        Icon(action.$2, color: LetterColors.teal),
-                        const SizedBox(width: LetterSpacing.sm),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                action.$1,
-                                style: const TextStyle(
-                                  fontWeight: FontWeight.w800,
-                                ),
-                              ),
-                              const SizedBox(height: 2),
-                              Text(
-                                action.$3,
-                                style: const TextStyle(
-                                  color: LetterColors.muted,
-                                  fontSize: 12,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                        Icon(
-                          selectedAction == action.$1
-                              ? Icons.check_circle
-                              : Icons.chevron_right,
-                          color: selectedAction == action.$1
-                              ? LetterColors.teal
-                              : LetterColors.muted,
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ),
-            ),
-          ),
-          const SizedBox(height: LetterSpacing.sm),
-          FilledButton(
-            onPressed: selectedAction == null
-                ? null
-                : () => Navigator.of(context).pop(),
-            style: FilledButton.styleFrom(
-              minimumSize: const Size.fromHeight(48),
-              backgroundColor: LetterColors.teal,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(LetterRadius.control),
-              ),
-            ),
-            child: Text(
-              selectedAction == null ? 'Choose one comfort' : 'Start gently',
-            ),
-          ),
-        ],
       ),
     );
   }
