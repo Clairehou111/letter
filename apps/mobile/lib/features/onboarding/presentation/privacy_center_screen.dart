@@ -80,6 +80,7 @@ class _LetterHomeState extends State<LetterHome> {
         onNavigationSelected: _selectTab,
         impulseBufferRepository: widget.impulseBufferRepository,
         careMemoryRepository: widget.careMemoryRepository,
+        healthRecordRepository: widget.healthRecordRepository,
         now: widget.now,
       );
     }

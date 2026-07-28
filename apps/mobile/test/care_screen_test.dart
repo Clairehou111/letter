@@ -13,6 +13,7 @@ import 'package:letter_mobile/features/care/presentation/need_space_flow.dart';
 import 'package:letter_mobile/features/care/presentation/physical_pain_flow.dart';
 import 'package:letter_mobile/features/care/presentation/racing_thoughts_flow.dart';
 import 'package:letter_mobile/features/care/presentation/safe_cocoon_stage.dart';
+import 'package:letter_mobile/features/health_records/data/in_memory_health_record_repository.dart';
 
 Future<void> pumpCare(
   WidgetTester tester, {
@@ -22,6 +23,7 @@ Future<void> pumpCare(
   ValueChanged<int>? onNavigationSelected,
   ImpulseBufferRepository? impulseBufferRepository,
   CareMemoryRepository? careMemoryRepository,
+  InMemoryHealthRecordRepository? healthRecordRepository,
   DateTime Function()? now,
 }) async {
   tester.view.devicePixelRatio = 1;
@@ -44,6 +46,8 @@ Future<void> pumpCare(
               impulseBufferRepository ?? InMemoryImpulseBufferRepository(),
           careMemoryRepository:
               careMemoryRepository ?? InMemoryCareMemoryRepository(),
+          healthRecordRepository:
+              healthRecordRepository ?? InMemoryHealthRecordRepository(),
           now: now ?? () => DateTime.utc(2026, 7, 28, 8),
         ),
       ),
@@ -246,6 +250,19 @@ void main() {
       await tester.tap(find.byKey(const Key('care-checkback-better')));
       await tester.pump();
       expect((await repository.getRecords()).single.outcome.name, 'better');
+
+      expect(
+        find.byKey(const Key('care-checkback-recovery-receipt')),
+        findsOneWidget,
+      );
+      await tester.tap(
+        find.byKey(const Key('care-checkback-recovery-receipt')),
+      );
+      await tester.pumpAndSettle();
+      expect(find.byKey(const Key('recovery-receipt-flow')), findsOneWidget);
+      await tester.tap(find.byKey(const Key('recovery-signal-not-remember')));
+      await tester.pumpAndSettle();
+      expect(find.byKey(const Key('care-checkback-recorded')), findsOneWidget);
 
       await tester.tap(find.byKey(const Key('care-checkback-keep')));
       await tester.pump();

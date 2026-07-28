@@ -6,6 +6,9 @@ import '../domain/care_memory.dart';
 import '../domain/care_memory_repository.dart';
 import '../domain/care_mode.dart';
 import '../domain/impulse_buffer_repository.dart';
+import '../../health_records/domain/health_record_repository.dart';
+import '../../recovery_receipt/application/recovery_receipt_controller.dart';
+import '../../recovery_receipt/presentation/recovery_receipt_flow.dart';
 import 'angry_impulse_flow.dart';
 import 'care_checkback_flow.dart';
 import 'care_safety_boundary_sheet.dart';
@@ -20,6 +23,7 @@ class CareScreen extends StatefulWidget {
     required this.onNavigationSelected,
     required this.impulseBufferRepository,
     required this.careMemoryRepository,
+    required this.healthRecordRepository,
     super.key,
     this.now,
   });
@@ -27,6 +31,7 @@ class CareScreen extends StatefulWidget {
   final ValueChanged<int> onNavigationSelected;
   final ImpulseBufferRepository impulseBufferRepository;
   final CareMemoryRepository careMemoryRepository;
+  final HealthRecordRepository healthRecordRepository;
   final DateTime Function()? now;
 
   @override
@@ -41,6 +46,7 @@ class _CareScreenState extends State<CareScreen> {
   List<CareRecord> _records = const [];
   List<CareReflection> _reflections = const [];
   bool _showCareKit = false;
+  bool _showRecoveryReceipt = false;
   bool _memoryBusy = false;
   bool _memoryError = false;
   Future<void> Function()? _retryMemoryOperation;
@@ -78,6 +84,7 @@ class _CareScreenState extends State<CareScreen> {
     setState(() {
       _activeMode = null;
       _showCareKit = false;
+      _showRecoveryReceipt = false;
       _pendingPhysicalCompletion = null;
     });
   }
@@ -86,6 +93,7 @@ class _CareScreenState extends State<CareScreen> {
     setState(() {
       _activeMode = null;
       _showCareKit = false;
+      _showRecoveryReceipt = false;
       _pendingCompletion = completion;
       _pendingPhysicalCompletion = null;
       _recordedCheckBack = null;
@@ -199,6 +207,19 @@ class _CareScreenState extends State<CareScreen> {
       _memoryError = false;
       _retryMemoryOperation = null;
     });
+  }
+
+  void _openRecoveryReceipt() {
+    if (_recordedCheckBack == null) {
+      return;
+    }
+    setState(() => _showRecoveryReceipt = true);
+  }
+
+  void _closeRecoveryReceipt() {
+    if (mounted) {
+      setState(() => _showRecoveryReceipt = false);
+    }
   }
 
   Future<void> _setKitPinned(String recordId, bool pinned) async {
@@ -322,6 +343,18 @@ class _CareScreenState extends State<CareScreen> {
       );
     }
     if (_pendingCompletion != null) {
+      if (_showRecoveryReceipt && _recordedCheckBack != null) {
+        return RecoveryReceiptFlow(
+          careRecord: _recordedCheckBack!,
+          controller: RecoveryReceiptController(
+            careMemoryRepository: widget.careMemoryRepository,
+            healthRecordRepository: widget.healthRecordRepository,
+            now: widget.now,
+          ),
+          onComplete: (_) => _closeRecoveryReceipt(),
+          onSkipped: _closeRecoveryReceipt,
+        );
+      }
       return CareCheckBackFlow(
         onOutcome: _recordOutcome,
         onSkip: _finishCheckBack,
@@ -332,6 +365,7 @@ class _CareScreenState extends State<CareScreen> {
         isBusy: _memoryBusy,
         hasError: _memoryError,
         onRetry: _retryMemoryOperation,
+        onOpenRecoveryReceipt: _openRecoveryReceipt,
       );
     }
     final activeMode = _activeMode;

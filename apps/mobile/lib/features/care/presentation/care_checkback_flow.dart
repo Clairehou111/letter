@@ -18,6 +18,7 @@ class CareCheckBackFlow extends StatelessWidget {
     this.isBusy = false,
     this.hasError = false,
     this.onRetry,
+    this.onOpenRecoveryReceipt,
   });
 
   final ValueChanged<CareOutcome> onOutcome;
@@ -29,6 +30,7 @@ class CareCheckBackFlow extends StatelessWidget {
   final bool isBusy;
   final bool hasError;
   final VoidCallback? onRetry;
+  final VoidCallback? onOpenRecoveryReceipt;
 
   @override
   Widget build(BuildContext context) {
@@ -87,6 +89,7 @@ class CareCheckBackFlow extends StatelessWidget {
                           isBusy: isBusy,
                           onKeepInKit: onKeepInKit,
                           onDone: onDone,
+                          onOpenRecoveryReceipt: onOpenRecoveryReceipt,
                         ),
                       if (isBusy) ...[
                         const SizedBox(height: LetterSpacing.md),
@@ -252,6 +255,7 @@ class _RecordedOutcome extends StatelessWidget {
     required this.isBusy,
     required this.onKeepInKit,
     required this.onDone,
+    this.onOpenRecoveryReceipt,
   });
 
   final CareOutcome outcome;
@@ -259,6 +263,7 @@ class _RecordedOutcome extends StatelessWidget {
   final bool isBusy;
   final VoidCallback onKeepInKit;
   final VoidCallback onDone;
+  final VoidCallback? onOpenRecoveryReceipt;
 
   @override
   Widget build(BuildContext context) {
@@ -325,6 +330,20 @@ class _RecordedOutcome extends StatelessWidget {
                 icon: const Icon(Icons.bookmark_add_outlined),
                 label: const Text('Keep in my Care Kit'),
               ),
+            if (onOpenRecoveryReceipt != null) ...[
+              const SizedBox(height: LetterSpacing.xs),
+              OutlinedButton.icon(
+                key: const Key('care-checkback-recovery-receipt'),
+                onPressed: isBusy ? null : onOpenRecoveryReceipt,
+                style: OutlinedButton.styleFrom(
+                  minimumSize: const Size.fromHeight(48),
+                  foregroundColor: LetterColors.teal,
+                  side: const BorderSide(color: LetterColors.teal),
+                ),
+                icon: const Icon(Icons.edit_note_outlined),
+                label: const Text('Record a body detail'),
+              ),
+            ],
             if (!isPinned) const SizedBox(height: LetterSpacing.xs),
             TextButton(
               key: const Key('care-checkback-done'),
