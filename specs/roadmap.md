@@ -99,18 +99,18 @@ to the same record model through Recovery Receipt. NLP and optional LLM output
 remain editable candidates and never assign severity, diagnosis, or function.
 
 The first Phase 3 implementation slice is now present as local-first modules:
-the health-record foundation is wired into Today, while Recovery Receipt,
-text/voice capture, NLP review, personal patterns, and archive views are
-implemented behind explicit interfaces and focused tests. Their navigation and
-repository integration remain the next implementation step; they are not yet
-claimed as end-to-end released capabilities.
+the health-record foundation, Recovery Receipt, text capture, personal
+patterns, archive views, and Cycle and Care Summary navigation use the shared
+local repositories. Voice recognition remains unavailable until a reviewed
+system-speech adapter is installed; NLP and optional LLM output remain editable
+candidates rather than records.
 
 ## Phase 4: Reports And Commercial Readiness
 
 | Order | Feature | Status |
 | --- | --- | --- |
-| 1 | Encrypted local export and import | proposed ([spec](features/2026-07-28-encrypted-local-export-import/)) |
-| 2 | Cycle and Care Summary export | proposed ([spec](features/2026-07-28-cycle-care-summary-export/)) |
+| 1 | Encrypted local export and import | in_progress ([spec](features/2026-07-28-encrypted-local-export-import/)) |
+| 2 | Cycle and Care Summary export | in_progress ([spec](features/2026-07-28-cycle-care-summary-export/)) |
 | 3 | Doctor Mode, prospective diary, and clinical report | proposed ([spec](features/2026-07-28-doctor-mode-prospective-diary/)) |
 | 4 | Authentication and subscription entitlement | proposed ([spec](features/2026-07-28-auth-subscription-entitlement/)) |
 | 5 | Privacy-safe operational analytics | proposed ([spec](features/2026-07-28-privacy-safe-operational-analytics/)) |

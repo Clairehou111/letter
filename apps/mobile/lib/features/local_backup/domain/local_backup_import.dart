@@ -172,6 +172,11 @@ abstract interface class LocalBackupImportStager {
   Future<StagedLocalBackupImport> stage(LocalBackupImportPlan plan);
 }
 
+/// A production local store can both capture its current records and stage an
+/// atomic import. It never sends a snapshot or passphrase to a server.
+abstract interface class LocalBackupStore
+    implements LocalBackupSnapshotProvider, LocalBackupImportStager {}
+
 abstract interface class StagedLocalBackupImport {
   LocalBackupImportPreview get preview;
 

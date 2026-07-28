@@ -10,6 +10,9 @@ import '../../cycle/domain/period_repository.dart';
 import '../../cycle/presentation/cycle_screen.dart';
 import '../../letters/presentation/letters_home_screen.dart';
 import '../../health_records/domain/health_record_repository.dart';
+import '../../local_backup/domain/local_backup_file_port.dart';
+import '../../local_backup/domain/local_backup_import.dart';
+import '../../local_backup/presentation/local_backup_screen.dart';
 import '../../today/today_screen.dart';
 import '../domain/onboarding_profile.dart';
 
@@ -26,6 +29,8 @@ class LetterHome extends StatefulWidget {
     required this.captureNoteStore,
     required this.onProfileChanged,
     required this.onReset,
+    this.localBackupStore,
+    this.localBackupFilePort,
     this.now,
     super.key,
   });
@@ -38,6 +43,8 @@ class LetterHome extends StatefulWidget {
   final CaptureNoteStore captureNoteStore;
   final UpdateOnboardingProfile onProfileChanged;
   final Future<void> Function() onReset;
+  final LocalBackupStore? localBackupStore;
+  final LocalBackupFilePort? localBackupFilePort;
   final DateTime Function()? now;
 
   @override
@@ -68,6 +75,8 @@ class _LetterHomeState extends State<LetterHome> {
         profile: widget.profile,
         onProfileChanged: widget.onProfileChanged,
         onReset: widget.onReset,
+        localBackupStore: widget.localBackupStore,
+        localBackupFilePort: widget.localBackupFilePort,
         onNavigationSelected: _selectTab,
       );
     }
@@ -104,6 +113,8 @@ class PrivacyCenterScreen extends StatefulWidget {
     required this.onProfileChanged,
     required this.onReset,
     required this.onNavigationSelected,
+    this.localBackupStore,
+    this.localBackupFilePort,
     super.key,
   });
 
@@ -111,6 +122,8 @@ class PrivacyCenterScreen extends StatefulWidget {
   final UpdateOnboardingProfile onProfileChanged;
   final Future<void> Function() onReset;
   final ValueChanged<int> onNavigationSelected;
+  final LocalBackupStore? localBackupStore;
+  final LocalBackupFilePort? localBackupFilePort;
 
   @override
   State<PrivacyCenterScreen> createState() => _PrivacyCenterScreenState();
@@ -249,6 +262,33 @@ class _PrivacyCenterScreenState extends State<PrivacyCenterScreen> {
                             _updatePreference(CloudToolsPreference.askEachTime),
                       ),
                       const SizedBox(height: LetterSpacing.xl),
+                      if (widget.localBackupStore != null &&
+                          widget.localBackupFilePort != null) ...[
+                        const LetterEyebrow('Local backup'),
+                        const SizedBox(height: LetterSpacing.sm),
+                        const Text(
+                          'Create an encrypted file you can keep yourself.',
+                          style: TextStyle(
+                            color: LetterColors.muted,
+                            height: 1.5,
+                          ),
+                        ),
+                        const SizedBox(height: LetterSpacing.sm),
+                        OutlinedButton.icon(
+                          key: const Key('open-local-backup'),
+                          onPressed: () => Navigator.of(context).push(
+                            MaterialPageRoute<void>(
+                              builder: (context) => LocalBackupScreen(
+                                store: widget.localBackupStore!,
+                                filePort: widget.localBackupFilePort!,
+                              ),
+                            ),
+                          ),
+                          icon: const Icon(Icons.lock_outline),
+                          label: const Text('Encrypted local backup'),
+                        ),
+                        const SizedBox(height: LetterSpacing.xl),
+                      ],
                       const LetterEyebrow('Your starting goals'),
                       const SizedBox(height: LetterSpacing.sm),
                       if (widget.profile.selectedGoals.isEmpty)

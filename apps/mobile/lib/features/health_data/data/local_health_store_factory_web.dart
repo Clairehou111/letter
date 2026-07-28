@@ -16,6 +16,7 @@ LocalHealthStore createDefaultLocalHealthStore() {
     careMemoryRepository: careMemoryRepository,
     healthRecordRepository: healthRecordRepository,
     captureNoteStore: InMemoryCaptureNoteStore(),
+    localBackupStore: null,
     closeStore: () async {
       await periodRepository.close();
       await impulseBufferRepository.close();

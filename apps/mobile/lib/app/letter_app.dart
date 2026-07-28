@@ -12,6 +12,8 @@ import '../features/health_data/data/local_health_store.dart';
 import '../features/health_data/data/local_health_store_factory.dart';
 import '../features/health_records/data/in_memory_health_record_repository.dart';
 import '../features/health_records/domain/health_record_repository.dart';
+import '../features/local_backup/domain/local_backup_file_port.dart';
+import '../features/local_backup/domain/local_backup_import.dart';
 import '../features/onboarding/data/onboarding_repository.dart';
 import '../features/onboarding/domain/onboarding_profile.dart';
 import '../features/onboarding/presentation/onboarding_flow.dart';
@@ -48,6 +50,7 @@ class _LetterAppState extends State<LetterApp> {
   late final CareMemoryRepository _careMemoryRepository;
   late final HealthRecordRepository _healthRecordRepository;
   late final CaptureNoteStore _captureNoteStore;
+  LocalBackupStore? _localBackupStore;
   LocalHealthStore? _ownedHealthStore;
   OnboardingProfile? _profile;
   bool _loaded = false;
@@ -69,6 +72,7 @@ class _LetterAppState extends State<LetterApp> {
       _careMemoryRepository = healthStore.careMemoryRepository;
       _healthRecordRepository = healthStore.healthRecordRepository;
       _captureNoteStore = healthStore.captureNoteStore;
+      _localBackupStore = healthStore.localBackupStore;
     } else {
       _periodRepository = widget.periodRepository ?? InMemoryPeriodRepository();
       _impulseBufferRepository =
@@ -161,6 +165,10 @@ class _LetterAppState extends State<LetterApp> {
               captureNoteStore: _captureNoteStore,
               onProfileChanged: _updateProfile,
               onReset: _resetOnboarding,
+              localBackupStore: _localBackupStore,
+              localBackupFilePort: _localBackupStore == null
+                  ? null
+                  : const SystemLocalBackupFilePort(),
               now: widget.now,
             ),
     );

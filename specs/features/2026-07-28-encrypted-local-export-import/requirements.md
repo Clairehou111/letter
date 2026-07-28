@@ -1,6 +1,6 @@
 # Encrypted Local Export And Import Requirements
 
-Status: proposed
+Status: in_progress
 Dependencies: all local health repositories and encrypted native database
 
 ## Goal
@@ -32,6 +32,10 @@ health export path unless its repository explicitly supports it.
 
 REQ-007: The server, API, analytics, and crash metadata never receive the
 plaintext package or its passphrase.
+
+REQ-008: Sealed impulse letters remain outside export and import. An import
+does not replace or reveal a destination sealed letter; it can only be handled
+through its existing Care flow.
 
 ## Non-Goals
 

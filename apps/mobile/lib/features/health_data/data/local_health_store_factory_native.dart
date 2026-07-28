@@ -13,6 +13,7 @@ import '../../capture/data/drift_capture_note_store.dart';
 import '../../cycle/data/drift_period_repository.dart';
 import '../../cycle/data/letter_health_database.dart';
 import '../../health_records/data/drift_health_record_repository.dart';
+import '../../local_backup/data/drift_local_backup_store.dart';
 import 'local_health_store.dart';
 
 const _databaseKeyName = 'letter.health_database.key.v1';
@@ -52,6 +53,7 @@ LocalHealthStore createDefaultLocalHealthStore() {
       closeDatabase: false,
     ),
     captureNoteStore: DriftCaptureNoteStore(database, closeDatabase: false),
+    localBackupStore: DriftLocalBackupStore(database),
     closeStore: database.close,
   );
 }

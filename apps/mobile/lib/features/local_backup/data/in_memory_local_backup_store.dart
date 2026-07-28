@@ -3,8 +3,7 @@ import '../domain/local_backup_models.dart';
 
 /// Reference transactional store for tests and non-persistent development.
 /// Production adapters must stage against the local encrypted database.
-final class InMemoryLocalBackupStore
-    implements LocalBackupSnapshotProvider, LocalBackupImportStager {
+final class InMemoryLocalBackupStore implements LocalBackupStore {
   InMemoryLocalBackupStore(this._snapshot);
 
   LocalBackupSnapshot _snapshot;
