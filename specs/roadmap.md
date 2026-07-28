@@ -19,7 +19,7 @@ confirmed mobile stack.
 
 | Order | Feature | Status |
 | --- | --- | --- |
-| 1 | Local onboarding and privacy choices | proposed |
+| 1 | Local onboarding and privacy choices | validated |
 | 2 | Period logging and history editing | proposed |
 | 3 | Cycle prediction and confidence display | proposed |
 | 4 | Today cycle-state summary | proposed |

@@ -46,7 +46,9 @@ enum TodayState {
 }
 
 class TodayScreen extends StatefulWidget {
-  const TodayScreen({super.key});
+  const TodayScreen({super.key, this.onNavigationSelected});
+
+  final ValueChanged<int>? onNavigationSelected;
 
   @override
   State<TodayScreen> createState() => _TodayScreenState();
@@ -79,7 +81,9 @@ class _TodayScreenState extends State<TodayScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      bottomNavigationBar: const LetterBottomNavigation(),
+      bottomNavigationBar: LetterBottomNavigation(
+        onSelected: widget.onNavigationSelected,
+      ),
       body: Center(
         child: ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: 480),
@@ -754,7 +758,14 @@ class RecentEntry extends StatelessWidget {
 }
 
 class LetterBottomNavigation extends StatelessWidget {
-  const LetterBottomNavigation({super.key});
+  const LetterBottomNavigation({
+    super.key,
+    this.selectedIndex = 2,
+    this.onSelected,
+  });
+
+  final int selectedIndex;
+  final ValueChanged<int>? onSelected;
 
   static const items = [
     ('Cycle', Icons.calendar_today_outlined),
@@ -775,15 +786,17 @@ class LetterBottomNavigation extends StatelessWidget {
           border: Border(top: BorderSide(color: LetterColors.line)),
         ),
         child: Row(
-          children: items.map((item) {
-            final active = item.$1 == 'Today';
+          children: List.generate(items.length, (index) {
+            final item = items[index];
+            final active = index == selectedIndex;
             return Expanded(
               child: Semantics(
                 button: true,
                 selected: active,
                 label: '${item.$1} tab',
                 child: InkWell(
-                  onTap: () {},
+                  key: Key('navigation-${item.$1.toLowerCase()}'),
+                  onTap: () => onSelected?.call(index),
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
