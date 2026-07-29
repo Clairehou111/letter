@@ -7,6 +7,7 @@ import 'package:letter_mobile/features/care/domain/care_memory.dart';
 import 'package:letter_mobile/features/care/domain/care_memory_repository.dart';
 import 'package:letter_mobile/features/care/domain/care_mode.dart';
 import 'package:letter_mobile/features/care/domain/impulse_buffer_repository.dart';
+import 'package:letter_mobile/features/care/presentation/care_safety_boundary_sheet.dart';
 import 'package:letter_mobile/features/care/presentation/care_screen.dart';
 import 'package:letter_mobile/features/care/presentation/heavy_presence_flow.dart';
 import 'package:letter_mobile/features/care/presentation/need_space_flow.dart';
@@ -180,8 +181,14 @@ void main() {
       find.text('This needs medical attention, not more interaction.'),
       findsOneWidget,
     );
-    expect(find.textContaining('needs medical assessment'), findsOneWidget);
+    expect(find.textContaining('Book a medical assessment'), findsOneWidget);
 
+    await tester.dragUntilVisible(
+      find.byKey(const Key('leave-care-from-safety')),
+      find.byType(CareSafetyBoundarySheet).first,
+      const Offset(0, -200),
+    );
+    await tester.pumpAndSettle();
     await tester.tap(find.byKey(const Key('leave-care-from-safety')));
     await tester.pumpAndSettle();
     expect(selectedNavigation, 2);

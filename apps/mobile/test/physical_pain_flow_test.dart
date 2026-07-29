@@ -263,9 +263,15 @@ void main() {
         findsOneWidget,
       );
       expect(
-        find.textContaining('New, unusual, severe, changing'),
+        find.textContaining('Book a medical assessment'),
         findsOneWidget,
       );
+      await tester.dragUntilVisible(
+        find.byKey(const Key('return-to-care-scene')),
+        find.byType(ListView).last,
+        const Offset(0, -200),
+      );
+      await tester.pumpAndSettle();
       await tester.tap(find.byKey(const Key('return-to-care-scene')));
       await tester.pumpAndSettle();
       expectPersistentControls();
@@ -278,6 +284,12 @@ void main() {
     await selectPath(tester, 'cramps');
 
     await tester.tap(find.byKey(const Key('physical-safety')));
+    await tester.pumpAndSettle();
+    await tester.dragUntilVisible(
+      find.byKey(const Key('leave-care-from-safety')),
+      find.byType(ListView).last,
+      const Offset(0, -200),
+    );
     await tester.pumpAndSettle();
     await tester.tap(find.byKey(const Key('leave-care-from-safety')));
     await tester.pump();

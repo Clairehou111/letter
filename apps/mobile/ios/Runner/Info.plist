@@ -66,5 +66,11 @@
 		<string>UIInterfaceOrientationLandscapeLeft</string>
 		<string>UIInterfaceOrientationLandscapeRight</string>
 	</array>
+	<key>LSApplicationQueriesSchemes</key>
+	<array>
+		<!-- Lets the safety boundary sheet open the Phone app dialer for
+		     crisis numbers. Only the dialer is opened; no call is placed. -->
+		<string>tel</string>
+	</array>
 </dict>
 </plist>
