@@ -311,7 +311,7 @@ class _RecoveryReceiptFlowState extends State<RecoveryReceiptFlow> {
                   Text(
                     _error!,
                     key: const Key('recovery-receipt-error'),
-                    style: const TextStyle(color: Color(0xFF9D3D35)),
+                    style: const TextStyle(color: LetterColors.safetyRed),
                   ),
                 ],
               ],

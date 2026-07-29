@@ -83,7 +83,9 @@ class _HealthRecordsScreenState extends State<HealthRecordsScreen> {
           FilledButton(
             key: const Key('health-record-confirm-delete'),
             onPressed: () => Navigator.pop(context, true),
-            style: FilledButton.styleFrom(backgroundColor: Color(0xFF9D3D35)),
+            style: FilledButton.styleFrom(
+              backgroundColor: LetterColors.safetyRed,
+            ),
             child: const Text('Delete'),
           ),
         ],
@@ -515,7 +517,7 @@ class _HealthRecordFormScreenState extends State<HealthRecordFormScreen> {
               Text(
                 _error!,
                 key: const Key('health-record-error'),
-                style: const TextStyle(color: Color(0xFF9D3D35)),
+                style: const TextStyle(color: LetterColors.safetyRed),
               ),
             ],
             const SizedBox(height: LetterSpacing.lg),

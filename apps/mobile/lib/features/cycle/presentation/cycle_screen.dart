@@ -178,7 +178,7 @@ class _CycleScreenState extends State<CycleScreen> {
             key: const Key('confirm-delete-period'),
             onPressed: () => Navigator.pop(context, true),
             style: FilledButton.styleFrom(
-              backgroundColor: const Color(0xFF9D3D35),
+              backgroundColor: LetterColors.safetyRed,
             ),
             child: const Text('Delete'),
           ),
@@ -566,7 +566,7 @@ class _CurrentPeriodPanel extends StatelessWidget {
                   children: [
                     const LetterEyebrow(
                       'In progress',
-                      color: Color(0xFF9D3D35),
+                      color: LetterColors.safetyRed,
                     ),
                     const SizedBox(height: LetterSpacing.xs),
                     Text(
@@ -602,7 +602,7 @@ class _CurrentPeriodPanel extends StatelessWidget {
               key: const Key('end-period-today'),
               onPressed: saving ? null : onEndToday,
               style: FilledButton.styleFrom(
-                backgroundColor: const Color(0xFF9D3D35),
+                backgroundColor: LetterColors.safetyRed,
               ),
               icon: const Icon(Icons.stop_circle_outlined),
               label: const Text('End period today'),
@@ -876,7 +876,7 @@ class _PeriodHistoryRow extends StatelessWidget {
               child: Text(
                 folioNumber.toString().padLeft(2, '0'),
                 style: const TextStyle(
-                  color: Color(0xFF9D3D35),
+                  color: LetterColors.safetyRed,
                   fontFamily: 'Newsreader',
                   fontSize: 19,
                   fontWeight: FontWeight.w700,
@@ -935,7 +935,10 @@ class _PeriodHistoryRow extends StatelessWidget {
               PopupMenuItem(
                 value: _PeriodMenuAction.delete,
                 child: ListTile(
-                  leading: Icon(Icons.delete_outline, color: Color(0xFF9D3D35)),
+                  leading: Icon(
+                    Icons.delete_outline,
+                    color: LetterColors.safetyRed,
+                  ),
                   title: Text('Delete'),
                   contentPadding: EdgeInsets.zero,
                 ),

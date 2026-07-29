@@ -518,7 +518,7 @@ class _CycleLetterRow extends StatelessWidget {
                                 const Text(
                                   'INCOMPLETE',
                                   style: TextStyle(
-                                    color: Color(0xFF9D3D35),
+                                    color: LetterColors.safetyRed,
                                     fontSize: 9,
                                     height: 1.2,
                                     fontWeight: FontWeight.w800,
@@ -684,7 +684,7 @@ class _CycleLetterDetail extends StatelessWidget {
                       letter.isComplete ? 'Completed cycle' : 'In progress',
                       color: letter.isComplete
                           ? LetterColors.violet
-                          : const Color(0xFF9D3D35),
+                          : LetterColors.safetyRed,
                     ),
                     const SizedBox(height: LetterSpacing.xs),
                     Text(

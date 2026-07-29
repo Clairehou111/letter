@@ -39,7 +39,7 @@ enum TodayState {
   irritable(
     'Irritable',
     Icons.local_fire_department_outlined,
-    Color(0xFFB45046),
+    LetterColors.safetyRed,
     LetterColors.coralSoft,
   ),
   physical(

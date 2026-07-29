@@ -165,7 +165,7 @@ class _OnboardingFlowState extends State<OnboardingFlow> {
                                 error,
                                 key: const Key('onboarding-save-error'),
                                 style: const TextStyle(
-                                  color: Color(0xFF9D3D35),
+                                  color: LetterColors.safetyRed,
                                   fontWeight: FontWeight.w700,
                                 ),
                               ),

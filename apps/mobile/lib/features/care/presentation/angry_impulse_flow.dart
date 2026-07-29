@@ -306,7 +306,7 @@ class _AngryImpulseFlowState extends State<AngryImpulseFlow> {
             key: const Key('confirm-delete-impulse'),
             onPressed: () => Navigator.of(context).pop(true),
             style: FilledButton.styleFrom(
-              backgroundColor: const Color(0xFFAD4E46),
+              backgroundColor: LetterColors.safetyRed,
             ),
             child: const Text('Delete permanently'),
           ),
@@ -440,7 +440,7 @@ class _AngryImpulseFlowState extends State<AngryImpulseFlow> {
       AngryImpulseStage.loading => [
         const SizedBox(height: 180),
         const Center(
-          child: CircularProgressIndicator(color: Color(0xFFAD4E46)),
+          child: CircularProgressIndicator(color: LetterColors.safetyRed),
         ),
       ],
       AngryImpulseStage.loadFailed => [
@@ -650,7 +650,7 @@ class _AngryImpulseFlowState extends State<AngryImpulseFlow> {
           onPressed: _busy ? null : () => _confirmDelete(sealedUnopened: false),
           style: TextButton.styleFrom(
             minimumSize: const Size.fromHeight(48),
-            foregroundColor: const Color(0xFFAD4E46),
+            foregroundColor: LetterColors.safetyRed,
           ),
           child: const Text('Delete permanently'),
         ),
@@ -756,7 +756,7 @@ class _AngryImpulseFlowState extends State<AngryImpulseFlow> {
         onPressed: _busy ? null : () => _confirmDelete(sealedUnopened: true),
         style: OutlinedButton.styleFrom(
           minimumSize: const Size.fromHeight(48),
-          foregroundColor: const Color(0xFFAD4E46),
+          foregroundColor: LetterColors.safetyRed,
           side: const BorderSide(color: Color(0xFFD7BAB6)),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(LetterRadius.control),
@@ -815,7 +815,7 @@ class _AngryImpulseFlowState extends State<AngryImpulseFlow> {
         onPressed: _busy ? null : () => _confirmDelete(sealedUnopened: true),
         style: TextButton.styleFrom(
           minimumSize: const Size.fromHeight(48),
-          foregroundColor: const Color(0xFFAD4E46),
+          foregroundColor: LetterColors.safetyRed,
         ),
         icon: const Icon(Icons.delete_outline),
         label: const Text('Delete unopened'),
@@ -823,7 +823,7 @@ class _AngryImpulseFlowState extends State<AngryImpulseFlow> {
     ];
   }
 
-  ButtonStyle _primaryStyle({Color background = const Color(0xFFAD4E46)}) {
+  ButtonStyle _primaryStyle({Color background = LetterColors.safetyRed}) {
     return FilledButton.styleFrom(
       minimumSize: const Size.fromHeight(52),
       backgroundColor: background,
@@ -875,7 +875,7 @@ class _AngryTitle extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        LetterEyebrow(eyebrow, color: const Color(0xFFAD4E46)),
+        LetterEyebrow(eyebrow, color: LetterColors.safetyRed),
         const SizedBox(height: LetterSpacing.sm),
         Text(
           title,
@@ -969,7 +969,7 @@ class ShatterCrystalPainter extends CustomPainter {
     canvas.drawPath(
       crystal,
       Paint()
-        ..color = const Color(0xFFAD4E46)
+        ..color = LetterColors.safetyRed
         ..style = PaintingStyle.stroke
         ..strokeWidth = 3,
     );

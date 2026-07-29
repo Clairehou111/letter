@@ -870,7 +870,7 @@ extension CareModePresentation on CareMode {
   };
 
   Color get color => switch (this) {
-    CareMode.explode => const Color(0xFFAD4E46),
+    CareMode.explode => LetterColors.safetyRed,
     CareMode.heavy => const Color(0xFF4A6482),
     CareMode.racing => LetterColors.violet,
     CareMode.space => LetterColors.teal,

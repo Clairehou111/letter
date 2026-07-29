@@ -174,7 +174,7 @@ class _PrivacyCenterScreenState extends State<PrivacyCenterScreen> {
             key: const Key('confirm-reset-onboarding'),
             onPressed: () => Navigator.pop(context, true),
             style: FilledButton.styleFrom(
-              backgroundColor: const Color(0xFF9D3D35),
+              backgroundColor: LetterColors.safetyRed,
             ),
             child: const Text('Clear choices'),
           ),
@@ -323,7 +323,7 @@ class _PrivacyCenterScreenState extends State<PrivacyCenterScreen> {
                         key: const Key('reset-onboarding'),
                         onPressed: _confirmReset,
                         style: TextButton.styleFrom(
-                          foregroundColor: const Color(0xFF9D3D35),
+                          foregroundColor: LetterColors.safetyRed,
                           minimumSize: const Size.fromHeight(48),
                           alignment: Alignment.centerLeft,
                         ),

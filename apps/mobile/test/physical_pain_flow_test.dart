@@ -262,10 +262,7 @@ void main() {
         find.text('This needs medical attention, not more interaction.'),
         findsOneWidget,
       );
-      expect(
-        find.textContaining('Book a medical assessment'),
-        findsOneWidget,
-      );
+      expect(find.textContaining('Book a medical assessment'), findsOneWidget);
       await tester.dragUntilVisible(
         find.byKey(const Key('return-to-care-scene')),
         find.byType(ListView).last,
