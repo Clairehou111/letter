@@ -1,6 +1,6 @@
 # Session-Only Boundary Card Requirements
 
-Status: approved
+Status: validated
 Parent feature: `need-space-safe-cocoon`
 Integration feature: `need-space-flow-integration`
 

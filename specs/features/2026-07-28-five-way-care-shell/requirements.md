@@ -1,6 +1,6 @@
 # Five-Way Care Entrance And Finite Reward Shell Requirements
 
-Status: approved
+Status: validated
 Branch: `feature/five-way-care-shell`
 Base branch: `feature/today-cycle-context`
 

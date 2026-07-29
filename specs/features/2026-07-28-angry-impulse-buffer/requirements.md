@@ -1,6 +1,6 @@
 # Angry And Overloaded Impulse Buffer Requirements
 
-Status: approved
+Status: validated
 Branch: `feature/angry-impulse-buffer`
 Base branch: `feature/five-way-care-shell`
 

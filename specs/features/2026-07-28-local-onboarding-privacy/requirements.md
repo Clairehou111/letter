@@ -1,6 +1,6 @@
 # Local Onboarding And Privacy Choices Requirements
 
-Status: approved
+Status: validated
 Branch: `feature/local-onboarding-privacy`
 
 ## Context

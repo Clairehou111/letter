@@ -1,6 +1,6 @@
 # Clearer-Day Reflection And Future-Self Note Requirements
 
-Status: approved
+Status: validated
 Branch: `feature/phase2-personal-care-memory`
 Approved together with the remaining Phase 2 scope on 2026-07-28.
 

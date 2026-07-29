@@ -1,6 +1,6 @@
 # Heavy And Low Presence Flow Requirements
 
-Status: approved
+Status: validated
 Branch: `feature/heavy-low-presence-flow`
 Base branch: `feature/angry-impulse-buffer`
 

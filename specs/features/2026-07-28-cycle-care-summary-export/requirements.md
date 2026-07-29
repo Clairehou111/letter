@@ -1,6 +1,6 @@
 # Cycle And Care Summary Export Requirements
 
-Status: proposed
+Status: in_progress
 Dependencies: Cycle Letters archive, confirmed health records, Care outcomes,
 and encrypted local export/import
 

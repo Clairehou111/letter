@@ -1,6 +1,6 @@
 # Period Logging And History Requirements
 
-Status: approved
+Status: validated
 Branch: `feature/period-logging-history`
 
 ## Context

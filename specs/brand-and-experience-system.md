@@ -263,11 +263,14 @@ A reply becomes available when:
 - the user has indicated they feel steadier
 - or the user opens `Letters` and chooses to review
 
-Notification:
+Notification (deferred; no notification infrastructure exists yet — a future
+feature spec must define user-configured, calm-state-only delivery before this
+copy ships):
 
 > A sealed note is ready when you are.
 
-Do not expose note content on the lock screen.
+Do not expose note content on the lock screen. Until that feature exists, the
+ready state is surfaced in-app only.
 
 ### Opening
 

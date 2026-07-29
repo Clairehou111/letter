@@ -1,6 +1,6 @@
 # Cycle Prediction And Confidence Requirements
 
-Status: approved
+Status: validated
 Branch: `feature/cycle-prediction-confidence`
 Base branch: `feature/period-logging-history`
 

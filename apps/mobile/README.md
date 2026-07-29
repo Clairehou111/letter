@@ -12,9 +12,10 @@ flutter test
 flutter run
 ```
 
-The current Today experience uses synthetic content. It must not send that
-state to the operational API. Product health records will use an encrypted
-local data layer selected by a later feature specification.
+Today reads the real encrypted local health repositories (Drift +
+SQLite3MultipleCiphers on native, memory-only on the Web preview). Health
+records never leave the device unless a feature specification defines a
+purpose-specific consent boundary.
 
 The generated API client is located at
 `lib/api/generated/letter_api_client.dart`. Regenerate it from the repository

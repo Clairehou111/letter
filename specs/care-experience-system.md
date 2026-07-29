@@ -102,9 +102,10 @@ User-facing choices describe experience instead of diagnosis:
 4. `I need everyone away`
 5. `My body hurts`
 
-Each choice has a visible text label and a supporting icon. The user's two most
-frequent choices may appear first after enough history, but the product never
-infers and opens a mode automatically.
+Each choice has a visible text label and a supporting icon. Entrance order is
+stable and identical for every user. The product never infers, ranks,
+reorders, preselects, or opens a mode automatically from cycle timing,
+history, or other behavior.
 
 ## Mode 1: Shatter And Seal
 
@@ -122,7 +123,7 @@ HIGH ENERGY -> SUDDEN SILENCE -> TIME BETWEEN FEELING AND ACTION
 - one abstract crystal fills most of the screen
 - taps create local cracks with optional glass sound and haptics
 - the object responds on every tap; controls do not shake
-- the sequence ends at 20 seconds or when the object breaks
+- the sequence ends at 20 seconds or 20 taps, whichever comes first
 - skip and urgent-safety controls remain available
 
 ### Transition

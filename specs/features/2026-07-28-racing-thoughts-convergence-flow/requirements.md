@@ -1,6 +1,6 @@
 # Racing Thoughts Convergence Flow Requirements
 
-Status: approved
+Status: validated
 Branch: `feature/racing-thoughts-convergence-flow`
 Base branch: `feature/heavy-low-presence-flow`
 

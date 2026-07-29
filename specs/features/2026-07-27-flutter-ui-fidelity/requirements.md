@@ -1,6 +1,6 @@
 # Flutter UI Fidelity Spike Requirements
 
-Status: approved
+Status: validated
 Branch: `spike/flutter-ui-fidelity`
 
 ## Context

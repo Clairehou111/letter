@@ -177,10 +177,11 @@ must still be confirmed.
 
 ### Screen 4: Reconcile Other Signals
 
-The proposed `circle words in a letter` interaction is useful here when it is
-transparent:
+Signal selection uses ordinary tap-to-keep controls. No forced metaphor
+gesture (such as circling or crossing) is required when a normal tap is more
+accessible:
 
-> Letter noticed possible signals in what you recorded. Circle only what was
+> Letter noticed possible signals in what you recorded. Keep only what was
 > actually present.
 
 Possible chips include:

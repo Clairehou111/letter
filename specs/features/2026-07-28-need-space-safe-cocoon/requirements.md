@@ -1,6 +1,6 @@
 # Need-Space Safe Cocoon Requirements
 
-Status: approved
+Status: validated
 Parent feature: `need-space-flow-integration`
 
 ## Purpose

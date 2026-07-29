@@ -1,6 +1,6 @@
 # Today Cycle Context And Logging Entry Requirements
 
-Status: approved
+Status: validated
 Branch: `feature/today-cycle-context`
 Base branch: `feature/cycle-prediction-confidence`
 

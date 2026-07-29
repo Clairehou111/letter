@@ -1,6 +1,6 @@
 # Production Workspace Foundation Requirements
 
-Status: approved
+Status: validated
 Branch: `feature/production-workspace-foundation`
 
 ## Context
