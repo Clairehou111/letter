@@ -127,7 +127,13 @@ Release-blocking work for the first paid public MVP, ordered by dependency.
 
 | Order | Feature | Status |
 | --- | --- | --- |
-| 1 | Safety boundary content (locale-aware crisis + medical red flags) | in_progress ([spec](features/2026-07-29-safety-boundary-content/)) |
+| 1 | Safety boundary content (locale-aware crisis + medical red flags) | validated ([spec](features/2026-07-29-safety-boundary-content/)) |
+
+Safety routing is now configured: US 988 call/text + 911, CA 9-8-8 + 911, and
+an honest no-invented-numbers fallback elsewhere; medical Care shows urgent
+and book-assessment red-flag tiers. All contacts are tappable with the visible
+number as fallback. Native dialer tap-through remains deferred to the release
+gates.
 
 ## Release Acceptance Gates
 

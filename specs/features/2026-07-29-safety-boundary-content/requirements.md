@@ -1,6 +1,6 @@
 # Safety Boundary Content Requirements
 
-Status: approved
+Status: validated
 Branch: `feature/safety-boundary-content`
 Base branch: `feature/phase2-personal-care-memory`
 
