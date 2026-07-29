@@ -55,7 +55,9 @@ interaction. No scene may require completion.
 
 REQ-010: Keep a visible `I may not be safe` route on emotional Care scenes. It
 must stop the normal interaction and state honestly that locale-aware crisis
-routing is not configured in this shell.
+routing is not configured in this shell. (Superseded by
+`2026-07-29-safety-boundary-content`, which configures the region-aware crisis
+content.)
 
 REQ-011: Physical Care must instead keep a visible
 `This is new, unusual, or severe` route. It must stop the normal interaction

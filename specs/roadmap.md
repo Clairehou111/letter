@@ -121,6 +121,14 @@ generated from local, user-confirmed data. Doctor Mode cannot use DRSP wording
 or claim diagnostic equivalence until clinical review, wording, scoring, and
 licensing requirements are satisfied.
 
+## Phase 5: MVP Release Readiness
+
+Release-blocking work for the first paid public MVP, ordered by dependency.
+
+| Order | Feature | Status |
+| --- | --- | --- |
+| 1 | Safety boundary content (locale-aware crisis + medical red flags) | in_progress ([spec](features/2026-07-29-safety-boundary-content/)) |
+
 ## Release Acceptance Gates
 
 | Order | Gate | Status |
