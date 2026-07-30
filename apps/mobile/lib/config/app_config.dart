@@ -7,7 +7,7 @@
 final class AppConfig {
   const AppConfig({
     required this.supabaseUrl,
-    required this.supabaseAnonKey,
+    required this.supabasePublishableKey,
     required this.revenueCatAppleApiKey,
     required this.revenueCatGoogleApiKey,
     required this.posthogApiKey,
@@ -17,8 +17,9 @@ final class AppConfig {
   /// Supabase project URL (e.g. https://xxx.supabase.co).
   final String supabaseUrl;
 
-  /// Supabase anonymous key (public, safe in client code).
-  final String supabaseAnonKey;
+  /// Supabase publishable key (starts with sb_publishable_).
+  /// Safe in client code — access is enforced by Row-Level Security.
+  final String supabasePublishableKey;
 
   /// RevenueCat public Apple API key.
   final String revenueCatAppleApiKey;
@@ -38,7 +39,7 @@ final class AppConfig {
   /// functional without any external service.
   static const dev = AppConfig(
     supabaseUrl: '',
-    supabaseAnonKey: '',
+    supabasePublishableKey: '',
     revenueCatAppleApiKey: '',
     revenueCatGoogleApiKey: '',
     posthogApiKey: '',
@@ -49,7 +50,7 @@ final class AppConfig {
   /// Keys are placeholder until services are provisioned.
   static const meetletter = AppConfig(
     supabaseUrl: 'https://xliwvcbgwcguawffrmli.supabase.co',
-    supabaseAnonKey: '', // TODO: get from Supabase → Settings → API
+    supabasePublishableKey: 'sb_publishable_GgnBqkhHhbzG762r9CThYw_XXlwqQcb',
     revenueCatAppleApiKey: '', // TODO: get from RevenueCat → Settings → API Keys
     revenueCatGoogleApiKey: '',
     posthogApiKey: '', // TODO: get from PostHog → Project Settings
