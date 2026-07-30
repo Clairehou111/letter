@@ -44,4 +44,15 @@ final class AppConfig {
     posthogApiKey: '',
     posthogHost: '',
   );
+
+  /// Production config for meetletter.app.
+  /// Keys are placeholder until services are provisioned.
+  static const meetletter = AppConfig(
+    supabaseUrl: 'https://xliwvcbgwcguawffrmli.supabase.co',
+    supabaseAnonKey: '', // TODO: get from Supabase → Settings → API
+    revenueCatAppleApiKey: '', // TODO: get from RevenueCat → Settings → API Keys
+    revenueCatGoogleApiKey: '',
+    posthogApiKey: '', // TODO: get from PostHog → Project Settings
+    posthogHost: 'https://us.posthog.com',
+  );
 }
