@@ -43,21 +43,3 @@ Never push, deploy, or merge without explicit user instruction.
 - Prefer narrow changes over unrelated refactors.
 
 
-# Flutter & Dart Architectural & UI Guidelines
-
-## UI & Presentation Layer
-- **Responsiveness**: Never hardcode static layouts. Always leverage `MediaQuery`, `LayoutBuilder`, or the `responsive_framework` package for fluid grid systems.
-- **Theming**: Bind all colors, text styles, and component modifications to `Theme.of(context)`. Explicitly support dark and light theme variations.
-- **Aesthetics**: Prioritize modern UI principles (smooth micro-interactions, explicit hover/focus states for desktop/web, clean card elevations, and custom `Sliver` animations for scroll views).
-- **Optimization**: Proactively use the `const` constructor for widgets wherever possible to minimize unnecessary tree rebuilds.
-
-## Dart & Code Quality
-- **Type Safety**: Enforce strict type definitions for all methods, widget parameters, and callback arguments. Avoid using `dynamic`.
-- **Formatting**: Always format trailing commas for nested widget arguments to ensure clean multi-line formatting.
-- **State Management**: Structure presentation separation clearly. Use [Insert your choice: Riverpod / BLoC / Provider] for reactive bindings. Keep business logic completely outside of the view widgets.
-
-
-## LLM Workspace Routing Strategy
-- **DeepSeek V4 Pro**: Use exclusively for structural architecture, data mapping, local encrypted storage rules, state transition models, and writing widget/golden tests.
-- **Kimi K3**: Use exclusively for building UI presentation widgets, styling design tokens, platform-adaptive behaviors, and visual micro-interactions.
-
