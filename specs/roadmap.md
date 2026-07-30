@@ -87,11 +87,11 @@ clinical score, cloud request, analytics event, or LLM request.
 | Order | Feature | Status |
 | --- | --- | --- |
 | 1 | Confirmed health-record foundation | validated ([spec](features/2026-07-28-health-record-foundation/)) |
-| 2 | Care-linked recovery receipt | in_progress ([spec](features/2026-07-28-care-recovery-receipt/)) |
-| 3 | Text and on-device voice capture | in_progress ([spec](features/2026-07-28-text-voice-capture/)) |
-| 4 | NLP-first candidate confirmation | in_progress ([spec](features/2026-07-28-nlp-candidate-confirmation/)) |
-| 5 | Personal patterns and support-action matching | in_progress ([spec](features/2026-07-28-personal-patterns-support-matching/)) |
-| 6 | Archive Story and Pattern views | in_progress ([spec](features/2026-07-28-archive-story-pattern-views/)) |
+| 2 | Care-linked recovery receipt | validated ([spec](features/2026-07-28-care-recovery-receipt/)) |
+| 3 | Text and on-device voice capture | validated ([spec](features/2026-07-28-text-voice-capture/)) |
+| 4 | NLP-first candidate confirmation | validated ([spec](features/2026-07-28-nlp-candidate-confirmation/)) |
+| 5 | Personal patterns and support-action matching | validated ([spec](features/2026-07-28-personal-patterns-support-matching/)) |
+| 6 | Archive Story and Pattern views | validated ([spec](features/2026-07-28-archive-story-pattern-views/)) |
 
 Phase 3 is usable without cloud processing or LLM access. Direct structured
 records are the source of truth. Care becomes a delayed, user-confirmed input
@@ -109,8 +109,8 @@ candidates rather than records.
 
 | Order | Feature | Status |
 | --- | --- | --- |
-| 1 | Encrypted local export and import | in_progress ([spec](features/2026-07-28-encrypted-local-export-import/)) |
-| 2 | Cycle and Care Summary export | in_progress ([spec](features/2026-07-28-cycle-care-summary-export/)) |
+| 1 | Encrypted local export and import | validated ([spec](features/2026-07-28-encrypted-local-export-import/)) |
+| 2 | Cycle and Care Summary export | validated ([spec](features/2026-07-28-cycle-care-summary-export/)) |
 | 3 | Doctor Mode, prospective diary, and clinical report | proposed ([spec](features/2026-07-28-doctor-mode-prospective-diary/)) |
 | 4 | Authentication and subscription entitlement | proposed ([spec](features/2026-07-28-auth-subscription-entitlement/)) |
 | 5 | Privacy-safe operational analytics | proposed ([spec](features/2026-07-28-privacy-safe-operational-analytics/)) |

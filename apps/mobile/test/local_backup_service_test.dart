@@ -97,6 +97,77 @@ void main() {
     );
   });
 
+  test('rejects an empty or whitespace-only passphrase', () async {
+    await expectLater(
+      service.encryptSnapshot(snapshot: snapshot, passphrase: ''),
+      throwsA(
+        isA<LocalBackupException>().having(
+          (error) => error.failure,
+          'failure',
+          LocalBackupFailure.emptyPassphrase,
+        ),
+      ),
+    );
+    await expectLater(
+      service.encryptSnapshot(snapshot: snapshot, passphrase: '   '),
+      throwsA(
+        isA<LocalBackupException>().having(
+          (error) => error.failure,
+          'failure',
+          LocalBackupFailure.emptyPassphrase,
+        ),
+      ),
+    );
+  });
+
+  test('rejects a corrupt or structurally invalid package', () async {
+    await expectLater(
+      service.decryptSnapshot(
+        packageBytes: utf8.encode('not valid json at all'),
+        passphrase: 'anything',
+      ),
+      throwsA(
+        isA<LocalBackupException>().having(
+          (error) => error.failure,
+          'failure',
+          LocalBackupFailure.invalidPackage,
+        ),
+      ),
+    );
+
+    await expectLater(
+      service.decryptSnapshot(
+        packageBytes: utf8.encode(jsonEncode({'format': 'wrong-format'})),
+        passphrase: 'anything',
+      ),
+      throwsA(isA<LocalBackupException>()),
+    );
+  });
+
+  test('rejects a valid JSON package with a malformed payload inside', () async {
+    final bytes = await service.encryptSnapshot(
+      snapshot: snapshot,
+      passphrase: 'private backup password',
+    );
+    final decoded = jsonDecode(utf8.decode(bytes)) as Map<String, Object?>;
+    decoded['ciphertext'] = 'AAAA';
+
+    // With a drastically wrong ciphertext, integrity failure is expected.
+    await expectLater(
+      service.decryptSnapshot(
+        packageBytes: utf8.encode(jsonEncode(decoded)),
+        passphrase: 'private backup password',
+      ),
+      throwsA(
+        isA<LocalBackupException>().having(
+          (error) => error.failure,
+          'failure',
+          LocalBackupFailure.integrityCheckFailed,
+        ),
+      ),
+    );
+  });
+
   test('merge has deterministic stable-ID conflict rules', () {
     final destination = _snapshot(
       createdAt: DateTime.utc(2026, 7, 1),
