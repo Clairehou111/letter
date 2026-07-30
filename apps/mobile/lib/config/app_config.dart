@@ -53,7 +53,7 @@ final class AppConfig {
     supabasePublishableKey: 'sb_publishable_GgnBqkhHhbzG762r9CThYw_XXlwqQcb',
     revenueCatAppleApiKey: '', // TODO: get from RevenueCat → Settings → API Keys
     revenueCatGoogleApiKey: '',
-    posthogApiKey: '', // TODO: get from PostHog → Project Settings
+    posthogApiKey: 'phc_npmVkd93ENCWb6MPLxk4wSr4bSdLtoBYn9NDegskaDxQ',
     posthogHost: 'https://us.posthog.com',
   );
 }
