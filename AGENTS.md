@@ -57,3 +57,7 @@ Never push, deploy, or merge without explicit user instruction.
 - **State Management**: Structure presentation separation clearly. Use [Insert your choice: Riverpod / BLoC / Provider] for reactive bindings. Keep business logic completely outside of the view widgets.
 
 
+## LLM Workspace Routing Strategy
+- **DeepSeek V4 Pro**: Use exclusively for structural architecture, data mapping, local encrypted storage rules, state transition models, and writing widget/golden tests.
+- **Kimi K3**: Use exclusively for building UI presentation widgets, styling design tokens, platform-adaptive behaviors, and visual micro-interactions.
+
