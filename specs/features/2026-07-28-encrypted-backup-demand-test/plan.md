@@ -1,9 +1,9 @@
-# Encrypted Backup Demand Test Plan
+# Encrypted Cloud Backup Plan (MVP)
 
-Status: proposed
+Status: in_progress (demand test skipped per 2026-07-30 product decision)
 
-1. Define the non-sensitive demand question, threshold, and privacy copy.
-2. Add a local-only preference and anonymous response path if approved.
-3. Validate that the flow never asks for health content or recovery secrets.
-4. Review results and decide whether a separate backup architecture spec is
-   justified.
+1. [ ] Define the backup architecture: encrypted package upload/download via Supabase.
+2. [ ] Add recovery-key generation, storage guidance, and deletion model.
+3. [ ] Implement encrypted upload, download, restore, and key-rotation flows.
+4. [ ] Add threat model, legal/privacy review, and approved implementation spec.
+5. [ ] Validate wrong-key, tampered, cancelled, partial, and reinstall scenarios.
