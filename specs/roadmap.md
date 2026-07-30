@@ -111,7 +111,7 @@ candidates rather than records.
 | --- | --- | --- |
 | 1 | Encrypted local export and import | validated ([spec](features/2026-07-28-encrypted-local-export-import/)) |
 | 2 | Cycle and Care Summary export | validated ([spec](features/2026-07-28-cycle-care-summary-export/)) |
-| 3 | Doctor Mode, prospective diary, and clinical report | proposed ([spec](features/2026-07-28-doctor-mode-prospective-diary/)) |
+| 3 | Doctor Mode, prospective diary, and clinical report | in_progress ([spec](features/2026-07-28-doctor-mode-prospective-diary/)) |
 | 4 | Authentication and subscription entitlement | proposed ([spec](features/2026-07-28-auth-subscription-entitlement/)) |
 | 5 | Privacy-safe operational analytics | proposed ([spec](features/2026-07-28-privacy-safe-operational-analytics/)) |
 | 6 | Optional encrypted-backup demand test | proposed ([spec](features/2026-07-28-encrypted-backup-demand-test/)) |
