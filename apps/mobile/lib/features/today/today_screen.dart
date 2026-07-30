@@ -503,7 +503,7 @@ class CycleHero extends StatelessWidget {
                     width: 56,
                     height: 16,
                     decoration: BoxDecoration(
-                      color: LetterColors.moonMetal.withOpacity(0.14),
+                      color: LetterColors.moonMetal.withValues(alpha: 0.14),
                       borderRadius: BorderRadius.circular(12),
                     ),
                   ),
@@ -530,7 +530,7 @@ class CycleHero extends StatelessWidget {
                   width: 28,
                   height: 28,
                   decoration: BoxDecoration(
-                    color: LetterColors.moonMetal.withOpacity(0.16),
+                    color: LetterColors.moonMetal.withValues(alpha: 0.16),
                     shape: BoxShape.circle,
                   ),
                 ),
@@ -544,7 +544,7 @@ class CycleHero extends StatelessWidget {
                     width: 36,
                     height: 8,
                     decoration: BoxDecoration(
-                      color: LetterColors.canvas.withOpacity(0.14),
+                      color: LetterColors.canvas.withValues(alpha: 0.14),
                       borderRadius: BorderRadius.circular(8),
                     ),
                   ),

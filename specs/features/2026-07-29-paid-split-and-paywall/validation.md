@@ -1,21 +1,21 @@
 # Paid Split And Paywall Validation
 
-Status: in_progress
+Status: validated
 
 ## Automated Checks
 
-- [ ] every REQ-001 capability is available with lapsed/no entitlement
-- [ ] every REQ-002 capability requires active entitlement
-- [ ] lapse pauses premium memory but deletes nothing
-- [ ] plans sheet shows intro price, renewal price, alternatives, effective
+- [x] every REQ-001 capability is available with lapsed/no entitlement
+- [x] every REQ-002 capability requires active entitlement
+- [x] lapse pauses premium memory but deletes nothing
+- [x] plans sheet shows intro price, renewal price, alternatives, effective
       monthly prices, and the `$1 more` note with explicit selection
-- [ ] no countdown, scarcity, or preselected consent exists
-- [ ] paywall is unreachable from Care flows, safety routes, and export flows
-- [ ] locked surfaces show honest previews, never fabricated content
-- [ ] offline state keeps free capabilities working
-- [ ] no health value appears on purchase surfaces
-- [ ] goldens reviewed; 320px at 200 percent text passes
-- [ ] `flutter analyze` clean; full `flutter test` passes; web build passes
+- [x] no countdown, scarcity, or preselected consent exists
+- [x] paywall is unreachable from Care flows, safety routes, and export flows
+- [x] locked surfaces show honest previews, never fabricated content
+- [x] offline state keeps free capabilities working
+- [x] no health value appears on purchase surfaces
+- [x] goldens reviewed; 320px at 200 percent text passes
+- [x] `flutter analyze` clean; full `flutter test` passes; web build passes
 
 ## Manual Product Review
 
@@ -27,7 +27,7 @@ Status: in_progress
 
 ## Merge Gate
 
-- [ ] free/paid split matches the 2026-07-29 decisions exactly
-- [ ] safety and data access never depend on billing
-- [ ] local changes committed
+- [x] free/paid split matches the 2026-07-29 decisions exactly
+- [x] safety and data access never depend on billing
+- [x] local changes committed
 - [ ] user explicitly requests merge
