@@ -482,27 +482,95 @@ class CycleHero extends StatelessWidget {
         return Container(
           key: const Key('today-cycle-context'),
           width: double.infinity,
-          padding: const EdgeInsets.fromLTRB(16, 21, 16, 18),
           decoration: BoxDecoration(
-            color: LetterColors.tealDark,
+            gradient: const LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [Color(0xFF176D67), Color(0xFF124B50)],
+            ),
             borderRadius: BorderRadius.circular(LetterRadius.panel),
+            boxShadow: LetterShadows.soft,
           ),
-          child: stackContent
-              ? Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    copy,
-                    Align(alignment: Alignment.centerRight, child: ring),
-                  ],
-                )
-              : Row(
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  children: [
-                    Expanded(child: copy),
-                    const SizedBox(width: LetterSpacing.sm),
-                    ring,
-                  ],
+          child: Stack(
+            clipBehavior: Clip.none,
+            children: [
+              Positioned(
+                top: 8,
+                left: 10,
+                child: Transform.rotate(
+                  angle: -0.18,
+                  child: Container(
+                    width: 56,
+                    height: 16,
+                    decoration: BoxDecoration(
+                      color: LetterColors.moonMetal.withOpacity(0.14),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
                 ),
+              ),
+              Positioned(
+                top: -8,
+                left: 0,
+                child: Container(
+                  width: 76,
+                  height: 22,
+                  decoration: BoxDecoration(
+                    color: LetterColors.teal,
+                    borderRadius: const BorderRadius.only(
+                      bottomRight: Radius.circular(14),
+                    ),
+                  ),
+                ),
+              ),
+              Positioned(
+                top: 16,
+                right: 16,
+                child: Container(
+                  width: 28,
+                  height: 28,
+                  decoration: BoxDecoration(
+                    color: LetterColors.moonMetal.withOpacity(0.16),
+                    shape: BoxShape.circle,
+                  ),
+                ),
+              ),
+              Positioned(
+                bottom: 10,
+                right: -10,
+                child: Transform.rotate(
+                  angle: 0.3,
+                  child: Container(
+                    width: 36,
+                    height: 8,
+                    decoration: BoxDecoration(
+                      color: LetterColors.canvas.withOpacity(0.14),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                  ),
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 21, 16, 18),
+                child: stackContent
+                    ? Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          copy,
+                          Align(alignment: Alignment.centerRight, child: ring),
+                        ],
+                      )
+                    : Row(
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        children: [
+                          Expanded(child: copy),
+                          const SizedBox(width: LetterSpacing.sm),
+                          ring,
+                        ],
+                      ),
+              ),
+            ],
+          ),
         );
       },
     );

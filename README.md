@@ -135,3 +135,4 @@ python3 tools/validate.py
 
 Native simulator and emulator checks require complete Xcode, CocoaPods, and
 Android SDK installations.
+
