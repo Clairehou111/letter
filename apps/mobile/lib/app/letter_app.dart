@@ -8,6 +8,10 @@ import '../features/care/domain/impulse_buffer_repository.dart';
 import '../features/capture/domain/capture_models.dart';
 import '../features/cycle/data/in_memory_period_repository.dart';
 import '../features/cycle/domain/period_repository.dart';
+import '../features/entitlement/data/local_entitlement_repository.dart';
+import '../features/entitlement/domain/entitlement.dart';
+import '../features/entitlement/domain/entitlement_repository.dart';
+import '../features/entitlement/presentation/entitlement_scope.dart';
 import '../features/health_data/data/local_health_store.dart';
 import '../features/health_data/data/local_health_store_factory.dart';
 import '../features/health_records/data/in_memory_health_record_repository.dart';
@@ -28,10 +32,12 @@ class LetterApp extends StatefulWidget {
     this.careMemoryRepository,
     this.healthRecordRepository,
     this.captureNoteStore,
+    this.entitlementRepository,
     this.now,
   });
 
   final OnboardingRepository? onboardingRepository;
+  final EntitlementRepository? entitlementRepository;
   final PeriodRepository? periodRepository;
   final ImpulseBufferRepository? impulseBufferRepository;
   final CareMemoryRepository? careMemoryRepository;
@@ -45,6 +51,10 @@ class LetterApp extends StatefulWidget {
 
 class _LetterAppState extends State<LetterApp> {
   late final OnboardingRepository _repository;
+  late final EntitlementRepository _entitlementRepository;
+  EntitlementState _entitlementState = const EntitlementState(
+    status: EntitlementStatus.freeOrUnknown,
+  );
   late final PeriodRepository _periodRepository;
   late final ImpulseBufferRepository _impulseBufferRepository;
   late final CareMemoryRepository _careMemoryRepository;
@@ -60,6 +70,12 @@ class _LetterAppState extends State<LetterApp> {
   void initState() {
     super.initState();
     _repository = widget.onboardingRepository ?? SecureOnboardingRepository();
+    _entitlementRepository =
+        widget.entitlementRepository ?? LocalEntitlementRepository();
+    _entitlementState = _entitlementRepository.current;
+    _entitlementRepository.watch().listen((state) {
+      if (mounted) setState(() => _entitlementState = state);
+    });
     if (widget.periodRepository == null &&
         widget.impulseBufferRepository == null &&
         widget.careMemoryRepository == null &&
@@ -150,27 +166,31 @@ class _LetterAppState extends State<LetterApp> {
       debugShowCheckedModeBanner: false,
       title: 'Letter',
       theme: LetterTheme.light,
-      home: !_loaded
-          ? const _OnboardingLoadingScreen()
-          : _loadFailed
-          ? _OnboardingLoadErrorScreen(onRetry: _load)
-          : _profile == null
-          ? OnboardingFlow(onComplete: _completeOnboarding)
-          : LetterHome(
-              profile: _profile!,
-              periodRepository: _periodRepository,
-              impulseBufferRepository: _impulseBufferRepository,
-              careMemoryRepository: _careMemoryRepository,
-              healthRecordRepository: _healthRecordRepository,
-              captureNoteStore: _captureNoteStore,
-              onProfileChanged: _updateProfile,
-              onReset: _resetOnboarding,
-              localBackupStore: _localBackupStore,
-              localBackupFilePort: _localBackupStore == null
-                  ? null
-                  : const SystemLocalBackupFilePort(),
-              now: widget.now,
-            ),
+      home: EntitlementScope(
+        repository: _entitlementRepository,
+        state: _entitlementState,
+        child: !_loaded
+            ? const _OnboardingLoadingScreen()
+            : _loadFailed
+            ? _OnboardingLoadErrorScreen(onRetry: _load)
+            : _profile == null
+            ? OnboardingFlow(onComplete: _completeOnboarding)
+            : LetterHome(
+                profile: _profile!,
+                periodRepository: _periodRepository,
+                impulseBufferRepository: _impulseBufferRepository,
+                careMemoryRepository: _careMemoryRepository,
+                healthRecordRepository: _healthRecordRepository,
+                captureNoteStore: _captureNoteStore,
+                onProfileChanged: _updateProfile,
+                onReset: _resetOnboarding,
+                localBackupStore: _localBackupStore,
+                localBackupFilePort: _localBackupStore == null
+                    ? null
+                    : const SystemLocalBackupFilePort(),
+                now: widget.now,
+              ),
+      ),
     );
   }
 }

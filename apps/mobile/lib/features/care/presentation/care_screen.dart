@@ -6,6 +6,9 @@ import '../domain/care_memory.dart';
 import '../domain/care_memory_repository.dart';
 import '../domain/care_mode.dart';
 import '../domain/impulse_buffer_repository.dart';
+import '../../entitlement/domain/entitlement.dart';
+import '../../entitlement/presentation/entitlement_scope.dart';
+import '../../entitlement/presentation/locked_premium_surface.dart';
 import '../../health_records/domain/health_record_repository.dart';
 import '../../recovery_receipt/application/recovery_receipt_controller.dart';
 import '../../recovery_receipt/presentation/recovery_receipt_flow.dart';
@@ -330,6 +333,15 @@ class _CareScreenState extends State<CareScreen> {
   @override
   Widget build(BuildContext context) {
     if (_showCareKit) {
+      if (!EntitlementScope.canUse(context, LetterCapability.careKitMemory)) {
+        return const LockedPremiumSurface(
+          title: 'Your Care Kit remembers what actually helps you.',
+          description:
+              'With a plan, every Better check-back can be kept here — with '
+              'honest counts — so your next hard moment starts with your own '
+              'answers, not a generic list.',
+        );
+      }
       return PersonalCareKitView(
         items: _careKitItems(),
         onBack: _returnToGate,

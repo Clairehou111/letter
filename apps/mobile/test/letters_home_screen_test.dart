@@ -7,6 +7,9 @@ import 'package:letter_mobile/features/care/domain/care_mode.dart';
 import 'package:letter_mobile/features/cycle/data/in_memory_period_repository.dart';
 import 'package:letter_mobile/features/cycle/domain/local_date.dart';
 import 'package:letter_mobile/features/cycle/domain/period_record.dart';
+import 'package:letter_mobile/features/entitlement/data/local_entitlement_repository.dart';
+import 'package:letter_mobile/features/entitlement/domain/entitlement.dart';
+import 'package:letter_mobile/features/entitlement/presentation/entitlement_scope.dart';
 import 'package:letter_mobile/features/health_records/data/in_memory_health_record_repository.dart';
 import 'package:letter_mobile/features/health_records/domain/health_record.dart';
 import 'package:letter_mobile/features/letters/presentation/letters_home_screen.dart';
@@ -63,11 +66,19 @@ void main() {
     await tester.pumpWidget(
       MaterialApp(
         theme: LetterTheme.light,
-        home: LettersHomeScreen(
-          periodRepository: periodRepository,
-          careMemoryRepository: InMemoryCareMemoryRepository(),
-          healthRecordRepository: healthRepository,
-          onNavigationSelected: (_) {},
+        home: EntitlementScope(
+          repository: LocalEntitlementRepository(
+            initial: const EntitlementState(
+              status: EntitlementStatus.activePaid,
+            ),
+          ),
+          state: const EntitlementState(status: EntitlementStatus.activePaid),
+          child: LettersHomeScreen(
+            periodRepository: periodRepository,
+            careMemoryRepository: InMemoryCareMemoryRepository(),
+            healthRecordRepository: healthRepository,
+            onNavigationSelected: (_) {},
+          ),
         ),
       ),
     );

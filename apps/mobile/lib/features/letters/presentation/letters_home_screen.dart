@@ -8,6 +8,9 @@ import '../../care/presentation/clearer_day_reflection_flow.dart';
 import '../../cycle/domain/local_date.dart';
 import '../../cycle/domain/period_record.dart';
 import '../../cycle/domain/period_repository.dart';
+import '../../entitlement/data/local_entitlement_repository.dart';
+import '../../entitlement/domain/entitlement.dart';
+import '../../entitlement/presentation/entitlement_scope.dart';
 import '../../health_records/domain/health_record_repository.dart';
 import '../../patterns/data/repository_pattern_source.dart';
 import '../../patterns/presentation/personal_patterns_route.dart';
@@ -164,13 +167,26 @@ class _LettersHomeScreenState extends State<LettersHomeScreen> {
   }
 
   Future<void> _openPersonalPatterns() async {
+    final scope = context.getInheritedWidgetOfExactType<EntitlementScope>();
     await Navigator.of(context).push<void>(
       MaterialPageRoute(
-        builder: (context) => PersonalPatternsRoute(
-          source: RepositoryPatternSource(
-            healthRecords: widget.healthRecordRepository,
-            careMemory: widget.careMemoryRepository,
-            periods: widget.periodRepository,
+        builder: (context) => EntitlementScope(
+          repository:
+              scope?.repository ??
+              LocalEntitlementRepository(
+                initial: const EntitlementState(
+                  status: EntitlementStatus.freeOrUnknown,
+                ),
+              ),
+          state:
+              scope?.state ??
+              const EntitlementState(status: EntitlementStatus.freeOrUnknown),
+          child: PersonalPatternsRoute(
+            source: RepositoryPatternSource(
+              healthRecords: widget.healthRecordRepository,
+              careMemory: widget.careMemoryRepository,
+              periods: widget.periodRepository,
+            ),
           ),
         ),
       ),

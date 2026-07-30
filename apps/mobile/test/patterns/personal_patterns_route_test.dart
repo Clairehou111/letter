@@ -6,6 +6,9 @@ import 'package:letter_mobile/features/care/domain/care_memory.dart';
 import 'package:letter_mobile/features/care/domain/care_mode.dart';
 import 'package:letter_mobile/features/cycle/data/in_memory_period_repository.dart';
 import 'package:letter_mobile/features/cycle/domain/local_date.dart';
+import 'package:letter_mobile/features/entitlement/data/local_entitlement_repository.dart';
+import 'package:letter_mobile/features/entitlement/domain/entitlement.dart';
+import 'package:letter_mobile/features/entitlement/presentation/entitlement_scope.dart';
 import 'package:letter_mobile/features/cycle/domain/period_record.dart';
 import 'package:letter_mobile/features/health_records/data/in_memory_health_record_repository.dart';
 import 'package:letter_mobile/features/health_records/domain/health_record.dart';
@@ -56,11 +59,19 @@ void main() {
     await tester.pumpWidget(
       MaterialApp(
         theme: LetterTheme.light,
-        home: PersonalPatternsRoute(
-          source: RepositoryPatternSource(
-            healthRecords: healthRecords,
-            careMemory: careMemory,
-            periods: periods,
+        home: EntitlementScope(
+          repository: LocalEntitlementRepository(
+            initial: const EntitlementState(
+              status: EntitlementStatus.activePaid,
+            ),
+          ),
+          state: const EntitlementState(status: EntitlementStatus.activePaid),
+          child: PersonalPatternsRoute(
+            source: RepositoryPatternSource(
+              healthRecords: healthRecords,
+              careMemory: careMemory,
+              periods: periods,
+            ),
           ),
         ),
       ),

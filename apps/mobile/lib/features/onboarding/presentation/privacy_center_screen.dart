@@ -8,6 +8,8 @@ import '../../capture/domain/capture_models.dart';
 import '../../care/presentation/care_screen.dart';
 import '../../cycle/domain/period_repository.dart';
 import '../../cycle/presentation/cycle_screen.dart';
+import '../../entitlement/presentation/entitlement_scope.dart';
+import '../../entitlement/presentation/plans_sheet.dart';
 import '../../letters/presentation/letters_home_screen.dart';
 import '../../health_records/domain/health_record_repository.dart';
 import '../../local_backup/domain/local_backup_file_port.dart';
@@ -215,6 +217,28 @@ class _PrivacyCenterScreenState extends State<PrivacyCenterScreen> {
                   sliver: SliverList.list(
                     children: [
                       const _PrivacyHeader(),
+                      const SizedBox(height: LetterSpacing.xl),
+                      const LetterEyebrow('Plan'),
+                      const SizedBox(height: LetterSpacing.sm),
+                      OutlinedButton.icon(
+                        key: const Key('you-see-plans'),
+                        onPressed: () {
+                          final repo = EntitlementScope.repositoryOf(context);
+                          if (repo != null) PlansSheet.show(context, repo);
+                        },
+                        style: OutlinedButton.styleFrom(
+                          minimumSize: const Size.fromHeight(50),
+                          foregroundColor: LetterColors.teal,
+                          side: const BorderSide(color: LetterColors.teal),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(
+                              LetterRadius.control,
+                            ),
+                          ),
+                        ),
+                        icon: const Icon(Icons.mail_outline, size: 20),
+                        label: const Text('See plans'),
+                      ),
                       const SizedBox(height: LetterSpacing.xl),
                       const LetterEyebrow('Privacy and AI'),
                       const SizedBox(height: LetterSpacing.sm),

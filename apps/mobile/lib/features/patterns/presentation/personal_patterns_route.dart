@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 
 import '../../../design_system/letter_theme.dart';
+import '../../entitlement/domain/entitlement.dart';
+import '../../entitlement/presentation/entitlement_scope.dart';
+import '../../entitlement/presentation/locked_premium_surface.dart';
 import '../application/personal_patterns_controller.dart';
 import '../data/repository_pattern_source.dart';
 import 'personal_patterns_screen.dart';
@@ -53,6 +56,17 @@ class _PersonalPatternsRouteState extends State<PersonalPatternsRoute> {
 
   @override
   Widget build(BuildContext context) {
+    if (!EntitlementScope.canUse(context, LetterCapability.personalPatterns)) {
+      return const Scaffold(
+        body: LockedPremiumSurface(
+          title: 'Patterns gather quietly over cycles.',
+          description:
+              'With a plan, Letter keeps what repeats — what helped, what '
+              'returned, what you noticed — so each cycle starts smarter '
+              'than the last.',
+        ),
+      );
+    }
     return ListenableBuilder(
       listenable: _controller,
       builder: (context, _) {
