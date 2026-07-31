@@ -96,26 +96,29 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    expect(find.text('What did you experience?'), findsOneWidget);
-    expect(find.byKey(const Key('health-symptom-cramps')), findsOneWidget);
-    await tester.tap(find.byKey(const Key('health-symptom-cramps')));
+    expect(find.text("what's happening?"), findsOneWidget);
+
+    // Select cramps symptom.
+    await tester.tap(find.text('Cramps'));
     await tester.pumpAndSettle();
-    await tester.scrollUntilVisible(
-      find.byKey(const Key('health-severity-cramps-extreme')),
-      500,
-      scrollable: find.byType(Scrollable).first,
-    );
-    expect(
-      find.byKey(const Key('health-severity-cramps-extreme')),
-      findsOneWidget,
-    );
-    expect(find.byKey(const Key('health-record-provenance')), findsOneWidget);
-    expect(find.byKey(const Key('health-record-include-pain')), findsOneWidget);
-    await tester.scrollUntilVisible(
-      find.byKey(const Key('health-impact-workOrSchool')),
-      500,
-      scrollable: find.byType(Scrollable).first,
-    );
-    expect(find.text('USER-REPORTED IMPACT'), findsOneWidget);
+
+    // Intensity section appears.
+    expect(find.text('intensity'), findsOneWidget);
+    // Severity pills show.
+    expect(find.text('1'), findsOneWidget);
+    expect(find.text('6'), findsOneWidget);
+
+    // Tap extreme severity.
+    await tester.tap(find.text('6'));
+    await tester.pumpAndSettle();
+    expect(find.text('Extreme'), findsOneWidget);
+
+    // Expand 'when?' section.
+    await tester.tap(find.text('when?'));
+    await tester.pumpAndSettle();
+    expect(find.text('Same day'), findsOneWidget);
+
+    // Save button is visible with symptom count.
+    expect(find.text('save 1 symptom'), findsOneWidget);
   });
 }

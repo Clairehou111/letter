@@ -578,331 +578,555 @@ class _HealthRecordFormScreenState extends State<HealthRecordFormScreen> {
   Widget build(BuildContext context) {
     final editing = widget.initialRecord != null;
     return Scaffold(
+      backgroundColor: LetterColors.canvas,
       appBar: AppBar(
-        title: Text(editing ? 'Edit health record' : 'New health record'),
+        title: Text(editing ? 'Edit record' : 'Record a symptom'),
+        actions: [
+          if (editing)
+            TextButton(
+              onPressed: _saving ? null : () => Navigator.pop(context),
+              child: const Text('Cancel'),
+            ),
+        ],
       ),
       body: SafeArea(
-        child: ListView(
-          padding: const EdgeInsets.fromLTRB(20, 8, 20, 32),
-          children: [
-            const Text(
-              'What did you experience?',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800),
-            ),
-            const SizedBox(height: LetterSpacing.xs),
-            const Text(
-              'Select one or more symptoms. Each one gets its own intensity.',
-              style: TextStyle(color: LetterColors.muted),
-            ),
-            const SizedBox(height: LetterSpacing.md),
-            ...SymptomCategory.values.map(_categorySection),
-            const SizedBox(height: LetterSpacing.lg),
-            const LetterEyebrow('Intensity for selected symptoms'),
-            const SizedBox(height: LetterSpacing.xs),
-            ..._selectedSymptoms.map(_severitySection),
-            const SizedBox(height: LetterSpacing.lg),
-            _dateSection(),
-            const SizedBox(height: LetterSpacing.lg),
-            _provenanceSection(),
-            const SizedBox(height: LetterSpacing.lg),
-            _painSection(),
-            const SizedBox(height: LetterSpacing.lg),
-            _impactSection(),
-            if (_error != null) ...[
-              const SizedBox(height: LetterSpacing.md),
-              Text(
-                _error!,
-                key: const Key('health-record-error'),
-                style: const TextStyle(color: LetterColors.safetyRed),
+        child: CustomScrollView(
+          slivers: [
+            SliverPadding(
+              padding: const EdgeInsets.fromLTRB(20, 8, 20, 24),
+              sliver: SliverList.list(
+                children: [
+                  // ── Symptom cards (horizontal scrollable row) ──
+                  const Text(
+                    "what's happening?",
+                    style: TextStyle(
+                      fontFamily: 'Newsreader',
+                      fontSize: 24,
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                  const SizedBox(height: LetterSpacing.sm),
+                  SizedBox(
+                    height: 82,
+                    child: ListView.separated(
+                      scrollDirection: Axis.horizontal,
+                      itemCount: SymptomType.values.length,
+                      separatorBuilder: (_, _) =>
+                          const SizedBox(width: LetterSpacing.xs),
+                      itemBuilder: (context, index) {
+                        final symptom = SymptomType.values[index];
+                        final selected =
+                            _selectedSymptoms.contains(symptom);
+                        return _SymptomCard(
+                          symptom: symptom,
+                          selected: selected,
+                          onTap: () => _toggleSymptom(symptom),
+                        );
+                      },
+                    ),
+                  ),
+                  const SizedBox(height: LetterSpacing.lg),
+
+                  // ── Intensity for selected symptoms ──
+                  if (_selectedSymptoms.isNotEmpty) ...[
+                    const Text(
+                      'intensity',
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w800,
+                        color: LetterColors.muted,
+                      ),
+                    ),
+                    const SizedBox(height: LetterSpacing.sm),
+                    ..._selectedSymptoms.map(_modernSeverityPills),
+                    const SizedBox(height: LetterSpacing.lg),
+                  ],
+
+                  // ── Collapsible: when ──
+                  _CollapsibleSection(
+                    title: 'when?',
+                    subtitle: _formatDate(context, _experiencedDate),
+                    initiallyExpanded: false,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const SizedBox(height: LetterSpacing.sm),
+                        OutlinedButton.icon(
+                          onPressed: _pickDate,
+                          icon: const Icon(Icons.calendar_today_outlined,
+                              size: 18),
+                          label: Text(_formatDate(context, _experiencedDate)),
+                          style: OutlinedButton.styleFrom(
+                            foregroundColor: LetterColors.ink,
+                            side: const BorderSide(color: LetterColors.line),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(
+                                  LetterRadius.control),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: LetterSpacing.sm),
+                        SegmentedButton<HealthRecordProvenance>(
+                          segments: HealthRecordProvenance.values
+                              .map((v) => ButtonSegment(
+                                    value: v,
+                                    label: Text(v.label,
+                                        style:
+                                            const TextStyle(fontSize: 12)),
+                                  ))
+                              .toList(),
+                          selected: {_provenance},
+                          onSelectionChanged: (values) =>
+                              setState(() => _provenance = values.single),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: LetterSpacing.md),
+
+                  // ── Collapsible: pain ──
+                  _CollapsibleSection(
+                    title:
+                        'pain ${_includePain ? "· ${_painLocations.length} location${_painLocations.length == 1 ? "" : "s"}" : ""}',
+                    initiallyExpanded: _includePain,
+                    onToggle: () =>
+                        setState(() => _includePain = !_includePain),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const SizedBox(height: LetterSpacing.sm),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: TextField(
+                                key: const Key('health-record-pain-rating'),
+                                controller: _painController,
+                                keyboardType: TextInputType.number,
+                                decoration: const InputDecoration(
+                                  labelText: '0–10 rating',
+                                  border: OutlineInputBorder(),
+                                  isDense: true,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: LetterSpacing.sm),
+                        Wrap(
+                          spacing: LetterSpacing.xs,
+                          runSpacing: LetterSpacing.xs,
+                          children: PainLocation.values.map((location) {
+                            final active =
+                                _painLocations.contains(location);
+                            return _MiniChip(
+                              label: location.label,
+                              active: active,
+                              activeColor: LetterColors.coral,
+                              onTap: () => setState(() {
+                                if (active) {
+                                  _painLocations.remove(location);
+                                } else {
+                                  _painLocations.add(location);
+                                }
+                              }),
+                            );
+                          }).toList(),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: LetterSpacing.md),
+
+                  // ── Collapsible: impact ──
+                  _CollapsibleSection(
+                    title:
+                        'daily impact ${_functionalImpacts.isNotEmpty ? "· ${_functionalImpacts.length} area${_functionalImpacts.length == 1 ? "" : "s"}" : ""}',
+                    initiallyExpanded: false,
+                    child: Wrap(
+                      spacing: LetterSpacing.xs,
+                      runSpacing: LetterSpacing.xs,
+                      children: [
+                        const SizedBox(height: LetterSpacing.sm),
+                        ...FunctionalImpact.values.map((impact) {
+                          final active =
+                              _functionalImpacts.contains(impact);
+                          return _MiniChip(
+                            label: impact.label,
+                            active: active,
+                            activeColor: LetterColors.amber,
+                            onTap: () => setState(() {
+                              if (active) {
+                                _functionalImpacts.remove(impact);
+                              } else {
+                                _functionalImpacts.add(impact);
+                              }
+                            }),
+                          );
+                        }),
+                      ],
+                    ),
+                  ),
+                ],
               ),
-            ],
-            const SizedBox(height: LetterSpacing.lg),
-            FilledButton.icon(
-              key: const Key('health-record-save'),
-              onPressed: _saving ? null : _save,
-              icon: _saving
-                  ? const SizedBox.square(
-                      dimension: 18,
-                      child: CircularProgressIndicator(strokeWidth: 2),
-                    )
-                  : const Icon(Icons.check),
-              label: Text(editing ? 'Save changes' : 'Confirm and save'),
-              style: FilledButton.styleFrom(
-                minimumSize: const Size.fromHeight(48),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(LetterRadius.control),
+            ),
+          ],
+        ),
+      ),
+      // Floating save bar
+      bottomNavigationBar: _selectedSymptoms.isNotEmpty
+          ? SafeArea(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(20, 8, 20, 12),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    if (_error != null)
+                      Padding(
+                        padding: const EdgeInsets.only(bottom: 8),
+                        child: Text(
+                          _error!,
+                          style: const TextStyle(
+                              color: LetterColors.safetyRed, fontSize: 13),
+                        ),
+                      ),
+                    FilledButton.icon(
+                      key: const Key('health-record-save'),
+                      onPressed: _saving ? null : _save,
+                      icon: _saving
+                          ? const SizedBox.square(
+                              dimension: 18,
+                              child: CircularProgressIndicator(
+                                  strokeWidth: 2),
+                            )
+                          : const Icon(Icons.check_circle_outlined, size: 20),
+                      label: Text(
+                        editing
+                            ? 'save changes'
+                            : 'save ${_selectedSymptoms.length} symptom${_selectedSymptoms.length == 1 ? "" : "s"}',
+                        style: const TextStyle(fontWeight: FontWeight.w700),
+                      ),
+                      style: FilledButton.styleFrom(
+                        minimumSize: const Size.fromHeight(52),
+                        backgroundColor: LetterColors.teal,
+                        shape: RoundedRectangleBorder(
+                          borderRadius:
+                              BorderRadius.circular(LetterRadius.control),
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
               ),
+            )
+          : null,
+    );
+  }
+
+  Widget _modernSeverityPills(SymptomType symptom) {
+    final current = _severities[symptom] ?? SymptomSeverity.moderate;
+    final severities = SymptomSeverity.values;
+    return Padding(
+      padding: const EdgeInsets.only(bottom: LetterSpacing.sm),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Text(
+                symptom.label,
+                style: const TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+              const Spacer(),
+              GestureDetector(
+                onTap: () => _toggleSymptom(symptom),
+                child: const Padding(
+                  padding: EdgeInsets.all(4),
+                  child: Icon(Icons.close, size: 16, color: LetterColors.muted),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 6),
+          // Interactive severity pill bar
+          ClipRRect(
+            borderRadius: BorderRadius.circular(LetterRadius.control),
+            child: SizedBox(
+              height: 48,
+              child: Row(
+                children: severities.map((severity) {
+                  final active = severity == current;
+                  final scoreRatio =
+                      (severity.score - 1) / 5.0; // 0.0 to 1.0
+                  return Expanded(
+                    child: GestureDetector(
+                      onTap: () =>
+                          setState(() => _severities[symptom] = severity),
+                      child: AnimatedContainer(
+                        duration: LetterMotion.responsive,
+                        curve: LetterMotion.standard,
+                        decoration: BoxDecoration(
+                          color: active
+                              ? Color.lerp(
+                                  LetterColors.violetSoft,
+                                  LetterColors.violet,
+                                  scoreRatio,
+                                )
+                              : LetterColors.violetSoft.withValues(alpha: 0.4),
+                          border: active
+                              ? Border.all(
+                                  color: LetterColors.violet, width: 1.5)
+                              : null,
+                        ),
+                        alignment: Alignment.center,
+                        child: Text(
+                          severity.score.toString(),
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.w800,
+                            color: active
+                                ? Colors.white
+                                : LetterColors.muted.withValues(alpha: 0.5),
+                          ),
+                        ),
+                      ),
+                    ),
+                  );
+                }).toList(),
+              ),
             ),
-            const SizedBox(height: LetterSpacing.xs),
-            const Text(
-              'This saves only what you selected and confirmed on this screen.',
+          ),
+          // Label for current severity
+          Padding(
+            padding: const EdgeInsets.only(top: 4),
+            child: Text(
+              current.label,
+              style: const TextStyle(
+                color: LetterColors.violet,
+                fontSize: 11,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ── Modern symptom card ──
+class _SymptomCard extends StatelessWidget {
+  const _SymptomCard({
+    required this.symptom,
+    required this.selected,
+    required this.onTap,
+  });
+
+  final SymptomType symptom;
+  final bool selected;
+  final VoidCallback onTap;
+
+  IconData get _icon => switch (symptom.category) {
+    SymptomCategory.physical => Icons.accessibility_new_outlined,
+    SymptomCategory.mood => Icons.psychology_outlined,
+    SymptomCategory.energy => Icons.battery_2_bar_outlined,
+    SymptomCategory.sleep => Icons.bedtime_outlined,
+  };
+
+  Color get _iconColor => switch (symptom.category) {
+    SymptomCategory.physical => LetterColors.coral,
+    SymptomCategory.mood => LetterColors.violet,
+    SymptomCategory.energy => LetterColors.amber,
+    SymptomCategory.sleep => LetterColors.blue,
+  };
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: AnimatedContainer(
+        duration: LetterMotion.responsive,
+        curve: LetterMotion.standard,
+        width: 68,
+        padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
+        decoration: BoxDecoration(
+          color: selected ? _iconColor.withValues(alpha: 0.15) : LetterColors.surface,
+          borderRadius: BorderRadius.circular(LetterRadius.panel),
+          border: Border.all(
+            color: selected ? _iconColor.withValues(alpha: 0.5) : LetterColors.line,
+            width: selected ? 1.5 : 1,
+          ),
+        ),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(_icon, size: 22, color: selected ? _iconColor : LetterColors.muted),
+            const SizedBox(height: 4),
+            Text(
+              symptom.label.split(' ').first,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
               textAlign: TextAlign.center,
-              style: TextStyle(color: LetterColors.muted, fontSize: 11),
+              style: TextStyle(
+                fontSize: 9,
+                fontWeight: FontWeight.w600,
+                color: selected ? LetterColors.ink : LetterColors.muted,
+              ),
             ),
           ],
         ),
       ),
     );
   }
+}
 
-  Widget _categorySection(SymptomCategory category) {
-    final symptoms = SymptomType.values.where(
-      (item) => item.category == category,
-    );
-    return Padding(
-      padding: const EdgeInsets.only(bottom: LetterSpacing.md),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          LetterEyebrow(_categoryLabel(category)),
-          const SizedBox(height: LetterSpacing.xs),
-          Wrap(
-            spacing: LetterSpacing.xs,
-            runSpacing: LetterSpacing.xs,
-            children: symptoms.map((symptom) {
-              final selected = _selectedSymptoms.contains(symptom);
-              return FilterChip(
-                key: Key('health-symptom-${symptom.name}'),
-                selected: selected,
-                showCheckmark: false,
-                onSelected: (_) => _toggleSymptom(symptom),
-                avatar: Icon(
-                  selected ? Icons.check : Icons.add,
-                  size: 16,
-                  color: selected ? Colors.white : LetterColors.teal,
-                ),
-                label: Text(symptom.label),
-                labelStyle: TextStyle(
-                  color: selected ? Colors.white : LetterColors.ink,
-                  fontWeight: FontWeight.w700,
-                ),
-                selectedColor: LetterColors.teal,
-                backgroundColor: LetterColors.tealSoft,
-                side: BorderSide.none,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(LetterRadius.control),
-                ),
-              );
-            }).toList(),
-          ),
-        ],
-      ),
-    );
-  }
+// ── Mini toggle chip ──
+class _MiniChip extends StatelessWidget {
+  const _MiniChip({
+    required this.label,
+    required this.active,
+    required this.activeColor,
+    required this.onTap,
+  });
 
-  Widget _severitySection(SymptomType symptom) {
-    final selected = _severities[symptom] ?? SymptomSeverity.moderate;
-    return Padding(
-      padding: const EdgeInsets.only(bottom: LetterSpacing.sm),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            symptom.label,
-            style: const TextStyle(fontWeight: FontWeight.w700),
-          ),
-          const SizedBox(height: LetterSpacing.xs),
-          Wrap(
-            spacing: LetterSpacing.xs,
-            runSpacing: LetterSpacing.xs,
-            children: SymptomSeverity.values.map((severity) {
-              final active = severity == selected;
-              return ChoiceChip(
-                key: Key('health-severity-${symptom.name}-${severity.name}'),
-                selected: active,
-                onSelected: (_) =>
-                    setState(() => _severities[symptom] = severity),
-                label: Text(severity.label),
-                selectedColor: LetterColors.violet,
-                backgroundColor: LetterColors.violetSoft,
-                labelStyle: TextStyle(
-                  color: active ? Colors.white : LetterColors.ink,
-                  fontWeight: FontWeight.w700,
-                ),
-                showCheckmark: false,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(LetterRadius.control),
-                ),
-              );
-            }).toList(),
-          ),
-        ],
-      ),
-    );
-  }
+  final String label;
+  final bool active;
+  final Color activeColor;
+  final VoidCallback onTap;
 
-  Widget _dateSection() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const LetterEyebrow('When did you experience it?'),
-        const SizedBox(height: LetterSpacing.xs),
-        OutlinedButton.icon(
-          key: const Key('health-record-experienced-date'),
-          onPressed: _pickDate,
-          icon: const Icon(Icons.calendar_today_outlined),
-          label: Text(_formatDate(context, _experiencedDate)),
-          style: OutlinedButton.styleFrom(
-            alignment: Alignment.centerLeft,
-            minimumSize: const Size.fromHeight(48),
-            foregroundColor: LetterColors.ink,
-            side: const BorderSide(color: LetterColors.line),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(LetterRadius.control),
-            ),
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: AnimatedContainer(
+        duration: LetterMotion.responsive,
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+        decoration: BoxDecoration(
+          color: active ? activeColor.withValues(alpha: 0.15) : LetterColors.surface,
+          borderRadius: BorderRadius.circular(LetterRadius.control),
+          border: Border.all(
+            color: active ? activeColor : LetterColors.line,
           ),
         ),
-      ],
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            if (active)
+              Padding(
+                padding: const EdgeInsets.only(right: 4),
+                child: Icon(Icons.check, size: 14, color: activeColor),
+              ),
+            Text(
+              label,
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+                color: active ? activeColor : LetterColors.muted,
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
+}
 
-  Widget _provenanceSection() {
+// ── Collapsible section ──
+class _CollapsibleSection extends StatefulWidget {
+  const _CollapsibleSection({
+    required this.title,
+    this.subtitle,
+    required this.child,
+    this.initiallyExpanded = false,
+    this.onToggle,
+  });
+
+  final String title;
+  final String? subtitle;
+  final Widget child;
+  final bool initiallyExpanded;
+  final VoidCallback? onToggle;
+
+  @override
+  State<_CollapsibleSection> createState() => _CollapsibleSectionState();
+}
+
+class _CollapsibleSectionState extends State<_CollapsibleSection> {
+  late bool _expanded;
+
+  @override
+  void initState() {
+    super.initState();
+    _expanded = widget.initiallyExpanded;
+  }
+
+  @override
+  Widget build(BuildContext context) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const LetterEyebrow('When are you recording this?'),
-        const SizedBox(height: LetterSpacing.xs),
-        SegmentedButton<HealthRecordProvenance>(
-          key: const Key('health-record-provenance'),
-          segments: HealthRecordProvenance.values
-              .map(
-                (value) => ButtonSegment(
-                  value: value,
-                  label: Text(value.label),
-                  icon: Icon(
-                    value == HealthRecordProvenance.sameDay
-                        ? Icons.today_outlined
-                        : Icons.history_outlined,
+        GestureDetector(
+          onTap: () {
+            setState(() => _expanded = !_expanded);
+            widget.onToggle?.call();
+          },
+          child: Container(
+            padding: const EdgeInsets.symmetric(vertical: 12),
+            decoration: BoxDecoration(
+              border: Border(
+                bottom: BorderSide(
+                  color: _expanded ? LetterColors.line : Colors.transparent,
+                ),
+              ),
+            ),
+            child: Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    widget.title,
+                    style: const TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w800,
+                      color: LetterColors.muted,
+                    ),
                   ),
                 ),
-              )
-              .toList(),
-          selected: {_provenance},
-          onSelectionChanged: (values) =>
-              setState(() => _provenance = values.single),
-        ),
-      ],
-    );
-  }
-
-  Widget _painSection() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const LetterEyebrow('Optional pain detail'),
-        const SizedBox(height: LetterSpacing.xs),
-        CheckboxListTile(
-          key: const Key('health-record-include-pain'),
-          value: _includePain,
-          onChanged: (value) => setState(() => _includePain = value ?? false),
-          contentPadding: EdgeInsets.zero,
-          title: const Text('Add a separate 0-10 pain rating'),
-          subtitle: const Text('This is separate from symptom intensity.'),
-          controlAffinity: ListTileControlAffinity.leading,
-        ),
-        if (_includePain) ...[
-          TextField(
-            key: const Key('health-record-pain-rating'),
-            controller: _painController,
-            keyboardType: TextInputType.number,
-            decoration: const InputDecoration(
-              labelText: 'Pain rating (0-10)',
-              border: OutlineInputBorder(),
+                if (widget.subtitle != null) ...[
+                  Text(
+                    widget.subtitle!,
+                    style: const TextStyle(
+                      fontSize: 12,
+                      color: LetterColors.ink,
+                    ),
+                  ),
+                  const SizedBox(width: LetterSpacing.xs),
+                ],
+                AnimatedRotation(
+                  turns: _expanded ? 0.5 : 0.0,
+                  duration: LetterMotion.responsive,
+                  child: const Icon(
+                    Icons.keyboard_arrow_down,
+                    size: 20,
+                    color: LetterColors.muted,
+                  ),
+                ),
+              ],
             ),
           ),
-          const SizedBox(height: LetterSpacing.sm),
-          const Text(
-            'Where did it hurt?',
-            style: TextStyle(fontWeight: FontWeight.w700),
-          ),
-          const SizedBox(height: LetterSpacing.xs),
-          Wrap(
-            spacing: LetterSpacing.xs,
-            runSpacing: LetterSpacing.xs,
-            children: PainLocation.values.map((location) {
-              final selected = _painLocations.contains(location);
-              return FilterChip(
-                key: Key('health-pain-location-${location.name}'),
-                selected: selected,
-                showCheckmark: false,
-                onSelected: (_) => setState(() {
-                  if (selected) {
-                    _painLocations.remove(location);
-                  } else {
-                    _painLocations.add(location);
-                  }
-                }),
-                label: Text(location.label),
-                selectedColor: LetterColors.coral,
-                backgroundColor: LetterColors.coralSoft,
-                labelStyle: TextStyle(
-                  color: selected ? LetterColors.ink : LetterColors.ink,
-                  fontWeight: FontWeight.w700,
-                ),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(LetterRadius.control),
-                ),
-              );
-            }).toList(),
-          ),
-        ],
-      ],
-    );
-  }
-
-  Widget _impactSection() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const LetterEyebrow('User-reported impact'),
-        const SizedBox(height: LetterSpacing.xs),
-        const Text(
-          'Select any areas this affected. Letter does not calculate an '
-          'impairment score.',
-          style: TextStyle(color: LetterColors.muted, fontSize: 12),
         ),
-        const SizedBox(height: LetterSpacing.xs),
-        Wrap(
-          spacing: LetterSpacing.xs,
-          runSpacing: LetterSpacing.xs,
-          children: FunctionalImpact.values.map((impact) {
-            final selected = _functionalImpacts.contains(impact);
-            return FilterChip(
-              key: Key('health-impact-${impact.name}'),
-              selected: selected,
-              showCheckmark: false,
-              onSelected: (_) => setState(() {
-                if (selected) {
-                  _functionalImpacts.remove(impact);
-                } else {
-                  _functionalImpacts.add(impact);
-                }
-              }),
-              label: Text(impact.label),
-              selectedColor: LetterColors.amber,
-              backgroundColor: LetterColors.amberSoft,
-              labelStyle: const TextStyle(
-                color: LetterColors.ink,
-                fontWeight: FontWeight.w700,
-              ),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(LetterRadius.control),
-              ),
-            );
-          }).toList(),
+        AnimatedCrossFade(
+          firstChild: const SizedBox.shrink(),
+          secondChild: widget.child,
+          crossFadeState:
+              _expanded ? CrossFadeState.showSecond : CrossFadeState.showFirst,
+          duration: LetterMotion.responsive,
         ),
       ],
     );
   }
 }
-
-String _categoryLabel(SymptomCategory category) => switch (category) {
-  SymptomCategory.physical => 'Physical',
-  SymptomCategory.mood => 'Mood',
-  SymptomCategory.energy => 'Energy',
-  SymptomCategory.sleep => 'Sleep',
-};
 
 String _formatDate(BuildContext context, LocalDate date) {
   return MaterialLocalizations.of(
