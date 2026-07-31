@@ -18,6 +18,7 @@ import '../features/health_records/data/in_memory_health_record_repository.dart'
 import '../features/health_records/domain/health_record_repository.dart';
 import '../features/local_backup/domain/local_backup_file_port.dart';
 import '../features/local_backup/domain/local_backup_import.dart';
+import '../features/onboarding/data/file_onboarding_repository.dart';
 import '../features/onboarding/data/onboarding_repository.dart';
 import '../features/onboarding/domain/onboarding_profile.dart';
 import '../features/onboarding/presentation/onboarding_flow.dart';
@@ -69,7 +70,7 @@ class _LetterAppState extends State<LetterApp> {
   @override
   void initState() {
     super.initState();
-    _repository = widget.onboardingRepository ?? SecureOnboardingRepository();
+    _repository = widget.onboardingRepository ?? FileOnboardingRepository();
     _entitlementRepository =
         widget.entitlementRepository ?? LocalEntitlementRepository();
     _entitlementState = _entitlementRepository.current;
