@@ -19,13 +19,12 @@ import 'local_health_store.dart';
 const _databaseKeyName = 'letter.health_database.key.v1';
 
 LocalHealthStore createDefaultLocalHealthStore() {
-  const secureStorage = FlutterSecureStorage();
   final executor = LazyDatabase(() async {
     final directory = await getApplicationSupportDirectory();
     final databaseFile = File(
       path.join(directory.path, 'letter-health.sqlite'),
     );
-    final key = await _loadOrCreateKey(secureStorage);
+    final key = await _loadOrCreateKey(directory);
 
     return NativeDatabase.createInBackground(
       databaseFile,
@@ -58,17 +57,36 @@ LocalHealthStore createDefaultLocalHealthStore() {
   );
 }
 
-Future<String> _loadOrCreateKey(FlutterSecureStorage storage) async {
-  final existing = await storage.read(key: _databaseKeyName);
-  if (existing != null && existing.isNotEmpty) {
-    return existing;
+Future<String> _loadOrCreateKey(Directory directory) async {
+  // Primary: iOS Keychain / Android EncryptedSharedPreferences.
+  try {
+    const secureStorage = FlutterSecureStorage();
+    final existing = await secureStorage.read(key: _databaseKeyName);
+    if (existing != null && existing.isNotEmpty) return existing;
+
+    final newKey = _generateKey();
+    await secureStorage.write(key: _databaseKeyName, value: newKey);
+    return newKey;
+  } on Object {
+    // Fallback: file-based key for platforms where secure storage is
+    // unavailable (macOS debug builds without provisioning).
   }
 
+  // macOS / desktop fallback — file in sandboxed app support directory.
+  final keyFile = File(path.join(directory.path, 'letter.health_database.key'));
+  if (await keyFile.exists()) {
+    final key = await keyFile.readAsString();
+    if (key.trim().isNotEmpty) return key.trim();
+  }
+  final newKey = _generateKey();
+  await keyFile.writeAsString(newKey);
+  return newKey;
+}
+
+String _generateKey() {
   final random = Random.secure();
-  final key = List.generate(
+  return List.generate(
     32,
     (_) => random.nextInt(256).toRadixString(16).padLeft(2, '0'),
   ).join();
-  await storage.write(key: _databaseKeyName, value: key);
-  return key;
 }
