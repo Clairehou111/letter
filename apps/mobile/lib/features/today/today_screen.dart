@@ -187,12 +187,17 @@ class _TodayScreenState extends State<TodayScreen> {
   Widget _buildGravityHorizon(BuildContext context, CyclePrediction? prediction) {
     if (prediction == null) return const SizedBox.shrink();
     final size = MediaQuery.sizeOf(context);
+    final cycleContext = TodayCycleContext.fromRecords(
+      records: _records,
+      today: _today,
+    );
     return SizedBox(
       height: 280,
       child: GravityHorizonView(
         viewModel: GravityHorizonViewModel.fromPrediction(
           prediction: prediction,
           today: _today,
+          cycleDay: cycleContext.dayNumber,
           availableWidth: size.width - 36,
           availableHeight: 280,
         ),

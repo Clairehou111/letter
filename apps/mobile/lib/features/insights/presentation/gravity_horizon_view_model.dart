@@ -45,6 +45,7 @@ final class GravityHorizonViewModel {
   factory GravityHorizonViewModel.fromPrediction({
     required CyclePrediction? prediction,
     required LocalDate today,
+    required int? cycleDay,
     required double availableWidth,
     required double availableHeight,
   }) {
@@ -59,27 +60,25 @@ final class GravityHorizonViewModel {
       );
     }
 
+    final day = cycleDay ?? 1;
     final totalDays = prediction.maximumCycleDays + 10;
     final points = <Offset>[];
-    for (var day = 0; day <= totalDays; day++) {
-      final x = day / totalDays;
-      final isLuteal = _isInLutealWindow(day, prediction, today);
+    for (var i = 0; i <= totalDays; i++) {
+      final x = i / totalDays;
+      final isLuteal = _isInLutealWindow(i, prediction, today);
       final y = isLuteal
-          ? 0.5 + _lutealValleyDepth * _lutealIntensity(day, prediction)
+          ? 0.5 + _lutealValleyDepth * _lutealIntensity(i, prediction)
           : 0.5;
       points.add(Offset(x * availableWidth, y * availableHeight));
     }
 
-    final todayDay = today.epochDay -
-        prediction.predictedMensesStart.addDays(-prediction.medianCycleDays)
-            .epochDay;
-    final todayX = (todayDay / totalDays).clamp(0.0, 1.0);
+    final todayX = (day / totalDays).clamp(0.0, 1.0);
     final inLuteal = prediction.lutealWindow.contains(today);
 
     return GravityHorizonViewModel(
       curvePoints: points,
       todayPosition: todayX,
-      todayLabel: 'day ${todayDay.clamp(1, totalDays)}',
+      todayLabel: 'day $day',
       subtitle: inLuteal
           ? 'current tide: entering the luteal valley. '
               'gravity feels heavier today. you are safe to slow down.'
