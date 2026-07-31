@@ -167,20 +167,17 @@ class _LettersHomeScreenState extends State<LettersHomeScreen> {
   }
 
   Future<void> _openPersonalPatterns() async {
-    final scope = context.getInheritedWidgetOfExactType<EntitlementScope>();
+    final existingRepo = EntitlementScope.repositoryOf(context);
     await Navigator.of(context).push<void>(
       MaterialPageRoute(
         builder: (context) => EntitlementScope(
           repository:
-              scope?.repository ??
+              existingRepo ??
               LocalEntitlementRepository(
                 initial: const EntitlementState(
                   status: EntitlementStatus.freeOrUnknown,
                 ),
               ),
-          state:
-              scope?.state ??
-              const EntitlementState(status: EntitlementStatus.freeOrUnknown),
           child: PersonalPatternsRoute(
             source: RepositoryPatternSource(
               healthRecords: widget.healthRecordRepository,

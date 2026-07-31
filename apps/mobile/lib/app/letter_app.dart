@@ -169,7 +169,7 @@ class _LetterAppState extends State<LetterApp> {
       theme: LetterTheme.light,
       home: EntitlementScope(
         repository: _entitlementRepository,
-        state: _entitlementState,
+        initialState: _entitlementState,
         child: !_loaded
             ? const _OnboardingLoadingScreen()
             : _loadFailed

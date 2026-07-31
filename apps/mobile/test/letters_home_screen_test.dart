@@ -72,7 +72,7 @@ void main() {
               status: EntitlementStatus.activePaid,
             ),
           ),
-          state: const EntitlementState(status: EntitlementStatus.activePaid),
+          initialState: const EntitlementState(status: EntitlementStatus.activePaid),
           child: LettersHomeScreen(
             periodRepository: periodRepository,
             careMemoryRepository: InMemoryCareMemoryRepository(),

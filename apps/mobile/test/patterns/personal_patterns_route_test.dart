@@ -65,7 +65,7 @@ void main() {
               status: EntitlementStatus.activePaid,
             ),
           ),
-          state: const EntitlementState(status: EntitlementStatus.activePaid),
+          initialState: const EntitlementState(status: EntitlementStatus.activePaid),
           child: PersonalPatternsRoute(
             source: RepositoryPatternSource(
               healthRecords: healthRecords,
