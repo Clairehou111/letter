@@ -14,6 +14,8 @@ import '../capture/domain/speech_to_text_adapter.dart';
 import '../capture/presentation/text_voice_capture_flow.dart';
 import '../health_records/domain/health_record_repository.dart';
 import '../health_records/presentation/health_records_screen.dart';
+import '../insights/presentation/gravity_horizon.dart';
+import '../insights/presentation/gravity_horizon_view_model.dart';
 import 'today_cycle_context.dart';
 
 enum TodayState {
@@ -179,8 +181,28 @@ class _TodayScreenState extends State<TodayScreen> {
     }
   }
 
+  CyclePrediction? get _prediction =>
+      CyclePredictionEngine.calculate(_records);
+
+  Widget _buildGravityHorizon(BuildContext context, CyclePrediction? prediction) {
+    if (prediction == null) return const SizedBox.shrink();
+    final size = MediaQuery.sizeOf(context);
+    return SizedBox(
+      height: 280,
+      child: GravityHorizonView(
+        viewModel: GravityHorizonViewModel.fromPrediction(
+          prediction: prediction,
+          today: _today,
+          availableWidth: size.width - 36,
+          availableHeight: 280,
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
+    final prediction = _prediction;
     return Scaffold(
       bottomNavigationBar: LetterBottomNavigation(
         onSelected: widget.onNavigationSelected,
@@ -215,6 +237,9 @@ class _TodayScreenState extends State<TodayScreen> {
                             const SizedBox(height: LetterSpacing.xl),
                             TodayCareEntry(onOpenCare: _openCare),
                             const SizedBox(height: LetterSpacing.xl),
+                            _buildGravityHorizon(context, prediction),
+                            if (prediction != null)
+                              const SizedBox(height: LetterSpacing.xl),
                             if (widget.healthRecordRepository != null) ...[
                               TodayHealthRecordEntry(
                                 onOpenRecords: _openHealthRecords,

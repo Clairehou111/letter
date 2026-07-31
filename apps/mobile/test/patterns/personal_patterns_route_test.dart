@@ -79,6 +79,18 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.byKey(const Key('personal-patterns-screen')), findsOneWidget);
+
+    // Scroll to visible content — spectrum log may push cards below viewport.
+    await tester.scrollUntilVisible(
+      find.text('Cramps'),
+      260,
+      scrollable: find.descendant(
+        of: find.byKey(const Key('personal-patterns-scroll')),
+        matching: find.byType(Scrollable),
+      ),
+    );
+    await tester.pumpAndSettle();
+
     expect(find.text('Cramps'), findsOneWidget);
     expect(find.text('2 confirmed records'), findsOneWidget);
     expect(find.textContaining('same cycle day in 2 records'), findsOneWidget);

@@ -171,29 +171,33 @@ class TwinMatrixPainter extends CustomPainter {
       );
 
       // Luteal bars (left side, days -14 to -1).
-      for (var i = 0; i < 14; i++) {
-        final severity = cluster.lutealSeverities[i];
-        if (severity <= 0) continue;
-        final barHeight = (severity / 6.0).clamp(0.0, 1.0) * barMaxHeight;
-        final x = labelWidth + i * dayWidth + dayWidth / 2;
-        canvas.drawLine(
-          Offset(x, rowCenterY + barHeight / 2),
-          Offset(x, rowCenterY - barHeight / 2),
-          barPaint,
-        );
+      if (cluster.lutealSeverities.isNotEmpty) {
+        for (var i = 0; i < cluster.lutealSeverities.length && i < 14; i++) {
+          final severity = cluster.lutealSeverities[i];
+          if (severity <= 0) continue;
+          final barHeight = (severity / 6.0).clamp(0.0, 1.0) * barMaxHeight;
+          final x = labelWidth + i * dayWidth + dayWidth / 2;
+          canvas.drawLine(
+            Offset(x, rowCenterY + barHeight / 2),
+            Offset(x, rowCenterY - barHeight / 2),
+            barPaint,
+          );
+        }
       }
 
       // Menses bars (right side, days 1 to 14).
-      for (var i = 0; i < 14; i++) {
-        final severity = cluster.mensesSeverities[i];
-        if (severity <= 0) continue;
-        final barHeight = (severity / 6.0).clamp(0.0, 1.0) * barMaxHeight;
-        final x = labelWidth + halfWidth + i * dayWidth + dayWidth / 2;
-        canvas.drawLine(
-          Offset(x, rowCenterY + barHeight / 2),
-          Offset(x, rowCenterY - barHeight / 2),
-          barPaint,
-        );
+      if (cluster.mensesSeverities.isNotEmpty) {
+        for (var i = 0; i < cluster.mensesSeverities.length && i < 14; i++) {
+          final severity = cluster.mensesSeverities[i];
+          if (severity <= 0) continue;
+          final barHeight = (severity / 6.0).clamp(0.0, 1.0) * barMaxHeight;
+          final x = labelWidth + halfWidth + i * dayWidth + dayWidth / 2;
+          canvas.drawLine(
+            Offset(x, rowCenterY + barHeight / 2),
+            Offset(x, rowCenterY - barHeight / 2),
+            barPaint,
+          );
+        }
       }
     }
   }

@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 
 import '../../../design_system/letter_theme.dart';
 import '../../care/domain/care_memory.dart';
+import '../../clinical/presentation/twin_matrix_report.dart';
+import '../../clinical/presentation/twin_matrix_view_model.dart';
 import '../../cycle/domain/local_date.dart';
 import '../domain/cycle_care_summary.dart';
 import '../domain/local_file_share_adapter.dart';
@@ -106,6 +108,71 @@ class _SummaryExportScreenState extends State<SummaryExportScreen> {
     ).showSnackBar(SnackBar(content: Text(message)));
   }
 
+  Widget _buildClinicalMatrix() {
+    return Container(
+      padding: const EdgeInsets.all(LetterSpacing.md),
+      decoration: BoxDecoration(
+        color: const Color(0xFF0B0C10),
+        borderRadius: BorderRadius.circular(LetterRadius.panel),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            'clinical matrix preview',
+            style: TextStyle(
+              color: Color(0xFF888888),
+              fontSize: 10,
+              fontFamily: 'Courier',
+            ),
+          ),
+          const SizedBox(height: 8),
+          SizedBox(
+            height: 240,
+            child: TwinMatrixReport(
+              viewModel: TwinMatrixViewModel(
+                clusters: const [
+                  TwinMatrixCluster(
+                    label: 'irritability/anger',
+                    lutealSeverities: [],
+                    mensesSeverities: [],
+                  ),
+                  TwinMatrixCluster(
+                    label: 'depressed mood/anxiety',
+                    lutealSeverities: [],
+                    mensesSeverities: [],
+                  ),
+                  TwinMatrixCluster(
+                    label: 'social withdrawal',
+                    lutealSeverities: [],
+                    mensesSeverities: [],
+                  ),
+                  TwinMatrixCluster(
+                    label: 'physical cramps/pain',
+                    lutealSeverities: [],
+                    mensesSeverities: [],
+                  ),
+                ],
+                cycleLabel: 'enable doctor mode for full matrix',
+                exportTimestamp: '',
+                totalDays: 28,
+              ),
+            ),
+          ),
+          const SizedBox(height: 4),
+          const Text(
+            'complete two diary cycles to populate the clinical matrix.',
+            style: TextStyle(
+              color: Color(0xFF555555),
+              fontSize: 8,
+              fontFamily: 'Courier',
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     if (_loading) {
@@ -177,6 +244,8 @@ class _SummaryExportScreenState extends State<SummaryExportScreen> {
             ),
             const SizedBox(height: LetterSpacing.lg),
             _MissingnessSection(values: summary.missingness),
+            const SizedBox(height: LetterSpacing.xl),
+            _buildClinicalMatrix(),
             const SizedBox(height: LetterSpacing.xl),
             FilledButton.icon(
               key: const Key('summary-export-csv'),

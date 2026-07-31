@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import '../../../design_system/letter_theme.dart';
 import '../../care/domain/care_mode.dart';
 import '../../health_records/domain/health_record.dart';
+import '../../insights/presentation/hormonal_spectrum_strip.dart';
+import '../../insights/presentation/spectrum_log_view_model.dart';
 import '../domain/personal_pattern.dart';
 
 class PersonalPatternsScreen extends StatelessWidget {
@@ -24,6 +26,12 @@ class PersonalPatternsScreen extends StatelessWidget {
   final ValueChanged<String>? onUnpinAction;
   final ValueChanged<String>? onEditSource;
   final ValueChanged<String>? onDeleteSource;
+
+  static Widget _buildSpectrumLog(PersonalPatternAnalysis analysis) {
+    final viewModel = SpectrumLogViewModel.fromAnalysis(analysis);
+    if (viewModel.nebulaSegments.isEmpty) return const SizedBox.shrink();
+    return HormonalSpectrumStrip(viewModel: viewModel);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -83,6 +91,8 @@ class PersonalPatternsScreen extends StatelessWidget {
                           height: 1.45,
                         ),
                       ),
+                      const SizedBox(height: LetterSpacing.xl),
+                      _buildSpectrumLog(analysis),
                       const SizedBox(height: LetterSpacing.xl),
                       const LetterSectionTitle(
                         eyebrow: 'Repeated records',

@@ -91,6 +91,18 @@ void main() {
 
     expect(find.byKey(const Key('personal-patterns-screen')), findsOneWidget);
     expect(find.text('What has repeated'), findsOneWidget);
+
+    // Scroll to find symptom cards — spectrum log may push them below viewport.
+    await tester.scrollUntilVisible(
+      find.text('Cramps'),
+      260,
+      scrollable: find.descendant(
+        of: find.byKey(const Key('personal-patterns-scroll')),
+        matching: find.byType(Scrollable),
+      ),
+    );
+    await tester.pumpAndSettle();
+
     expect(find.text('Cramps'), findsOneWidget);
     expect(find.text('2 confirmed records'), findsOneWidget);
     expect(find.textContaining('diagnos'), findsNothing);
