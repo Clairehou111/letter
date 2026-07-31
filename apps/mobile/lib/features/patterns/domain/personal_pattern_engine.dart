@@ -97,6 +97,10 @@ final class PersonalPatternEngine {
             ),
           ),
           cycleDayObservations: List.unmodifiable(cycleDays),
+          severityByDaysBeforeMenses: _buildDaysBeforeMensesMatrix(
+            records,
+            source.periods,
+          ),
         ),
       );
     }
@@ -197,11 +201,51 @@ final class PersonalPatternEngine {
     if (starts.isEmpty) {
       return null;
     }
-    final start = starts.last;
+    final mostRecentStart = starts.last;
+    final cycleDay = date.epochDay - mostRecentStart.epochDay + 1;
+
+    // Negative index: days before the NEXT period start.
+    // Find the first period start strictly after this date.
+    final nextStarts =
+        periods
+            .where((period) => period.startDate.isAfter(date))
+            .map((period) => period.startDate)
+            .toList()
+          ..sort();
+    final int? daysBeforeMenses = nextStarts.isEmpty
+        ? null
+        : date.epochDay - nextStarts.first.epochDay;
+
     return PatternCycleDayObservation(
       date: date,
-      cycleDay: date.epochDay - start.epochDay + 1,
+      cycleDay: cycleDay,
+      daysBeforeMenses: daysBeforeMenses,
     );
+  }
+
+  /// Builds a severity-by-days-before-menses matrix (negative index).
+  /// Aggregates severity scores for each day in the luteal window (-14 to -1)
+  /// across all cycles where a subsequent period start is known.
+  Map<int, double> _buildDaysBeforeMensesMatrix(
+    List<HealthRecord> records,
+    List<PeriodRecord> periods,
+  ) {
+    final severityByDay = <int, List<int>>{};
+    for (final record in records) {
+      final observation = _cycleDayFor(record.experiencedDate, periods);
+      final daysBefore = observation?.daysBeforeMenses;
+      if (daysBefore == null || daysBefore < -14 || daysBefore > -1) {
+        continue;
+      }
+      severityByDay.putIfAbsent(daysBefore, () => []).add(record.severity.score);
+    }
+    final result = <int, double>{};
+    for (final entry in severityByDay.entries) {
+      final avg = entry.value.fold<int>(0, (sum, v) => sum + v) /
+          entry.value.length;
+      result[entry.key] = double.parse(avg.toStringAsFixed(1));
+    }
+    return Map.unmodifiable(result);
   }
 
   String? _reflectionText(CareReflection? reflection) {

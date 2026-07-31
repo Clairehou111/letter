@@ -24,10 +24,18 @@ final class PatternCycleDayObservation {
   const PatternCycleDayObservation({
     required this.date,
     required this.cycleDay,
+    required this.daysBeforeMenses,
   });
 
   final LocalDate date;
+
+  /// Forward index: days since the most recent period start (1-based).
   final int cycleDay;
+
+  /// Negative index: days before the NEXT confirmed period start.
+  /// Example: -3 means 3 days before the next period began.
+  /// Null if there is no subsequent period start to anchor against.
+  final int? daysBeforeMenses;
 }
 
 final class ObservedSymptomPattern {
@@ -43,6 +51,7 @@ final class ObservedSymptomPattern {
     required this.functionalImpactCounts,
     required this.sources,
     required this.cycleDayObservations,
+    this.severityByDaysBeforeMenses = const {},
   });
 
   final String id;
@@ -56,6 +65,11 @@ final class ObservedSymptomPattern {
   final Map<FunctionalImpact, int> functionalImpactCounts;
   final List<PatternSourceReference> sources;
   final List<PatternCycleDayObservation> cycleDayObservations;
+
+  /// Aggregated severity by days-before-menses (negative index).
+  /// Key: days before menses (-14 to -1). Value: average severity.
+  /// Empty if no subsequent period starts are available for anchoring.
+  final Map<int, double> severityByDaysBeforeMenses;
 
   PersonalPatternKind get kind => PersonalPatternKind.symptom;
 

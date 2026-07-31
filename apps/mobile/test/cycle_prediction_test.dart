@@ -156,4 +156,80 @@ void main() {
       6,
     );
   });
+
+  // ── Outlier filtering & luteal detection tests ──
+
+  test('drops outlier intervals < 21 days', () {
+    final prediction = CyclePredictionEngine.calculate([
+      period('one', 0),
+      period('two', 28),
+      period('three', 38), // 10-day interval (pathological — illness/stress)
+      period('four', 66),  // 28-day interval (normal)
+    ])!;
+
+    // The 10-day outlier should be excluded; 2 normal intervals remain.
+    expect(prediction.intervalCount, 2);
+    expect(prediction.medianCycleDays, 28);
+  });
+
+  test('drops outlier intervals > 45 days', () {
+    final prediction = CyclePredictionEngine.calculate([
+      period('one', 0),
+      period('two', 28),
+      period('three', 80), // 52-day interval (pathological)
+      period('four', 108), // 28-day interval (normal)
+    ])!;
+
+    expect(prediction.intervalCount, 2);
+    expect(prediction.medianCycleDays, 28);
+  });
+
+  test('drops intervals exceeding 1.5× the baseline median', () {
+    // Baseline median ~28. 45 days > 28*1.5=42 → excluded.
+    final prediction = CyclePredictionEngine.calculate([
+      period('one', 0),
+      period('two', 28),
+      period('three', 56),
+      period('four', 101), // 45-day outlier
+      period('five', 129), // 28-day normal
+    ])!;
+
+    expect(prediction.intervalCount, 3);
+  });
+
+  test('luteal window computed via 14±2 day countdown from predicted menses', () {
+    final prediction = CyclePredictionEngine.calculate([
+      period('one', 0),
+      period('two', 28),
+      period('three', 56),
+      period('four', 84),
+    ])!;
+
+    // Menses predicted ~ day 112 (84 + 28). Midpoint ~112, halfWidth 2.
+    // Luteal start = mensesStart - 16 days.
+    // Luteal end   = mensesEnd - 1 day.
+    final luteal = prediction.lutealWindow;
+    expect(luteal.rangeStart.epochDay,
+        prediction.predictedMensesStart.epochDay - 16);
+    expect(luteal.rangeEnd.epochDay,
+        prediction.predictedMensesEnd.epochDay - 1);
+  });
+
+  test('luteal window contains dates within the predicted luteal phase', () {
+    final prediction = CyclePredictionEngine.calculate([
+      period('one', 0),
+      period('two', 28),
+      period('three', 56),
+      period('four', 84),
+    ])!;
+
+    final luteal = prediction.lutealWindow;
+    // A date in the middle of the luteal window should be contained.
+    final midLuteal = luteal.midpoint;
+    expect(luteal.contains(midLuteal), isTrue);
+    // A date well before luteal start should not be contained.
+    expect(luteal.contains(luteal.rangeStart.addDays(-10)), isFalse);
+    // A date well after luteal end should not be contained.
+    expect(luteal.contains(luteal.rangeEnd.addDays(10)), isFalse);
+  });
 }
