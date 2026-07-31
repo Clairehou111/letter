@@ -29,8 +29,7 @@ final class GravityHorizonViewModel {
   /// Short lowercase label, e.g. "day 18".
   final String todayLabel;
 
-  /// Lowercase subtitle, e.g. "current tide: entering the luteal valley.
-  /// gravity feels heavier today. you are safe to slow down."
+  /// Plain subtitle that distinguishes estimated timing from lived experience.
   final String subtitle;
 
   /// Whether today is inside the predicted luteal window.
@@ -80,9 +79,8 @@ final class GravityHorizonViewModel {
       todayPosition: todayX,
       todayLabel: 'day $day',
       subtitle: inLuteal
-          ? 'current tide: entering the luteal valley. '
-              'gravity feels heavier today. you are safe to slow down.'
-          : 'current tide: steady waters. your energy is holding.',
+          ? 'Estimated premenstrual window. Your experience may be different.'
+          : 'Estimated cycle position. Check in to record how you actually feel.',
       isInLutealValley: inLuteal,
       backgroundColor: const Color(0xFF0B0C10),
     );

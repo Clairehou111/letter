@@ -66,10 +66,7 @@ class SpectrumLogPainter extends CustomPainter {
               Colors.transparent,
             ],
           ).createShader(rect)
-          ..maskFilter = MaskFilter.blur(
-            BlurStyle.normal,
-            segment.blurRadius,
-          );
+          ..maskFilter = MaskFilter.blur(BlurStyle.normal, segment.blurRadius);
 
         final expandedRect = rect.inflate(segmentWidth * 0.5);
         canvas.drawRect(expandedRect, nebulaPaint);
@@ -132,10 +129,7 @@ class SpectrumLogPainter extends CustomPainter {
 
       label.paint(
         canvas,
-        Offset(
-          i * segmentWidth + (segmentWidth - label.width) / 2,
-          labelTop,
-        ),
+        Offset(i * segmentWidth + (segmentWidth - label.width) / 2, labelTop),
       );
     }
   }
@@ -161,7 +155,7 @@ class HormonalSpectrumStrip extends StatelessWidget {
           const Padding(
             padding: EdgeInsets.only(left: 4, bottom: 8),
             child: Text(
-              'luteal spectrum',
+              'Spectrum Log',
               style: TextStyle(
                 color: Color(0xFF555555),
                 fontSize: 10,
@@ -169,6 +163,26 @@ class HormonalSpectrumStrip extends StatelessWidget {
                 fontWeight: FontWeight.w300,
                 letterSpacing: 1.2,
               ),
+            ),
+          ),
+          Text(
+            '${viewModel.confirmedRatingCount} confirmed ratings across '
+            '${viewModel.observedDayCount} observed days',
+            style: const TextStyle(
+              color: Color(0xFF888888),
+              fontSize: 10,
+              fontFamily: 'Arial',
+              fontWeight: FontWeight.w400,
+            ),
+          ),
+          const SizedBox(height: 4),
+          const Text(
+            'Only days anchored to a later observed period are colored. Blank areas are missing data.',
+            style: TextStyle(
+              color: Color(0xFF555555),
+              fontSize: 9,
+              fontFamily: 'Arial',
+              height: 1.35,
             ),
           ),
           SizedBox(

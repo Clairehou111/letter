@@ -3050,6 +3050,330 @@ class CaptureNoteRowsCompanion extends UpdateCompanion<CaptureNoteRow> {
   }
 }
 
+class $MomentCheckInRowsTable extends MomentCheckInRows
+    with TableInfo<$MomentCheckInRowsTable, MomentCheckInRow> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $MomentCheckInRowsTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<String> id = GeneratedColumn<String>(
+    'id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _stateMeta = const VerificationMeta('state');
+  @override
+  late final GeneratedColumn<String> state = GeneratedColumn<String>(
+    'state',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _occurredAtMillisMeta = const VerificationMeta(
+    'occurredAtMillis',
+  );
+  @override
+  late final GeneratedColumn<int> occurredAtMillis = GeneratedColumn<int>(
+    'occurred_at_millis',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _createdAtMillisMeta = const VerificationMeta(
+    'createdAtMillis',
+  );
+  @override
+  late final GeneratedColumn<int> createdAtMillis = GeneratedColumn<int>(
+    'created_at_millis',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    id,
+    state,
+    occurredAtMillis,
+    createdAtMillis,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'moment_check_in_rows';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<MomentCheckInRow> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    } else if (isInserting) {
+      context.missing(_idMeta);
+    }
+    if (data.containsKey('state')) {
+      context.handle(
+        _stateMeta,
+        state.isAcceptableOrUnknown(data['state']!, _stateMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_stateMeta);
+    }
+    if (data.containsKey('occurred_at_millis')) {
+      context.handle(
+        _occurredAtMillisMeta,
+        occurredAtMillis.isAcceptableOrUnknown(
+          data['occurred_at_millis']!,
+          _occurredAtMillisMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_occurredAtMillisMeta);
+    }
+    if (data.containsKey('created_at_millis')) {
+      context.handle(
+        _createdAtMillisMeta,
+        createdAtMillis.isAcceptableOrUnknown(
+          data['created_at_millis']!,
+          _createdAtMillisMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_createdAtMillisMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  MomentCheckInRow map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return MomentCheckInRow(
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}id'],
+      )!,
+      state: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}state'],
+      )!,
+      occurredAtMillis: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}occurred_at_millis'],
+      )!,
+      createdAtMillis: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}created_at_millis'],
+      )!,
+    );
+  }
+
+  @override
+  $MomentCheckInRowsTable createAlias(String alias) {
+    return $MomentCheckInRowsTable(attachedDatabase, alias);
+  }
+}
+
+class MomentCheckInRow extends DataClass
+    implements Insertable<MomentCheckInRow> {
+  final String id;
+  final String state;
+  final int occurredAtMillis;
+  final int createdAtMillis;
+  const MomentCheckInRow({
+    required this.id,
+    required this.state,
+    required this.occurredAtMillis,
+    required this.createdAtMillis,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<String>(id);
+    map['state'] = Variable<String>(state);
+    map['occurred_at_millis'] = Variable<int>(occurredAtMillis);
+    map['created_at_millis'] = Variable<int>(createdAtMillis);
+    return map;
+  }
+
+  MomentCheckInRowsCompanion toCompanion(bool nullToAbsent) {
+    return MomentCheckInRowsCompanion(
+      id: Value(id),
+      state: Value(state),
+      occurredAtMillis: Value(occurredAtMillis),
+      createdAtMillis: Value(createdAtMillis),
+    );
+  }
+
+  factory MomentCheckInRow.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return MomentCheckInRow(
+      id: serializer.fromJson<String>(json['id']),
+      state: serializer.fromJson<String>(json['state']),
+      occurredAtMillis: serializer.fromJson<int>(json['occurredAtMillis']),
+      createdAtMillis: serializer.fromJson<int>(json['createdAtMillis']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<String>(id),
+      'state': serializer.toJson<String>(state),
+      'occurredAtMillis': serializer.toJson<int>(occurredAtMillis),
+      'createdAtMillis': serializer.toJson<int>(createdAtMillis),
+    };
+  }
+
+  MomentCheckInRow copyWith({
+    String? id,
+    String? state,
+    int? occurredAtMillis,
+    int? createdAtMillis,
+  }) => MomentCheckInRow(
+    id: id ?? this.id,
+    state: state ?? this.state,
+    occurredAtMillis: occurredAtMillis ?? this.occurredAtMillis,
+    createdAtMillis: createdAtMillis ?? this.createdAtMillis,
+  );
+  MomentCheckInRow copyWithCompanion(MomentCheckInRowsCompanion data) {
+    return MomentCheckInRow(
+      id: data.id.present ? data.id.value : this.id,
+      state: data.state.present ? data.state.value : this.state,
+      occurredAtMillis: data.occurredAtMillis.present
+          ? data.occurredAtMillis.value
+          : this.occurredAtMillis,
+      createdAtMillis: data.createdAtMillis.present
+          ? data.createdAtMillis.value
+          : this.createdAtMillis,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('MomentCheckInRow(')
+          ..write('id: $id, ')
+          ..write('state: $state, ')
+          ..write('occurredAtMillis: $occurredAtMillis, ')
+          ..write('createdAtMillis: $createdAtMillis')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(id, state, occurredAtMillis, createdAtMillis);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is MomentCheckInRow &&
+          other.id == this.id &&
+          other.state == this.state &&
+          other.occurredAtMillis == this.occurredAtMillis &&
+          other.createdAtMillis == this.createdAtMillis);
+}
+
+class MomentCheckInRowsCompanion extends UpdateCompanion<MomentCheckInRow> {
+  final Value<String> id;
+  final Value<String> state;
+  final Value<int> occurredAtMillis;
+  final Value<int> createdAtMillis;
+  final Value<int> rowid;
+  const MomentCheckInRowsCompanion({
+    this.id = const Value.absent(),
+    this.state = const Value.absent(),
+    this.occurredAtMillis = const Value.absent(),
+    this.createdAtMillis = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  MomentCheckInRowsCompanion.insert({
+    required String id,
+    required String state,
+    required int occurredAtMillis,
+    required int createdAtMillis,
+    this.rowid = const Value.absent(),
+  }) : id = Value(id),
+       state = Value(state),
+       occurredAtMillis = Value(occurredAtMillis),
+       createdAtMillis = Value(createdAtMillis);
+  static Insertable<MomentCheckInRow> custom({
+    Expression<String>? id,
+    Expression<String>? state,
+    Expression<int>? occurredAtMillis,
+    Expression<int>? createdAtMillis,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (state != null) 'state': state,
+      if (occurredAtMillis != null) 'occurred_at_millis': occurredAtMillis,
+      if (createdAtMillis != null) 'created_at_millis': createdAtMillis,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  MomentCheckInRowsCompanion copyWith({
+    Value<String>? id,
+    Value<String>? state,
+    Value<int>? occurredAtMillis,
+    Value<int>? createdAtMillis,
+    Value<int>? rowid,
+  }) {
+    return MomentCheckInRowsCompanion(
+      id: id ?? this.id,
+      state: state ?? this.state,
+      occurredAtMillis: occurredAtMillis ?? this.occurredAtMillis,
+      createdAtMillis: createdAtMillis ?? this.createdAtMillis,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<String>(id.value);
+    }
+    if (state.present) {
+      map['state'] = Variable<String>(state.value);
+    }
+    if (occurredAtMillis.present) {
+      map['occurred_at_millis'] = Variable<int>(occurredAtMillis.value);
+    }
+    if (createdAtMillis.present) {
+      map['created_at_millis'] = Variable<int>(createdAtMillis.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('MomentCheckInRowsCompanion(')
+          ..write('id: $id, ')
+          ..write('state: $state, ')
+          ..write('occurredAtMillis: $occurredAtMillis, ')
+          ..write('createdAtMillis: $createdAtMillis, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
 abstract class _$LetterHealthDatabase extends GeneratedDatabase {
   _$LetterHealthDatabase(QueryExecutor e) : super(e);
   $LetterHealthDatabaseManager get managers =>
@@ -3067,6 +3391,8 @@ abstract class _$LetterHealthDatabase extends GeneratedDatabase {
   late final $CaptureNoteRowsTable captureNoteRows = $CaptureNoteRowsTable(
     this,
   );
+  late final $MomentCheckInRowsTable momentCheckInRows =
+      $MomentCheckInRowsTable(this);
   @override
   Iterable<TableInfo<Table, Object?>> get allTables =>
       allSchemaEntities.whereType<TableInfo<Table, Object?>>();
@@ -3078,6 +3404,7 @@ abstract class _$LetterHealthDatabase extends GeneratedDatabase {
     careReflectionRows,
     healthRecordRows,
     captureNoteRows,
+    momentCheckInRows,
   ];
 }
 
@@ -4673,6 +5000,204 @@ typedef $$CaptureNoteRowsTableProcessedTableManager =
       CaptureNoteRow,
       PrefetchHooks Function()
     >;
+typedef $$MomentCheckInRowsTableCreateCompanionBuilder =
+    MomentCheckInRowsCompanion Function({
+      required String id,
+      required String state,
+      required int occurredAtMillis,
+      required int createdAtMillis,
+      Value<int> rowid,
+    });
+typedef $$MomentCheckInRowsTableUpdateCompanionBuilder =
+    MomentCheckInRowsCompanion Function({
+      Value<String> id,
+      Value<String> state,
+      Value<int> occurredAtMillis,
+      Value<int> createdAtMillis,
+      Value<int> rowid,
+    });
+
+class $$MomentCheckInRowsTableFilterComposer
+    extends Composer<_$LetterHealthDatabase, $MomentCheckInRowsTable> {
+  $$MomentCheckInRowsTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get state => $composableBuilder(
+    column: $table.state,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get occurredAtMillis => $composableBuilder(
+    column: $table.occurredAtMillis,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get createdAtMillis => $composableBuilder(
+    column: $table.createdAtMillis,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$MomentCheckInRowsTableOrderingComposer
+    extends Composer<_$LetterHealthDatabase, $MomentCheckInRowsTable> {
+  $$MomentCheckInRowsTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get state => $composableBuilder(
+    column: $table.state,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get occurredAtMillis => $composableBuilder(
+    column: $table.occurredAtMillis,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get createdAtMillis => $composableBuilder(
+    column: $table.createdAtMillis,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$MomentCheckInRowsTableAnnotationComposer
+    extends Composer<_$LetterHealthDatabase, $MomentCheckInRowsTable> {
+  $$MomentCheckInRowsTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<String> get state =>
+      $composableBuilder(column: $table.state, builder: (column) => column);
+
+  GeneratedColumn<int> get occurredAtMillis => $composableBuilder(
+    column: $table.occurredAtMillis,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get createdAtMillis => $composableBuilder(
+    column: $table.createdAtMillis,
+    builder: (column) => column,
+  );
+}
+
+class $$MomentCheckInRowsTableTableManager
+    extends
+        RootTableManager<
+          _$LetterHealthDatabase,
+          $MomentCheckInRowsTable,
+          MomentCheckInRow,
+          $$MomentCheckInRowsTableFilterComposer,
+          $$MomentCheckInRowsTableOrderingComposer,
+          $$MomentCheckInRowsTableAnnotationComposer,
+          $$MomentCheckInRowsTableCreateCompanionBuilder,
+          $$MomentCheckInRowsTableUpdateCompanionBuilder,
+          (
+            MomentCheckInRow,
+            BaseReferences<
+              _$LetterHealthDatabase,
+              $MomentCheckInRowsTable,
+              MomentCheckInRow
+            >,
+          ),
+          MomentCheckInRow,
+          PrefetchHooks Function()
+        > {
+  $$MomentCheckInRowsTableTableManager(
+    _$LetterHealthDatabase db,
+    $MomentCheckInRowsTable table,
+  ) : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$MomentCheckInRowsTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$MomentCheckInRowsTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$MomentCheckInRowsTableAnnotationComposer(
+                $db: db,
+                $table: table,
+              ),
+          updateCompanionCallback:
+              ({
+                Value<String> id = const Value.absent(),
+                Value<String> state = const Value.absent(),
+                Value<int> occurredAtMillis = const Value.absent(),
+                Value<int> createdAtMillis = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => MomentCheckInRowsCompanion(
+                id: id,
+                state: state,
+                occurredAtMillis: occurredAtMillis,
+                createdAtMillis: createdAtMillis,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required String id,
+                required String state,
+                required int occurredAtMillis,
+                required int createdAtMillis,
+                Value<int> rowid = const Value.absent(),
+              }) => MomentCheckInRowsCompanion.insert(
+                id: id,
+                state: state,
+                occurredAtMillis: occurredAtMillis,
+                createdAtMillis: createdAtMillis,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$MomentCheckInRowsTableProcessedTableManager =
+    ProcessedTableManager<
+      _$LetterHealthDatabase,
+      $MomentCheckInRowsTable,
+      MomentCheckInRow,
+      $$MomentCheckInRowsTableFilterComposer,
+      $$MomentCheckInRowsTableOrderingComposer,
+      $$MomentCheckInRowsTableAnnotationComposer,
+      $$MomentCheckInRowsTableCreateCompanionBuilder,
+      $$MomentCheckInRowsTableUpdateCompanionBuilder,
+      (
+        MomentCheckInRow,
+        BaseReferences<
+          _$LetterHealthDatabase,
+          $MomentCheckInRowsTable,
+          MomentCheckInRow
+        >,
+      ),
+      MomentCheckInRow,
+      PrefetchHooks Function()
+    >;
 
 class $LetterHealthDatabaseManager {
   final _$LetterHealthDatabase _db;
@@ -4689,4 +5214,6 @@ class $LetterHealthDatabaseManager {
       $$HealthRecordRowsTableTableManager(_db, _db.healthRecordRows);
   $$CaptureNoteRowsTableTableManager get captureNoteRows =>
       $$CaptureNoteRowsTableTableManager(_db, _db.captureNoteRows);
+  $$MomentCheckInRowsTableTableManager get momentCheckInRows =>
+      $$MomentCheckInRowsTableTableManager(_db, _db.momentCheckInRows);
 }

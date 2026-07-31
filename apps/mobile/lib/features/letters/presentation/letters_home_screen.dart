@@ -291,6 +291,9 @@ class _LettersHomeScreenState extends State<LettersHomeScreen> {
               actionLabel: record.actionLabel,
               checkBackLabel: _outcomeLabel(record.outcome),
               reflectionId: reflectionsByRecord[record.id]?.id,
+              reflectionPreview: _reflectionPreview(
+                reflectionsByRecord[record.id],
+              ),
             ),
         ],
         checkBackCounts: CycleLetterCheckBackCounts(
@@ -375,6 +378,21 @@ class _LettersHomeScreenState extends State<LettersHomeScreen> {
     CareOutcome.same => 'Same',
     CareOutcome.worse => 'Worse',
   };
+
+  static String? _reflectionPreview(CareReflection? reflection) {
+    if (reflection == null) return null;
+    final parts = [
+      reflection.observation,
+      reflection.whatHelped,
+      reflection.futureSelfNote,
+    ].whereType<String>().where((value) => value.trim().isNotEmpty).toList();
+    if (parts.isEmpty) {
+      return reflection.need == null
+          ? null
+          : 'Need remembered: ${reflection.need!.name}';
+    }
+    return parts.join(' ');
+  }
 
   static ReflectionNeed? _toDomainNeed(ClearerDayNeed? need) {
     return switch (need) {

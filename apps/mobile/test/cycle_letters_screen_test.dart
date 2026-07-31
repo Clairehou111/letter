@@ -10,9 +10,12 @@ const completedLetter = CycleLetterDisplay(
   recordedPeriodDates: ['Jun 12', 'Jun 13', 'Jun 14', 'Jun 15'],
   careMoments: [
     CycleLetterCareMomentDisplay(
+      id: 'care-racing',
       dateLabel: 'Jul 5',
       actionLabel: 'Racing thoughts',
       checkBackLabel: 'Better',
+      reflectionId: 'reflection-june',
+      reflectionPreview: 'Quiet helped. Try it earlier next time.',
     ),
     CycleLetterCareMomentDisplay(
       dateLabel: 'Jul 7',
@@ -78,6 +81,7 @@ Future<void> pumpArchive(
   ValueChanged<String>? onLetterOpen,
   VoidCallback? onLetterClose,
   ValueChanged<String>? onReflectionOpen,
+  ValueChanged<String>? onCareRecordReflect,
   VoidCallback? onOpenArchiveViews,
   VoidCallback? onOpenPersonalPatterns,
 }) async {
@@ -103,6 +107,7 @@ Future<void> pumpArchive(
           onLetterOpen: onLetterOpen,
           onLetterClose: onLetterClose,
           onReflectionOpen: onReflectionOpen,
+          onCareRecordReflect: onCareRecordReflect,
           onOpenArchiveViews: onOpenArchiveViews,
           onOpenPersonalPatterns: onOpenPersonalPatterns,
         ),
@@ -133,12 +138,12 @@ void main() {
       onOpenArchiveViews: () => archiveOpened += 1,
     );
 
-    expect(find.text('Open observed Patterns'), findsOneWidget);
-    expect(find.text('Open Story and Clinical archive'), findsOneWidget);
+    expect(find.text('Patterns'), findsOneWidget);
+    expect(find.text('Reports'), findsOneWidget);
     expect(find.textContaining('Story, Pattern, Clinical'), findsNothing);
 
-    await tester.tap(find.byKey(const Key('open-personal-patterns')));
-    await tester.tap(find.byKey(const Key('open-archive-views')));
+    await tester.tap(find.text('Patterns'));
+    await tester.tap(find.text('Reports'));
     expect(patternsOpened, 1);
     expect(archiveOpened, 1);
   });
@@ -249,10 +254,10 @@ void main() {
     expect(openedLetter, 'cycle-current');
 
     await tester.tap(find.byKey(const Key('navigation-cycle')));
-    expect(selectedNavigation, 0);
+    expect(selectedNavigation, 1);
   });
 
-  testWidgets('detail has exactly four truthful evidence sections', (
+  testWidgets('detail keeps reflections attached to their Care moments', (
     tester,
   ) async {
     await pumpArchive(tester, selectedLetterId: completedLetter.id);
@@ -273,12 +278,11 @@ void main() {
     expect(find.text('Same 1'), findsOneWidget);
     expect(find.text('Worse 0'), findsOneWidget);
 
-    await scrollTo(tester, const Key('cycle-letter-section-reflections'));
     expect(
-      find.byKey(const Key('cycle-letter-section-reflections')),
+      find.byKey(const Key('cycle-letter-reflection-preview-care-racing')),
       findsOneWidget,
     );
-    expect(find.text('Reflections'), findsOneWidget);
+    expect(find.text('Edit reflection'), findsOneWidget);
 
     await scrollTo(tester, const Key('cycle-letter-section-missing'));
     expect(
@@ -288,24 +292,24 @@ void main() {
     expect(find.text('What is not recorded'), findsOneWidget);
   });
 
-  testWidgets('opens a saved reflection and returns through callbacks', (
+  testWidgets('edits a Care moment reflection and returns through callbacks', (
     tester,
   ) async {
-    String? reflectionId;
+    String? careRecordId;
     var closes = 0;
     await pumpArchive(
       tester,
       selectedLetterId: completedLetter.id,
       onLetterClose: () => closes += 1,
-      onReflectionOpen: (id) => reflectionId = id,
+      onCareRecordReflect: (id) => careRecordId = id,
     );
 
     await tester.tap(find.byKey(const Key('cycle-letter-detail-back')));
     expect(closes, 1);
 
-    await scrollTo(tester, const Key('cycle-letter-open-reflection'));
-    await tester.tap(find.byKey(const Key('cycle-letter-open-reflection')));
-    expect(reflectionId, 'reflection-june');
+    await scrollTo(tester, const Key('cycle-letter-reflect-care-racing'));
+    await tester.tap(find.byKey(const Key('cycle-letter-reflect-care-racing')));
+    expect(careRecordId, 'care-racing');
   });
 
   testWidgets('shows missing evidence instead of inventing content', (
@@ -318,12 +322,12 @@ void main() {
       find.text('No Care moments are recorded for this cycle.'),
       findsOneWidget,
     );
-    await scrollTo(tester, const Key('cycle-letter-section-reflections'));
     expect(
       find.text('No reflection is recorded for this cycle.'),
-      findsOneWidget,
+      findsNothing,
     );
-    expect(find.byKey(const Key('cycle-letter-open-reflection')), findsNothing);
+    expect(find.text('No reflection recorded.'), findsOneWidget);
+    expect(find.text('Edit reflection'), findsNothing);
   });
 
   testWidgets('shows an explicit state when selected source was deleted', (
@@ -375,8 +379,7 @@ void main() {
     );
 
     expect(tester.takeException(), isNull);
-    await tester.drag(find.byType(Scrollable).first, const Offset(0, -220));
-    await tester.pump();
+    await scrollTo(tester, const Key('cycle-letter-cycle-current'));
     final currentControl = find.byKey(const Key('cycle-letter-cycle-current'));
     expect(currentControl, findsOneWidget);
     expect(tester.getSize(currentControl).height, greaterThanOrEqualTo(44));

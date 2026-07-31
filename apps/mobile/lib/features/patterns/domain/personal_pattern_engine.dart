@@ -26,9 +26,17 @@ final class PersonalPatternEngine {
   }
 
   List<ObservedSymptomPattern> _symptomPatterns(PatternSourceSnapshot source) {
-    final confirmed = source.healthRecords.where(
+    final latestDaily = <String, HealthRecord>{};
+    for (final record in source.healthRecords.where(
       (record) => record.userConfirmed,
-    );
+    )) {
+      final key = '${record.symptom.name}:${record.experiencedDate.epochDay}';
+      final previous = latestDaily[key];
+      if (previous == null || record.updatedAt.isAfter(previous.updatedAt)) {
+        latestDaily[key] = record;
+      }
+    }
+    final confirmed = latestDaily.values;
     final grouped = <SymptomType, List<HealthRecord>>{};
     for (final record in confirmed) {
       grouped.putIfAbsent(record.symptom, () => []).add(record);
@@ -101,6 +109,7 @@ final class PersonalPatternEngine {
             records,
             source.periods,
           ),
+          severityByCycleDay: _buildCycleDayMatrix(records, source.periods),
         ),
       );
     }
@@ -237,15 +246,36 @@ final class PersonalPatternEngine {
       if (daysBefore == null || daysBefore < -14 || daysBefore > -1) {
         continue;
       }
-      severityByDay.putIfAbsent(daysBefore, () => []).add(record.severity.score);
+      severityByDay
+          .putIfAbsent(daysBefore, () => [])
+          .add(record.severity.score);
     }
     final result = <int, double>{};
     for (final entry in severityByDay.entries) {
-      final avg = entry.value.fold<int>(0, (sum, v) => sum + v) /
-          entry.value.length;
+      final avg =
+          entry.value.fold<int>(0, (sum, v) => sum + v) / entry.value.length;
       result[entry.key] = double.parse(avg.toStringAsFixed(1));
     }
     return Map.unmodifiable(result);
+  }
+
+  Map<int, double> _buildCycleDayMatrix(
+    List<HealthRecord> records,
+    List<PeriodRecord> periods,
+  ) {
+    final severityByDay = <int, List<int>>{};
+    for (final record in records) {
+      final observation = _cycleDayFor(record.experiencedDate, periods);
+      final cycleDay = observation?.cycleDay;
+      if (cycleDay == null || cycleDay < 1 || cycleDay > 14) continue;
+      severityByDay.putIfAbsent(cycleDay, () => []).add(record.severity.score);
+    }
+    return Map.unmodifiable({
+      for (final entry in severityByDay.entries)
+        entry.key:
+            entry.value.fold<int>(0, (sum, value) => sum + value) /
+            entry.value.length,
+    });
   }
 
   String? _reflectionText(CareReflection? reflection) {

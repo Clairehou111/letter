@@ -80,6 +80,7 @@ final class SummaryHealthRow {
   const SummaryHealthRow({
     required this.date,
     required this.cycleDay,
+    required this.daysBeforeMenses,
     required this.symptom,
     required this.severity,
     required this.painRating,
@@ -91,6 +92,7 @@ final class SummaryHealthRow {
 
   final LocalDate date;
   final int? cycleDay;
+  final int? daysBeforeMenses;
   final SymptomType symptom;
   final SymptomSeverity severity;
   final int? painRating;
@@ -164,6 +166,10 @@ CycleAndCareSummary buildCycleAndCareSummary({
             (record) => SummaryHealthRow(
               date: record.experiencedDate,
               cycleDay: _cycleDayFor(record.experiencedDate, allPeriodDays),
+              daysBeforeMenses: _daysBeforeNextPeriod(
+                record.experiencedDate,
+                allPeriodDays,
+              ),
               symptom: record.symptom,
               severity: record.severity,
               painRating: record.painRating,
@@ -249,6 +255,22 @@ int? _cycleDayFor(LocalDate date, List<SummaryPeriodDay> periodDays) {
     previous = periodDay.date;
   }
   return latestStart == null ? null : date.epochDay - latestStart.epochDay + 1;
+}
+
+int? _daysBeforeNextPeriod(LocalDate date, List<SummaryPeriodDay> periodDays) {
+  LocalDate? previous;
+  final starts = <LocalDate>[];
+  for (final periodDay in periodDays) {
+    if (previous == null || periodDay.date.epochDay != previous.epochDay + 1) {
+      starts.add(periodDay.date);
+    }
+    previous = periodDay.date;
+  }
+  final laterStarts = starts.where((start) => start.isAfter(date)).toList()
+    ..sort();
+  if (laterStarts.isEmpty) return null;
+  final distance = date.epochDay - laterStarts.first.epochDay;
+  return distance >= -14 && distance <= -1 ? distance : null;
 }
 
 int _compareHealthRows(SummaryHealthRow left, SummaryHealthRow right) {

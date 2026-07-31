@@ -4,6 +4,10 @@ Status: in_progress
 Dependencies: Cycle Letters archive, confirmed health records, Care outcomes,
 and encrypted local export/import
 
+Superseded in part by
+`../2026-07-31-unified-record-and-navigation/requirements.md`, which defines the
+compliant Twin Matrix preview and prohibits mirrored observations.
+
 ## Goal
 
 Give normal Letter users a truthful, clinician-readable summary of their local

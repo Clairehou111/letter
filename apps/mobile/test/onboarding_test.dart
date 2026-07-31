@@ -257,6 +257,11 @@ void main() {
     );
     await pumpLetter(tester, repository);
 
+    await tester.drag(
+      find.byKey(const Key('today-scroll')),
+      const Offset(0, -1000),
+    );
+    await tester.pumpAndSettle();
     await tester.tap(find.byKey(const Key('open-care-button')));
     await tester.pumpAndSettle();
     expect(find.byType(CareScreen), findsOneWidget);

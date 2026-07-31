@@ -83,6 +83,15 @@ void main() {
           ),
         );
         batch.insert(
+          source.momentCheckInRows,
+          MomentCheckInRowsCompanion.insert(
+            id: 'check-in-source',
+            state: 'steady',
+            occurredAtMillis: 850,
+            createdAtMillis: 875,
+          ),
+        );
+        batch.insert(
           source.impulseDraftRows,
           ImpulseDraftRowsCompanion.insert(
             id: 'sealed-not-exported',
@@ -119,6 +128,7 @@ void main() {
           'care_reflections',
           'health_records',
           'capture_notes',
+          'moment_check_ins',
         ]),
       );
       expect(
@@ -177,6 +187,12 @@ void main() {
       expect(
         (await destination.select(destination.captureNoteRows).get()).single.id,
         'note-source',
+      );
+      expect(
+        (await destination.select(destination.momentCheckInRows).get())
+            .single
+            .id,
+        'check-in-source',
       );
       expect(
         await destination.select(destination.impulseDraftRows).get(),

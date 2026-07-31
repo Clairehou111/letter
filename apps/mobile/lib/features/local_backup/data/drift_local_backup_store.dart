@@ -32,6 +32,9 @@ final class DriftLocalBackupStore implements LocalBackupStore {
       final captureNotes = await _database
           .select(_database.captureNoteRows)
           .get();
+      final momentCheckIns = await _database
+          .select(_database.momentCheckInRows)
+          .get();
       return LocalBackupSnapshot(
         createdAt: _clock().toUtc(),
         collections: [
@@ -109,6 +112,17 @@ final class DriftLocalBackupStore implements LocalBackupStore {
               }),
             ),
           ),
+          LocalBackupCollection(
+            name: _momentCheckIns,
+            schemaVersion: 1,
+            records: momentCheckIns.map(
+              (row) => _record(row.id, row.createdAtMillis, {
+                'state': row.state,
+                'occurredAtMillis': row.occurredAtMillis,
+                'createdAtMillis': row.createdAtMillis,
+              }),
+            ),
+          ),
         ],
       );
     } on LocalBackupException {
@@ -140,13 +154,15 @@ const _careRecords = 'care_records';
 const _careReflections = 'care_reflections';
 const _healthRecords = 'health_records';
 const _captureNotes = 'capture_notes';
-const _supportedCollections = {
+const _momentCheckIns = 'moment_check_ins';
+const _requiredCollections = {
   _periods,
   _careRecords,
   _careReflections,
   _healthRecords,
   _captureNotes,
 };
+const _supportedCollections = {..._requiredCollections, _momentCheckIns};
 
 LocalBackupRecord _record(
   String id,
@@ -165,6 +181,7 @@ final class _ParsedSnapshot {
     required this.careReflections,
     required this.healthRecords,
     required this.captureNotes,
+    required this.momentCheckIns,
   });
 
   final List<PeriodRowsCompanion> periods;
@@ -172,14 +189,15 @@ final class _ParsedSnapshot {
   final List<CareReflectionRowsCompanion> careReflections;
   final List<HealthRecordRowsCompanion> healthRecords;
   final List<CaptureNoteRowsCompanion> captureNotes;
+  final List<MomentCheckInRowsCompanion> momentCheckIns;
 
   factory _ParsedSnapshot.fromSnapshot(LocalBackupSnapshot snapshot) {
     final byName = {
       for (final collection in snapshot.collections)
         collection.name: collection,
     };
-    if (byName.keys.toSet().length != _supportedCollections.length ||
-        !byName.keys.toSet().containsAll(_supportedCollections) ||
+    if (!byName.keys.toSet().containsAll(_requiredCollections) ||
+        !byName.keys.every(_supportedCollections.contains) ||
         byName.values.any((collection) => collection.schemaVersion != 1)) {
       throw const LocalBackupException(LocalBackupFailure.unsupportedFormat);
     }
@@ -197,6 +215,11 @@ final class _ParsedSnapshot {
       captureNotes: byName[_captureNotes]!.records
           .map(_captureNote)
           .toList(growable: false),
+      momentCheckIns:
+          byName[_momentCheckIns]?.records
+              .map(_momentCheckIn)
+              .toList(growable: false) ??
+          const [],
     );
   }
 }
@@ -227,6 +250,7 @@ final class _DriftStagedLocalBackupImport implements StagedLocalBackupImport {
         await database.delete(database.careRecordRows).go();
         await database.delete(database.healthRecordRows).go();
         await database.delete(database.captureNoteRows).go();
+        await database.delete(database.momentCheckInRows).go();
         await database.delete(database.periodRows).go();
         await database.batch((batch) {
           batch.insertAll(database.periodRows, parsed.periods);
@@ -234,6 +258,7 @@ final class _DriftStagedLocalBackupImport implements StagedLocalBackupImport {
           batch.insertAll(database.careReflectionRows, parsed.careReflections);
           batch.insertAll(database.healthRecordRows, parsed.healthRecords);
           batch.insertAll(database.captureNoteRows, parsed.captureNotes);
+          batch.insertAll(database.momentCheckInRows, parsed.momentCheckIns);
         });
       });
       _used = true;
@@ -360,6 +385,18 @@ CaptureNoteRowsCompanion _captureNote(LocalBackupRecord record) {
     id: record.id,
     content: _string(data, 'content'),
     source: _string(data, 'source'),
+    createdAtMillis: created,
+  );
+}
+
+MomentCheckInRowsCompanion _momentCheckIn(LocalBackupRecord record) {
+  final data = _data(record, {'state', 'occurredAtMillis', 'createdAtMillis'});
+  final created = _int(data, 'createdAtMillis');
+  _matchesUpdatedAt(record, created);
+  return MomentCheckInRowsCompanion.insert(
+    id: record.id,
+    state: _string(data, 'state'),
+    occurredAtMillis: _int(data, 'occurredAtMillis'),
     createdAtMillis: created,
   );
 }

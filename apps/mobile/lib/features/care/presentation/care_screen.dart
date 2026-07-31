@@ -429,7 +429,7 @@ class _CareScreenState extends State<CareScreen> {
 
     return Scaffold(
       bottomNavigationBar: LetterBottomNavigation(
-        selectedIndex: 3,
+        selectedIndex: 2,
         onSelected: widget.onNavigationSelected,
       ),
       body: SafeArea(

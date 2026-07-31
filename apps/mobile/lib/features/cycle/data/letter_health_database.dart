@@ -85,6 +85,18 @@ class CaptureNoteRows extends Table {
   Set<Column<Object>> get primaryKey => {id};
 }
 
+/// Timestamped, non-clinical current-state check-ins. These rows are never
+/// eligible for symptom severity, personal patterns, or clinical reports.
+class MomentCheckInRows extends Table {
+  TextColumn get id => text()();
+  TextColumn get state => text()();
+  IntColumn get occurredAtMillis => integer()();
+  IntColumn get createdAtMillis => integer()();
+
+  @override
+  Set<Column<Object>> get primaryKey => {id};
+}
+
 @DriftDatabase(
   tables: [
     PeriodRows,
@@ -93,13 +105,14 @@ class CaptureNoteRows extends Table {
     CareReflectionRows,
     HealthRecordRows,
     CaptureNoteRows,
+    MomentCheckInRows,
   ],
 )
 class LetterHealthDatabase extends _$LetterHealthDatabase {
   LetterHealthDatabase(super.executor);
 
   @override
-  int get schemaVersion => 5;
+  int get schemaVersion => 6;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -116,6 +129,9 @@ class LetterHealthDatabase extends _$LetterHealthDatabase {
       }
       if (from < 5) {
         await migrator.createTable(captureNoteRows);
+      }
+      if (from < 6) {
+        await migrator.createTable(momentCheckInRows);
       }
     },
   );

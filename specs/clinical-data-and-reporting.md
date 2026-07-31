@@ -340,6 +340,17 @@ Do not write:
 Raw drafts are excluded by default. The user may select specific excerpts for
 the report and preview every included sentence.
 
+### Twin Matrix Preview
+
+The summary may include a Twin Matrix preview when confirmed ratings exist.
+The matrix uses actual observed values on both sides of the period boundary.
+It never mirrors luteal values into menstrual or follicular days, fills missing
+cells, or derives severity from event counts.
+
+Until the clinical review and licensing gate is complete, its title is
+`Cyclical Symptom Summary`; it does not use `DRSP`, `DRSP-compatible`, or
+validated-instrument language. Medication history remains excluded.
+
 ## Report B: Prospective Clinical Diary
 
 This report is available only from Doctor Mode.

@@ -72,7 +72,9 @@ void main() {
               status: EntitlementStatus.activePaid,
             ),
           ),
-          initialState: const EntitlementState(status: EntitlementStatus.activePaid),
+          initialState: const EntitlementState(
+            status: EntitlementStatus.activePaid,
+          ),
           child: LettersHomeScreen(
             periodRepository: periodRepository,
             careMemoryRepository: InMemoryCareMemoryRepository(),
@@ -84,9 +86,9 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    expect(find.text('Open observed Patterns'), findsOneWidget);
-    expect(find.text('Open Story and Clinical archive'), findsOneWidget);
-    await tester.tap(find.byKey(const Key('open-personal-patterns')));
+    expect(find.text('Patterns'), findsOneWidget);
+    expect(find.text('Reports'), findsOneWidget);
+    await tester.tap(find.text('Patterns'));
     await tester.pumpAndSettle();
 
     expect(find.byKey(const Key('personal-patterns-screen')), findsOneWidget);

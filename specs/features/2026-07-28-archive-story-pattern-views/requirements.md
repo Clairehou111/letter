@@ -4,6 +4,11 @@ Status: in_progress
 Dependencies: Cycle Letters archive, confirmed health records, reflections,
 and personal patterns
 
+Superseded in part by
+`../2026-07-31-unified-record-and-navigation/requirements.md`, which moves
+cross-cycle Patterns and Reports to canonical Letters sections and keeps every
+reflection attached to its originating Care moment.
+
 ## Goal
 
 Evolve the Phase 2 archive into a scannable cycle record with distinct personal,

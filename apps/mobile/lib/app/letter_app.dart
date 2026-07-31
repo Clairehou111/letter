@@ -6,6 +6,8 @@ import '../features/care/data/in_memory_care_memory_repository.dart';
 import '../features/care/domain/care_memory_repository.dart';
 import '../features/care/domain/impulse_buffer_repository.dart';
 import '../features/capture/domain/capture_models.dart';
+import '../features/check_in/data/in_memory_moment_check_in_repository.dart';
+import '../features/check_in/domain/moment_check_in_repository.dart';
 import '../features/cycle/data/in_memory_period_repository.dart';
 import '../features/cycle/domain/period_repository.dart';
 import '../features/entitlement/data/local_entitlement_repository.dart';
@@ -18,8 +20,8 @@ import '../features/health_records/data/in_memory_health_record_repository.dart'
 import '../features/health_records/domain/health_record_repository.dart';
 import '../features/local_backup/domain/local_backup_file_port.dart';
 import '../features/local_backup/domain/local_backup_import.dart';
-import '../features/onboarding/data/file_onboarding_repository.dart';
 import '../features/onboarding/data/onboarding_repository.dart';
+import '../features/onboarding/data/onboarding_repository_factory.dart';
 import '../features/onboarding/domain/onboarding_profile.dart';
 import '../features/onboarding/presentation/onboarding_flow.dart';
 import '../features/onboarding/presentation/privacy_center_screen.dart';
@@ -33,6 +35,7 @@ class LetterApp extends StatefulWidget {
     this.careMemoryRepository,
     this.healthRecordRepository,
     this.captureNoteStore,
+    this.momentCheckInRepository,
     this.entitlementRepository,
     this.now,
   });
@@ -44,6 +47,7 @@ class LetterApp extends StatefulWidget {
   final CareMemoryRepository? careMemoryRepository;
   final HealthRecordRepository? healthRecordRepository;
   final CaptureNoteStore? captureNoteStore;
+  final MomentCheckInRepository? momentCheckInRepository;
   final DateTime Function()? now;
 
   @override
@@ -61,6 +65,7 @@ class _LetterAppState extends State<LetterApp> {
   late final CareMemoryRepository _careMemoryRepository;
   late final HealthRecordRepository _healthRecordRepository;
   late final CaptureNoteStore _captureNoteStore;
+  late final MomentCheckInRepository _momentCheckInRepository;
   LocalBackupStore? _localBackupStore;
   LocalHealthStore? _ownedHealthStore;
   OnboardingProfile? _profile;
@@ -70,7 +75,8 @@ class _LetterAppState extends State<LetterApp> {
   @override
   void initState() {
     super.initState();
-    _repository = widget.onboardingRepository ?? FileOnboardingRepository();
+    _repository =
+        widget.onboardingRepository ?? createDefaultOnboardingRepository();
     _entitlementRepository =
         widget.entitlementRepository ?? LocalEntitlementRepository();
     _entitlementState = _entitlementRepository.current;
@@ -81,7 +87,8 @@ class _LetterAppState extends State<LetterApp> {
         widget.impulseBufferRepository == null &&
         widget.careMemoryRepository == null &&
         widget.healthRecordRepository == null &&
-        widget.captureNoteStore == null) {
+        widget.captureNoteStore == null &&
+        widget.momentCheckInRepository == null) {
       final healthStore = createDefaultLocalHealthStore();
       _ownedHealthStore = healthStore;
       _periodRepository = healthStore.periodRepository;
@@ -89,6 +96,7 @@ class _LetterAppState extends State<LetterApp> {
       _careMemoryRepository = healthStore.careMemoryRepository;
       _healthRecordRepository = healthStore.healthRecordRepository;
       _captureNoteStore = healthStore.captureNoteStore;
+      _momentCheckInRepository = healthStore.momentCheckInRepository;
       _localBackupStore = healthStore.localBackupStore;
     } else {
       _periodRepository = widget.periodRepository ?? InMemoryPeriodRepository();
@@ -102,6 +110,9 @@ class _LetterAppState extends State<LetterApp> {
           widget.healthRecordRepository ??
           InMemoryHealthRecordRepository(clock: widget.now);
       _captureNoteStore = widget.captureNoteStore ?? InMemoryCaptureNoteStore();
+      _momentCheckInRepository =
+          widget.momentCheckInRepository ??
+          InMemoryMomentCheckInRepository(clock: widget.now);
     }
     _load();
   }
@@ -183,6 +194,7 @@ class _LetterAppState extends State<LetterApp> {
                 careMemoryRepository: _careMemoryRepository,
                 healthRecordRepository: _healthRecordRepository,
                 captureNoteStore: _captureNoteStore,
+                momentCheckInRepository: _momentCheckInRepository,
                 onProfileChanged: _updateProfile,
                 onReset: _resetOnboarding,
                 localBackupStore: _localBackupStore,

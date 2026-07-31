@@ -127,6 +127,38 @@ void main() {
     expect(pattern.cycleDayObservations, hasLength(2));
   });
 
+  test('legacy duplicate symptom rows count once per experienced day', () {
+    final older = health('older', const LocalDate(2026, 7, 10));
+    final newer = HealthRecord(
+      id: 'newer',
+      symptom: older.symptom,
+      severity: SymptomSeverity.severe,
+      painRating: null,
+      painLocations: const {},
+      functionalImpacts: const {},
+      experiencedDate: older.experiencedDate,
+      recordedAt: older.recordedAt,
+      updatedAt: older.updatedAt.add(const Duration(hours: 1)),
+      provenance: older.provenance,
+      userConfirmed: true,
+      vocabularyVersion: healthRecordVocabularyVersion,
+    );
+    final analysis = engine.analyze(
+      PatternSourceSnapshot(
+        healthRecords: [
+          older,
+          newer,
+          health('second-day', const LocalDate(2026, 7, 11)),
+        ],
+      ),
+    );
+
+    final pattern = analysis.symptomPatterns.single;
+    expect(pattern.count, 2);
+    expect(pattern.severityCounts[SymptomSeverity.severe], 1);
+    expect(pattern.severityCounts[SymptomSeverity.moderate], 1);
+  });
+
   test('keeps Care outcomes distinct and returns prior actions by mode', () {
     final analysis = engine.analyze(
       PatternSourceSnapshot(

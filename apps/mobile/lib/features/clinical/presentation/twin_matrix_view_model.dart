@@ -3,9 +3,9 @@ import '../../patterns/domain/personal_pattern.dart';
 
 /// View-state for the Twin Matrix clinical report.
 ///
-/// Maps ObservedSymptomPattern data into a black-and-white DRSP-compatible
-/// grid. X-axis: Days -14 to -1 (luteal) LEFT of center, Days 1 to 14
-/// (menses/follicular) RIGHT. Y-axis: 4 PMDD clinical clusters.
+/// Maps confirmed personal-pattern data into a black-and-white clinical grid.
+/// X-axis: observed days -14 to -1 before menses on the left and observed cycle
+/// days 1 to 14 on the right.
 ///
 /// Design spec: clinical_representation.md.
 class TwinMatrixViewModel {
@@ -47,32 +47,42 @@ class TwinMatrixViewModel {
     final irritabilityMatrix = _mergeSymptomMatrices(patterns, [
       SymptomType.irritability,
     ]);
-    clusters.add(TwinMatrixCluster(
-      label: clusterMap[1]!,
-      lutealSeverities: _matrixToList(irritabilityMatrix),
-      mensesSeverities: _mensesMirror(irritabilityMatrix),
-    ));
+    final irritabilityCycleDays = _mergeCycleDayMatrices(patterns, [
+      SymptomType.irritability,
+    ]);
+    clusters.add(
+      TwinMatrixCluster(
+        label: clusterMap[1]!,
+        lutealSeverities: _matrixToList(irritabilityMatrix),
+        mensesSeverities: _cycleDayMatrixToList(irritabilityCycleDays),
+      ),
+    );
 
     // Cluster 2: depressed mood + anxiety
     final moodMatrix = _mergeSymptomMatrices(patterns, [
       SymptomType.lowMood,
       SymptomType.anxiety,
     ]);
-    clusters.add(TwinMatrixCluster(
-      label: clusterMap[2]!,
-      lutealSeverities: _matrixToList(moodMatrix),
-      mensesSeverities: _mensesMirror(moodMatrix),
-    ));
+    final moodCycleDays = _mergeCycleDayMatrices(patterns, [
+      SymptomType.lowMood,
+      SymptomType.anxiety,
+    ]);
+    clusters.add(
+      TwinMatrixCluster(
+        label: clusterMap[2]!,
+        lutealSeverities: _matrixToList(moodMatrix),
+        mensesSeverities: _cycleDayMatrixToList(moodCycleDays),
+      ),
+    );
 
     // Cluster 3: social withdrawal (from functional impacts)
-    final socialMatrix = _mergeFunctionalImpacts(patterns, [
-      FunctionalImpact.socialActivity,
-    ]);
-    clusters.add(TwinMatrixCluster(
-      label: clusterMap[3]!,
-      lutealSeverities: _matrixToList(socialMatrix),
-      mensesSeverities: _mensesMirror(socialMatrix),
-    ));
+    clusters.add(
+      TwinMatrixCluster(
+        label: clusterMap[3]!,
+        lutealSeverities: List.filled(14, 0),
+        mensesSeverities: List.filled(14, 0),
+      ),
+    );
 
     // Cluster 4: physical symptoms
     final physicalMatrix = _mergeSymptomMatrices(patterns, [
@@ -82,14 +92,85 @@ class TwinMatrixViewModel {
       SymptomType.breastTenderness,
       SymptomType.bloating,
     ]);
-    clusters.add(TwinMatrixCluster(
-      label: clusterMap[4]!,
-      lutealSeverities: _matrixToList(physicalMatrix),
-      mensesSeverities: _mensesMirror(physicalMatrix),
-    ));
+    final physicalCycleDays = _mergeCycleDayMatrices(patterns, [
+      SymptomType.cramps,
+      SymptomType.headache,
+      SymptomType.bodyAches,
+      SymptomType.breastTenderness,
+      SymptomType.bloating,
+    ]);
+    clusters.add(
+      TwinMatrixCluster(
+        label: clusterMap[4]!,
+        lutealSeverities: _matrixToList(physicalMatrix),
+        mensesSeverities: _cycleDayMatrixToList(physicalCycleDays),
+      ),
+    );
 
     return TwinMatrixViewModel(
       clusters: clusters,
+      cycleLabel: cycleLabel,
+      exportTimestamp: exportTimestamp,
+      totalDays: 28,
+    );
+  }
+
+  factory TwinMatrixViewModel.fromObservations({
+    required List<TwinMatrixObservation> observations,
+    required String cycleLabel,
+    required String exportTimestamp,
+  }) {
+    TwinMatrixCluster cluster(String label, Set<SymptomType> symptoms) {
+      final relevant = observations.where(
+        (observation) => symptoms.contains(observation.symptom),
+      );
+      final before = <int, List<int>>{};
+      final after = <int, List<int>>{};
+      for (final observation in relevant) {
+        final beforeDay = observation.daysBeforeMenses;
+        if (beforeDay != null && beforeDay >= -14 && beforeDay <= -1) {
+          before
+              .putIfAbsent(beforeDay, () => [])
+              .add(observation.severity.score);
+        }
+        final cycleDay = observation.cycleDay;
+        if (cycleDay != null && cycleDay >= 1 && cycleDay <= 14) {
+          after.putIfAbsent(cycleDay, () => []).add(observation.severity.score);
+        }
+      }
+      double average(List<int>? values) {
+        if (values == null || values.isEmpty) return 0;
+        return values.fold<int>(0, (sum, value) => sum + value) / values.length;
+      }
+
+      return TwinMatrixCluster(
+        label: label,
+        lutealSeverities: [
+          for (var day = -14; day <= -1; day++) average(before[day]),
+        ],
+        mensesSeverities: [
+          for (var day = 1; day <= 14; day++) average(after[day]),
+        ],
+      );
+    }
+
+    return TwinMatrixViewModel(
+      clusters: [
+        cluster(clusterMap[1]!, {SymptomType.irritability}),
+        cluster(clusterMap[2]!, {SymptomType.lowMood, SymptomType.anxiety}),
+        TwinMatrixCluster(
+          label: clusterMap[3]!,
+          lutealSeverities: List.filled(14, 0),
+          mensesSeverities: List.filled(14, 0),
+        ),
+        cluster(clusterMap[4]!, {
+          SymptomType.cramps,
+          SymptomType.headache,
+          SymptomType.bodyAches,
+          SymptomType.breastTenderness,
+          SymptomType.bloating,
+        }),
+      ],
       cycleLabel: cycleLabel,
       exportTimestamp: exportTimestamp,
       totalDays: 28,
@@ -116,27 +197,15 @@ class TwinMatrixViewModel {
     return result;
   }
 
-  /// Merges functional impact counts across matching FunctionalImpacts.
-  static Map<int, double> _mergeFunctionalImpacts(
+  static Map<int, double> _mergeCycleDayMatrices(
     List<ObservedSymptomPattern> patterns,
-    List<FunctionalImpact> types,
+    List<SymptomType> types,
   ) {
-    // We use cycleDayObservations to find days-before-menses where these
-    // functional impacts were recorded.
     final merged = <int, List<double>>{};
     for (final pattern in patterns) {
-      for (final observation in pattern.cycleDayObservations) {
-        final daysBefore = observation.daysBeforeMenses;
-        if (daysBefore == null) continue;
-        // Check if this pattern has any of the target functional impacts.
-        final hasImpact = types.any(
-          (type) => pattern.functionalImpactCounts.containsKey(type),
-        );
-        if (!hasImpact) continue;
-        // Use the dominant severity for this observation.
-        final severity = pattern.severityCounts.entries
-            .fold(0, (sum, e) => sum + e.key.score * e.value);
-        merged.putIfAbsent(daysBefore, () => []).add(severity.toDouble());
+      if (!types.contains(pattern.symptom)) continue;
+      for (final entry in pattern.severityByCycleDay.entries) {
+        merged.putIfAbsent(entry.key, () => []).add(entry.value);
       }
     }
     final result = <int, double>{};
@@ -147,7 +216,7 @@ class TwinMatrixViewModel {
     return result;
   }
 
-  /// Converts a Map<int, double> to a 14-element list for days -14 to -1.
+  /// Converts a `Map<int, double>` to a 14-element list for days -14 to -1.
   static List<double> _matrixToList(Map<int, double> matrix) {
     final list = <double>[];
     for (var day = -14; day <= -1; day++) {
@@ -156,17 +225,10 @@ class TwinMatrixViewModel {
     return list;
   }
 
-  /// Mirrors luteal data for the menses/follicular side of the matrix.
-  static List<double> _mensesMirror(Map<int, double> matrix) {
-    // For the right side (days 1-14), we project the menses-side severity
-    // by mirroring the luteal pattern. In practice the pattern engine would
-    // provide actual menses data; for now we mirror for visual symmetry.
+  static List<double> _cycleDayMatrixToList(Map<int, double> matrix) {
     final list = <double>[];
     for (var day = 1; day <= 14; day++) {
-      // Map to luteal days for visual reference (not clinically accurate)
-      // but shows the cyclical nature.
-      final lutealDay = -(15 - day);
-      list.add(matrix[lutealDay] ?? 0.0);
+      list.add(matrix[day] ?? 0.0);
     }
     return list;
   }
@@ -188,4 +250,18 @@ class TwinMatrixCluster {
 
   /// 14 values for days 1 to 14 (menses/follicular, right of center).
   final List<double> mensesSeverities;
+}
+
+final class TwinMatrixObservation {
+  const TwinMatrixObservation({
+    required this.symptom,
+    required this.severity,
+    required this.daysBeforeMenses,
+    required this.cycleDay,
+  });
+
+  final SymptomType symptom;
+  final SymptomSeverity severity;
+  final int? daysBeforeMenses;
+  final int? cycleDay;
 }

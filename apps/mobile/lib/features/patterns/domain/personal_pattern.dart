@@ -52,6 +52,7 @@ final class ObservedSymptomPattern {
     required this.sources,
     required this.cycleDayObservations,
     this.severityByDaysBeforeMenses = const {},
+    this.severityByCycleDay = const {},
   });
 
   final String id;
@@ -70,6 +71,10 @@ final class ObservedSymptomPattern {
   /// Key: days before menses (-14 to -1). Value: average severity.
   /// Empty if no subsequent period starts are available for anchoring.
   final Map<int, double> severityByDaysBeforeMenses;
+
+  /// Aggregated confirmed severity by observed forward cycle day.
+  /// Only days 1 through 14 are included for the Twin Matrix right side.
+  final Map<int, double> severityByCycleDay;
 
   PersonalPatternKind get kind => PersonalPatternKind.symptom;
 

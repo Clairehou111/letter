@@ -2,13 +2,21 @@ import 'package:flutter/material.dart';
 
 import '../../../design_system/letter_theme.dart';
 import '../../cycle/domain/local_date.dart';
+import '../../cycle/domain/period_record.dart';
+import '../../cycle/domain/period_repository.dart';
 import '../domain/health_record.dart';
 import '../domain/health_record_repository.dart';
 
 class HealthRecordsScreen extends StatefulWidget {
-  const HealthRecordsScreen({required this.repository, super.key, this.now});
+  const HealthRecordsScreen({
+    required this.repository,
+    super.key,
+    this.periodRepository,
+    this.now,
+  });
 
   final HealthRecordRepository repository;
+  final PeriodRepository? periodRepository;
   final DateTime Function()? now;
 
   @override
@@ -17,6 +25,7 @@ class HealthRecordsScreen extends StatefulWidget {
 
 class _HealthRecordsScreenState extends State<HealthRecordsScreen> {
   List<HealthRecord> _records = const [];
+  List<PeriodRecord> _periods = const [];
   bool _loading = true;
   bool _failed = false;
 
@@ -33,11 +42,14 @@ class _HealthRecordsScreenState extends State<HealthRecordsScreen> {
     });
     try {
       final records = await widget.repository.getAll();
+      final periods =
+          await widget.periodRepository?.getAll() ?? const <PeriodRecord>[];
       if (!mounted) {
         return;
       }
       setState(() {
         _records = records;
+        _periods = periods;
         _loading = false;
       });
     } on Object {
@@ -134,26 +146,110 @@ class _HealthRecordsScreenState extends State<HealthRecordsScreen> {
                 ? _HealthRecordLoadError(onRetry: _load)
                 : _records.isEmpty
                 ? _HealthRecordEmpty(onAdd: () => _openEditor())
-                : ListView.separated(
+                : ListView(
                     padding: const EdgeInsets.fromLTRB(20, 16, 20, 32),
-                    itemCount: _records.length + 1,
-                    separatorBuilder: (_, _) =>
-                        const SizedBox(height: LetterSpacing.sm),
-                    itemBuilder: (context, index) {
-                      if (index == 0) {
-                        return const _HealthRecordIntro();
-                      }
-                      final record = _records[index - 1];
-                      return _HealthRecordTile(
-                        record: record,
-                        onEdit: () => _openEditor(record),
-                        onDelete: () => _delete(record),
-                      );
-                    },
+                    children: [
+                      const _HealthRecordIntro(),
+                      const SizedBox(height: LetterSpacing.lg),
+                      for (final group in _dayGroups()) ...[
+                        _HealthRecordDayGroup(
+                          date: group.date,
+                          cycleLabel: _cycleLabel(group.date),
+                          records: group.records,
+                          onEdit: _openEditor,
+                          onDelete: _delete,
+                        ),
+                        const SizedBox(height: LetterSpacing.lg),
+                      ],
+                    ],
                   ),
           ),
         ),
       ),
+    );
+  }
+
+  List<_HealthRecordDay> _dayGroups() {
+    final grouped = <LocalDate, List<HealthRecord>>{};
+    for (final record in _records) {
+      grouped.putIfAbsent(record.experiencedDate, () => []).add(record);
+    }
+    final dates = grouped.keys.toList()..sort((a, b) => b.compareTo(a));
+    return [
+      for (final date in dates)
+        _HealthRecordDay(date: date, records: grouped[date]!),
+    ];
+  }
+
+  String _cycleLabel(LocalDate date) {
+    final starts =
+        _periods
+            .where((period) => !period.startDate.isAfter(date))
+            .map((period) => period.startDate)
+            .toList()
+          ..sort();
+    if (starts.isEmpty) return 'Outside recorded cycle history';
+    final start = starts.last;
+    return 'Cycle day ${date.epochDay - start.epochDay + 1}';
+  }
+}
+
+final class _HealthRecordDay {
+  const _HealthRecordDay({required this.date, required this.records});
+
+  final LocalDate date;
+  final List<HealthRecord> records;
+}
+
+class _HealthRecordDayGroup extends StatelessWidget {
+  const _HealthRecordDayGroup({
+    required this.date,
+    required this.cycleLabel,
+    required this.records,
+    required this.onEdit,
+    required this.onDelete,
+  });
+
+  final LocalDate date;
+  final String cycleLabel;
+  final List<HealthRecord> records;
+  final ValueChanged<HealthRecord> onEdit;
+  final ValueChanged<HealthRecord> onDelete;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      key: Key('health-record-day-${date.epochDay}'),
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Text(
+          _formatDate(context, date),
+          style: const TextStyle(
+            fontFamily: 'Newsreader',
+            fontSize: 20,
+            fontWeight: FontWeight.w800,
+          ),
+        ),
+        const SizedBox(height: LetterSpacing.xxs),
+        Text(
+          cycleLabel,
+          style: const TextStyle(
+            color: LetterColors.muted,
+            fontSize: 12,
+            fontWeight: FontWeight.w700,
+          ),
+        ),
+        const SizedBox(height: LetterSpacing.sm),
+        for (var index = 0; index < records.length; index++) ...[
+          _HealthRecordTile(
+            record: records[index],
+            onEdit: () => onEdit(records[index]),
+            onDelete: () => onDelete(records[index]),
+          ),
+          if (index != records.length - 1)
+            const SizedBox(height: LetterSpacing.xs),
+        ],
+      ],
     );
   }
 }

@@ -237,7 +237,7 @@ class _CycleScreenState extends State<CycleScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       bottomNavigationBar: LetterBottomNavigation(
-        selectedIndex: 0,
+        selectedIndex: 1,
         onSelected: widget.onNavigationSelected,
       ),
       body: SafeArea(

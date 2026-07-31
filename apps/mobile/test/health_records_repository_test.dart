@@ -43,4 +43,37 @@ void main() {
       expect(await repository.getAll(), isEmpty);
     },
   );
+
+  test('same symptom and date updates the existing daily record', () async {
+    var now = DateTime.utc(2026, 7, 28, 9);
+    var nextId = 0;
+    final repository = InMemoryHealthRecordRepository(
+      clock: () => now,
+      idGenerator: () => 'health-${nextId++}',
+    );
+    final first = await repository.create(
+      const HealthRecordDraft(
+        symptom: SymptomType.cramps,
+        severity: SymptomSeverity.mild,
+        experiencedDate: LocalDate(2026, 7, 28),
+        provenance: HealthRecordProvenance.sameDay,
+      ),
+    );
+
+    now = DateTime.utc(2026, 7, 28, 18);
+    final second = await repository.create(
+      const HealthRecordDraft(
+        symptom: SymptomType.cramps,
+        severity: SymptomSeverity.severe,
+        experiencedDate: LocalDate(2026, 7, 28),
+        provenance: HealthRecordProvenance.sameDay,
+      ),
+    );
+
+    expect(second.id, first.id);
+    expect(second.recordedAt, first.recordedAt);
+    expect(second.updatedAt, now);
+    expect(second.severity, SymptomSeverity.severe);
+    expect(await repository.getAll(), hasLength(1));
+  });
 }

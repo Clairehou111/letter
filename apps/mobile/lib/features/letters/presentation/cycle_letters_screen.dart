@@ -65,6 +65,7 @@ class CycleLetterCareMomentDisplay {
     this.id,
     this.checkBackLabel,
     this.reflectionId,
+    this.reflectionPreview,
   });
 
   final String? id;
@@ -72,6 +73,7 @@ class CycleLetterCareMomentDisplay {
   final String actionLabel;
   final String? checkBackLabel;
   final String? reflectionId;
+  final String? reflectionPreview;
 }
 
 @immutable
@@ -162,7 +164,7 @@ class CycleLettersScreen extends StatelessWidget {
     final selectedLetter = _selectedLetter();
     return Scaffold(
       bottomNavigationBar: LetterBottomNavigation(
-        selectedIndex: 1,
+        selectedIndex: 3,
         onSelected: onNavigationSelected,
       ),
       body: SafeArea(
@@ -280,24 +282,11 @@ class _ArchiveList extends StatelessWidget {
           sliver: SliverList.list(
             children: [
               const _ArchiveHeader(),
-              if (onOpenPersonalPatterns != null) ...[
-                const SizedBox(height: LetterSpacing.sm),
-                OutlinedButton.icon(
-                  key: const Key('open-personal-patterns'),
-                  onPressed: onOpenPersonalPatterns,
-                  icon: const Icon(Icons.insights_outlined),
-                  label: const Text('Open observed Patterns'),
-                ),
-              ],
-              if (onOpenArchiveViews != null) ...[
-                const SizedBox(height: LetterSpacing.xs),
-                OutlinedButton.icon(
-                  key: const Key('open-archive-views'),
-                  onPressed: onOpenArchiveViews,
-                  icon: const Icon(Icons.auto_stories_outlined),
-                  label: const Text('Open Story and Clinical archive'),
-                ),
-              ],
+              const SizedBox(height: LetterSpacing.md),
+              _LettersDestinations(
+                onOpenPatterns: onOpenPersonalPatterns,
+                onOpenReports: onOpenArchiveViews,
+              ),
               const SizedBox(height: LetterSpacing.xl),
               if (!hasCycleRecord) const _NoPeriodsRecorded(),
               if (viewModel.currentCycle case final current?) ...[
@@ -360,6 +349,54 @@ class _ArchiveList extends StatelessWidget {
           ),
         ),
       ],
+    );
+  }
+}
+
+enum _LettersDestination { cycles, patterns, reports }
+
+class _LettersDestinations extends StatelessWidget {
+  const _LettersDestinations({
+    required this.onOpenPatterns,
+    required this.onOpenReports,
+  });
+
+  final VoidCallback? onOpenPatterns;
+  final VoidCallback? onOpenReports;
+
+  @override
+  Widget build(BuildContext context) {
+    return SegmentedButton<_LettersDestination>(
+      key: const Key('letters-destinations'),
+      segments: const [
+        ButtonSegment(
+          value: _LettersDestination.cycles,
+          label: Text('Cycles'),
+          icon: Icon(Icons.mail_outline),
+        ),
+        ButtonSegment(
+          value: _LettersDestination.patterns,
+          label: Text('Patterns'),
+          icon: Icon(Icons.insights_outlined),
+        ),
+        ButtonSegment(
+          value: _LettersDestination.reports,
+          label: Text('Reports'),
+          icon: Icon(Icons.description_outlined),
+        ),
+      ],
+      selected: const {_LettersDestination.cycles},
+      showSelectedIcon: false,
+      onSelectionChanged: (selection) {
+        switch (selection.single) {
+          case _LettersDestination.cycles:
+            return;
+          case _LettersDestination.patterns:
+            onOpenPatterns?.call();
+          case _LettersDestination.reports:
+            onOpenReports?.call();
+        }
+      },
     );
   }
 }
@@ -731,15 +768,6 @@ class _CycleLetterDetail extends StatelessWidget {
                       ),
                     ),
                     _DetailSection(
-                      key: const Key('cycle-letter-section-reflections'),
-                      icon: Icons.edit_note_outlined,
-                      title: 'Reflections',
-                      child: _ReflectionSection(
-                        reflection: letter.reflection,
-                        onOpen: onReflectionOpen,
-                      ),
-                    ),
-                    _DetailSection(
                       key: const Key('cycle-letter-section-missing'),
                       icon: Icons.remove_circle_outline,
                       title: 'What is not recorded',
@@ -868,6 +896,24 @@ class _CareMoments extends StatelessWidget {
                     ?moment.checkBackLabel,
                   ].join('  •  '),
                 ),
+                if (moment.reflectionPreview case final preview?) ...[
+                  const SizedBox(height: LetterSpacing.xs),
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(LetterSpacing.sm),
+                    decoration: const BoxDecoration(
+                      color: LetterColors.tealSoft,
+                      border: Border(
+                        left: BorderSide(color: LetterColors.teal, width: 3),
+                      ),
+                    ),
+                    child: Text(
+                      preview,
+                      key: Key('cycle-letter-reflection-preview-${moment.id}'),
+                      style: const TextStyle(height: 1.4),
+                    ),
+                  ),
+                ],
                 if (moment.id case final id?) ...[
                   const SizedBox(height: LetterSpacing.xs),
                   OutlinedButton.icon(
@@ -935,47 +981,6 @@ class _CountLabel extends StatelessWidget {
           fontWeight: FontWeight.w800,
         ),
       ),
-    );
-  }
-}
-
-class _ReflectionSection extends StatelessWidget {
-  const _ReflectionSection({required this.reflection, required this.onOpen});
-
-  final CycleLetterReflectionDisplay? reflection;
-  final ValueChanged<String>? onOpen;
-
-  @override
-  Widget build(BuildContext context) {
-    final savedReflection = reflection;
-    if (savedReflection == null) {
-      return const Text(
-        'No reflection is recorded for this cycle.',
-        style: TextStyle(color: LetterColors.muted, height: 1.4),
-      );
-    }
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          'Reflection recorded ${savedReflection.dateLabel}.',
-          style: const TextStyle(height: 1.4),
-        ),
-        const SizedBox(height: LetterSpacing.sm),
-        OutlinedButton.icon(
-          key: const Key('cycle-letter-open-reflection'),
-          onPressed: onOpen == null ? null : () => onOpen!(savedReflection.id),
-          icon: const Icon(Icons.open_in_new, size: 19),
-          label: const Text('Open reflection'),
-          style: OutlinedButton.styleFrom(
-            minimumSize: const Size(44, 44),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(LetterRadius.control),
-            ),
-          ),
-        ),
-      ],
     );
   }
 }

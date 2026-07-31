@@ -66,6 +66,28 @@ Used for doctor-facing evidence:
 The clinical layer can carry Letter typography and restrained color, but it
 must not hide evidence inside poetic narrative or a simulated object.
 
+## Three Signature Views
+
+Letter's visual identity is expressed through a progression rather than
+repeated decorative motifs:
+
+- `Gravity Horizon`: ritual orientation to observed and estimated cycle timing
+- `Spectrum Log`: a utility and ritual view of confirmed cross-cycle patterns
+- `Twin Matrix`: a plain clinical view of confirmed evidence
+
+The progression is:
+
+```text
+cycle context -> personal pattern -> owned clinical evidence
+```
+
+Metaphor strength decreases as clinical seriousness increases. The Horizon may
+feel tidal, the Spectrum may use restrained color, and the Twin Matrix must
+prioritize dates, scales, provenance, and missingness.
+
+None of the three views may imply that Letter measures hormones, knows how the
+user feels, identifies a medical danger window, or verifies a diagnosis.
+
 ## Metaphor Budget
 
 Use one strong metaphor per screen, not one per component.

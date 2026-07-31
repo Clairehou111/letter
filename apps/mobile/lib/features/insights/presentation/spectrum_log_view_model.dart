@@ -5,8 +5,8 @@ import '../../patterns/domain/pattern_source.dart';
 
 /// View-state for the Spectrum Log (Insights view).
 ///
-/// Replaces traditional line/bar charts with a single horizontal "hormonal
-/// spectrum strip" — a gradient bar representing the 14-day luteal countdown
+/// Replaces traditional line/bar charts with a single horizontal spectrum
+/// strip — a gradient bar representing the 14-day premenstrual countdown
 /// (Day -14 to Day -1), with blurred "nebula" color overlays derived from
 /// the symptom severity matrix.
 ///
@@ -16,6 +16,8 @@ final class SpectrumLogViewModel {
     required this.nebulaSegments,
     required this.dayLabels,
     required this.emptyMessage,
+    required this.confirmedRatingCount,
+    required this.observedDayCount,
   });
 
   /// One segment per day in the luteal window (-14 to -1).
@@ -26,6 +28,8 @@ final class SpectrumLogViewModel {
 
   /// Shown when no pattern data exists yet.
   final String? emptyMessage;
+  final int confirmedRatingCount;
+  final int observedDayCount;
 
   /// Builds from the pattern engine's analysis.
   factory SpectrumLogViewModel.fromAnalysis(
@@ -37,6 +41,8 @@ final class SpectrumLogViewModel {
         nebulaSegments: [],
         dayLabels: [],
         emptyMessage: 'patterns gather quietly over cycles.',
+        confirmedRatingCount: 0,
+        observedDayCount: 0,
       );
     }
 
@@ -73,6 +79,14 @@ final class SpectrumLogViewModel {
       nebulaSegments: segments,
       dayLabels: labels,
       emptyMessage: null,
+      confirmedRatingCount: analysis.symptomPatterns.fold(
+        0,
+        (total, pattern) => total + pattern.count,
+      ),
+      observedDayCount: analysis.symptomPatterns
+          .expand((pattern) => pattern.coveredDates)
+          .toSet()
+          .length,
     );
   }
 

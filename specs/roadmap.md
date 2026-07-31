@@ -5,6 +5,16 @@ Status values: `proposed`, `specifying`, `approved`, `in_progress`,
 
 Only one product feature should normally be `in_progress`.
 
+## Active Superseding Feature
+
+| Order | Feature | Status | Specification |
+| --- | --- | --- | --- |
+| 1 | Unified record and navigation architecture | in_progress | `features/2026-07-31-unified-record-and-navigation/` |
+
+This feature supersedes session-only quick states and reconciles Today,
+cycle-grouped records, Letters, reflections, Gravity Horizon, Spectrum Log, and
+Twin Matrix before additional release-surface work continues.
+
 Current roadmap exclusions:
 
 - contact access, trusted-contact management, or direct messaging
@@ -38,9 +48,10 @@ Cycle prediction is a derived, local-only date range based on at least two
 observed start-to-start intervals. It shows confidence and recorded variation
 without fertility, phase, or diagnostic claims.
 
-Today now derives its date, period or cycle day, and supported prediction from
-the same local period repository. Quick-state choices are intentionally
-session-only and cannot appear in history or reports yet.
+Today derives its date, period or cycle day, and supported prediction from the
+same local period repository. The 2026-07-31 unified-record feature supersedes
+session-only quick states with timestamped, non-clinical moment check-ins that
+remain excluded from health reports.
 
 The validated onboarding persistence and privacy architecture remains. Its copy
 and goals require a separate revision after the Care-loop redesign is approved.

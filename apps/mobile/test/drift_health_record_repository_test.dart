@@ -52,4 +52,41 @@ void main() {
       expect(await repository.getAll(), isEmpty);
     },
   );
+
+  test('Drift upserts the same symptom on the same experienced date', () async {
+    final database = LetterHealthDatabase(NativeDatabase.memory());
+    addTearDown(database.close);
+    var now = DateTime.utc(2026, 7, 28, 9);
+    var nextId = 0;
+    final repository = DriftHealthRecordRepository(
+      database,
+      closeDatabase: false,
+      clock: () => now,
+      idGenerator: () => 'drift-health-${nextId++}',
+    );
+    final first = await repository.create(
+      const HealthRecordDraft(
+        symptom: SymptomType.lowMood,
+        severity: SymptomSeverity.mild,
+        experiencedDate: LocalDate(2026, 7, 28),
+        provenance: HealthRecordProvenance.sameDay,
+      ),
+    );
+
+    now = DateTime.utc(2026, 7, 28, 19);
+    final second = await repository.create(
+      const HealthRecordDraft(
+        symptom: SymptomType.lowMood,
+        severity: SymptomSeverity.extreme,
+        experiencedDate: LocalDate(2026, 7, 28),
+        provenance: HealthRecordProvenance.sameDay,
+      ),
+    );
+
+    expect(second.id, first.id);
+    expect(second.recordedAt, first.recordedAt);
+    expect(second.updatedAt, now);
+    expect(second.severity, SymptomSeverity.extreme);
+    expect(await repository.getAll(), hasLength(1));
+  });
 }

@@ -3,6 +3,10 @@
 Status: validated
 Dependencies: Phase 1 local repositories and Phase 2 encrypted Care memory
 
+Superseded in part by
+`../2026-07-31-unified-record-and-navigation/requirements.md`, which adds
+same-day update semantics, day grouping, and explicit episode separation.
+
 ## Goal
 
 Make direct, user-confirmed symptom records durable, editable, local, and

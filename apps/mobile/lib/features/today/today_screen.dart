@@ -4,6 +4,10 @@ import 'package:flutter/material.dart';
 
 import '../../design_system/letter_bottom_navigation.dart';
 import '../../design_system/letter_theme.dart';
+import '../care/domain/care_memory.dart';
+import '../care/domain/care_memory_repository.dart';
+import '../check_in/domain/moment_check_in.dart';
+import '../check_in/domain/moment_check_in_repository.dart';
 import '../cycle/domain/cycle_prediction.dart';
 import '../cycle/domain/local_date.dart';
 import '../cycle/domain/period_record.dart';
@@ -13,6 +17,7 @@ import '../capture/domain/capture_models.dart';
 import '../capture/domain/speech_to_text_adapter.dart';
 import '../capture/presentation/text_voice_capture_flow.dart';
 import '../health_records/domain/health_record_repository.dart';
+import '../health_records/domain/health_record.dart';
 import '../health_records/presentation/health_records_screen.dart';
 import '../insights/presentation/gravity_horizon.dart';
 import '../insights/presentation/gravity_horizon_view_model.dart';
@@ -67,6 +72,8 @@ class TodayScreen extends StatefulWidget {
     this.now,
     this.healthRecordRepository,
     this.captureNoteStore,
+    this.momentCheckInRepository,
+    this.careMemoryRepository,
   });
 
   final PeriodRepository repository;
@@ -74,6 +81,8 @@ class TodayScreen extends StatefulWidget {
   final DateTime Function()? now;
   final HealthRecordRepository? healthRecordRepository;
   final CaptureNoteStore? captureNoteStore;
+  final MomentCheckInRepository? momentCheckInRepository;
+  final CareMemoryRepository? careMemoryRepository;
 
   @override
   State<TodayScreen> createState() => _TodayScreenState();
@@ -82,6 +91,10 @@ class TodayScreen extends StatefulWidget {
 class _TodayScreenState extends State<TodayScreen> {
   TodayState? selectedState;
   List<PeriodRecord> _records = const [];
+  List<MomentCheckIn> _checkIns = const [];
+  List<HealthRecord> _healthRecords = const [];
+  List<CaptureNote> _notes = const [];
+  List<CareRecord> _careRecords = const [];
   bool _loading = true;
   bool _loadFailed = false;
 
@@ -94,18 +107,36 @@ class _TodayScreenState extends State<TodayScreen> {
     _load();
   }
 
-  Future<void> _load() async {
-    setState(() {
-      _loading = true;
-      _loadFailed = false;
-    });
+  Future<void> _load({bool showProgress = true}) async {
+    if (showProgress) {
+      setState(() {
+        _loading = true;
+        _loadFailed = false;
+      });
+    }
     try {
       final records = await widget.repository.getAll();
+      final checkIns =
+          await widget.momentCheckInRepository?.getAll() ??
+          const <MomentCheckIn>[];
+      final healthRecords =
+          await widget.healthRecordRepository?.getAll() ??
+          const <HealthRecord>[];
+      final notes =
+          await widget.captureNoteStore?.getAll() ?? const <CaptureNote>[];
+      final careRecords =
+          await widget.careMemoryRepository?.getRecords() ??
+          const <CareRecord>[];
       if (!mounted) {
         return;
       }
       setState(() {
         _records = records;
+        _checkIns = checkIns;
+        _healthRecords = healthRecords;
+        _notes = notes;
+        _careRecords = careRecords;
+        selectedState = _latestTodayState(checkIns, _today);
         _loading = false;
       });
     } on Object {
@@ -119,19 +150,8 @@ class _TodayScreenState extends State<TodayScreen> {
     }
   }
 
-  Future<void> _openStateSheet(TodayState state) async {
-    setState(() => selectedState = state);
-    await showModalBottomSheet<void>(
-      context: context,
-      isScrollControlled: true,
-      useSafeArea: true,
-      barrierColor: LetterColors.ink.withValues(alpha: 0.35),
-      builder: (context) => StateDetailSheet(state: state),
-    );
-  }
-
   void _openCare() {
-    widget.onNavigationSelected?.call(3);
+    widget.onNavigationSelected?.call(2);
   }
 
   Future<void> _openHealthRecords() async {
@@ -141,10 +161,16 @@ class _TodayScreenState extends State<TodayScreen> {
     }
     await Navigator.of(context).push(
       MaterialPageRoute<void>(
-        builder: (context) =>
-            HealthRecordsScreen(repository: repository, now: widget.now),
+        builder: (context) => HealthRecordsScreen(
+          repository: repository,
+          periodRepository: widget.repository,
+          now: widget.now,
+        ),
       ),
     );
+    if (mounted) {
+      await _load(showProgress: false);
+    }
   }
 
   Future<void> _openCapture() async {
@@ -166,6 +192,9 @@ class _TodayScreenState extends State<TodayScreen> {
     } finally {
       controller.dispose();
     }
+    if (mounted) {
+      await _load(showProgress: false);
+    }
   }
 
   Future<void> _openQuickStateSheet() async {
@@ -177,29 +206,128 @@ class _TodayScreenState extends State<TodayScreen> {
       builder: (context) => QuickStateSheet(selectedState: selectedState),
     );
     if (state != null && mounted) {
-      await _openStateSheet(state);
+      await _saveCheckIn(state);
     }
   }
 
-  CyclePrediction? get _prediction =>
-      CyclePredictionEngine.calculate(_records);
+  Future<void> _saveCheckIn(TodayState state) async {
+    final repository = widget.momentCheckInRepository;
+    if (repository == null) {
+      _showActivityError('Check-in storage is unavailable.');
+      return;
+    }
+    try {
+      final checkIn = await repository.create(
+        _momentState(state),
+        occurredAt: (widget.now ?? DateTime.now)(),
+      );
+      if (!mounted) return;
+      setState(() {
+        selectedState = state;
+        _checkIns = [checkIn, ..._checkIns];
+      });
+      final next = await showModalBottomSheet<_CheckInNextAction>(
+        context: context,
+        useSafeArea: true,
+        barrierColor: LetterColors.ink.withValues(alpha: 0.35),
+        builder: (context) => CheckInSavedSheet(checkIn: checkIn),
+      );
+      if (!mounted) return;
+      if (next == _CheckInNextAction.undo) {
+        await repository.delete(checkIn.id);
+        await _load(showProgress: false);
+      } else if (next == _CheckInNextAction.addDetails) {
+        await _openHealthRecordEditor();
+      }
+    } on MomentCheckInException catch (error) {
+      if (mounted) _showActivityError(error.userMessage);
+    }
+  }
 
-  Widget _buildGravityHorizon(BuildContext context, CyclePrediction? prediction) {
+  Future<void> _openHealthRecordEditor([HealthRecord? record]) async {
+    final repository = widget.healthRecordRepository;
+    if (repository == null) return;
+    await Navigator.of(context).push<void>(
+      MaterialPageRoute(
+        builder: (context) => HealthRecordFormScreen(
+          repository: repository,
+          initialRecord: record,
+          now: widget.now,
+        ),
+      ),
+    );
+    if (mounted) {
+      await _load(showProgress: false);
+    }
+  }
+
+  Future<void> _deleteNote(CaptureNote note) async {
+    final store = widget.captureNoteStore;
+    if (store == null) return;
+    try {
+      await store.delete(note);
+      await _load(showProgress: false);
+    } on Object {
+      if (mounted) {
+        _showActivityError('Letter could not delete this private note.');
+      }
+    }
+  }
+
+  Future<void> _deleteCheckIn(MomentCheckIn checkIn) async {
+    final repository = widget.momentCheckInRepository;
+    if (repository == null) return;
+    try {
+      await repository.delete(checkIn.id);
+      await _load(showProgress: false);
+    } on MomentCheckInException catch (error) {
+      if (mounted) _showActivityError(error.userMessage);
+    }
+  }
+
+  void _showActivityError(String message) {
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text(message)));
+  }
+
+  CyclePrediction? get _prediction => CyclePredictionEngine.calculate(_records);
+
+  String _careOutcomeLabel(CareOutcome outcome) => switch (outcome) {
+    CareOutcome.better => 'Better',
+    CareOutcome.same => 'Same',
+    CareOutcome.worse => 'Worse',
+  };
+
+  Widget _buildGravityHorizon(
+    BuildContext context,
+    CyclePrediction? prediction,
+  ) {
     if (prediction == null) return const SizedBox.shrink();
     final size = MediaQuery.sizeOf(context);
+    final textScale = MediaQuery.textScalerOf(context).scale(1);
+    final horizonHeight = 190.0 + (math.max(1.0, textScale) - 1.0) * 100.0;
     final cycleContext = TodayCycleContext.fromRecords(
       records: _records,
       today: _today,
     );
-    return SizedBox(
-      height: 280,
-      child: GravityHorizonView(
-        viewModel: GravityHorizonViewModel.fromPrediction(
-          prediction: prediction,
-          today: _today,
-          cycleDay: cycleContext.dayNumber,
-          availableWidth: size.width - 36,
-          availableHeight: 280,
+    return Semantics(
+      button: true,
+      label: 'Open Cycle from the Gravity Horizon',
+      child: InkWell(
+        key: const Key('today-gravity-horizon'),
+        onTap: () => widget.onNavigationSelected?.call(1),
+        child: SizedBox(
+          height: horizonHeight,
+          child: GravityHorizonView(
+            viewModel: GravityHorizonViewModel.fromPrediction(
+              prediction: prediction,
+              today: _today,
+              cycleDay: cycleContext.dayNumber,
+              availableWidth: size.width - 36,
+              availableHeight: horizonHeight,
+            ),
+          ),
         ),
       ),
     );
@@ -208,6 +336,10 @@ class _TodayScreenState extends State<TodayScreen> {
   @override
   Widget build(BuildContext context) {
     final prediction = _prediction;
+    final cycleContext = TodayCycleContext.fromRecords(
+      records: _records,
+      today: _today,
+    );
     return Scaffold(
       bottomNavigationBar: LetterBottomNavigation(
         onSelected: widget.onNavigationSelected,
@@ -229,22 +361,37 @@ class _TodayScreenState extends State<TodayScreen> {
                         padding: const EdgeInsets.fromLTRB(18, 0, 18, 32),
                         sliver: SliverList.list(
                           children: [
-                            AppHeader(onLog: _openQuickStateSheet),
+                            AppHeader(onCheckIn: _openQuickStateSheet),
                             const SizedBox(height: LetterSpacing.md),
+                            // 1. Estimate cycle
                             CycleHero(
-                              cycleContext: TodayCycleContext.fromRecords(
-                                records: _records,
-                                today: _today,
-                              ),
+                              cycleContext: cycleContext,
                               onOpenCycle: () =>
-                                  widget.onNavigationSelected?.call(0),
+                                  widget.onNavigationSelected?.call(1),
                             ),
-                            const SizedBox(height: LetterSpacing.xl),
+                            const SizedBox(height: LetterSpacing.md),
+                            // 2. Quick check-in
+                            const LetterSectionTitle(
+                              eyebrow: 'A quick check-in',
+                              title: 'How are you right now?',
+                            ),
+                            const SizedBox(height: LetterSpacing.sm),
+                            StateGrid(
+                              selectedState: selectedState,
+                              onSelected: _saveCheckIn,
+                            ),
+                            const SizedBox(height: LetterSpacing.lg),
+                            // 3. Gravity Horizon (when prediction exists)
+                            if (prediction != null) ...[
+                              _buildGravityHorizon(context, prediction),
+                              const SizedBox(height: LetterSpacing.lg),
+                            ],
+                            // 4. Today's activity — compact recent items only
+                            _buildCompactActivity(context),
+                            const SizedBox(height: LetterSpacing.lg),
+                            // 5. Tools
                             TodayCareEntry(onOpenCare: _openCare),
                             const SizedBox(height: LetterSpacing.xl),
-                            _buildGravityHorizon(context, prediction),
-                            if (prediction != null)
-                              const SizedBox(height: LetterSpacing.xl),
                             if (widget.healthRecordRepository != null) ...[
                               TodayHealthRecordEntry(
                                 onOpenRecords: _openHealthRecords,
@@ -255,21 +402,143 @@ class _TodayScreenState extends State<TodayScreen> {
                               TodayCaptureEntry(onOpenCapture: _openCapture),
                               const SizedBox(height: LetterSpacing.xl),
                             ],
-                            const LetterSectionTitle(
-                              eyebrow: 'A quick check-in',
-                              title: 'How are you right now?',
-                            ),
-                            const SizedBox(height: LetterSpacing.sm),
-                            StateGrid(
-                              selectedState: selectedState,
-                              onSelected: _openStateSheet,
-                            ),
                           ],
                         ),
                       ),
                     ],
                   ),
           ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildCompactActivity(BuildContext context) {
+    final entries = <_TodayActivityEntry>[
+      for (final checkIn in _checkIns)
+        if (TodayActivity._isToday(checkIn.occurredAt, _today))
+          _TodayActivityEntry(
+            key: Key('today-activity-check-in-${checkIn.id}'),
+            occurredAt: checkIn.occurredAt,
+            icon: Icons.brightness_1_outlined,
+            iconColor: LetterColors.teal,
+            title: checkIn.state.label,
+            detail: 'Moment check-in · not a clinical rating',
+            onDelete: () => _deleteCheckIn(checkIn),
+          ),
+      for (final record in _healthRecords)
+        if (record.experiencedDate == _today)
+          _TodayActivityEntry(
+            key: Key('today-activity-health-${record.id}'),
+            occurredAt: record.recordedAt,
+            icon: Icons.edit_note_outlined,
+            iconColor: LetterColors.violet,
+            title: '${record.symptom.label} · ${record.severity.label}',
+            detail: '${record.severity.score}/6 · ${record.provenance.label}',
+            onTap: () => _openHealthRecordEditor(record),
+          ),
+      for (final note in _notes)
+        if (TodayActivity._isToday(note.createdAt, _today))
+          _TodayActivityEntry(
+            key: Key('today-activity-note-${note.id}'),
+            occurredAt: note.createdAt,
+            icon: Icons.notes_outlined,
+            iconColor: LetterColors.blue,
+            title: note.text,
+            detail: 'Private note · excluded from reports by default',
+            onDelete: () => _deleteNote(note),
+          ),
+      for (final record in _careRecords)
+        if (TodayActivity._isToday(record.occurredAt, _today))
+          _TodayActivityEntry(
+            key: Key('today-activity-care-${record.id}'),
+            occurredAt: record.occurredAt,
+            icon: Icons.volunteer_activism_outlined,
+            iconColor: LetterColors.coral,
+            title: record.actionLabel,
+            detail: 'Care · ${_careOutcomeLabel(record.outcome)}',
+          ),
+    ]..sort((left, right) => right.occurredAt.compareTo(left.occurredAt));
+
+    return Column(
+      key: const Key('today-activity-compact'),
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        const LetterSectionTitle(
+          eyebrow: 'Saved on this device',
+          title: "Today's activity",
+        ),
+        const SizedBox(height: LetterSpacing.sm),
+        if (entries.isEmpty)
+          Container(
+            padding: const EdgeInsets.all(LetterSpacing.md),
+            decoration: BoxDecoration(
+              color: LetterColors.surface,
+              border: Border.all(color: LetterColors.line),
+              borderRadius: BorderRadius.circular(LetterRadius.panel),
+            ),
+            child: const Text(
+              'Nothing recorded today yet.',
+              key: Key('today-activity-empty'),
+              style: TextStyle(color: LetterColors.muted),
+            ),
+          )
+        else ...[
+          for (var index = 0;
+              index < entries.length && index < 4;
+              index++) ...[
+            entries[index],
+            if (index < entries.length - 1 && index < 3)
+              const SizedBox(height: LetterSpacing.xs),
+          ],
+          if (entries.length > 4)
+            Padding(
+              padding: const EdgeInsets.only(top: LetterSpacing.sm),
+              child: TextButton(
+                key: const Key('today-view-all-activity'),
+                onPressed: () => _showFullActivity(),
+                child: Text(
+                  'view all ${entries.length} entries',
+                  style: const TextStyle(fontWeight: FontWeight.w600),
+                ),
+              ),
+            ),
+        ],
+      ],
+    );
+  }
+
+  void _showFullActivity() {
+    showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      useSafeArea: true,
+      barrierColor: LetterColors.ink.withValues(alpha: 0.35),
+      builder: (context) => DraggableScrollableSheet(
+        initialChildSize: 0.7,
+        minChildSize: 0.3,
+        maxChildSize: 0.92,
+        expand: false,
+        builder: (context, scrollController) => ListView(
+          controller: scrollController,
+          padding: const EdgeInsets.fromLTRB(18, 12, 18, 32),
+          children: [
+            const LetterSectionTitle(
+              eyebrow: "Today's activity",
+              title: 'All entries for today',
+            ),
+            const SizedBox(height: LetterSpacing.md),
+            TodayActivity(
+              today: _today,
+              checkIns: _checkIns,
+              healthRecords: _healthRecords,
+              notes: _notes,
+              careRecords: _careRecords,
+              onEditHealthRecord: _openHealthRecordEditor,
+              onDeleteNote: _deleteNote,
+              onDeleteCheckIn: _deleteCheckIn,
+            ),
+          ],
         ),
       ),
     );
@@ -324,7 +593,7 @@ class QuickStateSheet extends StatelessWidget {
     return LetterSheetFrame(
       title: 'How are you right now?',
       subtitle:
-          'Choose one starting point. Nothing is saved to your health record yet.',
+          'Choose one moment. It will be saved privately with the current time.',
       child: StateGrid(
         selectedState: selectedState,
         onSelected: (state) => Navigator.pop(context, state),
@@ -333,10 +602,75 @@ class QuickStateSheet extends StatelessWidget {
   }
 }
 
-class AppHeader extends StatelessWidget {
-  const AppHeader({required this.onLog, super.key});
+enum _CheckInNextAction { addDetails, undo }
 
-  final VoidCallback onLog;
+class CheckInSavedSheet extends StatelessWidget {
+  const CheckInSavedSheet({required this.checkIn, super.key});
+
+  final MomentCheckIn checkIn;
+
+  @override
+  Widget build(BuildContext context) {
+    final local = checkIn.occurredAt.toLocal();
+    final time = MaterialLocalizations.of(
+      context,
+    ).formatTimeOfDay(TimeOfDay.fromDateTime(local));
+    return Container(
+      key: const Key('check-in-saved-sheet'),
+      padding: const EdgeInsets.fromLTRB(20, 24, 20, 28),
+      decoration: const BoxDecoration(
+        color: LetterColors.canvas,
+        borderRadius: BorderRadius.vertical(top: Radius.circular(18)),
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          const Icon(
+            Icons.check_circle_outline,
+            color: LetterColors.teal,
+            size: 34,
+          ),
+          const SizedBox(height: LetterSpacing.sm),
+          Text(
+            '${checkIn.state.label} saved at $time',
+            textAlign: TextAlign.center,
+            style: const TextStyle(
+              fontFamily: 'Newsreader',
+              fontSize: 23,
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+          const SizedBox(height: LetterSpacing.xs),
+          const Text(
+            'This moment appears in Today and your cycle Story. It is not a clinical rating.',
+            textAlign: TextAlign.center,
+            style: TextStyle(color: LetterColors.muted, height: 1.4),
+          ),
+          const SizedBox(height: LetterSpacing.lg),
+          FilledButton.icon(
+            key: const Key('check-in-add-details'),
+            onPressed: () =>
+                Navigator.pop(context, _CheckInNextAction.addDetails),
+            icon: const Icon(Icons.edit_note_outlined),
+            label: const Text('Add symptom details'),
+          ),
+          TextButton.icon(
+            key: const Key('check-in-undo'),
+            onPressed: () => Navigator.pop(context, _CheckInNextAction.undo),
+            icon: const Icon(Icons.undo),
+            label: const Text('Undo check-in'),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class AppHeader extends StatelessWidget {
+  const AppHeader({required this.onCheckIn, super.key});
+
+  final VoidCallback onCheckIn;
 
   @override
   Widget build(BuildContext context) {
@@ -377,14 +711,14 @@ class AppHeader extends StatelessWidget {
           if (compact)
             IconButton.outlined(
               key: const Key('header-log-button'),
-              tooltip: 'Log today',
-              onPressed: onLog,
+              tooltip: 'Check in',
+              onPressed: onCheckIn,
               icon: const Icon(Icons.add),
             )
           else
             OutlinedButton.icon(
               key: const Key('header-log-button'),
-              onPressed: onLog,
+              onPressed: onCheckIn,
               style: OutlinedButton.styleFrom(
                 foregroundColor: LetterColors.ink,
                 side: const BorderSide(color: LetterColors.line),
@@ -395,7 +729,7 @@ class AppHeader extends StatelessWidget {
               ),
               icon: const Icon(Icons.add, size: 18),
               label: const Text(
-                'Log',
+                'Check in',
                 style: TextStyle(fontWeight: FontWeight.w800),
               ),
             ),
@@ -900,6 +1234,202 @@ class TodayCaptureEntry extends StatelessWidget {
   }
 }
 
+class TodayActivity extends StatelessWidget {
+  const TodayActivity({
+    required this.today,
+    required this.checkIns,
+    required this.healthRecords,
+    required this.notes,
+    required this.careRecords,
+    required this.onEditHealthRecord,
+    required this.onDeleteNote,
+    required this.onDeleteCheckIn,
+    super.key,
+  });
+
+  final LocalDate today;
+  final List<MomentCheckIn> checkIns;
+  final List<HealthRecord> healthRecords;
+  final List<CaptureNote> notes;
+  final List<CareRecord> careRecords;
+  final ValueChanged<HealthRecord> onEditHealthRecord;
+  final ValueChanged<CaptureNote> onDeleteNote;
+  final ValueChanged<MomentCheckIn> onDeleteCheckIn;
+
+  @override
+  Widget build(BuildContext context) {
+    final entries = <_TodayActivityEntry>[
+      for (final checkIn in checkIns)
+        if (_isToday(checkIn.occurredAt, today))
+          _TodayActivityEntry(
+            key: Key('today-activity-check-in-${checkIn.id}'),
+            occurredAt: checkIn.occurredAt,
+            icon: Icons.brightness_1_outlined,
+            iconColor: LetterColors.teal,
+            title: checkIn.state.label,
+            detail: 'Moment check-in · not a clinical rating',
+            onDelete: () => onDeleteCheckIn(checkIn),
+          ),
+      for (final record in healthRecords)
+        if (record.experiencedDate == today)
+          _TodayActivityEntry(
+            key: Key('today-activity-health-${record.id}'),
+            occurredAt: record.recordedAt,
+            icon: Icons.edit_note_outlined,
+            iconColor: LetterColors.violet,
+            title: '${record.symptom.label} · ${record.severity.label}',
+            detail: '${record.severity.score}/6 · ${record.provenance.label}',
+            onTap: () => onEditHealthRecord(record),
+          ),
+      for (final note in notes)
+        if (_isToday(note.createdAt, today))
+          _TodayActivityEntry(
+            key: Key('today-activity-note-${note.id}'),
+            occurredAt: note.createdAt,
+            icon: Icons.notes_outlined,
+            iconColor: LetterColors.blue,
+            title: note.text,
+            detail: 'Private note · excluded from reports by default',
+            onDelete: () => onDeleteNote(note),
+          ),
+      for (final record in careRecords)
+        if (_isToday(record.occurredAt, today))
+          _TodayActivityEntry(
+            key: Key('today-activity-care-${record.id}'),
+            occurredAt: record.occurredAt,
+            icon: Icons.volunteer_activism_outlined,
+            iconColor: LetterColors.coral,
+            title: record.actionLabel,
+            detail: 'Care · ${_careOutcomeLabel(record.outcome)}',
+          ),
+    ]..sort((left, right) => right.occurredAt.compareTo(left.occurredAt));
+
+    return Column(
+      key: const Key('today-activity'),
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        const LetterSectionTitle(
+          eyebrow: 'Saved on this device',
+          title: "Today's activity",
+        ),
+        const SizedBox(height: LetterSpacing.sm),
+        if (entries.isEmpty)
+          Container(
+            padding: const EdgeInsets.all(LetterSpacing.md),
+            decoration: BoxDecoration(
+              color: LetterColors.surface,
+              border: Border.all(color: LetterColors.line),
+              borderRadius: BorderRadius.circular(LetterRadius.panel),
+            ),
+            child: const Text(
+              'Nothing recorded today yet.',
+              key: Key('today-activity-empty'),
+              style: TextStyle(color: LetterColors.muted),
+            ),
+          )
+        else
+          for (var index = 0; index < entries.length; index++) ...[
+            entries[index],
+            if (index != entries.length - 1)
+              const SizedBox(height: LetterSpacing.xs),
+          ],
+      ],
+    );
+  }
+
+  static bool _isToday(DateTime value, LocalDate today) {
+    return LocalDate.fromDateTime(value.toLocal()) == today;
+  }
+}
+
+class _TodayActivityEntry extends StatelessWidget {
+  const _TodayActivityEntry({
+    required this.occurredAt,
+    required this.icon,
+    required this.iconColor,
+    required this.title,
+    required this.detail,
+    super.key,
+    this.onTap,
+    this.onDelete,
+  });
+
+  final DateTime occurredAt;
+  final IconData icon;
+  final Color iconColor;
+  final String title;
+  final String detail;
+  final VoidCallback? onTap;
+  final VoidCallback? onDelete;
+
+  @override
+  Widget build(BuildContext context) {
+    final time = MaterialLocalizations.of(
+      context,
+    ).formatTimeOfDay(TimeOfDay.fromDateTime(occurredAt.toLocal()));
+    return Material(
+      color: LetterColors.surface,
+      shape: RoundedRectangleBorder(
+        side: const BorderSide(color: LetterColors.line),
+        borderRadius: BorderRadius.circular(LetterRadius.panel),
+      ),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(LetterRadius.panel),
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(14, 12, 8, 12),
+          child: Row(
+            children: [
+              SizedBox.square(
+                dimension: 36,
+                child: Icon(icon, color: iconColor, size: 21),
+              ),
+              const SizedBox(width: LetterSpacing.sm),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      title,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      '$time · $detail',
+                      style: const TextStyle(
+                        color: LetterColors.muted,
+                        fontSize: 11,
+                        height: 1.35,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              if (onDelete != null)
+                IconButton(
+                  tooltip: 'Delete',
+                  onPressed: onDelete,
+                  icon: const Icon(Icons.delete_outline, size: 20),
+                )
+              else if (onTap != null)
+                const Icon(
+                  Icons.chevron_right,
+                  color: LetterColors.muted,
+                  size: 20,
+                ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 class StateGrid extends StatelessWidget {
   const StateGrid({
     required this.selectedState,
@@ -999,218 +1529,6 @@ class StateButton extends StatelessWidget {
   }
 }
 
-class StateDetailSheet extends StatefulWidget {
-  const StateDetailSheet({required this.state, super.key});
-
-  final TodayState state;
-
-  @override
-  State<StateDetailSheet> createState() => _StateDetailSheetState();
-}
-
-class _StateDetailSheetState extends State<StateDetailSheet> {
-  static const painOptions = [
-    'Pelvic cramps',
-    'Lower back pain',
-    'Headache',
-    'Breast tenderness',
-    'Joint or muscle pain',
-    'Other pelvic pain',
-  ];
-  final Map<String, String> painRatings = {};
-  String selectedSeverity = 'Moderate';
-  String? activePain;
-
-  void _togglePain(String pain) {
-    setState(() {
-      if (painRatings.containsKey(pain)) {
-        painRatings.remove(pain);
-        if (activePain == pain) {
-          activePain = painRatings.keys.firstOrNull;
-        }
-      } else {
-        painRatings[pain] = 'Moderate';
-        activePain = pain;
-      }
-    });
-  }
-
-  void _setSeverity(String severity) {
-    setState(() {
-      selectedSeverity = severity;
-      if (activePain != null) {
-        painRatings[activePain!] = severity;
-      }
-    });
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final isPhysical = widget.state == TodayState.physical;
-    final activeSeverity = activePain == null
-        ? selectedSeverity
-        : painRatings[activePain]!;
-
-    return LetterSheetFrame(
-      title: isPhysical
-          ? 'Where does your body hurt?'
-          : 'How ${widget.state.label.toLowerCase()} do you feel?',
-      subtitle: isPhysical
-          ? 'Choose every pain that applies. This is not saved to your '
-                'health record yet.'
-          : 'One tap is enough. This is not saved to your health record yet.',
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          if (isPhysical) ...[
-            Wrap(
-              spacing: LetterSpacing.xs,
-              runSpacing: LetterSpacing.xs,
-              children: painOptions.map((pain) {
-                final selected = painRatings.containsKey(pain);
-                return Semantics(
-                  selected: selected,
-                  button: true,
-                  label: '$pain pain location',
-                  child: FilterChip(
-                    key: Key('pain-${pain.toLowerCase().replaceAll(' ', '-')}'),
-                    label: Text(pain),
-                    selected: selected,
-                    onSelected: (_) => _togglePain(pain),
-                    showCheckmark: false,
-                    avatar: Icon(
-                      selected ? Icons.check : Icons.add,
-                      size: 17,
-                      color: selected ? Colors.white : LetterColors.violet,
-                    ),
-                    labelStyle: TextStyle(
-                      color: selected ? Colors.white : LetterColors.ink,
-                      fontWeight: FontWeight.w700,
-                    ),
-                    backgroundColor: LetterColors.violetSoft,
-                    selectedColor: LetterColors.violet,
-                    side: BorderSide.none,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(LetterRadius.control),
-                    ),
-                  ),
-                );
-              }).toList(),
-            ),
-            const SizedBox(height: LetterSpacing.lg),
-            LetterEyebrow(
-              activePain == null
-                  ? 'Select a pain to rate it'
-                  : 'Severity for $activePain',
-            ),
-          ] else
-            const LetterEyebrow('Severity'),
-          const SizedBox(height: LetterSpacing.sm),
-          SeveritySelector(
-            selected: activeSeverity,
-            enabled: !isPhysical || activePain != null,
-            onSelected: _setSeverity,
-          ),
-          if (isPhysical && painRatings.length > 1) ...[
-            const SizedBox(height: LetterSpacing.md),
-            Text(
-              '${painRatings.length} pain locations added',
-              textAlign: TextAlign.center,
-              style: const TextStyle(
-                color: LetterColors.violet,
-                fontWeight: FontWeight.w800,
-              ),
-            ),
-          ],
-          const SizedBox(height: LetterSpacing.lg),
-          FilledButton(
-            onPressed: !isPhysical || painRatings.isNotEmpty
-                ? () => Navigator.of(context).pop()
-                : null,
-            style: FilledButton.styleFrom(
-              minimumSize: const Size.fromHeight(48),
-              backgroundColor: LetterColors.teal,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(LetterRadius.control),
-              ),
-            ),
-            child: const Text('Done'),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class SeveritySelector extends StatelessWidget {
-  const SeveritySelector({
-    required this.selected,
-    required this.enabled,
-    required this.onSelected,
-    super.key,
-  });
-
-  final String selected;
-  final bool enabled;
-  final ValueChanged<String> onSelected;
-
-  static const options = ['Mild', 'Moderate', 'Strong', 'Severe'];
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(3),
-      decoration: BoxDecoration(
-        color: LetterColors.canvas,
-        border: Border.all(color: LetterColors.line),
-        borderRadius: BorderRadius.circular(LetterRadius.control),
-      ),
-      child: Row(
-        children: options.map((option) {
-          final isSelected = option == selected;
-          return Expanded(
-            child: Semantics(
-              button: true,
-              selected: isSelected,
-              enabled: enabled,
-              label: '$option severity',
-              child: InkWell(
-                key: Key('severity-${option.toLowerCase()}'),
-                onTap: enabled ? () => onSelected(option) : null,
-                borderRadius: BorderRadius.circular(5),
-                child: AnimatedContainer(
-                  duration: const Duration(milliseconds: 160),
-                  constraints: const BoxConstraints(minHeight: 44),
-                  alignment: Alignment.center,
-                  decoration: BoxDecoration(
-                    color: isSelected && enabled
-                        ? LetterColors.teal
-                        : Colors.transparent,
-                    borderRadius: BorderRadius.circular(5),
-                  ),
-                  child: Text(
-                    option,
-                    maxLines: 1,
-                    style: TextStyle(
-                      color: !enabled
-                          ? LetterColors.muted.withValues(alpha: 0.55)
-                          : isSelected
-                          ? Colors.white
-                          : LetterColors.muted,
-                      fontSize: 11,
-                      fontWeight: FontWeight.w800,
-                    ),
-                  ),
-                ),
-              ),
-            ),
-          );
-        }).toList(),
-      ),
-    );
-  }
-}
-
 class LetterSheetFrame extends StatelessWidget {
   const LetterSheetFrame({
     required this.title,
@@ -1291,3 +1609,36 @@ String _formatContextDate(BuildContext context, LocalDate date) {
     context,
   ).formatMediumDate(date.asLocalDateTime);
 }
+
+MomentCheckInState _momentState(TodayState state) => switch (state) {
+  TodayState.good => MomentCheckInState.good,
+  TodayState.steady => MomentCheckInState.steady,
+  TodayState.energized => MomentCheckInState.energized,
+  TodayState.low => MomentCheckInState.low,
+  TodayState.irritable => MomentCheckInState.irritable,
+  TodayState.physical => MomentCheckInState.physical,
+};
+
+TodayState _todayState(MomentCheckInState state) => switch (state) {
+  MomentCheckInState.good => TodayState.good,
+  MomentCheckInState.steady => TodayState.steady,
+  MomentCheckInState.energized => TodayState.energized,
+  MomentCheckInState.low => TodayState.low,
+  MomentCheckInState.irritable => TodayState.irritable,
+  MomentCheckInState.physical => TodayState.physical,
+};
+
+TodayState? _latestTodayState(List<MomentCheckIn> checkIns, LocalDate today) {
+  for (final checkIn in checkIns) {
+    if (LocalDate.fromDateTime(checkIn.occurredAt.toLocal()) == today) {
+      return _todayState(checkIn.state);
+    }
+  }
+  return null;
+}
+
+String _careOutcomeLabel(CareOutcome outcome) => switch (outcome) {
+  CareOutcome.better => 'Better',
+  CareOutcome.same => 'Same',
+  CareOutcome.worse => 'Worse',
+};

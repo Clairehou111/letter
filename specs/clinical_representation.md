@@ -1,20 +1,76 @@
-You are a Senior Full-Stack Engineer with deep experience in clinical data compliance and native file export pipelines for the North American medical market (OB-GYN and psychiatric clinical standards).
+# Twin Matrix Clinical Representation
 
-Your task is to implement the core export adapter and layout generator that converts local behavioral data into an objective, doctor-ready clinical report. 
+Status: approved product direction; clinical review pending
+Date: 2026-07-31
+Canonical clinical policy: `clinical-data-and-reporting.md`
 
-CLINICAL & TECHNICAL REQUIREMENTS:
-1. MEDICAL REPORT COMPATIBILITY: The layout must strictly map to the 11 core clinical domains of the Daily Record of Severity of Problems (DRSP) used to diagnose PMDD and severe PMS in North America.
-2. PRIVACY COCOON: The report must completely omit and strip the user's raw text journal logs to preserve absolute psychological privacy. It must only export anonymized, quantified clinical metrics (severity, symptom codes, medication intervals).
-3. PROVENANCE LEGEND: The footer must feature a clear legal provenance notice stating that all data is generated via deterministic local logs with zero cloud interception.
+## Purpose
 
-REPORT STRUCTURE & PDF LAYOUT SPECIFICATION:
-- Header: Minimalist typography. "Patient Cyclical Symptom Standard Log (DRSP-Compatible)". Includes metadata blocks for Cycle IDs, target monitoring duration (e.g., Last 3 Cycles), and export timestamp.
-- Main Section (The Twin Matrix Graph): A clean, high-density, black-and-white horizontal grid.
-  - X-Axis: Left of Center represents Days -14 to -1 (Luteal/Pre-menses); Right of Center represents Days 1 to 14 (Menses/Follicular).
-  - Y-Axis: The 4 major clinical PMDD clusters: 1. Irritability/Anger, 2. Depressed Mood/Anxiety, 3. Social Withdrawal, 4. Physical Cramps/Pain.
-  - Bars: Render ultra-thin, low-ink gray or black bar markers showing the aggregated daily severity scores (scaled 1 to 6 per DRSP standard) derived from the local behavior-to-data mapping engine (e.g., crash-out screen taps mapped to anger severity).
-- Footer Section: 
-  - "Medication Logs": Display a strict temporal timeline of self-reported painkiller intakes (e.g., Ibuprofen) mapped against the peak physical pain coordinates.
-  - "Provenance Legend": "verified authentic: logged locally via device cryptographic key. zero cloud transit."
+The Twin Matrix is a compact, clinician-readable view of user-confirmed local
+records. It supports a rapid review of timing, severity, functional impact,
+coverage, and provenance without diagnosing PMS or PMDD.
 
-Implement this export pipeline using native platform rendering or a clean local file writer (e.g., using `reportlab` logic if python, or a clean `share_plus` backed native file adapter in Dart). The final asset must be an un-editable, clean, grid-aligned document optimized for a 10-second glance review by a busy North American physician.
+## Eligibility
+
+Eligible values:
+
+- prospective diary ratings
+- same-day user-confirmed symptom ratings
+- later-recall ratings with visible provenance
+- user-confirmed functional-impact ratings
+- factual Care events without an inferred symptom score
+
+Ineligible values:
+
+- Care tap count, duration, pressure, or completion
+- moment check-ins
+- text or voice candidates that the user did not confirm
+- app absence
+- mirrored, projected, interpolated, or imputed values
+- medication mentions or medication history
+
+## Matrix
+
+The horizontal axis may compare:
+
+- days `-14` through `-1` before a subsequent observed period start
+- observed cycle days `1` through `14` after an observed period start
+
+The right side must use actual observations. If no observation exists, the
+cell remains blank.
+
+Rows may group reviewed symptom domains for scanability, but every displayed
+value must retain traceability to its underlying symptom code, scale, date, and
+provenance. Aggregation rules must be documented beside the report and must not
+turn counts into severity.
+
+## Header And Legend
+
+The preview and export show:
+
+- `Cyclical Symptom Summary`
+- calendar date range
+- cycles covered
+- generated timestamp
+- days with confirmed ratings
+- missing days
+- provenance legend
+
+Until the clinical review gate is complete, do not use `DRSP`,
+`DRSP-compatible`, `standard log`, or equivalent validated-instrument claims.
+
+## Privacy
+
+Raw drafts, private notes, clipboard contents, unresolved candidates, contacts,
+and medication mentions are excluded by default. A user may explicitly select a
+private-note excerpt only for the separate Cycle and Care Summary flow.
+
+The report may say values were generated from local records. It must not claim
+cryptographic authenticity, verification, or zero cloud transit unless the
+specific export path can prove those properties.
+
+## Output
+
+The on-device preview and exported representation must match. Missingness and
+provenance remain visible in both. The report contains no diagnosis, treatment
+recommendation, causal conclusion, or invented clinical severity.

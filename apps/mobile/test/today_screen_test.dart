@@ -3,6 +3,9 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:letter_mobile/design_system/letter_theme.dart';
+import 'package:letter_mobile/features/check_in/data/in_memory_moment_check_in_repository.dart';
+import 'package:letter_mobile/features/check_in/domain/moment_check_in.dart';
+import 'package:letter_mobile/features/check_in/domain/moment_check_in_repository.dart';
 import 'package:letter_mobile/features/cycle/data/in_memory_period_repository.dart';
 import 'package:letter_mobile/features/cycle/domain/local_date.dart';
 import 'package:letter_mobile/features/cycle/domain/period_record.dart';
@@ -91,6 +94,7 @@ Future<void> pumpToday(
   PeriodRepository? repository,
   ValueChanged<int>? onNavigationSelected,
   CaptureNoteStore? captureNoteStore,
+  MomentCheckInRepository? momentCheckInRepository,
   bool settle = true,
 }) async {
   tester.view.devicePixelRatio = 1;
@@ -111,6 +115,11 @@ Future<void> pumpToday(
           onNavigationSelected: onNavigationSelected,
           now: () => DateTime(2026, 7, 28, 12),
           captureNoteStore: captureNoteStore,
+          momentCheckInRepository:
+              momentCheckInRepository ??
+              InMemoryMomentCheckInRepository(
+                clock: () => DateTime.utc(2026, 7, 28, 12),
+              ),
         ),
       ),
     ),
@@ -170,7 +179,7 @@ void main() {
     expect(find.textContaining('Estimated next period'), findsNothing);
 
     await tester.tap(find.byKey(const Key('today-open-cycle')));
-    expect(selectedNavigation, 0);
+    expect(selectedNavigation, 1);
   });
 
   testWidgets('open period shows its inclusive period day and start date', (
@@ -213,7 +222,7 @@ void main() {
     expect(find.textContaining('Today falls within'), findsOneWidget);
   });
 
-  testWidgets('renders balanced states and centered Today navigation', (
+  testWidgets('renders balanced states and ordered primary navigation', (
     tester,
   ) async {
     await pumpToday(tester);
@@ -241,21 +250,31 @@ void main() {
     expect(find.text('Care'), findsOneWidget);
     expect(find.text('You'), findsOneWidget);
 
-    final todayX = tester.getCenter(find.text('Today')).dx;
-    expect(todayX, closeTo(195, 2));
+    final tabCenters = [
+      'Today',
+      'Cycle',
+      'Care',
+      'Letters',
+      'You',
+    ].map((label) => tester.getCenter(find.text(label).last).dx).toList();
+    expect(tabCenters, orderedEquals([...tabCenters]..sort()));
   });
 
-  testWidgets('header Log opens session-only quick-state entry', (
+  testWidgets('header check-in persists one timestamped moment', (
     tester,
   ) async {
-    await pumpToday(tester);
+    final checkIns = InMemoryMomentCheckInRepository(
+      clock: () => DateTime.utc(2026, 7, 28, 12),
+      idGenerator: () => 'check-in-1',
+    );
+    await pumpToday(tester, momentCheckInRepository: checkIns);
 
     await tester.tap(find.byKey(const Key('header-log-button')));
     await tester.pumpAndSettle();
 
     expect(
       find.text(
-        'Choose one starting point. Nothing is saved to your health record yet.',
+        'Choose one moment. It will be saved privately with the current time.',
       ),
       findsOneWidget,
     );
@@ -284,20 +303,23 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    expect(
-      find.text(
-        'One tap is enough. This is not saved to your health record yet.',
-      ),
-      findsOneWidget,
-    );
-    expect(find.text('Done'), findsOneWidget);
-    expect(find.text('Save today'), findsNothing);
+    expect(find.byKey(const Key('check-in-saved-sheet')), findsOneWidget);
+    expect(find.textContaining('Good saved at'), findsOneWidget);
+    expect(find.text('Add symptom details'), findsOneWidget);
+    expect(find.text('Undo check-in'), findsOneWidget);
+    final saved = (await checkIns.getAll()).single;
+    expect(saved.state, MomentCheckInState.good);
+    expect(saved.occurredAt.toLocal(), DateTime(2026, 7, 28, 12));
   });
 
-  testWidgets('records multiple pain locations with separate severity', (
+  testWidgets('physical check-in saves before optional symptom details', (
     tester,
   ) async {
-    await pumpToday(tester);
+    final checkIns = InMemoryMomentCheckInRepository(
+      clock: () => DateTime.utc(2026, 7, 28, 12),
+      idGenerator: () => 'physical-1',
+    );
+    await pumpToday(tester, momentCheckInRepository: checkIns);
     await tester.scrollUntilVisible(
       find.byKey(const Key('state-physical')),
       240,
@@ -308,28 +330,11 @@ void main() {
     await tester.tap(find.byKey(const Key('state-physical')));
     await tester.pumpAndSettle();
 
-    expect(find.text('Where does your body hurt?'), findsOneWidget);
-    expect(find.text('Pelvic cramps'), findsOneWidget);
-    expect(find.text('Lower back pain'), findsOneWidget);
-    expect(find.text('Headache'), findsOneWidget);
-    expect(find.text('Breast tenderness'), findsOneWidget);
-
-    await tester.tap(find.byKey(const Key('pain-pelvic-cramps')));
-    await tester.pumpAndSettle();
-    await tester.tap(find.byKey(const Key('severity-strong')));
-    await tester.pumpAndSettle();
-    await tester.tap(find.byKey(const Key('pain-lower-back-pain')));
-    await tester.pumpAndSettle();
-
-    expect(find.text('2 pain locations added'), findsOneWidget);
-    final pelvicChip = tester.widget<FilterChip>(
-      find.byKey(const Key('pain-pelvic-cramps')),
-    );
-    final backChip = tester.widget<FilterChip>(
-      find.byKey(const Key('pain-lower-back-pain')),
-    );
-    expect(pelvicChip.selected, isTrue);
-    expect(backChip.selected, isTrue);
+    expect(find.textContaining('Physical saved at'), findsOneWidget);
+    expect(find.text('Add symptom details'), findsOneWidget);
+    expect((await checkIns.getAll()).single.state, MomentCheckInState.physical);
+    expect(find.text('Mild'), findsNothing);
+    expect(find.text('Moderate'), findsNothing);
   });
 
   testWidgets('does not show synthetic phase, plan, note, or Recent content', (
@@ -360,9 +365,14 @@ void main() {
       onNavigationSelected: (index) => selectedNavigation = index,
     );
 
+    await tester.drag(
+      find.byKey(const Key('today-scroll')),
+      const Offset(0, -1000),
+    );
+    await tester.pumpAndSettle();
     await tester.tap(find.byKey(const Key('open-care-button')));
 
-    expect(selectedNavigation, 3);
+    expect(selectedNavigation, 2);
   });
 
   testWidgets('keeps primary touch targets at least 44 logical pixels', (
@@ -370,7 +380,6 @@ void main() {
   ) async {
     await pumpToday(tester);
     final logSize = tester.getSize(find.byKey(const Key('header-log-button')));
-    final careSize = tester.getSize(find.byKey(const Key('open-care-button')));
 
     await tester.scrollUntilVisible(
       find.byKey(const Key('state-good')),
@@ -380,6 +389,12 @@ void main() {
     await tester.pumpAndSettle();
 
     final stateSize = tester.getSize(find.byKey(const Key('state-good')));
+    await tester.drag(
+      find.byKey(const Key('today-scroll')),
+      const Offset(0, -1000),
+    );
+    await tester.pumpAndSettle();
+    final careSize = tester.getSize(find.byKey(const Key('open-care-button')));
 
     expect(stateSize.height, greaterThanOrEqualTo(44));
     expect(careSize.height, greaterThanOrEqualTo(44));
@@ -399,6 +414,7 @@ void main() {
       240,
       scrollable: find.byType(Scrollable).first,
     );
+    await tester.pumpAndSettle();
     await tester.tap(find.byKey(const Key('open-text-voice-capture')));
     await tester.pumpAndSettle();
 

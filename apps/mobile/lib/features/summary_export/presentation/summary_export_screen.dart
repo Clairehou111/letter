@@ -108,7 +108,23 @@ class _SummaryExportScreenState extends State<SummaryExportScreen> {
     ).showSnackBar(SnackBar(content: Text(message)));
   }
 
-  Widget _buildClinicalMatrix() {
+  Widget _buildClinicalMatrix(CycleAndCareSummary summary) {
+    final generatedAt = (widget.now ?? DateTime.now)().toLocal();
+    final viewModel = TwinMatrixViewModel.fromObservations(
+      observations: [
+        for (final row in summary.healthRows)
+          TwinMatrixObservation(
+            symptom: row.symptom,
+            severity: row.severity,
+            daysBeforeMenses: row.daysBeforeMenses,
+            cycleDay: row.cycleDay,
+          ),
+      ],
+      cycleLabel: summary.range.label,
+      exportTimestamp:
+          '${generatedAt.year}-${generatedAt.month.toString().padLeft(2, '0')}-'
+          '${generatedAt.day.toString().padLeft(2, '0')}',
+    );
     return Container(
       padding: const EdgeInsets.all(LetterSpacing.md),
       decoration: BoxDecoration(
@@ -119,7 +135,7 @@ class _SummaryExportScreenState extends State<SummaryExportScreen> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const Text(
-            'clinical matrix preview',
+            'Twin Matrix · confirmed observations',
             style: TextStyle(
               color: Color(0xFF888888),
               fontSize: 10,
@@ -127,41 +143,12 @@ class _SummaryExportScreenState extends State<SummaryExportScreen> {
             ),
           ),
           const SizedBox(height: 8),
-          SizedBox(
-            height: 240,
-            child: TwinMatrixReport(
-              viewModel: TwinMatrixViewModel(
-                clusters: const [
-                  TwinMatrixCluster(
-                    label: 'irritability/anger',
-                    lutealSeverities: [],
-                    mensesSeverities: [],
-                  ),
-                  TwinMatrixCluster(
-                    label: 'depressed mood/anxiety',
-                    lutealSeverities: [],
-                    mensesSeverities: [],
-                  ),
-                  TwinMatrixCluster(
-                    label: 'social withdrawal',
-                    lutealSeverities: [],
-                    mensesSeverities: [],
-                  ),
-                  TwinMatrixCluster(
-                    label: 'physical cramps/pain',
-                    lutealSeverities: [],
-                    mensesSeverities: [],
-                  ),
-                ],
-                cycleLabel: 'enable doctor mode for full matrix',
-                exportTimestamp: '',
-                totalDays: 28,
-              ),
-            ),
-          ),
+          SizedBox(height: 240, child: TwinMatrixReport(viewModel: viewModel)),
           const SizedBox(height: 4),
-          const Text(
-            'complete two diary cycles to populate the clinical matrix.',
+          Text(
+            summary.healthRows.isEmpty
+                ? 'No confirmed ratings in this range. Blank cells are missing data.'
+                : '${summary.healthRows.length} confirmed ratings shown. Blank cells are missing data.',
             style: TextStyle(
               color: Color(0xFF555555),
               fontSize: 8,
@@ -245,7 +232,7 @@ class _SummaryExportScreenState extends State<SummaryExportScreen> {
             const SizedBox(height: LetterSpacing.lg),
             _MissingnessSection(values: summary.missingness),
             const SizedBox(height: LetterSpacing.xl),
-            _buildClinicalMatrix(),
+            _buildClinicalMatrix(summary),
             const SizedBox(height: LetterSpacing.xl),
             FilledButton.icon(
               key: const Key('summary-export-csv'),

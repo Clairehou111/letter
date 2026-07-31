@@ -28,6 +28,19 @@ final class InMemoryHealthRecordRepository implements HealthRecordRepository {
   Future<HealthRecord> create(HealthRecordDraft draft) async {
     final valid = validateHealthRecordDraft(draft);
     final now = _clock().toUtc();
+    final existingIndex = _records.indexWhere(
+      (record) =>
+          record.symptom == valid.symptom &&
+          record.experiencedDate == valid.experiencedDate,
+    );
+    if (existingIndex != -1) {
+      final updated = _records[existingIndex].copyWith(
+        draft: valid,
+        updatedAt: now,
+      );
+      _records[existingIndex] = updated;
+      return updated;
+    }
     final record = _fromDraft(
       id: _idGenerator(),
       draft: valid,

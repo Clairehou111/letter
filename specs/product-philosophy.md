@@ -295,15 +295,41 @@ receipt, Doctor Mode, and report structure.
 
 Primary navigation:
 
-1. `Cycle`
-2. `Letters`
-3. `Today`
-4. `Care`
+1. `Today`
+2. `Cycle`
+3. `Care`
+4. `Letters`
 5. `You`
 
-`Today` remains the central home anchor. `Care` remains one tap away. `Letters`
-contains cycle letters, patterns, and report entry; it does not disguise
-medical evidence behind poetic copy.
+`Today` is the default home and current-moment record. `Care` occupies the
+central navigation position for acute support. `Letters` contains cycle
+stories, cross-cycle patterns, and report entry; it does not disguise medical
+evidence behind poetic copy.
+
+### Three Signature Views
+
+Letter moves from context to pattern to evidence through three views:
+
+1. `Gravity Horizon` on Today: observed and estimated cycle timing, never a
+   prediction of the user's state
+2. `Spectrum Log` in Letters > Patterns: cross-cycle timing from confirmed
+   symptom records
+3. `Twin Matrix` in Letters > Reports: clinician-readable confirmed ratings,
+   provenance, and missingness
+
+These are derived views over one local timeline. They do not create independent
+health facts.
+
+### Quick Check-In And Clinical Rating
+
+`+ Check in` records one timestamped moment state without an intermediate menu.
+It is visible in Today and the containing cycle Story, but excluded from
+clinical reports and symptom-pattern severity.
+
+A confirmed symptom rating remains a separate, explicit six-point record.
+Repeated moment check-ins are allowed. Re-entering the same confirmed symptom
+for the same day updates the daily rating unless the user explicitly chooses to
+record a distinct timestamped episode.
 
 ## P0 Value
 

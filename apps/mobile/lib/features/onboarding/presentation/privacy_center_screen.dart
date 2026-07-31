@@ -5,6 +5,7 @@ import '../../../design_system/letter_theme.dart';
 import '../../care/domain/impulse_buffer_repository.dart';
 import '../../care/domain/care_memory_repository.dart';
 import '../../capture/domain/capture_models.dart';
+import '../../check_in/domain/moment_check_in_repository.dart';
 import '../../care/presentation/care_screen.dart';
 import '../../cycle/domain/period_repository.dart';
 import '../../cycle/presentation/cycle_screen.dart';
@@ -29,6 +30,7 @@ class LetterHome extends StatefulWidget {
     required this.careMemoryRepository,
     required this.healthRecordRepository,
     required this.captureNoteStore,
+    required this.momentCheckInRepository,
     required this.onProfileChanged,
     required this.onReset,
     this.localBackupStore,
@@ -43,6 +45,7 @@ class LetterHome extends StatefulWidget {
   final CareMemoryRepository careMemoryRepository;
   final HealthRecordRepository healthRecordRepository;
   final CaptureNoteStore captureNoteStore;
+  final MomentCheckInRepository momentCheckInRepository;
   final UpdateOnboardingProfile onProfileChanged;
   final Future<void> Function() onReset;
   final LocalBackupStore? localBackupStore;
@@ -54,7 +57,7 @@ class LetterHome extends StatefulWidget {
 }
 
 class _LetterHomeState extends State<LetterHome> {
-  int _selectedIndex = 2;
+  int _selectedIndex = 0;
 
   void _selectTab(int index) {
     if (index < 0 || index > 4) {
@@ -65,7 +68,7 @@ class _LetterHomeState extends State<LetterHome> {
 
   @override
   Widget build(BuildContext context) {
-    if (_selectedIndex == 0) {
+    if (_selectedIndex == 1) {
       return CycleScreen(
         repository: widget.periodRepository,
         onNavigationSelected: _selectTab,
@@ -82,7 +85,7 @@ class _LetterHomeState extends State<LetterHome> {
         onNavigationSelected: _selectTab,
       );
     }
-    if (_selectedIndex == 1) {
+    if (_selectedIndex == 3) {
       return LettersHomeScreen(
         periodRepository: widget.periodRepository,
         careMemoryRepository: widget.careMemoryRepository,
@@ -90,7 +93,7 @@ class _LetterHomeState extends State<LetterHome> {
         onNavigationSelected: _selectTab,
       );
     }
-    if (_selectedIndex == 3) {
+    if (_selectedIndex == 2) {
       return CareScreen(
         onNavigationSelected: _selectTab,
         impulseBufferRepository: widget.impulseBufferRepository,
@@ -103,6 +106,8 @@ class _LetterHomeState extends State<LetterHome> {
       repository: widget.periodRepository,
       healthRecordRepository: widget.healthRecordRepository,
       captureNoteStore: widget.captureNoteStore,
+      momentCheckInRepository: widget.momentCheckInRepository,
+      careMemoryRepository: widget.careMemoryRepository,
       onNavigationSelected: _selectTab,
       now: widget.now,
     );

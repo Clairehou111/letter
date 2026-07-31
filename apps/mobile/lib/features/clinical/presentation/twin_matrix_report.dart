@@ -2,11 +2,11 @@ import 'package:flutter/material.dart';
 
 import 'twin_matrix_view_model.dart';
 
-/// Renders the Twin Matrix — a black-and-white DRSP-compatible clinical
-/// report grid for OB-GYN review.
+/// Renders the Twin Matrix as a black-and-white clinical summary of confirmed
+/// local observations.
 ///
 /// X-axis: Days -14 to -1 (luteal) left of center, Days 1 to 14 (menses)
-/// right of center. Y-axis: 4 PMDD clinical clusters.
+/// right of center. Y-axis: four reviewed symptom groupings.
 ///
 /// Zero color, zero decorative elements. Ultra-thin bars, monospace text.
 /// Optimized for 10-second doctor glance review.
@@ -33,10 +33,7 @@ class TwinMatrixPainter extends CustomPainter {
   }
 
   void _paintBackground(Canvas canvas, Size size) {
-    canvas.drawRect(
-      Offset.zero & size,
-      Paint()..color = _bgColor,
-    );
+    canvas.drawRect(Offset.zero & size, Paint()..color = _bgColor);
   }
 
   void _paintGrid(Canvas canvas, Size size) {
@@ -107,13 +104,19 @@ class TwinMatrixPainter extends CustomPainter {
       )..layout();
       text.paint(
         canvas,
-        Offset(labelWidth + i * dayWidth + dayWidth / 2 - text.width / 2, labelY),
+        Offset(
+          labelWidth + i * dayWidth + dayWidth / 2 - text.width / 2,
+          labelY,
+        ),
       );
     }
 
     // Center: day 0.
     final centerText = TextPainter(
-      text: TextSpan(text: 'd0', style: axisTextStyle.copyWith(fontWeight: FontWeight.w500)),
+      text: TextSpan(
+        text: 'd0',
+        style: axisTextStyle.copyWith(fontWeight: FontWeight.w500),
+      ),
       textDirection: TextDirection.ltr,
     )..layout();
     centerText.paint(
@@ -129,7 +132,10 @@ class TwinMatrixPainter extends CustomPainter {
       )..layout();
       text.paint(
         canvas,
-        Offset(labelWidth + halfWidth + i * dayWidth + dayWidth / 2 - text.width / 2, labelY),
+        Offset(
+          labelWidth + halfWidth + i * dayWidth + dayWidth / 2 - text.width / 2,
+          labelY,
+        ),
       );
     }
   }
@@ -165,10 +171,7 @@ class TwinMatrixPainter extends CustomPainter {
         ),
         textDirection: TextDirection.ltr,
       )..layout(maxWidth: labelWidth - 8);
-      label.paint(
-        canvas,
-        Offset(4, rowCenterY - label.height / 2),
-      );
+      label.paint(canvas, Offset(4, rowCenterY - label.height / 2));
 
       // Luteal bars (left side, days -14 to -1).
       if (cluster.lutealSeverities.isNotEmpty) {
@@ -218,10 +221,7 @@ class TwinMatrixPainter extends CustomPainter {
 
     // Title.
     final title = TextPainter(
-      text: TextSpan(
-        text: 'patient cyclical symptom standard log (drsp-compatible)',
-        style: titleStyle,
-      ),
+      text: TextSpan(text: 'cyclical symptom summary', style: titleStyle),
       textDirection: TextDirection.ltr,
     )..layout();
     title.paint(canvas, const Offset(8, 8));
@@ -259,31 +259,29 @@ class TwinMatrixPainter extends CustomPainter {
         ..strokeWidth = 0.6,
     );
 
-    // Medication log placeholder.
     final medStyle = TextStyle(
       color: _mutedColor,
       fontSize: 7,
       fontFamily: 'Courier',
       fontWeight: FontWeight.w300,
     );
-    final med = TextPainter(
+    final coverage = TextPainter(
       text: TextSpan(
-        text: 'medication logs: none recorded in this period.',
+        text: 'blank cells are missing observations; no values are imputed.',
         style: medStyle,
       ),
       textDirection: TextDirection.ltr,
     )..layout();
-    med.paint(canvas, Offset(8, footerY + 2));
+    coverage.paint(canvas, Offset(8, footerY + 2));
 
-    // Provenance.
     final provenance = TextPainter(
       text: TextSpan(
-        text: 'verified authentic: logged locally via device cryptographic key. zero cloud transit.',
+        text: 'source: user-confirmed local records. not a diagnosis.',
         style: medStyle,
       ),
       textDirection: TextDirection.ltr,
     )..layout();
-    provenance.paint(canvas, Offset(8, footerY + med.height + 4));
+    provenance.paint(canvas, Offset(8, footerY + coverage.height + 4));
   }
 
   double _headerHeight(Size size) => 40.0;

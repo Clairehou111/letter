@@ -5,7 +5,7 @@ import 'letter_theme.dart';
 class LetterBottomNavigation extends StatelessWidget {
   const LetterBottomNavigation({
     super.key,
-    this.selectedIndex = 2,
+    this.selectedIndex = 0,
     this.onSelected,
   });
 
@@ -13,10 +13,10 @@ class LetterBottomNavigation extends StatelessWidget {
   final ValueChanged<int>? onSelected;
 
   static const items = [
-    ('Cycle', Icons.calendar_today_outlined),
-    ('Letters', Icons.mail_outline),
     ('Today', Icons.home_outlined),
+    ('Cycle', Icons.calendar_today_outlined),
     ('Care', Icons.volunteer_activism_outlined),
+    ('Letters', Icons.mail_outline),
     ('You', Icons.person_outline),
   ];
 

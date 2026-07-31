@@ -1,6 +1,7 @@
 import '../../care/data/in_memory_impulse_buffer_repository.dart';
 import '../../care/data/in_memory_care_memory_repository.dart';
 import '../../capture/domain/capture_models.dart';
+import '../../check_in/data/in_memory_moment_check_in_repository.dart';
 import '../../cycle/data/in_memory_period_repository.dart';
 import '../../health_records/data/in_memory_health_record_repository.dart';
 import 'local_health_store.dart';
@@ -16,6 +17,7 @@ LocalHealthStore createDefaultLocalHealthStore() {
     careMemoryRepository: careMemoryRepository,
     healthRecordRepository: healthRecordRepository,
     captureNoteStore: InMemoryCaptureNoteStore(),
+    momentCheckInRepository: InMemoryMomentCheckInRepository(),
     localBackupStore: null,
     closeStore: () async {
       await periodRepository.close();

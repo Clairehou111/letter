@@ -10,6 +10,7 @@ import 'package:path_provider/path_provider.dart';
 import '../../care/data/drift_impulse_buffer_repository.dart';
 import '../../care/data/drift_care_memory_repository.dart';
 import '../../capture/data/drift_capture_note_store.dart';
+import '../../check_in/data/drift_moment_check_in_repository.dart';
 import '../../cycle/data/drift_period_repository.dart';
 import '../../cycle/data/letter_health_database.dart';
 import '../../health_records/data/drift_health_record_repository.dart';
@@ -52,6 +53,10 @@ LocalHealthStore createDefaultLocalHealthStore() {
       closeDatabase: false,
     ),
     captureNoteStore: DriftCaptureNoteStore(database, closeDatabase: false),
+    momentCheckInRepository: DriftMomentCheckInRepository(
+      database,
+      closeDatabase: false,
+    ),
     localBackupStore: DriftLocalBackupStore(database),
     closeStore: database.close,
   );
