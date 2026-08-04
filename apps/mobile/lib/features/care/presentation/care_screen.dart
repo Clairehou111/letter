@@ -6,22 +6,20 @@ import '../domain/care_memory.dart';
 import '../domain/care_memory_repository.dart';
 import '../domain/care_mode.dart';
 import '../domain/impulse_buffer_repository.dart';
-import '../../entitlement/domain/entitlement.dart';
-import '../../entitlement/presentation/entitlement_scope.dart';
-import '../../entitlement/presentation/locked_premium_surface.dart';
 import '../../health_records/domain/health_record_repository.dart';
+import '../../health_records/presentation/health_record_form_screen.dart';
 import '../../recovery_receipt/application/recovery_receipt_controller.dart';
 import '../../recovery_receipt/presentation/recovery_receipt_flow.dart';
 import 'angry_impulse_flow.dart';
+import 'breath_flow.dart';
+import 'care_break_flow.dart';
 import 'care_checkback_flow.dart';
 import 'care_safety_boundary_sheet.dart';
 import 'heavy_presence_flow.dart';
+import 'low_energy_flow.dart';
 import 'need_space_flow.dart';
-import 'personal_care_kit_view.dart';
 import 'physical_pain_flow.dart';
 import 'racing_thoughts_flow.dart';
-import 'breath_flow.dart';
-import 'low_energy_flow.dart';
 
 class CareScreen extends StatefulWidget {
   const CareScreen({
@@ -44,13 +42,12 @@ class CareScreen extends StatefulWidget {
 }
 
 class _CareScreenState extends State<CareScreen> {
+  CareMode? _careBreakMode;
   CareMode? _activeMode;
   CareActionCompletion? _pendingCompletion;
   CareActionCompletion? _pendingPhysicalCompletion;
   CareRecord? _recordedCheckBack;
-  List<CareRecord> _records = const [];
   List<CareReflection> _reflections = const [];
-  bool _showCareKit = false;
   bool _showRecoveryReceipt = false;
   bool _memoryBusy = false;
   bool _memoryError = false;
@@ -64,13 +61,11 @@ class _CareScreenState extends State<CareScreen> {
 
   Future<void> _loadMemory() async {
     try {
-      final records = await widget.careMemoryRepository.getRecords();
       final reflections = await widget.careMemoryRepository.getReflections();
       if (!mounted) {
         return;
       }
       setState(() {
-        _records = records;
         _reflections = reflections;
         _memoryError = false;
       });
@@ -80,6 +75,8 @@ class _CareScreenState extends State<CareScreen> {
       }
     }
   }
+
+  // ── Low-effort entries (breathing, low-energy) ────────────────────
 
   Future<void> _openBreath() async {
     await Navigator.of(context).push(
@@ -99,14 +96,45 @@ class _CareScreenState extends State<CareScreen> {
     );
   }
 
+  // ── Motion scene → practical help ─────────────────────────────────
+
   void _openMode(CareMode mode) {
-    setState(() => _activeMode = mode);
+    setState(() {
+      _careBreakMode = mode;
+      _activeMode = null;
+    });
   }
+
+  void _openPracticalHelp(CareMode mode) {
+    setState(() {
+      _careBreakMode = null;
+      _activeMode = mode;
+    });
+  }
+
+  void _completeMotionActivity(CareMode mode) {
+    _openCheckBack(
+      CareActionCompletion(
+        mode: mode,
+        actionId: 'motion.${mode.name}',
+        actionLabel: switch (mode) {
+          CareMode.explode => 'Safe pressure release',
+          CareMode.heavy => 'Quiet presence',
+          CareMode.racing => 'One-point focus',
+          CareMode.space => 'Closed boundary',
+          CareMode.physical => 'Warmth and rest',
+        },
+        occurredAt: (widget.now ?? DateTime.now)(),
+      ),
+    );
+  }
+
+  // ── Navigation ────────────────────────────────────────────────────
 
   void _returnToGate() {
     setState(() {
+      _careBreakMode = null;
       _activeMode = null;
-      _showCareKit = false;
       _showRecoveryReceipt = false;
       _pendingPhysicalCompletion = null;
     });
@@ -115,7 +143,7 @@ class _CareScreenState extends State<CareScreen> {
   void _openCheckBack(CareActionCompletion completion) {
     setState(() {
       _activeMode = null;
-      _showCareKit = false;
+      _careBreakMode = null;
       _showRecoveryReceipt = false;
       _pendingCompletion = completion;
       _pendingPhysicalCompletion = null;
@@ -158,13 +186,11 @@ class _CareScreenState extends State<CareScreen> {
         completion,
         outcome,
       );
-      final records = await widget.careMemoryRepository.getRecords();
       if (!mounted) {
         return;
       }
       setState(() {
         _recordedCheckBack = record;
-        _records = records;
         _memoryBusy = false;
       });
     } on Object {
@@ -175,50 +201,6 @@ class _CareScreenState extends State<CareScreen> {
         _memoryBusy = false;
         _memoryError = true;
         _retryMemoryOperation = () => _recordOutcome(outcome);
-      });
-    }
-  }
-
-  Future<void> _keepCurrentInKit() async {
-    final record = _recordedCheckBack;
-    if (record == null || _memoryBusy) {
-      return;
-    }
-    setState(() {
-      _memoryBusy = true;
-      _memoryError = false;
-      _retryMemoryOperation = null;
-    });
-    try {
-      for (final existing in _records.where(
-        (item) =>
-            item.pinned &&
-            item.actionId == record.actionId &&
-            item.id != record.id,
-      )) {
-        await widget.careMemoryRepository.setPinned(existing.id, pinned: false);
-      }
-      final pinned = await widget.careMemoryRepository.setPinned(
-        record.id,
-        pinned: true,
-      );
-      final records = await widget.careMemoryRepository.getRecords();
-      if (!mounted) {
-        return;
-      }
-      setState(() {
-        _recordedCheckBack = pinned;
-        _records = records;
-        _memoryBusy = false;
-      });
-    } on Object {
-      if (!mounted) {
-        return;
-      }
-      setState(() {
-        _memoryBusy = false;
-        _memoryError = true;
-        _retryMemoryOperation = _keepCurrentInKit;
       });
     }
   }
@@ -239,71 +221,24 @@ class _CareScreenState extends State<CareScreen> {
     setState(() => _showRecoveryReceipt = true);
   }
 
+  Future<void> _recordSymptoms() async {
+    if (_recordedCheckBack != null) {
+      _openRecoveryReceipt();
+      return;
+    }
+    await Navigator.of(context).push<void>(
+      MaterialPageRoute(
+        builder: (context) => HealthRecordFormScreen(
+          repository: widget.healthRecordRepository,
+          now: widget.now,
+        ),
+      ),
+    );
+  }
+
   void _closeRecoveryReceipt() {
     if (mounted) {
       setState(() => _showRecoveryReceipt = false);
-    }
-  }
-
-  Future<void> _setKitPinned(String recordId, bool pinned) async {
-    if (_memoryBusy) {
-      return;
-    }
-    setState(() {
-      _memoryBusy = true;
-      _memoryError = false;
-    });
-    try {
-      await widget.careMemoryRepository.setPinned(recordId, pinned: pinned);
-      await _loadMemory();
-    } on Object {
-      if (mounted) {
-        setState(() => _memoryError = true);
-      }
-    } finally {
-      if (mounted) {
-        setState(() => _memoryBusy = false);
-      }
-    }
-  }
-
-  Future<void> _deleteKitRecord(String recordId) async {
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Delete this Care record?'),
-        content: const Text(
-          'This removes its check-back and reflection from this device.',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(false),
-            child: const Text('Cancel'),
-          ),
-          FilledButton(
-            key: const Key('confirm-delete-care-record'),
-            onPressed: () => Navigator.of(context).pop(true),
-            style: FilledButton.styleFrom(backgroundColor: LetterColors.ink),
-            child: const Text('Delete permanently'),
-          ),
-        ],
-      ),
-    );
-    if (confirmed != true || !mounted) {
-      return;
-    }
-    setState(() => _memoryBusy = true);
-    try {
-      await widget.careMemoryRepository.deleteRecord(recordId);
-      await _loadMemory();
-    } on Object {
-      if (mounted) {
-        setState(() => _memoryError = true);
-      }
-    } finally {
-      if (mounted) {
-        setState(() => _memoryBusy = false);
-      }
     }
   }
 
@@ -317,63 +252,10 @@ class _CareScreenState extends State<CareScreen> {
     return null;
   }
 
-  List<PersonalCareKitItemViewModel> _careKitItems() {
-    final pinned = _records.where((record) => record.pinned);
-    return [
-      for (final record in pinned)
-        PersonalCareKitItemViewModel(
-          id: record.id,
-          actionLabel: record.actionLabel,
-          modeLabel: record.mode.label,
-          betterCount: _records
-              .where(
-                (item) =>
-                    item.actionId == record.actionId &&
-                    item.outcome == CareOutcome.better,
-              )
-              .length,
-          sameCount: _records
-              .where(
-                (item) =>
-                    item.actionId == record.actionId &&
-                    item.outcome == CareOutcome.same,
-              )
-              .length,
-          worseCount: _records
-              .where(
-                (item) =>
-                    item.actionId == record.actionId &&
-                    item.outcome == CareOutcome.worse,
-              )
-              .length,
-        ),
-    ];
-  }
+  // ── Build ──────────────────────────────────────────────────────────
 
   @override
   Widget build(BuildContext context) {
-    if (_showCareKit) {
-      if (!EntitlementScope.canUse(context, LetterCapability.careKitMemory)) {
-        return const LockedPremiumSurface(
-          title: 'Your Care Kit remembers what actually helps you.',
-          description:
-              'With a plan, every Better check-back can be kept here — with '
-              'honest counts — so your next hard moment starts with your own '
-              'answers, not a generic list.',
-        );
-      }
-      return PersonalCareKitView(
-        items: _careKitItems(),
-        onBack: _returnToGate,
-        onUnpin: (id) => _setKitPinned(id, false),
-        onDelete: _deleteKitRecord,
-        busyItemIds: _memoryBusy
-            ? _careKitItems().map((item) => item.id).toSet()
-            : const {},
-        hasError: _memoryError,
-        onRetry: _loadMemory,
-      );
-    }
     if (_pendingCompletion != null) {
       if (_showRecoveryReceipt && _recordedCheckBack != null) {
         return RecoveryReceiptFlow(
@@ -390,16 +272,27 @@ class _CareScreenState extends State<CareScreen> {
       return CareCheckBackFlow(
         onOutcome: _recordOutcome,
         onSkip: _finishCheckBack,
-        onKeepInKit: _keepCurrentInKit,
+        onRecordSymptoms: _recordSymptoms,
         onDone: _finishCheckBack,
         recordedOutcome: _recordedCheckBack?.outcome,
-        isPinned: _recordedCheckBack?.pinned ?? false,
         isBusy: _memoryBusy,
         hasError: _memoryError,
         onRetry: _retryMemoryOperation,
-        onOpenRecoveryReceipt: _openRecoveryReceipt,
       );
     }
+    // Motion scene — the animated CareBreakFlow for all five modes.
+    final careBreakMode = _careBreakMode;
+    if (careBreakMode != null) {
+      return CareBreakFlow(
+        mode: careBreakMode,
+        onBack: _returnToGate,
+        onCompleted: () => _completeMotionActivity(careBreakMode),
+        onLeaveCare: () => widget.onNavigationSelected(2),
+        onPracticalHelp: () => _openPracticalHelp(careBreakMode),
+      );
+    }
+    // Practical help — the impulse buffer, presence, racing, space,
+    // and physical pain flows.
     final activeMode = _activeMode;
     if (activeMode != null) {
       if (activeMode == CareMode.explode) {
@@ -447,7 +340,9 @@ class _CareScreenState extends State<CareScreen> {
       );
     }
 
+    // ── Gate ───────────────────────────────────────────────────────
     return Scaffold(
+      backgroundColor: const Color(0xFFF3F1EB),
       bottomNavigationBar: LetterBottomNavigation(
         selectedIndex: 2,
         onSelected: widget.onNavigationSelected,
@@ -460,9 +355,11 @@ class _CareScreenState extends State<CareScreen> {
               key: const Key('care-gate-scroll'),
               slivers: [
                 SliverPadding(
-                  padding: const EdgeInsets.fromLTRB(18, 18, 18, 32),
+                  padding: const EdgeInsets.fromLTRB(18, 14, 18, 32),
                   sliver: SliverList.list(
                     children: [
+                      _CareGateHero(),
+                      const SizedBox(height: LetterSpacing.lg),
                       const LetterEyebrow('Care / right now'),
                       const SizedBox(height: LetterSpacing.sm),
                       const Text(
@@ -507,28 +404,6 @@ class _CareScreenState extends State<CareScreen> {
                         onPressed: _openBreath,
                       ),
                       const SizedBox(height: LetterSpacing.md),
-                      OutlinedButton.icon(
-                        key: const Key('open-personal-care-kit'),
-                        onPressed: () => setState(() => _showCareKit = true),
-                        style: OutlinedButton.styleFrom(
-                          minimumSize: const Size.fromHeight(48),
-                          foregroundColor: LetterColors.ink,
-                          backgroundColor: LetterColors.surface,
-                          side: const BorderSide(color: LetterColors.line),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(
-                              LetterRadius.control,
-                            ),
-                          ),
-                        ),
-                        icon: const Icon(Icons.bookmarks_outlined),
-                        label: Text(
-                          _careKitItems().isEmpty
-                              ? 'My Care Kit'
-                              : 'My Care Kit (${_careKitItems().length})',
-                        ),
-                      ),
-                      const SizedBox(height: LetterSpacing.md),
                       ...CareMode.values.map(
                         (mode) => Padding(
                           padding: const EdgeInsets.only(
@@ -552,6 +427,207 @@ class _CareScreenState extends State<CareScreen> {
   }
 }
 
+// ── Gate widgets ─────────────────────────────────────────────────────
+
+class _CareGateHero extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    final largeText = MediaQuery.textScalerOf(context).scale(1) > 1.45;
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.fromLTRB(20, 20, 20, 22),
+      decoration: BoxDecoration(
+        color: const Color(0xFF17191A),
+        borderRadius: BorderRadius.circular(14),
+        boxShadow: LetterShadows.soft,
+      ),
+      child: Stack(
+        children: [
+          Positioned(
+            right: -24,
+            top: -38,
+            child: ExcludeSemantics(
+              child: Container(
+                width: 132,
+                height: 132,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  border: Border.all(
+                    color: const Color(0xFFC4A66A).withValues(alpha: 0.22),
+                  ),
+                ),
+                child: Center(
+                  child: Container(
+                    width: 42,
+                    height: 42,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: const Color(0xFFC4A66A).withValues(alpha: 0.09),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'CARE / RIGHT NOW',
+                style: TextStyle(
+                  color: const Color(0xFFEFCB72).withValues(alpha: 0.88),
+                  fontSize: 10,
+                  fontWeight: FontWeight.w800,
+                  letterSpacing: 1.5,
+                ),
+              ),
+              const SizedBox(height: LetterSpacing.md),
+              Text(
+                'Change the next minute.',
+                style: TextStyle(
+                  color: const Color(0xFFF3F1EB),
+                  fontFamily: 'Newsreader',
+                  fontSize: largeText ? 29 : 36,
+                  height: 0.96,
+                  fontWeight: FontWeight.w800,
+                  letterSpacing: -0.35,
+                ),
+              ),
+              const SizedBox(height: LetterSpacing.sm),
+              SizedBox(
+                width: 270,
+                child: Text(
+                  'No lesson. No typing. Touch once and the screen changes with you.',
+                  style: TextStyle(
+                    color: const Color(0xFFF3F1EB).withValues(alpha: 0.68),
+                    fontSize: 13,
+                    height: 1.42,
+                  ),
+                ),
+              ),
+              const SizedBox(height: LetterSpacing.md),
+              Row(
+                children: [
+                  _HeroFact(label: 'SILENT'),
+                  _HeroFact(label: '1 MIN'),
+                  _HeroFact(label: 'PRIVATE'),
+                ],
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _HeroFact extends StatelessWidget {
+  const _HeroFact({required this.label});
+
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(right: 14),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const SizedBox.square(
+            dimension: 4,
+            child: DecoratedBox(
+              decoration: BoxDecoration(
+                color: Color(0xFFEFCB72),
+                shape: BoxShape.circle,
+              ),
+            ),
+          ),
+          const SizedBox(width: 5),
+          Text(
+            label,
+            style: TextStyle(
+              color: const Color(0xFFF3F1EB).withValues(alpha: 0.58),
+              fontSize: 9,
+              fontWeight: FontWeight.w800,
+              letterSpacing: 1.1,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// A calm, single-tap entry for the days when picking a feeling is too much.
+class _LowEffortEntry extends StatelessWidget {
+  const _LowEffortEntry({
+    required this.entryKey,
+    required this.icon,
+    required this.title,
+    required this.note,
+    required this.onPressed,
+  });
+
+  final Key entryKey;
+  final IconData icon;
+  final String title;
+  final String note;
+  final VoidCallback onPressed;
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      key: entryKey,
+      color: LetterColors.surface,
+      borderRadius: BorderRadius.circular(LetterRadius.panel),
+      child: InkWell(
+        onTap: onPressed,
+        borderRadius: BorderRadius.circular(LetterRadius.panel),
+        child: Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(LetterRadius.panel),
+            border: Border.all(color: LetterColors.line),
+          ),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Icon(icon, size: 20, color: LetterColors.tealDark),
+              const SizedBox(width: LetterSpacing.sm),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      title,
+                      style: const TextStyle(
+                        color: LetterColors.ink,
+                        fontSize: 15,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                    const SizedBox(height: LetterSpacing.xxs),
+                    Text(
+                      note,
+                      style: const TextStyle(
+                        color: LetterColors.muted,
+                        fontSize: 12.5,
+                        height: 1.4,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+// ── Mode entrance cards (with motion-break painter thumbnails) ───────
+
 class CareModeEntrance extends StatelessWidget {
   const CareModeEntrance({
     required this.mode,
@@ -566,31 +642,37 @@ class CareModeEntrance extends StatelessWidget {
   Widget build(BuildContext context) {
     return Semantics(
       button: true,
-      label: '${mode.label}. ${mode.gateDescription}',
+      label:
+          '${mode.label}. ${mode.gateDescription}. Opens a finite motion scene.',
       child: Material(
-        color: mode.softColor,
+        color: LetterColors.surface.withValues(alpha: 0.74),
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(LetterRadius.panel),
-          side: BorderSide(color: mode.color.withValues(alpha: 0.22)),
+          borderRadius: BorderRadius.circular(12),
+          side: BorderSide(color: LetterColors.ink.withValues(alpha: 0.1)),
         ),
         clipBehavior: Clip.antiAlias,
         child: InkWell(
           key: Key('care-mode-${mode.name}'),
           onTap: onPressed,
           child: ConstrainedBox(
-            constraints: const BoxConstraints(minHeight: 76),
+            constraints: const BoxConstraints(minHeight: 92),
             child: Padding(
-              padding: const EdgeInsets.all(LetterSpacing.sm),
+              padding: const EdgeInsets.fromLTRB(8, 8, 12, 8),
               child: Row(
                 children: [
-                  Container(
-                    width: 46,
-                    height: 46,
-                    decoration: BoxDecoration(
-                      color: LetterColors.surface.withValues(alpha: 0.72),
-                      borderRadius: BorderRadius.circular(LetterRadius.control),
+                  Hero(
+                    tag: 'care-mark-${mode.name}',
+                    child: RepaintBoundary(
+                      child: CustomPaint(
+                        painter: CareBreakPainter(
+                          mode: mode,
+                          progress: 0.72,
+                          touchPoint: null,
+                          visuals: CareBreakVisuals.forMode(mode),
+                        ),
+                        child: const SizedBox(width: 74, height: 74),
+                      ),
                     ),
-                    child: Icon(mode.icon, color: mode.color, size: 24),
                   ),
                   const SizedBox(width: LetterSpacing.sm),
                   Expanded(
@@ -601,7 +683,9 @@ class CareModeEntrance extends StatelessWidget {
                         Text(
                           mode.label,
                           style: const TextStyle(
-                            fontSize: 15,
+                            fontFamily: 'Newsreader',
+                            fontSize: 17,
+                            height: 1.08,
                             fontWeight: FontWeight.w800,
                           ),
                         ),
@@ -610,15 +694,19 @@ class CareModeEntrance extends StatelessWidget {
                           mode.gateDescription,
                           style: const TextStyle(
                             color: LetterColors.muted,
-                            fontSize: 12,
-                            height: 1.3,
+                            fontSize: 11.5,
+                            height: 1.35,
                           ),
                         ),
                       ],
                     ),
                   ),
                   const SizedBox(width: LetterSpacing.xs),
-                  Icon(Icons.chevron_right, color: mode.color),
+                  Icon(
+                    Icons.arrow_forward,
+                    color: LetterColors.ink.withValues(alpha: 0.5),
+                    size: 19,
+                  ),
                 ],
               ),
             ),
@@ -628,6 +716,9 @@ class CareModeEntrance extends StatelessWidget {
     );
   }
 }
+
+// ── Generic scene widget (kept for potential reuse by practical-help flows,
+//   but the primary motion experience is now CareBreakFlow) ───────────
 
 class CareModeScene extends StatefulWidget {
   const CareModeScene({
@@ -902,9 +993,10 @@ extension CareModePresentation on CareMode {
   String get gateDescription => switch (this) {
     CareMode.explode => 'Anger or an impulse needs somewhere to stop.',
     CareMode.heavy => 'Crying, emptiness, or almost no energy.',
-    CareMode.racing => 'Too many thoughts are demanding attention.',
+    CareMode.racing => 'Anxiety, panic, or too many thoughts need less input.',
     CareMode.space => 'Being available to anyone feels like too much.',
-    CareMode.physical => 'Pain or physical depletion needs less input.',
+    CareMode.physical =>
+      'Pain, fatigue, or physical discomfort needs less input.',
   };
 
   IconData get icon => switch (this) {
@@ -958,72 +1050,4 @@ extension CareModePresentation on CareMode {
   Color get activeColor => softColor;
 
   Color get settledColor => LetterColors.surface.withValues(alpha: 0.75);
-}
-
-/// A calm, single-tap entry for the days when picking a feeling is too much.
-class _LowEffortEntry extends StatelessWidget {
-  const _LowEffortEntry({
-    required this.entryKey,
-    required this.icon,
-    required this.title,
-    required this.note,
-    required this.onPressed,
-  });
-
-  final Key entryKey;
-  final IconData icon;
-  final String title;
-  final String note;
-  final VoidCallback onPressed;
-
-  @override
-  Widget build(BuildContext context) {
-    return Material(
-      key: entryKey,
-      color: LetterColors.surface,
-      borderRadius: BorderRadius.circular(LetterRadius.panel),
-      child: InkWell(
-        onTap: onPressed,
-        borderRadius: BorderRadius.circular(LetterRadius.panel),
-        child: Container(
-          padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(LetterRadius.panel),
-            border: Border.all(color: LetterColors.line),
-          ),
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Icon(icon, size: 20, color: LetterColors.tealDark),
-              const SizedBox(width: LetterSpacing.sm),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      title,
-                      style: const TextStyle(
-                        color: LetterColors.ink,
-                        fontSize: 15,
-                        fontWeight: FontWeight.w800,
-                      ),
-                    ),
-                    const SizedBox(height: LetterSpacing.xxs),
-                    Text(
-                      note,
-                      style: const TextStyle(
-                        color: LetterColors.muted,
-                        fontSize: 12.5,
-                        height: 1.4,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
 }
