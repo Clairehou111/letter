@@ -3,6 +3,9 @@ import 'package:flutter/material.dart';
 import '../../../design_system/letter_theme.dart';
 import '../../cycle/domain/local_date.dart';
 import '../domain/diary_enrollment.dart';
+import '../../care/domain/care_mode.dart';
+import '../../care/presentation/care_safety_boundary_sheet.dart';
+import '../../care/presentation/cell_support_stage.dart';
 import '../domain/diary_repository.dart';
 
 /// Daily diary entry screen: rate each symptom and functional-impact item
@@ -106,6 +109,33 @@ class _DiaryEntryScreenState extends State<DiaryEntryScreen> {
     }
   }
 
+  /// Someone marked thoughts of suicide or self-harm.
+  ///
+  /// Nothing is recorded for this row. The moment is held first by the cell
+  /// support sequence, then handed to real crisis contacts.
+  Future<void> _openSafetySupport() async {
+    await Navigator.of(context).push(
+      MaterialPageRoute<void>(
+        fullscreenDialog: true,
+        builder: (stageContext) => CellSupportStage(
+          onContinue: () => Navigator.of(stageContext).pop(),
+        ),
+      ),
+    );
+    if (!mounted) {
+      return;
+    }
+    await showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (sheetContext) => CareSafetyBoundarySheet(
+        kind: CareSafetyKind.emotional,
+        onLeaveCare: () => Navigator.of(sheetContext).pop(),
+      ),
+    );
+  }
+
   bool get _isToday {
     final now = LocalDate.fromDateTime(DateTime.now());
     return widget.experiencedDate == now;
@@ -203,6 +233,8 @@ class _DiaryEntryScreenState extends State<DiaryEntryScreen> {
                       },
                     ),
                   ),
+                const SizedBox(height: LetterSpacing.md),
+                _SafetySignalRow(onMarked: _openSafetySupport),
                 const SizedBox(height: LetterSpacing.lg),
                 _SectionHeader(
                   title: 'Impact on daily life',
@@ -427,6 +459,73 @@ class _RatingRow extends StatelessWidget {
               ),
             ),
         ],
+      ),
+    );
+  }
+}
+
+/// A row for thoughts of suicide or self-harm.
+///
+/// This is deliberately not a rated diary item: it stores nothing, scores
+/// nothing, and diagnoses nothing. Tapping it opens support, then help.
+class _SafetySignalRow extends StatelessWidget {
+  const _SafetySignalRow({required this.onMarked});
+
+  final Future<void> Function() onMarked;
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: LetterColors.surface,
+      borderRadius: BorderRadius.circular(LetterRadius.panel),
+      child: InkWell(
+        key: const Key('diary-safety-signal'),
+        onTap: onMarked,
+        borderRadius: BorderRadius.circular(LetterRadius.panel),
+        child: Container(
+          padding: const EdgeInsets.all(14),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(LetterRadius.panel),
+            border: Border.all(
+              color: LetterColors.safetyRed.withValues(alpha: 0.35),
+            ),
+          ),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Icon(
+                Icons.favorite_outline,
+                size: 18,
+                color: LetterColors.safetyRed,
+              ),
+              const SizedBox(width: LetterSpacing.sm),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: const [
+                    Text(
+                      'Thoughts of suicide or hurting yourself',
+                      style: TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                    SizedBox(height: LetterSpacing.xxs),
+                    Text(
+                      'Tap to stay with something for a moment, then see who '
+                      'you can reach. This is never rated, scored, or saved.',
+                      style: TextStyle(
+                        color: LetterColors.muted,
+                        fontSize: 12,
+                        height: 1.4,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }

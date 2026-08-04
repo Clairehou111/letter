@@ -1,7 +1,13 @@
 import 'package:flutter/material.dart';
 
+import 'letter_nav_marks.dart';
 import 'letter_theme.dart';
 
+/// Bottom navigation for Letter.
+///
+/// 月信 — a period is a letter from your body. The five destinations are named
+/// and drawn from that idea. Widget keys stay tied to the original destination
+/// ids so navigation and tests are unaffected by label wording.
 class LetterBottomNavigation extends StatelessWidget {
   const LetterBottomNavigation({
     super.key,
@@ -12,12 +18,16 @@ class LetterBottomNavigation extends StatelessWidget {
   final int selectedIndex;
   final ValueChanged<int>? onSelected;
 
-  static const items = [
-    ('Today', Icons.home_outlined),
-    ('Cycle', Icons.calendar_today_outlined),
-    ('Care', Icons.volunteer_activism_outlined),
-    ('Letters', Icons.mail_outline),
-    ('You', Icons.person_outline),
+  static const items = <LetterNavItem>[
+    LetterNavItem(id: 'today', label: 'Today', mark: LetterNavMark.todayLetter),
+    LetterNavItem(id: 'cycle', label: 'Rhythm', mark: LetterNavMark.moonPhases),
+    LetterNavItem(id: 'care', label: 'Stay', mark: LetterNavMark.shelter),
+    LetterNavItem(
+      id: 'letters',
+      label: 'Letters',
+      mark: LetterNavMark.letterStack,
+    ),
+    LetterNavItem(id: 'you', label: 'Yours', mark: LetterNavMark.waxSeal),
   ];
 
   @override
@@ -38,9 +48,9 @@ class LetterBottomNavigation extends StatelessWidget {
               child: Semantics(
                 button: true,
                 selected: active,
-                label: '${item.$1} tab',
+                label: '${item.label} tab',
                 child: InkWell(
-                  key: Key('navigation-${item.$1.toLowerCase()}'),
+                  key: Key('navigation-${item.id}'),
                   onTap: () => onSelected?.call(index),
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
@@ -48,15 +58,16 @@ class LetterBottomNavigation extends StatelessWidget {
                       Container(
                         width: 30,
                         height: 30,
+                        alignment: Alignment.center,
                         decoration: BoxDecoration(
                           color: active
                               ? LetterColors.teal
                               : Colors.transparent,
                           borderRadius: BorderRadius.circular(7),
                         ),
-                        child: Icon(
-                          item.$2,
-                          size: 20,
+                        child: LetterNavMarkIcon(
+                          mark: item.mark,
+                          active: active,
                           color: active ? Colors.white : LetterColors.muted,
                         ),
                       ),
@@ -64,7 +75,7 @@ class LetterBottomNavigation extends StatelessWidget {
                       MediaQuery.withClampedTextScaling(
                         maxScaleFactor: 1.3,
                         child: Text(
-                          item.$1,
+                          item.label,
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                           style: TextStyle(
@@ -88,4 +99,18 @@ class LetterBottomNavigation extends StatelessWidget {
       ),
     );
   }
+}
+
+@immutable
+class LetterNavItem {
+  const LetterNavItem({
+    required this.id,
+    required this.label,
+    required this.mark,
+  });
+
+  /// Stable destination id used for widget keys.
+  final String id;
+  final String label;
+  final LetterNavMark mark;
 }
