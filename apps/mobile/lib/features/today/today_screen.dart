@@ -398,18 +398,19 @@ class _TodayScreenState extends State<TodayScreen> {
                             // 3. Gravity Horizon — always present
                             _buildGravityHorizon(context, prediction),
                             const SizedBox(height: LetterSpacing.xl),
-                            // 4. Quick tools — compact row
-                            TodayQuickTools(
-                              onOpenCare: _openCare,
-                              onOpenHealthRecords: widget
-                                          .healthRecordRepository !=
-                                      null
-                                  ? _openHealthRecords
-                                  : null,
-                              onOpenCapture: widget.captureNoteStore != null
-                                  ? _openCapture
-                                  : null,
-                            ),
+                            // 4. Tools
+                            TodayCareEntry(onOpenCare: _openCare),
+                            const SizedBox(height: LetterSpacing.xl),
+                            if (widget.healthRecordRepository != null) ...[
+                              TodayHealthRecordEntry(
+                                onOpenRecords: _openHealthRecords,
+                              ),
+                              const SizedBox(height: LetterSpacing.xl),
+                            ],
+                            if (widget.captureNoteStore != null) ...[
+                              TodayCaptureEntry(onOpenCapture: _openCapture),
+                              const SizedBox(height: LetterSpacing.xl),
+                            ],
                           ],
                         ),
                       ),
@@ -919,147 +920,6 @@ class CycleRingPainter extends CustomPainter {
   @override
   bool shouldRepaint(CycleRingPainter oldDelegate) {
     return progress != oldDelegate.progress;
-  }
-}
-
-/// Compact row of quick-access tools replacing three separate full-width cards.
-class TodayQuickTools extends StatelessWidget {
-  const TodayQuickTools({
-    required this.onOpenCare,
-    this.onOpenHealthRecords,
-    this.onOpenCapture,
-    super.key,
-  });
-
-  final VoidCallback onOpenCare;
-  final VoidCallback? onOpenHealthRecords;
-  final VoidCallback? onOpenCapture;
-
-  @override
-  Widget build(BuildContext context) {
-    final compact =
-        MediaQuery.textScalerOf(context).scale(1) > 1.45 &&
-        MediaQuery.sizeOf(context).width < 360;
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        const LetterSectionTitle(
-          eyebrow: 'Quick tools',
-          title: 'Whenever you\'re ready',
-        ),
-        const SizedBox(height: LetterSpacing.sm),
-        Container(
-          padding: const EdgeInsets.symmetric(
-            vertical: LetterSpacing.xs,
-            horizontal: LetterSpacing.xs,
-          ),
-          decoration: BoxDecoration(
-            color: LetterColors.surface,
-            border: Border.all(color: LetterColors.line),
-            borderRadius: BorderRadius.circular(LetterRadius.panel),
-          ),
-          child: Row(
-            children: [
-              _QuickTool(
-                key: const Key('quick-tool-care'),
-                icon: Icons.volunteer_activism_outlined,
-                label: 'Care',
-                color: LetterColors.teal,
-                onTap: onOpenCare,
-                compact: compact,
-              ),
-              if (onOpenHealthRecords != null) ...[
-                _QuickToolDivider(),
-                _QuickTool(
-                  key: const Key('quick-tool-health'),
-                  icon: Icons.edit_note_outlined,
-                  label: 'Symptoms',
-                  color: LetterColors.violet,
-                  onTap: onOpenHealthRecords!,
-                  compact: compact,
-                ),
-              ],
-              if (onOpenCapture != null) ...[
-                _QuickToolDivider(),
-                _QuickTool(
-                  key: const Key('quick-tool-capture'),
-                  icon: Icons.edit_outlined,
-                  label: 'Note',
-                  color: LetterColors.blue,
-                  onTap: onOpenCapture!,
-                  compact: compact,
-                ),
-              ],
-            ],
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-class _QuickTool extends StatelessWidget {
-  const _QuickTool({
-    required this.icon,
-    required this.label,
-    required this.color,
-    required this.onTap,
-    required this.compact,
-    super.key,
-  });
-
-  final IconData icon;
-  final String label;
-  final Color color;
-  final VoidCallback onTap;
-  final bool compact;
-
-  @override
-  Widget build(BuildContext context) {
-    return Expanded(
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          onTap: onTap,
-          borderRadius: BorderRadius.circular(LetterRadius.control),
-          child: Padding(
-            padding: EdgeInsets.symmetric(
-              vertical: compact ? 10 : 14,
-              horizontal: LetterSpacing.xs,
-            ),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(icon, size: compact ? 20 : 24, color: color),
-                const SizedBox(height: LetterSpacing.xxs),
-                Text(
-                  label,
-                  style: TextStyle(
-                    fontSize: compact ? 10 : 11,
-                    fontWeight: FontWeight.w700,
-                    color: LetterColors.ink,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _QuickToolDivider extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return const SizedBox(
-      height: 36,
-      child: VerticalDivider(
-        width: 1,
-        color: LetterColors.line,
-      ),
-    );
   }
 }
 
