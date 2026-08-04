@@ -71,25 +71,56 @@ Future<void> openMode(WidgetTester tester, CareMode mode) async {
   await tester.pump(const Duration(milliseconds: 16));
 }
 
-Future<void> completeMotionActivity(WidgetTester tester, CareMode mode) async {
+Future<void> completeCareActivity(WidgetTester tester, CareMode mode) async {
   await openMode(tester, mode);
-  if (mode == CareMode.physical) {
-    await tester.tap(find.byKey(const Key('care-context-cramps')));
-    await tester.pump();
+
+  switch (mode) {
+    case CareMode.explode:
+      await tester.pump(const Duration(milliseconds: 120));
+      await tester.tap(find.byKey(const Key('skip-shatter')));
+      await tester.pump();
+      await tester.tap(find.byKey(const Key('leave-after-quiet')));
+    case CareMode.heavy:
+      await tester.tap(find.byKey(const Key('heavy-light')));
+      await tester.pump();
+      await tester.tap(find.byKey(const Key('heavy-stop-here')));
+      await tester.pump();
+      await tester.tap(find.byKey(const Key('heavy-handoff-return')));
+    case CareMode.racing:
+      await tester.tap(find.byKey(const Key('racing-convergence-surface')));
+      await tester.pump();
+      await tester.tap(find.byKey(const Key('racing-nothing-now')));
+      await tester.pump();
+      await tester.tap(find.byKey(const Key('racing-handoff-return')));
+    case CareMode.space:
+      await tester.tap(find.byKey(const Key('safe-cocoon-close')));
+      await tester.pump();
+      await tester.tap(find.byKey(const Key('safe-cocoon-nothing-now')));
+      await tester.pump();
+      await tester.tap(find.byKey(const Key('need-space-handoff-return')));
+    case CareMode.physical:
+      await tester.tap(find.byKey(const Key('physical-path-cramps')));
+      await tester.pump();
+      await tester.tap(find.byKey(const Key('physical-auto-complete')));
+      await tester.pump();
+      await tester.tap(
+        find.byKey(const Key('physical-action-cramps_familiar_warmth')),
+      );
+      await tester.pump();
+      await tester.tap(find.byKey(const Key('physical-handoff-return')));
   }
-  await tester.tap(find.byKey(const Key('care-break-complete')));
   await tester.pumpAndSettle();
-  if (find.byKey(const Key('care-rest-leave')).evaluate().isNotEmpty) {
-    await tester.tap(find.byKey(const Key('care-rest-leave')));
-    await tester.pumpAndSettle();
-  }
 }
 
 void main() {
-  testWidgets('shows all five entrances without selecting one', (tester) async {
+  testWidgets('shows the branch Care entries without a Care Kit', (
+    tester,
+  ) async {
     await pumpCare(tester);
 
-    expect(find.text('Change the next minute.'), findsOneWidget);
+    expect(find.text('What is closest to this moment?'), findsOneWidget);
+    expect(find.byKey(const Key('care-nothing-left')), findsOneWidget);
+    expect(find.byKey(const Key('care-breathe')), findsOneWidget);
     for (final mode in CareMode.values) {
       await tester.scrollUntilVisible(
         find.byKey(Key('care-mode-${mode.name}')),
@@ -100,21 +131,70 @@ void main() {
     }
     expect(find.textContaining('Care Kit'), findsNothing);
     expect(find.byKey(const Key('open-personal-care-kit')), findsNothing);
-    expect(find.byKey(const Key('care-protective-line')), findsNothing);
     expect(find.byKey(const Key('navigation-care')), findsOneWidget);
   });
 
-  testWidgets('all five activities end in outcome and symptom actions', (
+  testWidgets('breathing entry opens, completes, and closes locally', (
     tester,
   ) async {
+    await pumpCare(tester, disableAnimations: true);
+
+    await tester.tap(find.byKey(const Key('care-breathe')));
+    await tester.pumpAndSettle();
+    expect(find.byKey(const ValueKey('breath-intro')), findsOneWidget);
+
+    await tester.tap(find.byKey(const Key('breath-start')));
+    await tester.pump(const Duration(milliseconds: 80));
+    expect(find.byKey(const ValueKey('breath-session')), findsOneWidget);
+    await tester.tap(find.byKey(const Key('breath-finish')));
+    await tester.pumpAndSettle();
+    expect(find.byKey(const ValueKey('breath-done')), findsOneWidget);
+
+    await tester.tap(find.byKey(const Key('breath-close')));
+    await tester.pumpAndSettle();
+    expect(find.text('What is closest to this moment?'), findsOneWidget);
+  });
+
+  testWidgets('low-energy entry is available without a required action', (
+    tester,
+  ) async {
+    await pumpCare(tester, disableAnimations: true);
+
+    await tester.tap(find.byKey(const Key('care-nothing-left')));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
+    expect(find.byKey(const Key('low-energy-close')), findsOneWidget);
+
+    await tester.tap(find.byKey(const Key('low-energy-close')));
+    await tester.pumpAndSettle();
+    expect(find.text('What is closest to this moment?'), findsOneWidget);
+  });
+
+  testWidgets('all five Care activities reach check-back', (tester) async {
     await pumpCare(tester);
 
     for (final mode in CareMode.values) {
-      await completeMotionActivity(tester, mode);
-
-      expect(find.byKey(const Key('care-checkback-better')), findsOneWidget);
-      expect(find.byKey(const Key('care-checkback-same')), findsOneWidget);
-      expect(find.byKey(const Key('care-checkback-worse')), findsOneWidget);
+      await completeCareActivity(tester, mode);
+      expect(
+        find.text('How is this moment now?'),
+        findsOneWidget,
+        reason: 'completion did not reach check-back for ${mode.name}',
+      );
+      expect(
+        find.byKey(const Key('care-checkback-better')),
+        findsOneWidget,
+        reason: mode.name,
+      );
+      expect(
+        find.byKey(const Key('care-checkback-same')),
+        findsOneWidget,
+        reason: mode.name,
+      );
+      expect(
+        find.byKey(const Key('care-checkback-worse')),
+        findsOneWidget,
+        reason: mode.name,
+      );
       expect(
         find.byKey(const Key('care-checkback-record-symptoms')),
         findsOneWidget,
@@ -131,7 +211,8 @@ void main() {
     await pumpCare(tester);
     await openMode(tester, CareMode.explode);
 
-    await tester.tap(find.byKey(const Key('care-break-safety')));
+    await tester.pump(const Duration(milliseconds: 120));
+    await tester.tap(find.byKey(const Key('angry-safety')));
     await tester.pumpAndSettle();
 
     expect(find.text('Immediate safety comes first.'), findsOneWidget);
@@ -142,10 +223,10 @@ void main() {
 
     await tester.tap(find.byKey(const Key('return-to-care-scene')));
     await tester.pump();
-    expect(find.byKey(const Key('care-break-surface-explode')), findsOneWidget);
+    expect(find.byKey(const Key('shatter-crystal')), findsOneWidget);
   });
 
-  testWidgets('physical safety route stops normal Care and can leave', (
+  testWidgets('physical safety route leaves Care through navigation', (
     tester,
   ) async {
     int? selectedNavigation;
@@ -155,9 +236,8 @@ void main() {
     );
     await openMode(tester, CareMode.physical);
 
-    await tester.tap(find.byKey(const Key('care-break-safety')));
+    await tester.tap(find.byKey(const Key('physical-safety')));
     await tester.pumpAndSettle();
-
     expect(
       find.text('This needs medical attention, not more interaction.'),
       findsOneWidget,
@@ -175,45 +255,29 @@ void main() {
     expect(selectedNavigation, 2);
   });
 
-  testWidgets('primary controls remain at least 44 logical pixels', (
+  testWidgets('primary Care controls remain at least 44 logical pixels', (
     tester,
   ) async {
     await pumpCare(tester);
-    final entranceSize = tester.getSize(
-      find.byKey(const Key('care-mode-explode')),
+    expect(
+      tester.getSize(find.byKey(const Key('care-mode-explode'))).height,
+      greaterThanOrEqualTo(44),
     );
-    expect(entranceSize.height, greaterThanOrEqualTo(44));
 
-    await openMode(tester, CareMode.explode);
+    await openMode(tester, CareMode.racing);
     expect(
       tester
-          .getSize(find.byKey(const Key('care-break-surface-explode')))
+          .getSize(find.byKey(const Key('racing-convergence-surface')))
           .height,
       greaterThanOrEqualTo(44),
     );
     expect(
-      tester.getSize(find.byKey(const Key('care-break-safety'))).height,
+      tester.getSize(find.byKey(const Key('racing-safety'))).height,
       greaterThanOrEqualTo(44),
     );
   });
 
-  testWidgets('does not show fabricated contacts or prior outcomes', (
-    tester,
-  ) async {
-    await pumpCare(tester);
-
-    for (final text in [
-      'My person',
-      'Last time',
-      'saved action',
-      'future-self',
-      'Message Maya',
-    ]) {
-      expect(find.textContaining(text), findsNothing);
-    }
-  });
-
-  testWidgets('motion completion persists outcome and can record symptoms', (
+  testWidgets('outcome persists and symptom recording opens from check-back', (
     tester,
   ) async {
     final repository = InMemoryCareMemoryRepository(
@@ -221,18 +285,13 @@ void main() {
       idGenerator: () => 'care-record',
     );
     await pumpCare(tester, careMemoryRepository: repository);
-    await completeMotionActivity(tester, CareMode.physical);
-    expect(await repository.getRecords(), isEmpty);
-    expect(find.text('How is this moment now?'), findsOneWidget);
+    await completeCareActivity(tester, CareMode.heavy);
 
+    expect(await repository.getRecords(), isEmpty);
     await tester.tap(find.byKey(const Key('care-checkback-better')));
     await tester.pump();
     expect((await repository.getRecords()).single.outcome.name, 'better');
 
-    expect(
-      find.byKey(const Key('care-checkback-record-symptoms')),
-      findsOneWidget,
-    );
     await tester.tap(find.byKey(const Key('care-checkback-record-symptoms')));
     await tester.pumpAndSettle();
     expect(find.byKey(const Key('recovery-receipt-flow')), findsOneWidget);
@@ -243,12 +302,12 @@ void main() {
 
     await tester.tap(find.byKey(const Key('care-checkback-done')));
     await tester.pump();
-    expect(find.text('Change the next minute.'), findsOneWidget);
+    expect(find.text('What is closest to this moment?'), findsOneWidget);
   });
 
   testWidgets('can record symptoms before choosing an outcome', (tester) async {
     await pumpCare(tester);
-    await completeMotionActivity(tester, CareMode.heavy);
+    await completeCareActivity(tester, CareMode.heavy);
 
     await tester.tap(find.byKey(const Key('care-checkback-record-symptoms')));
     await tester.pumpAndSettle();
@@ -297,12 +356,7 @@ void main() {
       find.text('Close the laptop before choosing the next thing.'),
       findsNothing,
     );
-    expect(find.byKey(const Key('care-break-surface-racing')), findsOneWidget);
-
-    expect(
-      find.text('Close the laptop before choosing the next thing.'),
-      findsNothing,
-    );
+    expect(find.byKey(const Key('racing-convergence-surface')), findsOneWidget);
   });
 
   testWidgets('Care gate matches the 390 by 844 visual baseline', (

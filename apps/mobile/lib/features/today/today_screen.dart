@@ -317,7 +317,9 @@ class _TodayScreenState extends State<TodayScreen> {
     if (prediction == null) return const SizedBox.shrink();
     final size = MediaQuery.sizeOf(context);
     final textScale = MediaQuery.textScalerOf(context).scale(1);
-    final horizonHeight = 190.0 + (math.max(1.0, textScale) - 1.0) * 100.0;
+    // The supporting copy below the chart also scales. Give it enough room
+    // at large text sizes instead of allowing the fixed panel to overflow.
+    final horizonHeight = 190.0 + (math.max(1.0, textScale) - 1.0) * 160.0;
     final cycleContext = TodayCycleContext.fromRecords(
       records: _records,
       today: _today,

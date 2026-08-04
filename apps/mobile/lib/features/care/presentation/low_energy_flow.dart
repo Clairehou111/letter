@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
@@ -29,6 +30,7 @@ class _LowEnergyFlowState extends State<LowEnergyFlow>
   ];
 
   late final AnimationController _controller;
+  Timer? _advanceTimer;
   int _lineIndex = 0;
   bool _finished = false;
 
@@ -42,7 +44,8 @@ class _LowEnergyFlowState extends State<LowEnergyFlow>
   }
 
   void _advance() {
-    Future<void>.delayed(const Duration(seconds: 9), () {
+    _advanceTimer?.cancel();
+    _advanceTimer = Timer(const Duration(seconds: 9), () {
       if (!mounted) {
         return;
       }
@@ -57,6 +60,7 @@ class _LowEnergyFlowState extends State<LowEnergyFlow>
 
   @override
   void dispose() {
+    _advanceTimer?.cancel();
     _controller.dispose();
     super.dispose();
   }

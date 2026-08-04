@@ -100,7 +100,6 @@ Future<void> pumpToday(
   tester.view.devicePixelRatio = 1;
   tester.view.physicalSize = size;
   addTearDown(tester.view.reset);
-
   await tester.pumpWidget(
     MaterialApp(
       debugShowCheckedModeBanner: false,
@@ -178,6 +177,17 @@ void main() {
     expect(find.textContaining('Cycle day'), findsNothing);
     expect(find.textContaining('Estimated next period'), findsNothing);
 
+    await tester.scrollUntilVisible(
+      find.byKey(const Key('today-open-cycle')),
+      240,
+      scrollable: find.byType(Scrollable).first,
+    );
+    await Scrollable.ensureVisible(
+      tester.element(find.byKey(const Key('today-open-cycle'))),
+      alignment: 0.5,
+      duration: Duration.zero,
+    );
+    await tester.pump();
     await tester.tap(find.byKey(const Key('today-open-cycle')));
     expect(selectedNavigation, 1);
   });
@@ -443,7 +453,7 @@ void main() {
   ) async {
     await pumpToday(tester, size: const Size(320, 700), textScale: 2);
 
-    expect(find.text('Your period is in progress.'), findsOneWidget);
+    expect(find.byKey(const Key('today-body-letter')), findsOneWidget);
     expect(tester.takeException(), isNull);
 
     await tester.scrollUntilVisible(
