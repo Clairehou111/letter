@@ -280,7 +280,6 @@ class _TodayScreenState extends State<TodayScreen> {
     BuildContext context,
     CyclePrediction? prediction,
   ) {
-    if (prediction == null) return const SizedBox.shrink();
     final size = MediaQuery.sizeOf(context);
     final textScale = MediaQuery.textScalerOf(context).scale(1);
     final horizonHeight = 190.0 + (math.max(1.0, textScale) - 1.0) * 130.0;
@@ -288,6 +287,42 @@ class _TodayScreenState extends State<TodayScreen> {
       records: _records,
       today: _today,
     );
+
+    if (prediction == null) {
+      return Semantics(
+        label: 'Not enough data for cycle insights yet.',
+        child: Container(
+          key: const Key('today-gravity-horizon'),
+          height: 88,
+          padding: const EdgeInsets.all(LetterSpacing.sm),
+          decoration: BoxDecoration(
+            color: LetterColors.surface,
+            border: Border.all(color: LetterColors.line),
+            borderRadius: BorderRadius.circular(LetterRadius.panel),
+          ),
+          child: const Center(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(Icons.auto_awesome_outlined,
+                    size: 20, color: LetterColors.muted),
+                SizedBox(height: LetterSpacing.xxs),
+                Text(
+                  'Log a few periods to see your pattern.',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    color: LetterColors.muted,
+                    fontSize: 12,
+                    height: 1.4,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+    }
+
     return Semantics(
       button: true,
       label: 'Open Cycle from the Gravity Horizon',
@@ -341,14 +376,14 @@ class _TodayScreenState extends State<TodayScreen> {
                         sliver: SliverList.list(
                           children: [
                             AppHeader(onCheckIn: _openQuickStateSheet),
-                            const SizedBox(height: LetterSpacing.md),
+                            const SizedBox(height: LetterSpacing.xl),
                             // 1. Estimate cycle
                             CycleHero(
                               cycleContext: cycleContext,
                               onOpenCycle: () =>
                                   widget.onNavigationSelected?.call(1),
                             ),
-                            const SizedBox(height: LetterSpacing.md),
+                            const SizedBox(height: LetterSpacing.xl),
                             // 2. Quick check-in
                             const LetterSectionTitle(
                               eyebrow: 'A quick check-in',
@@ -359,25 +394,22 @@ class _TodayScreenState extends State<TodayScreen> {
                               selectedState: selectedState,
                               onSelected: _saveCheckIn,
                             ),
-                            const SizedBox(height: LetterSpacing.lg),
-                            // 3. Gravity Horizon (when prediction exists)
-                            if (prediction != null) ...[
-                              _buildGravityHorizon(context, prediction),
-                              const SizedBox(height: LetterSpacing.lg),
-                            ],
-                            // 4. Tools
-                            TodayCareEntry(onOpenCare: _openCare),
                             const SizedBox(height: LetterSpacing.xl),
-                            if (widget.healthRecordRepository != null) ...[
-                              TodayHealthRecordEntry(
-                                onOpenRecords: _openHealthRecords,
-                              ),
-                              const SizedBox(height: LetterSpacing.xl),
-                            ],
-                            if (widget.captureNoteStore != null) ...[
-                              TodayCaptureEntry(onOpenCapture: _openCapture),
-                              const SizedBox(height: LetterSpacing.xl),
-                            ],
+                            // 3. Gravity Horizon — always present
+                            _buildGravityHorizon(context, prediction),
+                            const SizedBox(height: LetterSpacing.xl),
+                            // 4. Quick tools — compact row
+                            TodayQuickTools(
+                              onOpenCare: _openCare,
+                              onOpenHealthRecords: widget
+                                          .healthRecordRepository !=
+                                      null
+                                  ? _openHealthRecords
+                                  : null,
+                              onOpenCapture: widget.captureNoteStore != null
+                                  ? _openCapture
+                                  : null,
+                            ),
                           ],
                         ),
                       ),
@@ -887,6 +919,147 @@ class CycleRingPainter extends CustomPainter {
   @override
   bool shouldRepaint(CycleRingPainter oldDelegate) {
     return progress != oldDelegate.progress;
+  }
+}
+
+/// Compact row of quick-access tools replacing three separate full-width cards.
+class TodayQuickTools extends StatelessWidget {
+  const TodayQuickTools({
+    required this.onOpenCare,
+    this.onOpenHealthRecords,
+    this.onOpenCapture,
+    super.key,
+  });
+
+  final VoidCallback onOpenCare;
+  final VoidCallback? onOpenHealthRecords;
+  final VoidCallback? onOpenCapture;
+
+  @override
+  Widget build(BuildContext context) {
+    final compact =
+        MediaQuery.textScalerOf(context).scale(1) > 1.45 &&
+        MediaQuery.sizeOf(context).width < 360;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        const LetterSectionTitle(
+          eyebrow: 'Quick tools',
+          title: 'Whenever you\'re ready',
+        ),
+        const SizedBox(height: LetterSpacing.sm),
+        Container(
+          padding: const EdgeInsets.symmetric(
+            vertical: LetterSpacing.xs,
+            horizontal: LetterSpacing.xs,
+          ),
+          decoration: BoxDecoration(
+            color: LetterColors.surface,
+            border: Border.all(color: LetterColors.line),
+            borderRadius: BorderRadius.circular(LetterRadius.panel),
+          ),
+          child: Row(
+            children: [
+              _QuickTool(
+                key: const Key('quick-tool-care'),
+                icon: Icons.volunteer_activism_outlined,
+                label: 'Care',
+                color: LetterColors.teal,
+                onTap: onOpenCare,
+                compact: compact,
+              ),
+              if (onOpenHealthRecords != null) ...[
+                _QuickToolDivider(),
+                _QuickTool(
+                  key: const Key('quick-tool-health'),
+                  icon: Icons.edit_note_outlined,
+                  label: 'Symptoms',
+                  color: LetterColors.violet,
+                  onTap: onOpenHealthRecords!,
+                  compact: compact,
+                ),
+              ],
+              if (onOpenCapture != null) ...[
+                _QuickToolDivider(),
+                _QuickTool(
+                  key: const Key('quick-tool-capture'),
+                  icon: Icons.edit_outlined,
+                  label: 'Note',
+                  color: LetterColors.blue,
+                  onTap: onOpenCapture!,
+                  compact: compact,
+                ),
+              ],
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _QuickTool extends StatelessWidget {
+  const _QuickTool({
+    required this.icon,
+    required this.label,
+    required this.color,
+    required this.onTap,
+    required this.compact,
+    super.key,
+  });
+
+  final IconData icon;
+  final String label;
+  final Color color;
+  final VoidCallback onTap;
+  final bool compact;
+
+  @override
+  Widget build(BuildContext context) {
+    return Expanded(
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(LetterRadius.control),
+          child: Padding(
+            padding: EdgeInsets.symmetric(
+              vertical: compact ? 10 : 14,
+              horizontal: LetterSpacing.xs,
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(icon, size: compact ? 20 : 24, color: color),
+                const SizedBox(height: LetterSpacing.xxs),
+                Text(
+                  label,
+                  style: TextStyle(
+                    fontSize: compact ? 10 : 11,
+                    fontWeight: FontWeight.w700,
+                    color: LetterColors.ink,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _QuickToolDivider extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return const SizedBox(
+      height: 36,
+      child: VerticalDivider(
+        width: 1,
+        color: LetterColors.line,
+      ),
+    );
   }
 }
 
@@ -1412,12 +1585,14 @@ class StateButton extends StatelessWidget {
       selected: selected,
       label: '${state.label} state',
       child: Material(
-        color: state.background,
+        color: LetterColors.surface,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(LetterRadius.panel),
           side: BorderSide(
-            color: selected ? state.foreground : Colors.transparent,
-            width: 2,
+            color: selected
+                ? state.foreground.withValues(alpha: 0.5)
+                : LetterColors.line,
+            width: selected ? 1.5 : 1,
           ),
         ),
         clipBehavior: Clip.antiAlias,

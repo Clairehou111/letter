@@ -143,7 +143,6 @@ void main() {
     await pumpToday(tester, repository: repository, settle: false);
 
     expect(find.byType(CircularProgressIndicator), findsOneWidget);
-    expect(find.byKey(const Key('today-cycle-context')), findsNothing);
 
     repository.pendingLoad.complete([]);
     await tester.pumpAndSettle();
@@ -251,7 +250,7 @@ void main() {
     expect(find.text('Cycle'), findsOneWidget);
     expect(find.text('Letters'), findsOneWidget);
     expect(find.text('Today'), findsOneWidget);
-    expect(find.text('Care'), findsOneWidget);
+    expect(find.text('Care'), findsWidgets);
     expect(find.text('You'), findsOneWidget);
 
     final tabCenters = [
@@ -363,8 +362,7 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    expect(find.byKey(const Key('today-health-record-entry')), findsOneWidget);
-    expect(find.byKey(const Key('open-health-records')), findsOneWidget);
+    expect(find.byKey(const Key('quick-tool-health')), findsOneWidget);
   });
 
   testWidgets("Today does not show a redundant activity feed", (tester) async {
@@ -407,7 +405,7 @@ void main() {
       const Offset(0, -1000),
     );
     await tester.pumpAndSettle();
-    await tester.tap(find.byKey(const Key('open-care-button')));
+    await tester.tap(find.byKey(const Key('quick-tool-care')));
 
     expect(selectedNavigation, 2);
   });
@@ -431,7 +429,7 @@ void main() {
       const Offset(0, -1000),
     );
     await tester.pumpAndSettle();
-    final careSize = tester.getSize(find.byKey(const Key('open-care-button')));
+    final careSize = tester.getSize(find.byKey(const Key('quick-tool-care')));
 
     expect(stateSize.height, greaterThanOrEqualTo(44));
     expect(careSize.height, greaterThanOrEqualTo(44));
@@ -447,12 +445,12 @@ void main() {
     );
 
     await tester.scrollUntilVisible(
-      find.byKey(const Key('open-text-voice-capture')),
+      find.byKey(const Key('quick-tool-capture')),
       240,
       scrollable: find.byType(Scrollable).first,
     );
     await tester.pumpAndSettle();
-    await tester.tap(find.byKey(const Key('open-text-voice-capture')));
+    await tester.tap(find.byKey(const Key('quick-tool-capture')));
     await tester.pumpAndSettle();
 
     expect(find.byKey(const Key('capture-flow')), findsOneWidget);
