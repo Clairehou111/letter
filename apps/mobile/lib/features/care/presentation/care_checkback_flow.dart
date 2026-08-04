@@ -10,27 +10,23 @@ class CareCheckBackFlow extends StatelessWidget {
   const CareCheckBackFlow({
     required this.onOutcome,
     required this.onSkip,
-    required this.onKeepInKit,
+    required this.onRecordSymptoms,
     required this.onDone,
     super.key,
     this.recordedOutcome,
-    this.isPinned = false,
     this.isBusy = false,
     this.hasError = false,
     this.onRetry,
-    this.onOpenRecoveryReceipt,
   });
 
   final ValueChanged<CareOutcome> onOutcome;
   final VoidCallback onSkip;
-  final VoidCallback onKeepInKit;
+  final VoidCallback onRecordSymptoms;
   final VoidCallback onDone;
   final CareOutcome? recordedOutcome;
-  final bool isPinned;
   final bool isBusy;
   final bool hasError;
   final VoidCallback? onRetry;
-  final VoidCallback? onOpenRecoveryReceipt;
 
   @override
   Widget build(BuildContext context) {
@@ -80,16 +76,15 @@ class CareCheckBackFlow extends StatelessWidget {
                         _OutcomeChoices(
                           enabled: !isBusy,
                           onOutcome: onOutcome,
+                          onRecordSymptoms: onRecordSymptoms,
                           onSkip: onSkip,
                         )
                       else
                         _RecordedOutcome(
                           outcome: recordedOutcome!,
-                          isPinned: isPinned,
                           isBusy: isBusy,
-                          onKeepInKit: onKeepInKit,
+                          onRecordSymptoms: onRecordSymptoms,
                           onDone: onDone,
-                          onOpenRecoveryReceipt: onOpenRecoveryReceipt,
                         ),
                       if (isBusy) ...[
                         const SizedBox(height: LetterSpacing.md),
@@ -127,11 +122,13 @@ class _OutcomeChoices extends StatelessWidget {
   const _OutcomeChoices({
     required this.enabled,
     required this.onOutcome,
+    required this.onRecordSymptoms,
     required this.onSkip,
   });
 
   final bool enabled;
   final ValueChanged<CareOutcome> onOutcome;
+  final VoidCallback onRecordSymptoms;
   final VoidCallback onSkip;
 
   @override
@@ -188,6 +185,22 @@ class _OutcomeChoices extends StatelessWidget {
                 ],
               ),
             const SizedBox(height: LetterSpacing.sm),
+            OutlinedButton.icon(
+              key: const Key('care-checkback-record-symptoms'),
+              onPressed: enabled ? onRecordSymptoms : null,
+              style: OutlinedButton.styleFrom(
+                minimumSize: const Size.fromHeight(50),
+                foregroundColor: LetterColors.violet,
+                backgroundColor: LetterColors.surface,
+                side: const BorderSide(color: LetterColors.violet),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(LetterRadius.control),
+                ),
+              ),
+              icon: const Icon(Icons.medical_information_outlined),
+              label: const Text('Record symptoms'),
+            ),
+            const SizedBox(height: LetterSpacing.xs),
             TextButton(
               key: const Key('care-checkback-skip'),
               onPressed: enabled ? onSkip : null,
@@ -251,19 +264,15 @@ class _OutcomeButton extends StatelessWidget {
 class _RecordedOutcome extends StatelessWidget {
   const _RecordedOutcome({
     required this.outcome,
-    required this.isPinned,
     required this.isBusy,
-    required this.onKeepInKit,
+    required this.onRecordSymptoms,
     required this.onDone,
-    this.onOpenRecoveryReceipt,
   });
 
   final CareOutcome outcome;
-  final bool isPinned;
   final bool isBusy;
-  final VoidCallback onKeepInKit;
+  final VoidCallback onRecordSymptoms;
   final VoidCallback onDone;
-  final VoidCallback? onOpenRecoveryReceipt;
 
   @override
   Widget build(BuildContext context) {
@@ -303,48 +312,31 @@ class _RecordedOutcome extends StatelessWidget {
               ),
             ),
             const SizedBox(height: LetterSpacing.xs),
-            Text(
-              isPinned
-                  ? 'This action is in your Care Kit.'
-                  : 'Keep this action only if you want it nearby.',
+            const Text(
+              'You can also record symptoms as a separate health record.',
               textAlign: TextAlign.center,
-              style: const TextStyle(
+              style: TextStyle(
                 color: LetterColors.muted,
                 fontSize: 14,
                 height: 1.4,
               ),
             ),
             const SizedBox(height: LetterSpacing.lg),
-            if (!isPinned)
-              FilledButton.icon(
-                key: const Key('care-checkback-keep'),
-                onPressed: isBusy ? null : onKeepInKit,
-                style: FilledButton.styleFrom(
-                  minimumSize: const Size.fromHeight(50),
-                  backgroundColor: LetterColors.teal,
-                  foregroundColor: Colors.white,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(LetterRadius.control),
-                  ),
+            FilledButton.icon(
+              key: const Key('care-checkback-record-symptoms'),
+              onPressed: isBusy ? null : onRecordSymptoms,
+              style: FilledButton.styleFrom(
+                minimumSize: const Size.fromHeight(50),
+                backgroundColor: LetterColors.violet,
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(LetterRadius.control),
                 ),
-                icon: const Icon(Icons.bookmark_add_outlined),
-                label: const Text('Keep in my Care Kit'),
               ),
-            if (onOpenRecoveryReceipt != null) ...[
-              const SizedBox(height: LetterSpacing.xs),
-              OutlinedButton.icon(
-                key: const Key('care-checkback-recovery-receipt'),
-                onPressed: isBusy ? null : onOpenRecoveryReceipt,
-                style: OutlinedButton.styleFrom(
-                  minimumSize: const Size.fromHeight(48),
-                  foregroundColor: LetterColors.teal,
-                  side: const BorderSide(color: LetterColors.teal),
-                ),
-                icon: const Icon(Icons.edit_note_outlined),
-                label: const Text('Record a body detail'),
-              ),
-            ],
-            if (!isPinned) const SizedBox(height: LetterSpacing.xs),
+              icon: const Icon(Icons.medical_information_outlined),
+              label: const Text('Record symptoms'),
+            ),
+            const SizedBox(height: LetterSpacing.xs),
             TextButton(
               key: const Key('care-checkback-done'),
               onPressed: isBusy ? null : onDone,
@@ -352,7 +344,7 @@ class _RecordedOutcome extends StatelessWidget {
                 minimumSize: const Size.fromHeight(48),
                 foregroundColor: LetterColors.ink,
               ),
-              child: Text(isPinned ? 'Done' : 'Not now'),
+              child: const Text('Done'),
             ),
           ],
         ),

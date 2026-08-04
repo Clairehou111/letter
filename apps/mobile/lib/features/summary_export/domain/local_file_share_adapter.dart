@@ -1,52 +1,113 @@
 import 'dart:convert';
+import 'dart:io';
+import 'dart:typed_data';
+
+import 'package:path_provider/path_provider.dart';
+import 'package:share_plus/share_plus.dart';
 
 import '../../care/domain/care_memory.dart';
 import 'cycle_care_summary.dart';
 
-final class LocalCsvFile {
-  const LocalCsvFile({required this.fileName, required this.bytes});
+sealed class LocalExportFile {
+  const LocalExportFile({
+    required this.fileName,
+    required this.bytes,
+    required this.mimeType,
+  });
 
   final String fileName;
   final List<int> bytes;
+  final String mimeType;
+}
+
+final class LocalCsvFile extends LocalExportFile {
+  const LocalCsvFile({required super.fileName, required super.bytes})
+    : super(mimeType: 'text/csv');
+}
+
+final class LocalPdfFile extends LocalExportFile {
+  const LocalPdfFile({required super.fileName, required super.bytes})
+    : super(mimeType: 'application/pdf');
 }
 
 enum LocalFileShareStatus { shared, unavailable, failed }
 
 final class LocalFileShareResult {
-  const LocalFileShareResult._(this.status);
+  const LocalFileShareResult._(this.status, {this.savedPath});
 
-  const LocalFileShareResult.shared() : this._(LocalFileShareStatus.shared);
+  const LocalFileShareResult.shared({String? savedPath})
+    : this._(LocalFileShareStatus.shared, savedPath: savedPath);
   const LocalFileShareResult.unavailable()
     : this._(LocalFileShareStatus.unavailable);
   const LocalFileShareResult.failed() : this._(LocalFileShareStatus.failed);
 
   final LocalFileShareStatus status;
+
+  /// On desktop platforms, the absolute path where the file was saved.
+  final String? savedPath;
 }
 
 /// Platform code owns the actual destination or operating-system share sheet.
 /// This boundary deliberately has no network, analytics, or logging behavior.
 abstract interface class LocalFileShareAdapter {
-  Future<LocalFileShareResult> share(LocalCsvFile file);
+  Future<LocalFileShareResult> share(LocalExportFile file);
 }
 
 final class UnavailableLocalFileShareAdapter implements LocalFileShareAdapter {
   const UnavailableLocalFileShareAdapter();
 
   @override
-  Future<LocalFileShareResult> share(LocalCsvFile file) async =>
+  Future<LocalFileShareResult> share(LocalExportFile file) async =>
       const LocalFileShareResult.unavailable();
 }
+
+/// Saves files locally on desktop platforms and uses the operating-system
+/// share sheet on iOS and Android.
+final class SystemLocalFileShareAdapter implements LocalFileShareAdapter {
+  const SystemLocalFileShareAdapter();
+
+  @override
+  Future<LocalFileShareResult> share(LocalExportFile file) async {
+    if (Platform.isAndroid || Platform.isIOS) {
+      try {
+        await Share.shareXFiles([
+          XFile.fromData(
+            Uint8List.fromList(file.bytes),
+            name: file.fileName,
+            mimeType: file.mimeType,
+          ),
+        ]);
+        return const LocalFileShareResult.shared();
+      } on Object {
+        return const LocalFileShareResult.failed();
+      }
+    }
+    if (!Platform.isMacOS && !Platform.isWindows && !Platform.isLinux) {
+      return const LocalFileShareResult.unavailable();
+    }
+    try {
+      final dir = await getApplicationDocumentsDirectory();
+      final output = File('${dir.path}/${file.fileName}');
+      await output.writeAsBytes(file.bytes);
+      return LocalFileShareResult.shared(savedPath: output.path);
+    } on Object {
+      return const LocalFileShareResult.failed();
+    }
+  }
+}
+
+@Deprecated('Use SystemLocalFileShareAdapter instead.')
+typedef DesktopLocalFileShareAdapter = SystemLocalFileShareAdapter;
 
 LocalCsvFile buildCycleAndCareCsv(CycleAndCareSummary summary) {
   final rows = <List<String>>[
     [
       'section',
       'date',
+      'recorded_at',
       'cycle_day',
       'item',
       'severity_score',
-      'pain_rating',
-      'pain_locations',
       'functional_impact',
       'care_outcome',
       'provenance',
@@ -58,9 +119,8 @@ LocalCsvFile buildCycleAndCareCsv(CycleAndCareSummary summary) {
       'Report',
       summary.range.label,
       '',
+      '',
       'Cycle and Care Summary',
-      '',
-      '',
       '',
       '',
       '',
@@ -73,9 +133,8 @@ LocalCsvFile buildCycleAndCareCsv(CycleAndCareSummary summary) {
       'Report',
       summary.range.label,
       '',
+      '',
       'Privacy boundary',
-      '',
-      '',
       '',
       '',
       '',
@@ -84,14 +143,13 @@ LocalCsvFile buildCycleAndCareCsv(CycleAndCareSummary summary) {
       CycleAndCareSummary.exclusionDisclosure,
       '',
     ],
-    for (final day in summary.periodDays)
+    for (final range in observedPeriodRanges(summary.periodDays))
       [
-        'Observed period day',
-        summaryDateLabel(day.date),
-        '',
-        'Period day',
+        'Observed period',
+        '${summaryDateLabel(range.start)} to ${summaryDateLabel(range.end)}',
         '',
         '',
+        'Observed period dates (${range.dayCount} days)',
         '',
         '',
         '',
@@ -105,9 +163,8 @@ LocalCsvFile buildCycleAndCareCsv(CycleAndCareSummary summary) {
         'Prediction range',
         '${summaryDateLabel(prediction.start)} to ${summaryDateLabel(prediction.end)}',
         '',
+        '',
         'Cycle prediction range',
-        '',
-        '',
         '',
         '',
         '',
@@ -120,11 +177,10 @@ LocalCsvFile buildCycleAndCareCsv(CycleAndCareSummary summary) {
       [
         'Confirmed health record',
         summaryDateLabel(row.date),
+        summaryDateTimeLabel(row.recordedAt),
         row.cycleDay?.toString() ?? 'Not available',
         row.symptom.label,
         '${row.severity.score}/6',
-        row.painRating?.toString() ?? 'Not recorded',
-        _labels(row.painLocations.map((item) => item.label)),
         _labels(row.functionalImpacts.map((item) => item.label)),
         '',
         row.provenance.label,
@@ -136,10 +192,9 @@ LocalCsvFile buildCycleAndCareCsv(CycleAndCareSummary summary) {
       [
         'Care event',
         summaryDateLabel(row.date),
+        '',
         row.cycleDay?.toString() ?? 'Not available',
         row.actionLabel,
-        '',
-        '',
         '',
         '',
         _outcomeLabel(row.outcome),
@@ -153,9 +208,8 @@ LocalCsvFile buildCycleAndCareCsv(CycleAndCareSummary summary) {
         'User-selected note',
         summaryDateLabel(note.date),
         '',
+        '',
         note.label,
-        '',
-        '',
         '',
         '',
         '',
@@ -165,7 +219,7 @@ LocalCsvFile buildCycleAndCareCsv(CycleAndCareSummary summary) {
         '',
       ],
     for (final missing in summary.missingness)
-      ['Missingness', '', '', '', '', '', '', '', '', '', '', '', missing],
+      ['Missingness', '', '', '', '', '', '', '', '', '', '', missing],
   ];
   final text = '${rows.map(_encodeCsvRow).join('\r\n')}\r\n';
   return LocalCsvFile(

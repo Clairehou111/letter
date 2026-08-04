@@ -7,15 +7,18 @@ final class InMemoryCareMemoryRepository implements CareMemoryRepository {
   InMemoryCareMemoryRepository({
     Iterable<CareRecord> records = const [],
     Iterable<CareReflection> reflections = const [],
+    Iterable<CycleReflection> cycleReflections = const [],
     DateTime Function()? clock,
     String Function()? idGenerator,
   }) : _records = [...records],
        _reflections = [...reflections],
+       _cycleReflections = [...cycleReflections],
        _clock = clock ?? DateTime.now,
        _idGenerator = idGenerator ?? _randomId;
 
   final List<CareRecord> _records;
   final List<CareReflection> _reflections;
+  final List<CycleReflection> _cycleReflections;
   final DateTime Function() _clock;
   final String Function() _idGenerator;
 
@@ -116,6 +119,62 @@ final class InMemoryCareMemoryRepository implements CareMemoryRepository {
       throw const CareMemoryException(CareMemoryFailure.notFound);
     }
     _reflections.removeAt(index);
+  }
+
+  @override
+  Future<List<CycleReflection>> getCycleReflections() async {
+    return [
+      ..._cycleReflections,
+    ]..sort((left, right) => right.cycleStartDay.compareTo(left.cycleStartDay));
+  }
+
+  @override
+  Future<CycleReflection?> getCycleReflection(int cycleStartDay) async {
+    return _cycleReflections
+        .where((item) => item.cycleStartDay == cycleStartDay)
+        .firstOrNull;
+  }
+
+  @override
+  Future<CycleReflection> saveCycleReflection(
+    int cycleStartDay,
+    CycleReflectionDraft draft,
+  ) async {
+    final valid = validateCycleReflection(draft);
+    final now = _clock().toUtc();
+    final existingIndex = _cycleReflections.indexWhere(
+      (item) => item.cycleStartDay == cycleStartDay,
+    );
+    final existing = existingIndex == -1
+        ? null
+        : _cycleReflections[existingIndex];
+    final reflection = CycleReflection(
+      id: existing?.id ?? _idGenerator(),
+      cycleStartDay: cycleStartDay,
+      observation: valid.observation,
+      need: valid.need,
+      whatHelped: valid.whatHelped,
+      futureSelfNote: valid.futureSelfNote,
+      createdAt: existing?.createdAt ?? now,
+      updatedAt: now,
+    );
+    if (existingIndex == -1) {
+      _cycleReflections.add(reflection);
+    } else {
+      _cycleReflections[existingIndex] = reflection;
+    }
+    return reflection;
+  }
+
+  @override
+  Future<void> deleteCycleReflection(String reflectionId) async {
+    final index = _cycleReflections.indexWhere(
+      (item) => item.id == reflectionId,
+    );
+    if (index == -1) {
+      throw const CareMemoryException(CareMemoryFailure.notFound);
+    }
+    _cycleReflections.removeAt(index);
   }
 
   @override

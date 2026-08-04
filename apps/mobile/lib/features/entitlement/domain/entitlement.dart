@@ -29,7 +29,6 @@ enum LetterCapability {
   localDataDelete,
 
   // Premium (REQ-002).
-  careKitMemory,
   futureSelfNotes,
   prepareSurface,
   personalPatterns,
@@ -44,7 +43,6 @@ bool isPremiumCapability(LetterCapability capability) {
     LetterCapability.cyclePrediction ||
     LetterCapability.localBackupExport ||
     LetterCapability.localDataDelete => false,
-    LetterCapability.careKitMemory ||
     LetterCapability.futureSelfNotes ||
     LetterCapability.prepareSurface ||
     LetterCapability.personalPatterns ||

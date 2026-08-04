@@ -138,6 +138,14 @@ abstract final class CyclePredictionEngine {
         ? filteredIntervals
         : rawIntervals;
 
+    // Guard: if filtered intervals exist but fell below minimum, the data is
+    // too unreliable for a prediction. Falling back to raw intervals risks
+    // predicting a cycle below the 21-day clinical minimum.
+    if (filteredIntervals.length < minimumIntervals &&
+        filteredIntervals.length < rawIntervals.length) {
+      return null;
+    }
+
     final sortedIntervals = [...intervals]..sort();
     final median = _roundedMedian(sortedIntervals);
     final minimum = sortedIntervals.first;

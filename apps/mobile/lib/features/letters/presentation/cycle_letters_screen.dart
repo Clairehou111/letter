@@ -42,11 +42,13 @@ class CycleLetterDisplay {
     required this.checkBackCounts,
     required this.notRecorded,
     this.letterNumber,
+    this.cycleStartDay,
     this.reflection,
   });
 
   final String id;
   final int? letterNumber;
+  final int? cycleStartDay;
   final String dateRange;
   final List<String> recordedPeriodDates;
   final List<CycleLetterCareMomentDisplay> careMoments;
@@ -96,10 +98,18 @@ class CycleLetterReflectionDisplay {
   const CycleLetterReflectionDisplay({
     required this.id,
     required this.dateLabel,
+    this.observation,
+    this.needLabel,
+    this.whatHelped,
+    this.futureSelfNote,
   });
 
   final String id;
   final String dateLabel;
+  final String? observation;
+  final String? needLabel;
+  final String? whatHelped;
+  final String? futureSelfNote;
 }
 
 @immutable
@@ -126,8 +136,7 @@ class CycleLettersScreen extends StatelessWidget {
     this.onRetry,
     this.onLetterOpen,
     this.onLetterClose,
-    this.onReflectionOpen,
-    this.onCareRecordReflect,
+    this.onCycleReflectionOpen,
     this.onOpenArchiveViews,
     this.onOpenPersonalPatterns,
   });
@@ -138,8 +147,7 @@ class CycleLettersScreen extends StatelessWidget {
   final VoidCallback? onRetry;
   final ValueChanged<String>? onLetterOpen;
   final VoidCallback? onLetterClose;
-  final ValueChanged<String>? onReflectionOpen;
-  final ValueChanged<String>? onCareRecordReflect;
+  final ValueChanged<int>? onCycleReflectionOpen;
   final VoidCallback? onOpenArchiveViews;
   final VoidCallback? onOpenPersonalPatterns;
 
@@ -187,8 +195,7 @@ class CycleLettersScreen extends StatelessWidget {
                     : _CycleLetterDetail(
                         letter: selectedLetter,
                         onBack: onLetterClose,
-                        onReflectionOpen: onReflectionOpen,
-                        onCareRecordReflect: onCareRecordReflect,
+                        onCycleReflectionOpen: onCycleReflectionOpen,
                       ),
             },
           ),
@@ -678,14 +685,12 @@ class _CycleLetterDetail extends StatelessWidget {
   const _CycleLetterDetail({
     required this.letter,
     required this.onBack,
-    required this.onReflectionOpen,
-    required this.onCareRecordReflect,
+    required this.onCycleReflectionOpen,
   });
 
   final CycleLetterDisplay letter;
   final VoidCallback? onBack;
-  final ValueChanged<String>? onReflectionOpen;
-  final ValueChanged<String>? onCareRecordReflect;
+  final ValueChanged<int>? onCycleReflectionOpen;
 
   @override
   Widget build(BuildContext context) {
@@ -764,7 +769,7 @@ class _CycleLetterDetail extends StatelessWidget {
                       title: 'Care moments',
                       child: _CareMoments(
                         letter: letter,
-                        onReflect: onCareRecordReflect,
+                        onCycleReflect: onCycleReflectionOpen,
                       ),
                     ),
                     _DetailSection(
@@ -865,78 +870,22 @@ class _CycleTiming extends StatelessWidget {
 }
 
 class _CareMoments extends StatelessWidget {
-  const _CareMoments({required this.letter, required this.onReflect});
+  const _CareMoments({required this.letter, required this.onCycleReflect});
 
   final CycleLetterDisplay letter;
-  final ValueChanged<String>? onReflect;
+  final ValueChanged<int>? onCycleReflect;
 
   @override
   Widget build(BuildContext context) {
-    if (letter.careMoments.isEmpty) {
-      return const Text(
-        'No Care moments are recorded for this cycle.',
-        style: TextStyle(color: LetterColors.muted, height: 1.4),
-      );
-    }
-
     final counts = letter.checkBackCounts;
+    final grouped = <String, List<CycleLetterCareMomentDisplay>>{};
+    for (final moment in letter.careMoments) {
+      grouped.putIfAbsent(moment.actionLabel, () => []).add(moment);
+    }
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        for (final moment in letter.careMoments)
-          Padding(
-            padding: const EdgeInsets.only(bottom: LetterSpacing.sm),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                _EvidenceLine(
-                  label: moment.dateLabel,
-                  value: [
-                    moment.actionLabel,
-                    ?moment.checkBackLabel,
-                  ].join('  •  '),
-                ),
-                if (moment.reflectionPreview case final preview?) ...[
-                  const SizedBox(height: LetterSpacing.xs),
-                  Container(
-                    width: double.infinity,
-                    padding: const EdgeInsets.all(LetterSpacing.sm),
-                    decoration: const BoxDecoration(
-                      color: LetterColors.tealSoft,
-                      border: Border(
-                        left: BorderSide(color: LetterColors.teal, width: 3),
-                      ),
-                    ),
-                    child: Text(
-                      preview,
-                      key: Key('cycle-letter-reflection-preview-${moment.id}'),
-                      style: const TextStyle(height: 1.4),
-                    ),
-                  ),
-                ],
-                if (moment.id case final id?) ...[
-                  const SizedBox(height: LetterSpacing.xs),
-                  OutlinedButton.icon(
-                    key: Key('cycle-letter-reflect-$id'),
-                    onPressed: onReflect == null ? null : () => onReflect!(id),
-                    icon: Icon(
-                      moment.reflectionId == null
-                          ? Icons.edit_note_outlined
-                          : Icons.edit_outlined,
-                      size: 19,
-                    ),
-                    label: Text(
-                      moment.reflectionId == null
-                          ? 'Reflect'
-                          : 'Edit reflection',
-                    ),
-                  ),
-                ],
-              ],
-            ),
-          ),
         if (counts.total > 0) ...[
-          const SizedBox(height: LetterSpacing.xs),
           Wrap(
             spacing: LetterSpacing.xs,
             runSpacing: LetterSpacing.xs,
@@ -951,7 +900,191 @@ class _CareMoments extends StatelessWidget {
             'No Better, Same, or Worse check-backs are recorded.',
             style: TextStyle(color: LetterColors.muted, height: 1.4),
           ),
+        const SizedBox(height: LetterSpacing.md),
+        if (grouped.isEmpty)
+          const Text(
+            'No Care moments are recorded for this cycle.',
+            style: TextStyle(color: LetterColors.muted, height: 1.4),
+          )
+        else
+          for (final entry in grouped.entries)
+            _CareMomentGroup(actionLabel: entry.key, moments: entry.value),
+        if (letter.reflection case final reflection?) ...[
+          const SizedBox(height: LetterSpacing.md),
+          _CycleReflectionCard(reflection: reflection),
+        ],
+        if (letter.cycleStartDay case final cycleStartDay?) ...[
+          const SizedBox(height: LetterSpacing.md),
+          OutlinedButton.icon(
+            key: const Key('cycle-letter-cycle-reflection'),
+            onPressed: onCycleReflect == null
+                ? null
+                : () => onCycleReflect!(cycleStartDay),
+            icon: Icon(
+              letter.reflection == null
+                  ? Icons.edit_note_outlined
+                  : Icons.edit_outlined,
+            ),
+            label: Text(
+              letter.reflection == null
+                  ? 'Reflect on this cycle'
+                  : 'Edit cycle reflection',
+            ),
+          ),
+        ],
       ],
+    );
+  }
+}
+
+class _CareMomentGroup extends StatelessWidget {
+  const _CareMomentGroup({required this.actionLabel, required this.moments});
+
+  final String actionLabel;
+  final List<CycleLetterCareMomentDisplay> moments;
+
+  @override
+  Widget build(BuildContext context) {
+    final better = moments
+        .where((item) => item.checkBackLabel == 'Better')
+        .length;
+    final same = moments.where((item) => item.checkBackLabel == 'Same').length;
+    final worse = moments
+        .where((item) => item.checkBackLabel == 'Worse')
+        .length;
+    final outcomeParts = [
+      if (better > 0) '$better better',
+      if (same > 0) '$same same',
+      if (worse > 0) '$worse worse',
+    ];
+    final noteCount = moments
+        .where((item) => item.reflectionPreview != null)
+        .length;
+    return Container(
+      key: Key('cycle-letter-care-group-${actionLabel.hashCode}'),
+      margin: const EdgeInsets.only(bottom: LetterSpacing.sm),
+      decoration: BoxDecoration(
+        color: LetterColors.surface,
+        border: Border.all(color: LetterColors.line),
+        borderRadius: BorderRadius.circular(LetterRadius.panel),
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: ExpansionTile(
+          tilePadding: const EdgeInsets.symmetric(horizontal: LetterSpacing.md),
+          childrenPadding: const EdgeInsets.fromLTRB(
+            LetterSpacing.md,
+            0,
+            LetterSpacing.md,
+            LetterSpacing.md,
+          ),
+          title: Text(
+            actionLabel,
+            style: const TextStyle(fontWeight: FontWeight.w800),
+          ),
+          subtitle: Text(
+            [
+              'Used ${moments.length} ${moments.length == 1 ? 'time' : 'times'}',
+              if (outcomeParts.isNotEmpty) outcomeParts.join(' · '),
+              if (noteCount > 0)
+                '$noteCount saved ${noteCount == 1 ? 'Care note' : 'Care notes'}',
+            ].join('  •  '),
+            style: const TextStyle(color: LetterColors.muted, fontSize: 12),
+          ),
+          children: [
+            for (final moment in moments) ...[
+              _EvidenceLine(
+                label: moment.dateLabel,
+                value: moment.checkBackLabel ?? 'No check-back recorded',
+              ),
+              if (moment.reflectionPreview case final preview?)
+                Container(
+                  width: double.infinity,
+                  margin: const EdgeInsets.only(
+                    top: LetterSpacing.xs,
+                    bottom: LetterSpacing.sm,
+                  ),
+                  padding: const EdgeInsets.all(LetterSpacing.sm),
+                  decoration: const BoxDecoration(
+                    color: LetterColors.tealSoft,
+                    border: Border(
+                      left: BorderSide(color: LetterColors.teal, width: 3),
+                    ),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        'Saved Care note',
+                        style: TextStyle(
+                          color: LetterColors.tealDark,
+                          fontSize: 12,
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
+                      const SizedBox(height: LetterSpacing.xxs),
+                      Text(preview, style: const TextStyle(height: 1.4)),
+                    ],
+                  ),
+                )
+              else
+                const SizedBox(height: LetterSpacing.sm),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _CycleReflectionCard extends StatelessWidget {
+  const _CycleReflectionCard({required this.reflection});
+
+  final CycleLetterReflectionDisplay reflection;
+
+  @override
+  Widget build(BuildContext context) {
+    final rows = <(String, String)>[
+      if (reflection.observation case final value?) ('What stood out', value),
+      if (reflection.needLabel case final value?) ('What you needed', value),
+      if (reflection.whatHelped case final value?) ('What helped', value),
+      if (reflection.futureSelfNote case final value?) ('For next time', value),
+    ];
+    return Container(
+      key: const Key('cycle-letter-cycle-reflection-card'),
+      width: double.infinity,
+      padding: const EdgeInsets.all(LetterSpacing.md),
+      decoration: const BoxDecoration(
+        color: LetterColors.violetSoft,
+        border: Border(left: BorderSide(color: LetterColors.violet, width: 4)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            'Your cycle reflection',
+            style: TextStyle(fontWeight: FontWeight.w800),
+          ),
+          const SizedBox(height: LetterSpacing.xxs),
+          Text(
+            'Updated ${reflection.dateLabel}',
+            style: const TextStyle(color: LetterColors.muted, fontSize: 12),
+          ),
+          for (final row in rows) ...[
+            const SizedBox(height: LetterSpacing.sm),
+            Text(
+              row.$1,
+              style: const TextStyle(
+                color: LetterColors.violet,
+                fontSize: 12,
+                fontWeight: FontWeight.w800,
+              ),
+            ),
+            const SizedBox(height: LetterSpacing.xxs),
+            Text(row.$2, style: const TextStyle(height: 1.4)),
+          ],
+        ],
+      ),
     );
   }
 }

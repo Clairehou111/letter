@@ -100,3 +100,44 @@ final class CareReflection {
   final DateTime createdAt;
   final DateTime updatedAt;
 }
+
+/// One editable, user-authored reflection for a recorded cycle.
+///
+/// `cycleStartDay` is the cycle's stable local epoch-day key. Keeping this
+/// separate from a Care record prevents a repeated reflection form for every
+/// individual Care outcome.
+final class CycleReflection {
+  const CycleReflection({
+    required this.id,
+    required this.cycleStartDay,
+    required this.observation,
+    required this.need,
+    required this.whatHelped,
+    required this.futureSelfNote,
+    required this.createdAt,
+    required this.updatedAt,
+  });
+
+  final String id;
+  final int cycleStartDay;
+  final String? observation;
+  final ReflectionNeed? need;
+  final String? whatHelped;
+  final String? futureSelfNote;
+  final DateTime createdAt;
+  final DateTime updatedAt;
+}
+
+final class CycleReflectionDraft {
+  const CycleReflectionDraft({
+    this.observation,
+    this.need,
+    this.whatHelped,
+    this.futureSelfNote,
+  });
+
+  final String? observation;
+  final ReflectionNeed? need;
+  final String? whatHelped;
+  final String? futureSelfNote;
+}

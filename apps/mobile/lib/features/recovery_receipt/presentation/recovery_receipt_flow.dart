@@ -396,6 +396,8 @@ class _RecoveryReceiptFlowState extends State<RecoveryReceiptFlow> {
     final suggestion = _suggestedSymptom;
     final signals = _showAllSignals
         ? SymptomType.values
+              .where((symptom) => symptom.availableForNewRecords)
+              .toList()
         : RecoveryReceiptSignal.values
               .where((signal) => signal.symptom != null)
               .map((signal) => signal.symptom!)
@@ -549,7 +551,9 @@ class _RecoveryReceiptFlowState extends State<RecoveryReceiptFlow> {
   Widget _physicalBody() {
     final options = SymptomType.values.where(
       (symptom) =>
-          symptom.category == SymptomCategory.physical && symptom != _symptom,
+          symptom.availableForNewRecords &&
+          symptom.category == SymptomCategory.physical &&
+          symptom != _symptom,
     );
     return Wrap(
       spacing: LetterSpacing.xs,

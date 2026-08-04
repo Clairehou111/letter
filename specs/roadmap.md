@@ -87,7 +87,8 @@ contact, recipient, send, share, or phone-isolation capability. The
 physical-pain flow now provides five low-effort comfort paths and a persistent
 medical boundary without medication guidance or treatment claims. A completed
 Care action offers one optional Better/Same/Worse check-back; only an explicit
-outcome becomes a local record, and pinning into the Care Kit is also explicit.
+outcome becomes a local record. Symptom recording remains a separate, explicit
+health record action after every Care activity.
 The Letters tab now groups completed cycles from real period starts, opens
 user-authored clearer-day reflections, and can return matching future-self
 notes only after the first acute response. No Phase 2 feature creates a

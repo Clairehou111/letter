@@ -157,6 +157,66 @@ final class DriftCareMemoryRepository implements CareMemoryRepository {
   }
 
   @override
+  Future<List<CycleReflection>> getCycleReflections() {
+    return _guardStorage(() async {
+      final query = _database.select(_database.cycleReflectionRows)
+        ..orderBy([(row) => OrderingTerm.desc(row.cycleStartDay)]);
+      return (await query.get())
+          .map(_cycleReflectionFromRow)
+          .toList(growable: false);
+    });
+  }
+
+  @override
+  Future<CycleReflection?> getCycleReflection(int cycleStartDay) {
+    return _guardStorage(() async {
+      final row =
+          await (_database.select(_database.cycleReflectionRows)
+                ..where((row) => row.cycleStartDay.equals(cycleStartDay)))
+              .getSingleOrNull();
+      return row == null ? null : _cycleReflectionFromRow(row);
+    });
+  }
+
+  @override
+  Future<CycleReflection> saveCycleReflection(
+    int cycleStartDay,
+    CycleReflectionDraft draft,
+  ) {
+    final valid = validateCycleReflection(draft);
+    return _guardStorage(() async {
+      final existing = await getCycleReflection(cycleStartDay);
+      final now = _clock().toUtc();
+      final reflection = CycleReflection(
+        id: existing?.id ?? _idGenerator(),
+        cycleStartDay: cycleStartDay,
+        observation: valid.observation,
+        need: valid.need,
+        whatHelped: valid.whatHelped,
+        futureSelfNote: valid.futureSelfNote,
+        createdAt: existing?.createdAt ?? now,
+        updatedAt: now,
+      );
+      await _database
+          .into(_database.cycleReflectionRows)
+          .insertOnConflictUpdate(_cycleReflectionCompanion(reflection));
+      return reflection;
+    });
+  }
+
+  @override
+  Future<void> deleteCycleReflection(String reflectionId) {
+    return _guardStorage(() async {
+      final deleted = await (_database.delete(
+        _database.cycleReflectionRows,
+      )..where((row) => row.id.equals(reflectionId))).go();
+      if (deleted == 0) {
+        throw const CareMemoryException(CareMemoryFailure.notFound);
+      }
+    });
+  }
+
+  @override
   Future<void> close() async {
     if (closeDatabase) {
       await _database.close();
@@ -232,6 +292,34 @@ final class DriftCareMemoryRepository implements CareMemoryRepository {
       id: reflection.id,
       careRecordId: reflection.careRecordId,
       mode: reflection.mode.name,
+      observation: Value(reflection.observation),
+      need: Value(reflection.need?.name),
+      whatHelped: Value(reflection.whatHelped),
+      futureSelfNote: Value(reflection.futureSelfNote),
+      createdAtMillis: reflection.createdAt.millisecondsSinceEpoch,
+      updatedAtMillis: reflection.updatedAt.millisecondsSinceEpoch,
+    );
+  }
+
+  static CycleReflection _cycleReflectionFromRow(CycleReflectionRow row) {
+    return CycleReflection(
+      id: row.id,
+      cycleStartDay: row.cycleStartDay,
+      observation: row.observation,
+      need: row.need == null ? null : ReflectionNeed.values.byName(row.need!),
+      whatHelped: row.whatHelped,
+      futureSelfNote: row.futureSelfNote,
+      createdAt: _date(row.createdAtMillis),
+      updatedAt: _date(row.updatedAtMillis),
+    );
+  }
+
+  static CycleReflectionRowsCompanion _cycleReflectionCompanion(
+    CycleReflection reflection,
+  ) {
+    return CycleReflectionRowsCompanion.insert(
+      id: reflection.id,
+      cycleStartDay: reflection.cycleStartDay,
       observation: Value(reflection.observation),
       need: Value(reflection.need?.name),
       whatHelped: Value(reflection.whatHelped),

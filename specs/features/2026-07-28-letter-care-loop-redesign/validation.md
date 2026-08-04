@@ -1,6 +1,6 @@
 # Letter Care Loop Redesign Validation
 
-Status: product direction approved; prototype validation pending
+Status: participatory Care prototype implemented; target-user validation pending
 
 ## Document Review
 
@@ -31,6 +31,11 @@ Status: product direction approved; prototype validation pending
 | --- | --- |
 | prospective symptom recording matters | supported by ACOG guidance |
 | aggressive venting reduces anger | rejected as a product claim; Shatter must be tested as interaction |
+| expressive writing reliably removes distress immediately | rejected; keep writing optional, brief, ephemeral, and followed by distancing |
+| emotion validation should precede reframing | supported as the default interaction order; category wording still needs user testing |
+| 1–3 minute mobile exercises can create a proximal state shift | plausible; do not generalize to treatment or lasting recovery |
+| arousal-reducing activity is safer than anger venting | supported as the anger design direction |
+| particle sound produces a therapeutic effect | unsupported; treat local sound as optional material feedback only |
 | every painkiller can use a four-hour timer | rejected; labels differ |
 | PMS reveals an objective hidden truth | unsupported; reframe as optional reflection |
 | haptics can be sold as pain treatment | unsupported; keep as optional sensory support |
@@ -43,17 +48,19 @@ Status: product direction approved; prototype validation pending
 Test with target users before deep implementation:
 
 1. Can a distressed user choose the right Care entrance in under ten seconds?
-2. Does Shatter leave users calmer, unchanged, or more activated before the
-   cooldown transition?
+2. Does the anger Living Ink field leave users calmer, unchanged, or more
+   activated before the protection handoff?
 3. Does `note from clearer me` feel supportive rather than automated or eerie?
 4. Do users understand that a need suggestion is not a diagnosis or fact?
 5. Do physical-pain users understand Care as comfort support rather than
    medical treatment?
 6. Does `Letters` communicate both personal meaning and useful health history?
-7. Which sensory modes should default on: dim theme, haptics, sound, or none?
+7. Does direct entry into motion feel simpler than choosing a sensory route,
+   while sound-off and automatic reduced motion remain understandable?
 8. Do users understand the 24-hour seal before confirming it, and do they trust
    that deletion remains available?
-9. Does each mode produce meaningful feedback after one low-effort gesture?
+9. Does each mode produce meaningful continuous feedback without feeling like
+   a tap counter or timed exercise?
 10. Can users leave the experience without completing a game or reflection?
 11. Does the physical-pain route make unusual/severe symptoms easy to escalate?
 12. Can users distinguish a candidate symptom from a confirmed report value?
@@ -64,6 +71,27 @@ Test with target users before deep implementation:
 16. Do users interpret moon imagery as decoration or as a biological claim?
 17. Does the Archive remain easy to compare across six or more cycles?
 18. Can users distinguish Story, Pattern, and Clinical views?
+19. Does category-specific validation feel accurate and seen without sounding
+    like the app claims to know why the feeling exists?
+20. Do the short supportive lines feel integrated with the motion rather than
+    like a separate reading task or generic affirmation feed?
+21. Are the lines readable as they move from blur to focus and dissolve, without
+    competing with the scene itself?
+22. Is the `More intense` route sufficiently clear about stopping rather than
+    repeating the exercise?
+
+## Prototype Implementation Checks
+
+- [x] all five Care entrances open their motion scene directly
+- [x] supportive lines surface inside motion rather than in a separate route
+- [x] scenes end automatically at 90 seconds without a timed extension screen
+- [x] Back, icon-only sound, Stay a moment, and safety remain reachable
+- [x] the immediate scene contains no user writing or persisted text
+- [x] sound is local, explicitly enabled, low-volume, and nonessential
+- [x] automatic reduced motion and headache/migraine preserve the same outcome route
+- [x] `More intense` is represented and does not loop into more novelty
+- [x] Heavy and Racing do not append duplicate legacy practical flows
+- [x] Anger, Space, and Physical retain only distinct practical handoffs
 
 ## Acceptance Gate
 

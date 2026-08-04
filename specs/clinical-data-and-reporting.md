@@ -94,6 +94,32 @@ This layer is eligible for the clinical report. Every rating stores when it was
 experienced, when it was entered, and whether it was prospective or recalled
 later.
 
+## Symptom Vocabulary Version 2
+
+The routine confirmed-rating vocabulary uses stable storage codes and
+plain-language labels. Version 2 retains all version 1 codes for existing
+records and adds the corpus-supported distinctions below:
+
+- mood: crying, hopelessness, anhedonia, mood swings, rage,
+  hypersensitivity, paranoia, social withdrawal, and impulsive urges
+- anxiety: panic attack remains distinct from general anxiety or worry
+- cognition and energy: brain fog and fatigue remain distinct from low energy
+- sleep: hypersomnia, insomnia, and sleep disruption remain distinct from
+  general sleepiness or difficulty sleeping
+- pain: pelvic pain, back pain, and joint or muscle pain remain distinct from
+  cramps and broad body aches
+- physical and autonomic: water retention, appetite change, constipation, hot
+  flashes or sweating, and palpitations
+
+The legacy `concentration` code remains readable but is not offered for new
+records; new capture uses `brainFog`.
+
+`Suicidal thoughts` and `Self-harm` are safety signals outside this symptom
+taxonomy. They do not receive the routine six-point score and are not silently
+written from a safety interruption. Selecting either opens the deterministic,
+region-aware crisis boundary immediately. Crisis resources must not depend on
+record creation, network analytics, or LLM interpretation.
+
 ## Acute Care Capture
 
 Care must not interrupt the acute scene with a symptom form.
@@ -157,9 +183,10 @@ Use the six explicit anchors:
 The UI may look like ink wells or marks on a letter, but labels and numbers
 must remain visible. Decorative interaction cannot obscure the scale.
 
-For a specific pain event, Letter may additionally collect a conventional
-user-entered 0-10 pain rating. This remains separate from a daily premenstrual
-symptom scale.
+Routine symptom capture uses one six-point intensity scale. Letter does not ask
+for a second 0-10 pain score or pain location in this flow. A conventional pain
+scale may be reconsidered only in a dedicated pain diary or clinically reviewed
+Doctor Mode where its distinct purpose is explicit.
 
 ### Screen 3: Confirm Functional Impact
 
@@ -347,9 +374,24 @@ The matrix uses actual observed values on both sides of the period boundary.
 It never mirrors luteal values into menstrual or follicular days, fills missing
 cells, or derives severity from event counts.
 
+Rows are scanability groups only; the underlying symptom code remains attached
+to every populated cell. Missing cells are blank, explicit zero ratings remain
+visible as zero markers, and populated values are averaged within cycle before
+being averaged across cycles. Cell evidence retains source record, date,
+provenance, and functional-impact context.
+
 Until the clinical review and licensing gate is complete, its title is
 `Cyclical Symptom Summary`; it does not use `DRSP`, `DRSP-compatible`, or
 validated-instrument language. Medication history remains excluded.
+
+The primary clinician handoff is a single PDF packet containing the disclosures,
+compact observed-period ranges, cyclical symptom matrix, confirmed health
+records, Care events, selected notes, missingness, provenance, and matrix
+methodology. An optional CSV sidecar contains source records only: period ranges,
+prediction ranges, confirmed health records, Care events, selected notes, and
+missingness. Derived matrix cells remain in the PDF and are not repeated in the
+CSV. The CSV is structured for analysis, not presented as an EHR interoperability
+format.
 
 ## Report B: Prospective Clinical Diary
 

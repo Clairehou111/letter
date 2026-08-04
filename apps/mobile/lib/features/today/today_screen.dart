@@ -23,6 +23,8 @@ import '../insights/presentation/gravity_horizon.dart';
 import '../insights/presentation/gravity_horizon_view_model.dart';
 import 'today_cycle_context.dart';
 
+const _healthCompactWindow = Duration(minutes: 5);
+
 enum TodayState {
   good(
     'Good',
@@ -62,6 +64,18 @@ enum TodayState {
   final IconData icon;
   final Color foreground;
   final Color background;
+
+  bool get isNegative => switch (this) {
+    TodayState.low || TodayState.irritable || TodayState.physical => true,
+    _ => false,
+  };
+
+  SymptomCategory? get defaultCategory => switch (this) {
+    TodayState.low => SymptomCategory.energy,
+    TodayState.irritable => SymptomCategory.mood,
+    TodayState.physical => SymptomCategory.physical,
+    _ => null,
+  };
 }
 
 class TodayScreen extends StatefulWidget {
@@ -92,9 +106,6 @@ class _TodayScreenState extends State<TodayScreen> {
   TodayState? selectedState;
   List<PeriodRecord> _records = const [];
   List<MomentCheckIn> _checkIns = const [];
-  List<HealthRecord> _healthRecords = const [];
-  List<CaptureNote> _notes = const [];
-  List<CareRecord> _careRecords = const [];
   bool _loading = true;
   bool _loadFailed = false;
 
@@ -119,23 +130,12 @@ class _TodayScreenState extends State<TodayScreen> {
       final checkIns =
           await widget.momentCheckInRepository?.getAll() ??
           const <MomentCheckIn>[];
-      final healthRecords =
-          await widget.healthRecordRepository?.getAll() ??
-          const <HealthRecord>[];
-      final notes =
-          await widget.captureNoteStore?.getAll() ?? const <CaptureNote>[];
-      final careRecords =
-          await widget.careMemoryRepository?.getRecords() ??
-          const <CareRecord>[];
       if (!mounted) {
         return;
       }
       setState(() {
         _records = records;
         _checkIns = checkIns;
-        _healthRecords = healthRecords;
-        _notes = notes;
-        _careRecords = careRecords;
         selectedState = _latestTodayState(checkIns, _today);
         _loading = false;
       });
@@ -156,9 +156,7 @@ class _TodayScreenState extends State<TodayScreen> {
 
   Future<void> _openHealthRecords() async {
     final repository = widget.healthRecordRepository;
-    if (repository == null) {
-      return;
-    }
+    if (repository == null) return;
     await Navigator.of(context).push(
       MaterialPageRoute<void>(
         builder: (context) => HealthRecordsScreen(
@@ -226,6 +224,11 @@ class _TodayScreenState extends State<TodayScreen> {
         selectedState = state;
         _checkIns = [checkIn, ..._checkIns];
       });
+      // Negative feelings jump directly to symptom recording.
+      if (state.isNegative) {
+        await _openHealthRecordEditor(initialCategory: state.defaultCategory);
+        return;
+      }
       final next = await showModalBottomSheet<_CheckInNextAction>(
         context: context,
         useSafeArea: true,
@@ -244,7 +247,10 @@ class _TodayScreenState extends State<TodayScreen> {
     }
   }
 
-  Future<void> _openHealthRecordEditor([HealthRecord? record]) async {
+  Future<void> _openHealthRecordEditor({
+    HealthRecord? record,
+    SymptomCategory? initialCategory,
+  }) async {
     final repository = widget.healthRecordRepository;
     if (repository == null) return;
     await Navigator.of(context).push<void>(
@@ -252,36 +258,13 @@ class _TodayScreenState extends State<TodayScreen> {
         builder: (context) => HealthRecordFormScreen(
           repository: repository,
           initialRecord: record,
+          initialCategory: initialCategory,
           now: widget.now,
         ),
       ),
     );
     if (mounted) {
       await _load(showProgress: false);
-    }
-  }
-
-  Future<void> _deleteNote(CaptureNote note) async {
-    final store = widget.captureNoteStore;
-    if (store == null) return;
-    try {
-      await store.delete(note);
-      await _load(showProgress: false);
-    } on Object {
-      if (mounted) {
-        _showActivityError('Letter could not delete this private note.');
-      }
-    }
-  }
-
-  Future<void> _deleteCheckIn(MomentCheckIn checkIn) async {
-    final repository = widget.momentCheckInRepository;
-    if (repository == null) return;
-    try {
-      await repository.delete(checkIn.id);
-      await _load(showProgress: false);
-    } on MomentCheckInException catch (error) {
-      if (mounted) _showActivityError(error.userMessage);
     }
   }
 
@@ -293,12 +276,6 @@ class _TodayScreenState extends State<TodayScreen> {
 
   CyclePrediction? get _prediction => CyclePredictionEngine.calculate(_records);
 
-  String _careOutcomeLabel(CareOutcome outcome) => switch (outcome) {
-    CareOutcome.better => 'Better',
-    CareOutcome.same => 'Same',
-    CareOutcome.worse => 'Worse',
-  };
-
   Widget _buildGravityHorizon(
     BuildContext context,
     CyclePrediction? prediction,
@@ -306,7 +283,7 @@ class _TodayScreenState extends State<TodayScreen> {
     if (prediction == null) return const SizedBox.shrink();
     final size = MediaQuery.sizeOf(context);
     final textScale = MediaQuery.textScalerOf(context).scale(1);
-    final horizonHeight = 190.0 + (math.max(1.0, textScale) - 1.0) * 100.0;
+    final horizonHeight = 190.0 + (math.max(1.0, textScale) - 1.0) * 130.0;
     final cycleContext = TodayCycleContext.fromRecords(
       records: _records,
       today: _today,
@@ -326,6 +303,8 @@ class _TodayScreenState extends State<TodayScreen> {
               cycleDay: cycleContext.dayNumber,
               availableWidth: size.width - 36,
               availableHeight: horizonHeight,
+              isPeriodInProgress:
+                  cycleContext.kind == TodayCycleKind.periodInProgress,
             ),
           ),
         ),
@@ -386,10 +365,7 @@ class _TodayScreenState extends State<TodayScreen> {
                               _buildGravityHorizon(context, prediction),
                               const SizedBox(height: LetterSpacing.lg),
                             ],
-                            // 4. Today's activity — compact recent items only
-                            _buildCompactActivity(context),
-                            const SizedBox(height: LetterSpacing.lg),
-                            // 5. Tools
+                            // 4. Tools
                             TodayCareEntry(onOpenCare: _openCare),
                             const SizedBox(height: LetterSpacing.xl),
                             if (widget.healthRecordRepository != null) ...[
@@ -408,137 +384,6 @@ class _TodayScreenState extends State<TodayScreen> {
                     ],
                   ),
           ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildCompactActivity(BuildContext context) {
-    final entries = <_TodayActivityEntry>[
-      for (final checkIn in _checkIns)
-        if (TodayActivity._isToday(checkIn.occurredAt, _today))
-          _TodayActivityEntry(
-            key: Key('today-activity-check-in-${checkIn.id}'),
-            occurredAt: checkIn.occurredAt,
-            icon: Icons.brightness_1_outlined,
-            iconColor: LetterColors.teal,
-            title: checkIn.state.label,
-            detail: 'Moment check-in · not a clinical rating',
-            onDelete: () => _deleteCheckIn(checkIn),
-          ),
-      for (final record in _healthRecords)
-        if (record.experiencedDate == _today)
-          _TodayActivityEntry(
-            key: Key('today-activity-health-${record.id}'),
-            occurredAt: record.recordedAt,
-            icon: Icons.edit_note_outlined,
-            iconColor: LetterColors.violet,
-            title: '${record.symptom.label} · ${record.severity.label}',
-            detail: '${record.severity.score}/6 · ${record.provenance.label}',
-            onTap: () => _openHealthRecordEditor(record),
-          ),
-      for (final note in _notes)
-        if (TodayActivity._isToday(note.createdAt, _today))
-          _TodayActivityEntry(
-            key: Key('today-activity-note-${note.id}'),
-            occurredAt: note.createdAt,
-            icon: Icons.notes_outlined,
-            iconColor: LetterColors.blue,
-            title: note.text,
-            detail: 'Private note · excluded from reports by default',
-            onDelete: () => _deleteNote(note),
-          ),
-      for (final record in _careRecords)
-        if (TodayActivity._isToday(record.occurredAt, _today))
-          _TodayActivityEntry(
-            key: Key('today-activity-care-${record.id}'),
-            occurredAt: record.occurredAt,
-            icon: Icons.volunteer_activism_outlined,
-            iconColor: LetterColors.coral,
-            title: record.actionLabel,
-            detail: 'Care · ${_careOutcomeLabel(record.outcome)}',
-          ),
-    ]..sort((left, right) => right.occurredAt.compareTo(left.occurredAt));
-
-    return Column(
-      key: const Key('today-activity-compact'),
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        const LetterSectionTitle(
-          eyebrow: 'Saved on this device',
-          title: "Today's activity",
-        ),
-        const SizedBox(height: LetterSpacing.sm),
-        if (entries.isEmpty)
-          Container(
-            padding: const EdgeInsets.all(LetterSpacing.md),
-            decoration: BoxDecoration(
-              color: LetterColors.surface,
-              border: Border.all(color: LetterColors.line),
-              borderRadius: BorderRadius.circular(LetterRadius.panel),
-            ),
-            child: const Text(
-              'Nothing recorded today yet.',
-              key: Key('today-activity-empty'),
-              style: TextStyle(color: LetterColors.muted),
-            ),
-          )
-        else ...[
-          for (var index = 0;
-              index < entries.length && index < 4;
-              index++) ...[
-            entries[index],
-            if (index < entries.length - 1 && index < 3)
-              const SizedBox(height: LetterSpacing.xs),
-          ],
-          if (entries.length > 4)
-            Padding(
-              padding: const EdgeInsets.only(top: LetterSpacing.sm),
-              child: TextButton(
-                key: const Key('today-view-all-activity'),
-                onPressed: () => _showFullActivity(),
-                child: Text(
-                  'view all ${entries.length} entries',
-                  style: const TextStyle(fontWeight: FontWeight.w600),
-                ),
-              ),
-            ),
-        ],
-      ],
-    );
-  }
-
-  void _showFullActivity() {
-    showModalBottomSheet<void>(
-      context: context,
-      isScrollControlled: true,
-      useSafeArea: true,
-      barrierColor: LetterColors.ink.withValues(alpha: 0.35),
-      builder: (context) => DraggableScrollableSheet(
-        initialChildSize: 0.7,
-        minChildSize: 0.3,
-        maxChildSize: 0.92,
-        expand: false,
-        builder: (context, scrollController) => ListView(
-          controller: scrollController,
-          padding: const EdgeInsets.fromLTRB(18, 12, 18, 32),
-          children: [
-            const LetterSectionTitle(
-              eyebrow: "Today's activity",
-              title: 'All entries for today',
-            ),
-            const SizedBox(height: LetterSpacing.md),
-            TodayActivity(
-              today: _today,
-              checkIns: _checkIns,
-              healthRecords: _healthRecords,
-              notes: _notes,
-              careRecords: _careRecords,
-              onEditHealthRecord: _openHealthRecordEditor,
-              onDeleteNote: _deleteNote,
-              onDeleteCheckIn: _deleteCheckIn,
-            ),
-          ],
         ),
       ),
     );
@@ -754,10 +599,7 @@ class CycleHero extends StatelessWidget {
     final textScale = MediaQuery.textScalerOf(context).scale(1);
     final prediction = cycleContext.prediction;
     final timing = prediction?.timingFor(cycleContext.today);
-    final range = prediction == null
-        ? null
-        : '${_formatContextDate(context, prediction.rangeStart)} - '
-              '${_formatContextDate(context, prediction.rangeEnd)}';
+    final rangeText = _buildRangeText(context, prediction);
     final title = switch (cycleContext.kind) {
       TodayCycleKind.noHistory => 'Start with a real cycle record.',
       TodayCycleKind.periodInProgress => 'Your period is in progress.',
@@ -782,12 +624,12 @@ class CycleHero extends StatelessWidget {
             'cycle intervals before estimating a range.',
       TodayCycleKind.betweenPeriods
           when timing == PredictionTiming.currentWindow =>
-        'Cycle day ${cycleContext.dayNumber}. Today falls within $range.',
+        'Cycle day ${cycleContext.dayNumber}. Today falls within $rangeText.',
       TodayCycleKind.betweenPeriods
           when timing == PredictionTiming.laterThanEstimate =>
-        'Cycle day ${cycleContext.dayNumber}. The recorded estimate was $range.',
+        'Cycle day ${cycleContext.dayNumber}. The recorded estimate was $rangeText.',
       TodayCycleKind.betweenPeriods =>
-        'Cycle day ${cycleContext.dayNumber}. Estimated next period: $range.',
+        'Cycle day ${cycleContext.dayNumber}. Next estimated period: $rangeText.',
     };
 
     return LayoutBuilder(
@@ -1130,22 +972,23 @@ class TodayHealthRecordEntry extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
+      key: const Key('today-health-record-entry'),
       padding: const EdgeInsets.all(LetterSpacing.md),
       decoration: BoxDecoration(
-        color: LetterColors.surface,
-        border: Border.all(color: LetterColors.line),
+        color: LetterColors.violetSoft,
+        border: Border.all(color: LetterColors.violet.withValues(alpha: 0.28)),
         borderRadius: BorderRadius.circular(LetterRadius.panel),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Row(
+          const Row(
             children: [
-              const Icon(Icons.edit_note_outlined, color: LetterColors.teal),
-              const SizedBox(width: LetterSpacing.sm),
-              const Expanded(
+              Icon(Icons.edit_note_outlined, color: LetterColors.violet),
+              SizedBox(width: LetterSpacing.sm),
+              Expanded(
                 child: Text(
-                  'Record what your body is telling you',
+                  'Log your symptoms',
                   style: TextStyle(fontWeight: FontWeight.w800),
                 ),
               ),
@@ -1153,8 +996,7 @@ class TodayHealthRecordEntry extends StatelessWidget {
           ),
           const SizedBox(height: LetterSpacing.xs),
           const Text(
-            'Choose a symptom and its intensity when you are ready. '
-            'Nothing is inferred from Care.',
+            'Track what you experienced. Everything stays private on this device.',
             style: TextStyle(color: LetterColors.muted, fontSize: 12),
           ),
           const SizedBox(height: LetterSpacing.sm),
@@ -1162,11 +1004,11 @@ class TodayHealthRecordEntry extends StatelessWidget {
             key: const Key('open-health-records'),
             onPressed: onOpenRecords,
             icon: const Icon(Icons.add),
-            label: const Text('Open health record'),
+            label: const Text('Add symptom details'),
             style: OutlinedButton.styleFrom(
-              foregroundColor: LetterColors.teal,
+              foregroundColor: LetterColors.violet,
               minimumSize: const Size.fromHeight(44),
-              side: const BorderSide(color: LetterColors.teal),
+              side: const BorderSide(color: LetterColors.violet),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(LetterRadius.control),
               ),
@@ -1241,7 +1083,7 @@ class TodayActivity extends StatelessWidget {
     required this.healthRecords,
     required this.notes,
     required this.careRecords,
-    required this.onEditHealthRecord,
+    required this.onDeleteHealthRecord,
     required this.onDeleteNote,
     required this.onDeleteCheckIn,
     super.key,
@@ -1252,12 +1094,13 @@ class TodayActivity extends StatelessWidget {
   final List<HealthRecord> healthRecords;
   final List<CaptureNote> notes;
   final List<CareRecord> careRecords;
-  final ValueChanged<HealthRecord> onEditHealthRecord;
+  final ValueChanged<HealthRecord> onDeleteHealthRecord;
   final ValueChanged<CaptureNote> onDeleteNote;
   final ValueChanged<MomentCheckIn> onDeleteCheckIn;
 
   @override
   Widget build(BuildContext context) {
+    final healthGroups = _compactHealthRecordsStatic(healthRecords, today);
     final entries = <_TodayActivityEntry>[
       for (final checkIn in checkIns)
         if (_isToday(checkIn.occurredAt, today))
@@ -1270,16 +1113,20 @@ class TodayActivity extends StatelessWidget {
             detail: 'Moment check-in · not a clinical rating',
             onDelete: () => onDeleteCheckIn(checkIn),
           ),
-      for (final record in healthRecords)
-        if (record.experiencedDate == today)
+      for (final group in healthGroups)
+        if (group.isToday)
           _TodayActivityEntry(
-            key: Key('today-activity-health-${record.id}'),
-            occurredAt: record.recordedAt,
+            key: Key('today-activity-health-grp-${group.key}'),
+            occurredAt: group.occurredAt,
             icon: Icons.edit_note_outlined,
             iconColor: LetterColors.violet,
-            title: '${record.symptom.label} · ${record.severity.label}',
-            detail: '${record.severity.score}/6 · ${record.provenance.label}',
-            onTap: () => onEditHealthRecord(record),
+            title: group.title,
+            detail: group.detail,
+            onDelete: () {
+              for (final record in group._records) {
+                onDeleteHealthRecord(record);
+              }
+            },
           ),
       for (final note in notes)
         if (_isToday(note.createdAt, today))
@@ -1340,6 +1187,89 @@ class TodayActivity extends StatelessWidget {
   static bool _isToday(DateTime value, LocalDate today) {
     return LocalDate.fromDateTime(value.toLocal()) == today;
   }
+
+  static List<_HealthRecordGroup> _compactHealthRecordsStatic(
+    List<HealthRecord> records,
+    LocalDate today,
+  ) {
+    final todayRecords =
+        records
+            .where(
+              (r) =>
+                  TodayActivity._isToday(r.recordedAt, today) ||
+                  TodayActivity._isToday(r.updatedAt, today),
+            )
+            .toList()
+          ..sort(
+            (a, b) => _healthActivityTime(a).compareTo(_healthActivityTime(b)),
+          );
+    if (todayRecords.isEmpty) return [];
+    final groups = <_HealthRecordGroup>[];
+    var current = <HealthRecord>[todayRecords.first];
+    for (var i = 1; i < todayRecords.length; i++) {
+      final prev = current.last;
+      final next = todayRecords[i];
+      if (_healthActivityTime(
+            next,
+          ).difference(_healthActivityTime(prev)).abs() <=
+          _healthCompactWindow) {
+        current.add(next);
+      } else {
+        groups.add(_HealthRecordGroup._fromRecords(current));
+        current = [next];
+      }
+    }
+    groups.add(_HealthRecordGroup._fromRecords(current));
+    return groups;
+  }
+}
+
+class _HealthRecordGroup {
+  _HealthRecordGroup._fromRecords(this._records);
+  final List<HealthRecord> _records;
+
+  String get key => _records.first.id;
+
+  DateTime get occurredAt =>
+      _records.map(_healthActivityTime).reduce((a, b) => a.isAfter(b) ? a : b);
+
+  bool get isToday => _records.isNotEmpty;
+
+  String get title {
+    final sorted = [..._records]
+      ..sort((a, b) => a.symptom.index.compareTo(b.symptom.index));
+    return sorted.map((r) => r.symptom.label).join(', ');
+  }
+
+  String get detail {
+    final count = _records.length;
+    final provenance = _records.first.provenance.label;
+    if (count == 1) {
+      final r = _records.first;
+      final experienced =
+          LocalDate.fromDateTime(r.recordedAt.toLocal()) == r.experiencedDate;
+      final when = experienced
+          ? ''
+          : ' · experienced ${r.experiencedDate.month}/${r.experiencedDate.day}';
+      final changed = r.updatedAt.isAfter(r.recordedAt)
+          ? 'Edited today'
+          : provenance;
+      return '${r.severity.label} · ${r.severity.score}/6 · $changed$when';
+    }
+    final recalled = _records.any(
+      (record) => record.provenance == HealthRecordProvenance.laterRecall,
+    );
+    final edited = _records.any(
+      (record) => record.updatedAt.isAfter(record.recordedAt),
+    );
+    return '$count symptoms · ${edited ? 'edited today' : 'logged $provenance'}${recalled ? ' · includes earlier date' : ''}';
+  }
+}
+
+DateTime _healthActivityTime(HealthRecord record) {
+  return record.updatedAt.isAfter(record.recordedAt)
+      ? record.updatedAt
+      : record.recordedAt;
 }
 
 class _TodayActivityEntry extends StatelessWidget {
@@ -1350,7 +1280,6 @@ class _TodayActivityEntry extends StatelessWidget {
     required this.title,
     required this.detail,
     super.key,
-    this.onTap,
     this.onDelete,
   });
 
@@ -1359,7 +1288,6 @@ class _TodayActivityEntry extends StatelessWidget {
   final Color iconColor;
   final String title;
   final String detail;
-  final VoidCallback? onTap;
   final VoidCallback? onDelete;
 
   @override
@@ -1374,7 +1302,6 @@ class _TodayActivityEntry extends StatelessWidget {
         borderRadius: BorderRadius.circular(LetterRadius.panel),
       ),
       child: InkWell(
-        onTap: onTap,
         borderRadius: BorderRadius.circular(LetterRadius.panel),
         child: Padding(
           padding: const EdgeInsets.fromLTRB(14, 12, 8, 12),
@@ -1415,12 +1342,6 @@ class _TodayActivityEntry extends StatelessWidget {
                   tooltip: 'Delete',
                   onPressed: onDelete,
                   icon: const Icon(Icons.delete_outline, size: 20),
-                )
-              else if (onTap != null)
-                const Icon(
-                  Icons.chevron_right,
-                  color: LetterColors.muted,
-                  size: 20,
                 ),
             ],
           ),
@@ -1608,6 +1529,19 @@ String _formatContextDate(BuildContext context, LocalDate date) {
   return MaterialLocalizations.of(
     context,
   ).formatMediumDate(date.asLocalDateTime);
+}
+
+String? _buildRangeText(BuildContext context, CyclePrediction? prediction) {
+  if (prediction == null) return null;
+  final start = _formatContextDate(context, prediction.rangeStart);
+  // For low-confidence predictions, only show the start date to avoid
+  // confusion from wide uncertainty windows (e.g. "8.1–8.11" looks like
+  // an 11-day period, when it's actually a 10-day prediction window).
+  if (prediction.confidence == PredictionConfidence.low) {
+    return 'around $start';
+  }
+  final end = _formatContextDate(context, prediction.rangeEnd);
+  return '$start – $end';
 }
 
 MomentCheckInState _momentState(TodayState state) => switch (state) {

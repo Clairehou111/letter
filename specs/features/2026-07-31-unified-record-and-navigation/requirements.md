@@ -26,6 +26,16 @@ without an intermediate action menu.
 REQ-004: Selecting Good, Steady, Energized, Low, Irritable, or Physical saves a
 timestamped local moment check-in immediately and offers Add details and Undo.
 
+REQ-004A: Add details opens a focused, repeatable two-step interaction:
+choose one symptom, confirm its explicit intensity, then add another symptom or
+continue to shared date, provenance, pain, and impact context. Choosing a
+symptom must not silently assign a default intensity.
+
+REQ-004B: Today has no separate promoted entrance for creating a symptom
+record. Confirmed symptom details are created from quick check-in or a
+user-chosen Care recovery receipt, while saved symptom activity remains
+retrievable and editable.
+
 REQ-005: Moment check-ins appear in Today's activity and the containing cycle
 Story. They are excluded from clinical severity, symptom patterns, and reports.
 
@@ -48,11 +58,28 @@ severity.
 REQ-010: Pattern counts use distinct confirmed daily symptom ratings and cannot
 be inflated by accidental duplicates.
 
+REQ-010A: Confirmed symptom capture uses vocabulary version 2 derived from the
+reviewed complaint corpus. It distinguishes commonly expressed experiences
+that the original vocabulary conflated, including crying, hopelessness,
+anhedonia, mood swings, rage, panic attacks, brain fog, fatigue, distinct sleep
+changes, distinct pain locations, appetite and digestive changes, hot flashes,
+and palpitations. Existing stored codes remain readable.
+
+REQ-010B: `Suicidal thoughts` and `Self-harm` are first-class safety signals,
+not ordinary symptoms on the six-point severity scale. Selecting either
+immediately opens the region-aware crisis boundary. Letter does not infer,
+score, save, analyze, or export that selection from this interruption.
+`Heart palpitations` is a physical safety signal rather than a routine Care
+interaction or new six-point rating; selecting it opens the physical medical
+boundary. Existing historical palpitation records remain readable.
+
 ## Letters
 
 REQ-011: Letters provides canonical `Cycles`, `Patterns`, and `Reports`
-destinations. Cycle Story places each reflection with its originating Care
-moment and exposes every reflection in that cycle.
+destinations. A cycle has at most one new editable cycle reflection. Cycle
+Story presents that reflection first, then groups repeated Care actions with
+expandable factual event detail. Reflections saved under the earlier per-Care
+model remain readable as nested Care notes under their originating actions.
 
 REQ-012: Spectrum Log is the primary Patterns visualization and uses only
 confirmed records anchored to observed cycles. It exposes coverage and
@@ -83,3 +110,4 @@ readers, reduced motion, empty states, storage failures, and 44-pixel targets.
 - diagnosis, DRSP equivalence, or medication history
 - cloud synchronization
 - automatic conversion of check-ins or Care behavior into symptom severity
+- treating a crisis signal as a routine reportable symptom rating

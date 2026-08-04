@@ -28,3 +28,12 @@ Status: completed
    - [x] Keep the next roadmap feature as a separate specification.
    - [x] Record onboarding copy and UI revision as separate future work.
    - [x] Split Care-loop implementation into independently validated features.
+
+5. Motion-Only Care Scene Revision
+   - [x] Review the latest reference implementation and motion language.
+   - [x] Remove the Touch, Words, and Still & dim route chooser.
+   - [x] Open emotional Care entrances directly into their motion scene.
+   - [x] Blend short app-authored lines into motion without user writing.
+   - [x] Preserve automatic reduced motion and a motionless headache scene.
+   - [x] Keep sound opt-in, safety interruption, and a finite outcome route.
+   - [x] Validate the revised flow with widget tests and visual baselines.

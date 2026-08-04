@@ -55,6 +55,20 @@ class CareReflectionRows extends Table {
   Set<Column<Object>> get primaryKey => {id};
 }
 
+class CycleReflectionRows extends Table {
+  TextColumn get id => text()();
+  IntColumn get cycleStartDay => integer().unique()();
+  TextColumn get observation => text().nullable()();
+  TextColumn get need => text().nullable()();
+  TextColumn get whatHelped => text().nullable()();
+  TextColumn get futureSelfNote => text().nullable()();
+  IntColumn get createdAtMillis => integer()();
+  IntColumn get updatedAtMillis => integer()();
+
+  @override
+  Set<Column<Object>> get primaryKey => {id};
+}
+
 class HealthRecordRows extends Table {
   TextColumn get id => text()();
   TextColumn get symptom => text()();
@@ -103,6 +117,7 @@ class MomentCheckInRows extends Table {
     ImpulseDraftRows,
     CareRecordRows,
     CareReflectionRows,
+    CycleReflectionRows,
     HealthRecordRows,
     CaptureNoteRows,
     MomentCheckInRows,
@@ -112,7 +127,7 @@ class LetterHealthDatabase extends _$LetterHealthDatabase {
   LetterHealthDatabase(super.executor);
 
   @override
-  int get schemaVersion => 6;
+  int get schemaVersion => 7;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -132,6 +147,9 @@ class LetterHealthDatabase extends _$LetterHealthDatabase {
       }
       if (from < 6) {
         await migrator.createTable(momentCheckInRows);
+      }
+      if (from < 7) {
+        await migrator.createTable(cycleReflectionRows);
       }
     },
   );

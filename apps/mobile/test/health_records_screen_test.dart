@@ -68,7 +68,7 @@ void main() {
     }
 
     expect(find.text('Cramps'), findsOneWidget);
-    expect(find.textContaining('Pain 7/10'), findsOneWidget);
+    expect(find.textContaining('Pain 7/10'), findsNothing);
     expect(find.textContaining('Later recall'), findsOneWidget);
 
     await tester.tap(find.byKey(const Key('health-record-menu-health-001')));
@@ -81,7 +81,122 @@ void main() {
     expect(find.text('Nothing recorded yet.'), findsOneWidget);
   });
 
-  testWidgets('form exposes explicit severity, pain, impact, and provenance', (
+  testWidgets('symptom choice requires an explicit intensity', (tester) async {
+    final repository = InMemoryHealthRecordRepository();
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: LetterTheme.light,
+        home: HealthRecordFormScreen(
+          repository: repository,
+          now: () => DateTime(2026, 7, 28),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('Add symptom details'), findsOneWidget);
+    expect(find.text('What are you noticing?'), findsOneWidget);
+    expect(find.text('Choose a symptom'), findsOneWidget);
+
+    await tester.tap(find.byKey(const Key('symptom-cramps')));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Cramps'), findsWidgets);
+    expect(find.text('Not at all'), findsOneWidget);
+    expect(find.text('Extreme'), findsOneWidget);
+    final confirm = tester.widget<FilledButton>(
+      find.widgetWithText(FilledButton, 'Add symptom'),
+    );
+    expect(confirm.onPressed, isNull);
+
+    await tester.tap(find.byKey(const Key('severity-extreme')));
+    await tester.pump();
+    await tester.tap(find.byKey(const Key('confirm-symptom-intensity')));
+    await tester.pumpAndSettle();
+
+    expect(find.text('6 · Extreme'), findsOneWidget);
+    expect(find.text('Continue with 1'), findsOneWidget);
+    expect(await repository.getAll(), isEmpty);
+  });
+
+  testWidgets('multi-symptom flow saves separate confirmed records', (
+    tester,
+  ) async {
+    final repository = InMemoryHealthRecordRepository();
+    final navigatorObserver = _TestNavigatorObserver();
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: LetterTheme.light,
+        navigatorObservers: [navigatorObserver],
+        home: HealthRecordFormScreen(
+          repository: repository,
+          now: () => DateTime(2026, 7, 28),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byKey(const Key('symptom-cramps')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('severity-extreme')));
+    await tester.pump();
+    await tester.tap(find.byKey(const Key('confirm-symptom-intensity')));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byKey(const Key('symptom-headache')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('severity-mild')));
+    await tester.pump();
+    await tester.tap(find.byKey(const Key('confirm-symptom-intensity')));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Continue with 2'), findsOneWidget);
+    await tester.tap(find.byKey(const Key('health-record-save')));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Add context'), findsOneWidget);
+    expect(find.text('Same day'), findsOneWidget);
+    expect(find.text('Save 2 symptoms'), findsOneWidget);
+
+    final impact = tester.widget<FilterChip>(
+      find.byKey(const Key('functional-impact-workOrSchool')),
+    );
+    impact.onSelected!(true);
+    final save = tester.widget<FilledButton>(
+      find.byKey(const Key('health-record-save')),
+    );
+    save.onPressed!();
+    await tester.pumpAndSettle();
+
+    expect(navigatorObserver.popped, isTrue);
+    final records = await repository.getAll();
+    expect(records, hasLength(2));
+    expect(
+      records.map((record) => record.symptom),
+      containsAll([SymptomType.cramps, SymptomType.headache]),
+    );
+    expect(
+      records
+          .firstWhere((record) => record.symptom == SymptomType.cramps)
+          .severity,
+      SymptomSeverity.extreme,
+    );
+    expect(
+      records
+          .firstWhere((record) => record.symptom == SymptomType.headache)
+          .severity,
+      SymptomSeverity.mild,
+    );
+    expect(
+      records.every(
+        (record) =>
+            record.functionalImpacts.contains(FunctionalImpact.workOrSchool),
+      ),
+      isTrue,
+    );
+  });
+
+  testWidgets('choosing a previous experienced date selects later recall', (
     tester,
   ) async {
     final repository = InMemoryHealthRecordRepository();
@@ -96,29 +211,134 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    expect(find.text("what's happening?"), findsOneWidget);
-
-    // Select cramps symptom.
-    await tester.tap(find.text('Cramps'));
+    await tester.tap(find.byKey(const Key('symptom-cramps')));
     await tester.pumpAndSettle();
-
-    // Intensity section appears.
-    expect(find.text('intensity'), findsOneWidget);
-    // Severity pills show.
-    expect(find.text('1'), findsOneWidget);
-    expect(find.text('6'), findsOneWidget);
-
-    // Tap extreme severity.
-    await tester.tap(find.text('6'));
+    await tester.tap(find.byKey(const Key('severity-moderate')));
+    await tester.pump();
+    await tester.tap(find.byKey(const Key('confirm-symptom-intensity')));
     await tester.pumpAndSettle();
-    expect(find.text('Extreme'), findsOneWidget);
-
-    // Expand 'when?' section.
-    await tester.tap(find.text('when?'));
+    await tester.tap(find.byKey(const Key('health-record-save')));
     await tester.pumpAndSettle();
-    expect(find.text('Same day'), findsOneWidget);
-
-    // Save button is visible with symptom count.
-    expect(find.text('save 1 symptom'), findsOneWidget);
+    await tester.tap(find.byKey(const Key('health-record-date')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.bySemanticsLabel(RegExp('July 27')));
+    await tester.tap(find.text('OK'));
+    await tester.pumpAndSettle();
+    expect(find.text('Later recall'), findsOneWidget);
   });
+
+  testWidgets('mood directory exposes corpus terms and crisis interruption', (
+    tester,
+  ) async {
+    final repository = InMemoryHealthRecordRepository();
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: LetterTheme.light,
+        home: HealthRecordFormScreen(
+          repository: repository,
+          now: () => DateTime(2026, 7, 28),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Mood'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Crying'), findsOneWidget);
+    expect(find.text('Rage'), findsOneWidget);
+    expect(find.text('Brain fog'), findsNothing);
+    expect(find.text('Suicidal thoughts'), findsOneWidget);
+    expect(find.text('Self-harm'), findsOneWidget);
+
+    await tester.tap(find.byKey(const Key('safety-signal-suicidalThoughts')));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Immediate safety comes first.'), findsOneWidget);
+    expect(
+      find.textContaining('Letter cannot provide emergency help'),
+      findsOneWidget,
+    );
+    expect(await repository.getAll(), isEmpty);
+  });
+
+  testWidgets('palpitations route to physical safety before routine capture', (
+    tester,
+  ) async {
+    final repository = InMemoryHealthRecordRepository();
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: LetterTheme.light,
+        home: HealthRecordFormScreen(
+          repository: repository,
+          now: () => DateTime(2026, 7, 28),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.byKey(const Key('symptom-palpitations')), findsNothing);
+
+    await tester.scrollUntilVisible(
+      find.byKey(const Key('safety-signal-palpitations')),
+      180,
+      scrollable: find.byType(Scrollable).first,
+    );
+    await tester.drag(find.byType(ListView), const Offset(0, -260));
+    await tester.pump();
+    expect(find.byKey(const Key('safety-signal-palpitations')), findsOneWidget);
+    await tester.tap(find.byKey(const Key('safety-signal-palpitations')));
+    await tester.pumpAndSettle();
+
+    expect(
+      find.text('This needs medical attention, not more interaction.'),
+      findsOneWidget,
+    );
+    expect(await repository.getAll(), isEmpty);
+  });
+
+  testWidgets('form remains usable at 320px with 200 percent text', (
+    tester,
+  ) async {
+    tester.view.devicePixelRatio = 1;
+    tester.view.physicalSize = const Size(320, 700);
+    addTearDown(tester.view.reset);
+    final repository = InMemoryHealthRecordRepository();
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: LetterTheme.light,
+        home: MediaQuery(
+          data: const MediaQueryData(
+            size: Size(320, 700),
+            textScaler: TextScaler.linear(2),
+          ),
+          child: HealthRecordFormScreen(
+            repository: repository,
+            now: () => DateTime(2026, 7, 28),
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(tester.takeException(), isNull);
+    await tester.scrollUntilVisible(
+      find.byKey(const Key('symptom-cramps')),
+      180,
+      scrollable: find.byType(Scrollable).first,
+    );
+    await tester.tap(find.byKey(const Key('symptom-cramps')));
+    await tester.pumpAndSettle();
+    expect(find.byKey(const Key('severity-notAtAll')), findsOneWidget);
+    expect(find.byKey(const Key('confirm-symptom-intensity')), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+}
+
+class _TestNavigatorObserver extends NavigatorObserver {
+  bool popped = false;
+  @override
+  void didPop(Route<dynamic> route, Route<dynamic>? previousRoute) {
+    popped = true;
+  }
 }

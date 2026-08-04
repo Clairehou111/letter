@@ -50,7 +50,7 @@ everyone away` now closes one symbolic curtain around a protected cocoon, then
 offers either immediate rest or an optional session-only boundary card. Copying
 is explicit and discloses the device clipboard boundary; Letter never reads
 contacts, chooses a recipient, sends, shares, silences other apps, or persists
-the text. `My body hurts` now offers five symptom-appropriate, low-effort
+the text. `My body needs care` now offers five symptom-appropriate, low-effort
 comfort paths with an always-available medical boundary and no medication
 guidance or treatment claim.
 
@@ -135,4 +135,3 @@ python3 tools/validate.py
 
 Native simulator and emulator checks require complete Xcode, CocoaPods, and
 Android SDK installations.
-

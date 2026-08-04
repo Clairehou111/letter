@@ -1,6 +1,6 @@
 import '../../cycle/domain/local_date.dart';
 
-const healthRecordVocabularyVersion = 1;
+const healthRecordVocabularyVersion = 2;
 
 enum SymptomCategory { physical, mood, energy, sleep }
 
@@ -11,18 +11,65 @@ enum SymptomType {
   bloating('Bloating', SymptomCategory.physical),
   nausea('Nausea', SymptomCategory.physical),
   bodyAches('Body aches', SymptomCategory.physical),
-  lowMood('Low mood', SymptomCategory.mood),
+  lowMood('Depressed mood', SymptomCategory.mood),
   irritability('Irritability', SymptomCategory.mood),
-  anxiety('Anxiety', SymptomCategory.mood),
-  concentration('Difficulty concentrating', SymptomCategory.mood),
+  anxiety('Anxiety or worry', SymptomCategory.mood),
+  concentration(
+    'Difficulty concentrating',
+    SymptomCategory.mood,
+    availableForNewRecords: false,
+  ),
   lowEnergy('Low energy', SymptomCategory.energy),
   sleepDifficulty('Difficulty sleeping', SymptomCategory.sleep),
-  sleepiness('Sleepiness', SymptomCategory.sleep);
+  sleepiness('Sleepiness', SymptomCategory.sleep),
+  crying('Crying', SymptomCategory.mood),
+  hopelessness('Hopelessness or despair', SymptomCategory.mood),
+  anhedonia('Loss of interest or pleasure', SymptomCategory.mood),
+  moodSwings('Mood swings', SymptomCategory.mood),
+  rage('Rage', SymptomCategory.mood),
+  panicAttack('Panic attack', SymptomCategory.mood),
+  hypersensitivity('Feeling unusually sensitive', SymptomCategory.mood),
+  paranoia('Suspicious or paranoid thoughts', SymptomCategory.mood),
+  socialWithdrawal('Social withdrawal', SymptomCategory.mood),
+  impulsiveUrges('Impulsive urges', SymptomCategory.mood),
+  brainFog('Brain fog', SymptomCategory.energy),
+  fatigue('Fatigue', SymptomCategory.energy),
+  hypersomnia('Sleeping much more', SymptomCategory.sleep),
+  insomnia('Insomnia', SymptomCategory.sleep),
+  sleepDisruption('Broken or disrupted sleep', SymptomCategory.sleep),
+  pelvicPain('Pelvic pain', SymptomCategory.physical),
+  backPain('Back pain', SymptomCategory.physical),
+  jointMusclePain('Joint or muscle pain', SymptomCategory.physical),
+  waterRetention('Water retention', SymptomCategory.physical),
+  appetiteChange('Appetite change or cravings', SymptomCategory.physical),
+  constipation('Constipation', SymptomCategory.physical),
+  hotFlashes('Hot flashes or sweating', SymptomCategory.physical),
+  palpitations(
+    'Heart palpitations',
+    SymptomCategory.physical,
+    availableForNewRecords: false,
+  );
 
-  const SymptomType(this.label, this.category);
+  const SymptomType(
+    this.label,
+    this.category, {
+    this.availableForNewRecords = true,
+  });
 
   final String label;
   final SymptomCategory category;
+  final bool availableForNewRecords;
+}
+
+enum SafetySignal {
+  suicidalThoughts('Suicidal thoughts'),
+  selfHarm('Self-harm'),
+  palpitations('Heart palpitations', physical: true);
+
+  const SafetySignal(this.label, {this.physical = false});
+
+  final String label;
+  final bool physical;
 }
 
 enum SymptomSeverity {

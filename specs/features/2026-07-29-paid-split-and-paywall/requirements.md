@@ -32,8 +32,8 @@ REQ-001: Free forever, regardless of entitlement state:
 
 REQ-002: Premium (requires active subscription or intro month):
 
-- personal memory: Care Kit accumulation and history, check-back history,
-  future-self notes, ranked comfort actions
+- personal memory: check-back history, future-self notes, and ranked comfort
+  actions
 - Today prepare surface and personal danger-window estimate
 - personal patterns and cross-cycle Letters archive detail
 - any future reports

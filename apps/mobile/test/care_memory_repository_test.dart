@@ -68,6 +68,33 @@ void main() {
     expect(await repository.getReflections(), isEmpty);
   });
 
+  test('saves, edits, and deletes one reflection per cycle', () async {
+    var id = 0;
+    final repository = InMemoryCareMemoryRepository(
+      clock: () => createdAt,
+      idGenerator: () => 'cycle-reflection-${id++}',
+    );
+
+    final reflection = await repository.saveCycleReflection(
+      20662,
+      const CycleReflectionDraft(
+        observation: 'The middle of the cycle felt harder.',
+        need: ReflectionNeed.restOrPhysicalCapacity,
+      ),
+    );
+    final edited = await repository.saveCycleReflection(
+      20662,
+      const CycleReflectionDraft(whatHelped: 'A quieter evening.'),
+    );
+
+    expect(edited.id, reflection.id);
+    expect(edited.whatHelped, 'A quieter evening.');
+    expect((await repository.getCycleReflections()), hasLength(1));
+
+    await repository.deleteCycleReflection(edited.id);
+    expect(await repository.getCycleReflections(), isEmpty);
+  });
+
   test('rejects invalid actions, empty reflections, and oversized text', () {
     final repository = InMemoryCareMemoryRepository(
       clock: () => createdAt,
@@ -101,6 +128,17 @@ void main() {
         );
         await repository.saveReflection(record.id, const CareReflectionDraft());
       },
+      throwsA(
+        isA<CareMemoryException>().having(
+          (error) => error.failure,
+          'failure',
+          CareMemoryFailure.emptyReflection,
+        ),
+      ),
+    );
+
+    expect(
+      () => repository.saveCycleReflection(20662, const CycleReflectionDraft()),
       throwsA(
         isA<CareMemoryException>().having(
           (error) => error.failure,

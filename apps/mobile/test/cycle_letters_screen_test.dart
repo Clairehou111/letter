@@ -5,6 +5,7 @@ import 'package:letter_mobile/features/letters/presentation/cycle_letters_screen
 
 const completedLetter = CycleLetterDisplay(
   id: 'cycle-june',
+  cycleStartDay: 20616,
   letterNumber: 1,
   dateRange: 'Jun 12 - Jul 9, 2026',
   recordedPeriodDates: ['Jun 12', 'Jun 13', 'Jun 14', 'Jun 15'],
@@ -25,14 +26,19 @@ const completedLetter = CycleLetterDisplay(
   ],
   checkBackCounts: CycleLetterCheckBackCounts(better: 1, same: 1),
   reflection: CycleLetterReflectionDisplay(
-    id: 'reflection-june',
+    id: 'cycle-reflection-june',
     dateLabel: 'Jul 11',
+    observation: 'I needed a quieter pace.',
+    needLabel: 'Rest or physical capacity',
+    whatHelped: 'Quiet helped.',
+    futureSelfNote: 'Try it earlier next time.',
   ),
   notRecorded: ['No check-back was recorded for one Care moment.'],
 );
 
 const secondCompletedLetter = CycleLetterDisplay(
   id: 'cycle-july',
+  cycleStartDay: 20644,
   letterNumber: 2,
   dateRange: 'Jul 10 - Aug 6, 2026',
   recordedPeriodDates: ['Jul 10', 'Jul 11', 'Jul 12'],
@@ -43,6 +49,7 @@ const secondCompletedLetter = CycleLetterDisplay(
 
 const currentCycle = CycleLetterDisplay(
   id: 'cycle-current',
+  cycleStartDay: 20672,
   dateRange: 'Aug 7 - present',
   recordedPeriodDates: ['Aug 7', 'Aug 8'],
   careMoments: [
@@ -80,8 +87,7 @@ Future<void> pumpArchive(
   VoidCallback? onRetry,
   ValueChanged<String>? onLetterOpen,
   VoidCallback? onLetterClose,
-  ValueChanged<String>? onReflectionOpen,
-  ValueChanged<String>? onCareRecordReflect,
+  ValueChanged<int>? onCycleReflectionOpen,
   VoidCallback? onOpenArchiveViews,
   VoidCallback? onOpenPersonalPatterns,
 }) async {
@@ -106,8 +112,7 @@ Future<void> pumpArchive(
           onRetry: onRetry,
           onLetterOpen: onLetterOpen,
           onLetterClose: onLetterClose,
-          onReflectionOpen: onReflectionOpen,
-          onCareRecordReflect: onCareRecordReflect,
+          onCycleReflectionOpen: onCycleReflectionOpen,
           onOpenArchiveViews: onOpenArchiveViews,
           onOpenPersonalPatterns: onOpenPersonalPatterns,
         ),
@@ -257,9 +262,7 @@ void main() {
     expect(selectedNavigation, 1);
   });
 
-  testWidgets('detail keeps reflections attached to their Care moments', (
-    tester,
-  ) async {
+  testWidgets('groups Care moments and nests older Care notes', (tester) async {
     await pumpArchive(tester, selectedLetterId: completedLetter.id);
 
     expect(find.text('COMPLETED CYCLE'), findsOneWidget);
@@ -279,10 +282,17 @@ void main() {
     expect(find.text('Worse 0'), findsOneWidget);
 
     expect(
-      find.byKey(const Key('cycle-letter-reflection-preview-care-racing')),
+      find.text('Used 1 time  •  1 better  •  1 saved Care note'),
       findsOneWidget,
     );
-    expect(find.text('Edit reflection'), findsOneWidget);
+    await tester.tap(find.text('Racing thoughts'));
+    await tester.pumpAndSettle();
+    expect(find.text('Saved Care note'), findsOneWidget);
+    expect(
+      find.text('Quiet helped. Try it earlier next time.'),
+      findsOneWidget,
+    );
+    expect(find.text('Edit cycle reflection'), findsOneWidget);
 
     await scrollTo(tester, const Key('cycle-letter-section-missing'));
     expect(
@@ -292,25 +302,26 @@ void main() {
     expect(find.text('What is not recorded'), findsOneWidget);
   });
 
-  testWidgets('edits a Care moment reflection and returns through callbacks', (
-    tester,
-  ) async {
-    String? careRecordId;
-    var closes = 0;
-    await pumpArchive(
-      tester,
-      selectedLetterId: completedLetter.id,
-      onLetterClose: () => closes += 1,
-      onCareRecordReflect: (id) => careRecordId = id,
-    );
+  testWidgets(
+    'opens one reflection for the cycle and returns through callbacks',
+    (tester) async {
+      int? reflectedCycleStartDay;
+      var closes = 0;
+      await pumpArchive(
+        tester,
+        selectedLetterId: completedLetter.id,
+        onLetterClose: () => closes += 1,
+        onCycleReflectionOpen: (day) => reflectedCycleStartDay = day,
+      );
 
-    await tester.tap(find.byKey(const Key('cycle-letter-detail-back')));
-    expect(closes, 1);
+      await tester.tap(find.byKey(const Key('cycle-letter-detail-back')));
+      expect(closes, 1);
 
-    await scrollTo(tester, const Key('cycle-letter-reflect-care-racing'));
-    await tester.tap(find.byKey(const Key('cycle-letter-reflect-care-racing')));
-    expect(careRecordId, 'care-racing');
-  });
+      await scrollTo(tester, const Key('cycle-letter-cycle-reflection'));
+      await tester.tap(find.byKey(const Key('cycle-letter-cycle-reflection')));
+      expect(reflectedCycleStartDay, completedLetter.cycleStartDay);
+    },
+  );
 
   testWidgets('shows missing evidence instead of inventing content', (
     tester,

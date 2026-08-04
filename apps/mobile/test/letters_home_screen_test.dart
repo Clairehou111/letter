@@ -111,9 +111,7 @@ void main() {
     expect(find.textContaining('cause'), findsNothing);
   });
 
-  testWidgets('opens a Care record and saves a clearer-day reflection', (
-    tester,
-  ) async {
+  testWidgets('saves one reflection for the selected cycle', (tester) async {
     final occurredAt = DateTime(2026, 6, 20, 12);
     final careRecord = CareRecord(
       id: 'care-record',
@@ -165,37 +163,41 @@ void main() {
 
     await tester.tap(find.text('Letter No. 1'));
     await tester.pump();
-    await tester.tap(find.byKey(const Key('cycle-letter-reflect-care-record')));
+    await tester.scrollUntilVisible(
+      find.byKey(const Key('cycle-letter-cycle-reflection')),
+      120,
+      scrollable: find.byType(Scrollable).first,
+    );
+    await tester.drag(
+      find.byKey(const Key('cycle-letter-detail-scroll-view')),
+      const Offset(0, -100),
+    );
+    await tester.pump();
+    await tester.tap(find.byKey(const Key('cycle-letter-cycle-reflection')));
     await tester.pump();
 
-    expect(find.text('Does any part of this still feel true?'), findsOneWidget);
-    await tester.tap(find.byKey(const Key('clearer-day-question-1-continue')));
-    await tester.pump();
+    expect(find.text('What stood out this cycle?'), findsOneWidget);
+    await tester.enterText(
+      find.byKey(const Key('cycle-reflection-observation')),
+      'A slower pace helped.',
+    );
     await tester.tap(
-      find.byKey(const Key('clearer-day-need-restOrPhysicalCapacity')),
+      find.byKey(const Key('cycle-reflection-need-restOrPhysicalCapacity')),
     );
-    final secondContinue = find.byKey(
-      const Key('clearer-day-question-2-continue'),
+    await tester.scrollUntilVisible(
+      find.byKey(const Key('cycle-reflection-save')),
+      220,
+      scrollable: find.byType(Scrollable).first,
     );
-    await tester.ensureVisible(secondContinue);
+    await tester.drag(find.byType(Scrollable).first, const Offset(0, -100));
     await tester.pump();
-    await tester.tap(secondContinue);
-    await tester.pump();
-    final review = find.byKey(const Key('clearer-day-review-draft'));
-    await tester.ensureVisible(review);
-    await tester.pump();
-    await tester.tap(review);
-    await tester.pump();
-    await tester.ensureVisible(find.byKey(const Key('clearer-day-save')));
-    await tester.tap(find.byKey(const Key('clearer-day-save')));
+    await tester.tap(find.byKey(const Key('cycle-reflection-save')));
     await tester.pumpAndSettle();
 
-    final reflection = (await careRepository.getReflections()).single;
-    expect(reflection.careRecordId, careRecord.id);
+    final reflection = (await careRepository.getCycleReflections()).single;
+    expect(reflection.cycleStartDay, const LocalDate(2026, 6, 8).epochDay);
+    expect(reflection.observation, 'A slower pace helped.');
     expect(reflection.need, ReflectionNeed.restOrPhysicalCapacity);
-
-    await tester.tap(find.byKey(const Key('clearer-day-completion-done')));
-    await tester.pump();
     expect(find.text('Letter No. 1'), findsOneWidget);
   });
 }

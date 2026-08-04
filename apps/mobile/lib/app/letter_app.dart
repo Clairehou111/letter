@@ -200,7 +200,7 @@ class _LetterAppState extends State<LetterApp> {
                 localBackupStore: _localBackupStore,
                 localBackupFilePort: _localBackupStore == null
                     ? null
-                    : const SystemLocalBackupFilePort(),
+                    : SystemLocalBackupFilePort(),
                 now: widget.now,
               ),
       ),

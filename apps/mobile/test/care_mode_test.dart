@@ -8,7 +8,7 @@ void main() {
       'I feel heavy',
       "My mind won't stop",
       'I need everyone away',
-      'My body hurts',
+      'My body needs care',
     ]);
   });
 

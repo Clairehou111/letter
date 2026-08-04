@@ -11,6 +11,8 @@ import 'package:letter_mobile/features/cycle/domain/local_date.dart';
 import 'package:letter_mobile/features/cycle/domain/period_record.dart';
 import 'package:letter_mobile/features/cycle/domain/period_repository.dart';
 import 'package:letter_mobile/features/capture/domain/capture_models.dart';
+import 'package:letter_mobile/features/health_records/data/in_memory_health_record_repository.dart';
+import 'package:letter_mobile/features/health_records/domain/health_record_repository.dart';
 import 'package:letter_mobile/features/today/today_screen.dart';
 
 PeriodRecord period({
@@ -95,6 +97,7 @@ Future<void> pumpToday(
   ValueChanged<int>? onNavigationSelected,
   CaptureNoteStore? captureNoteStore,
   MomentCheckInRepository? momentCheckInRepository,
+  HealthRecordRepository? healthRecordRepository,
   bool settle = true,
 }) async {
   tester.view.devicePixelRatio = 1;
@@ -120,6 +123,7 @@ Future<void> pumpToday(
               InMemoryMomentCheckInRepository(
                 clock: () => DateTime.utc(2026, 7, 28, 12),
               ),
+          healthRecordRepository: healthRecordRepository,
         ),
       ),
     ),
@@ -312,14 +316,19 @@ void main() {
     expect(saved.occurredAt.toLocal(), DateTime(2026, 7, 28, 12));
   });
 
-  testWidgets('physical check-in saves before optional symptom details', (
+  testWidgets('physical check-in saves then jumps directly to symptom form', (
     tester,
   ) async {
     final checkIns = InMemoryMomentCheckInRepository(
       clock: () => DateTime.utc(2026, 7, 28, 12),
       idGenerator: () => 'physical-1',
     );
-    await pumpToday(tester, momentCheckInRepository: checkIns);
+    final healthRecords = InMemoryHealthRecordRepository();
+    await pumpToday(
+      tester,
+      momentCheckInRepository: checkIns,
+      healthRecordRepository: healthRecords,
+    );
     await tester.scrollUntilVisible(
       find.byKey(const Key('state-physical')),
       240,
@@ -330,11 +339,39 @@ void main() {
     await tester.tap(find.byKey(const Key('state-physical')));
     await tester.pumpAndSettle();
 
-    expect(find.textContaining('Physical saved at'), findsOneWidget);
+    // Negative feeling → no saved sheet. Symptom form opens directly.
+    expect(find.textContaining('Physical saved at'), findsNothing);
+    // Symptom form is now visible.
     expect(find.text('Add symptom details'), findsOneWidget);
+    expect(find.text('What are you noticing?'), findsOneWidget);
+    // Check-in was still persisted.
     expect((await checkIns.getAll()).single.state, MomentCheckInState.physical);
-    expect(find.text('Mild'), findsNothing);
-    expect(find.text('Moderate'), findsNothing);
+  });
+
+  testWidgets('Today has independent symptom creation entrance', (
+    tester,
+  ) async {
+    await pumpToday(
+      tester,
+      healthRecordRepository: InMemoryHealthRecordRepository(),
+    );
+
+    await tester.fling(
+      find.byKey(const Key('today-scroll')),
+      const Offset(0, -1800),
+      1200,
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.byKey(const Key('today-health-record-entry')), findsOneWidget);
+    expect(find.byKey(const Key('open-health-records')), findsOneWidget);
+  });
+
+  testWidgets("Today does not show a redundant activity feed", (tester) async {
+    await pumpToday(tester);
+
+    expect(find.text("Today's activity"), findsNothing);
+    expect(find.byKey(const Key('today-activity-compact')), findsNothing);
   });
 
   testWidgets('does not show synthetic phase, plan, note, or Recent content', (

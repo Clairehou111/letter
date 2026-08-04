@@ -38,7 +38,7 @@ enum CareMode {
     safetyKind: CareSafetyKind.emotional,
   ),
   physical(
-    label: 'My body hurts',
+    label: 'My body needs care',
     sceneTitle: 'Make this moment quieter.',
     focalAction: 'Make the screen quieter',
     transformedLabel: 'Less input. More room.',

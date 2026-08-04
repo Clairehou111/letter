@@ -30,6 +30,39 @@ final class SummaryPeriodDay {
   final LocalDate date;
 }
 
+/// A contiguous run of observed period dates for compact display and export.
+final class SummaryObservedPeriodRange {
+  const SummaryObservedPeriodRange({required this.start, required this.end});
+
+  final LocalDate start;
+  final LocalDate end;
+
+  int get dayCount => end.epochDay - start.epochDay + 1;
+}
+
+List<SummaryObservedPeriodRange> observedPeriodRanges(
+  Iterable<SummaryPeriodDay> days,
+) {
+  final dates = days.map((day) => day.date).toList()..sort();
+  if (dates.isEmpty) return const [];
+
+  final ranges = <SummaryObservedPeriodRange>[];
+  var start = dates.first;
+  var end = start;
+  for (final date in dates.skip(1)) {
+    if (date.epochDay <= end.epochDay) continue;
+    if (date.epochDay == end.epochDay + 1) {
+      end = date;
+      continue;
+    }
+    ranges.add(SummaryObservedPeriodRange(start: start, end: end));
+    start = date;
+    end = date;
+  }
+  ranges.add(SummaryObservedPeriodRange(start: start, end: end));
+  return List.unmodifiable(ranges);
+}
+
 /// A stored prediction is kept visibly separate from observed period dates.
 final class SummaryPredictionRange {
   const SummaryPredictionRange({
@@ -78,25 +111,27 @@ final class SummaryExportInput {
 
 final class SummaryHealthRow {
   const SummaryHealthRow({
+    required this.id,
     required this.date,
+    required this.recordedAt,
+    required this.cycleStartDate,
     required this.cycleDay,
     required this.daysBeforeMenses,
     required this.symptom,
     required this.severity,
-    required this.painRating,
-    required this.painLocations,
     required this.functionalImpacts,
     required this.provenance,
     required this.sourceLabel,
   });
 
+  final String id;
   final LocalDate date;
+  final DateTime recordedAt;
+  final LocalDate? cycleStartDate;
   final int? cycleDay;
   final int? daysBeforeMenses;
   final SymptomType symptom;
   final SymptomSeverity severity;
-  final int? painRating;
-  final Set<PainLocation> painLocations;
   final Set<FunctionalImpact> functionalImpacts;
   final SummaryRecordProvenance provenance;
   final String sourceLabel;
@@ -164,7 +199,13 @@ CycleAndCareSummary buildCycleAndCareSummary({
           )
           .map(
             (record) => SummaryHealthRow(
+              id: record.id,
               date: record.experiencedDate,
+              recordedAt: record.recordedAt,
+              cycleStartDate: _cycleStartFor(
+                record.experiencedDate,
+                allPeriodDays,
+              ),
               cycleDay: _cycleDayFor(record.experiencedDate, allPeriodDays),
               daysBeforeMenses: _daysBeforeNextPeriod(
                 record.experiencedDate,
@@ -172,8 +213,6 @@ CycleAndCareSummary buildCycleAndCareSummary({
               ),
               symptom: record.symptom,
               severity: record.severity,
-              painRating: record.painRating,
-              painLocations: Set.unmodifiable(record.painLocations),
               functionalImpacts: Set.unmodifiable(record.functionalImpacts),
               provenance: record.provenance == HealthRecordProvenance.sameDay
                   ? SummaryRecordProvenance.sameDay
@@ -245,6 +284,11 @@ CycleAndCareSummary buildCycleAndCareSummary({
 }
 
 int? _cycleDayFor(LocalDate date, List<SummaryPeriodDay> periodDays) {
+  final latestStart = _cycleStartFor(date, periodDays);
+  return latestStart == null ? null : date.epochDay - latestStart.epochDay + 1;
+}
+
+LocalDate? _cycleStartFor(LocalDate date, List<SummaryPeriodDay> periodDays) {
   LocalDate? latestStart;
   LocalDate? previous;
   for (final periodDay in periodDays) {
@@ -254,7 +298,7 @@ int? _cycleDayFor(LocalDate date, List<SummaryPeriodDay> periodDays) {
     }
     previous = periodDay.date;
   }
-  return latestStart == null ? null : date.epochDay - latestStart.epochDay + 1;
+  return latestStart;
 }
 
 int? _daysBeforeNextPeriod(LocalDate date, List<SummaryPeriodDay> periodDays) {
@@ -287,5 +331,11 @@ int _compareCareRows(SummaryCareRow left, SummaryCareRow right) {
 }
 
 String summaryDateLabel(LocalDate date) => _dateLabel(date);
+
+String summaryDateTimeLabel(DateTime value) {
+  final local = value.toLocal();
+  return '${summaryDateLabel(LocalDate.fromDateTime(local))} '
+      '${local.hour.toString().padLeft(2, '0')}:${local.minute.toString().padLeft(2, '0')}';
+}
 
 String _dateLabel(LocalDate date) => '${date.month}/${date.day}/${date.year}';

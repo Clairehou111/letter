@@ -4,6 +4,8 @@ import '../../../design_system/letter_theme.dart';
 import '../../summary_export/domain/local_file_share_adapter.dart';
 import '../../summary_export/domain/summary_export_repository.dart';
 import '../../summary_export/presentation/summary_export_screen.dart';
+import '../../health_records/domain/health_record_repository.dart';
+import '../../health_records/presentation/health_records_screen.dart';
 import '../domain/archive_repository.dart';
 import '../domain/archive_summary_export_input.dart';
 import '../domain/archive_view_models.dart';
@@ -14,11 +16,13 @@ class ArchiveViewsScreen extends StatefulWidget {
   const ArchiveViewsScreen({
     required this.repository,
     super.key,
-    this.fileShareAdapter = const UnavailableLocalFileShareAdapter(),
+    this.fileShareAdapter = const SystemLocalFileShareAdapter(),
+    this.healthRecordRepository,
   });
 
   final ArchiveRepository repository;
   final LocalFileShareAdapter fileShareAdapter;
+  final HealthRecordRepository? healthRecordRepository;
 
   @override
   State<ArchiveViewsScreen> createState() => _ArchiveViewsScreenState();
@@ -93,6 +97,10 @@ class _ArchiveViewsScreenState extends State<ArchiveViewsScreen> {
                         onCreateSummary: _input == null
                             ? null
                             : () => _openSummary(_input!),
+                        onEditHealthRecords:
+                            widget.healthRecordRepository == null
+                            ? null
+                            : _openHealthRecords,
                       ),
             },
           ),
@@ -112,6 +120,30 @@ class _ArchiveViewsScreenState extends State<ArchiveViewsScreen> {
         ),
       ),
     );
+  }
+
+  Future<void> _openHealthRecords() async {
+    final repository = widget.healthRecordRepository;
+    final input = _input;
+    if (repository == null || input == null) return;
+    await Navigator.of(context).push<void>(
+      MaterialPageRoute(
+        builder: (context) => HealthRecordsScreen(repository: repository),
+      ),
+    );
+    if (!mounted) return;
+    final refreshed = await repository.getAll();
+    final updated = ArchiveInput(
+      cycles: input.cycles,
+      healthRecords: refreshed,
+      careRecords: input.careRecords,
+      reflections: input.reflections,
+      cycleReflections: input.cycleReflections,
+    );
+    setState(() {
+      _input = updated;
+      _viewModel = buildArchiveViewsViewModel(updated);
+    });
   }
 }
 
@@ -151,6 +183,7 @@ class _ArchiveList extends StatelessWidget {
           onChanged: onQueryChanged,
           decoration: const InputDecoration(
             labelText: 'Search saved cycles',
+            helperText: 'Symptom, Care action, date, or cycle number',
             prefixIcon: Icon(Icons.search),
             border: OutlineInputBorder(),
           ),
@@ -319,6 +352,7 @@ class _ArchiveDetail extends StatelessWidget {
     required this.onBack,
     required this.onTabChanged,
     this.onCreateSummary,
+    this.onEditHealthRecords,
   });
 
   final ArchiveCycleSummaryViewModel cycle;
@@ -326,6 +360,7 @@ class _ArchiveDetail extends StatelessWidget {
   final VoidCallback onBack;
   final ValueChanged<ArchiveViewTab> onTabChanged;
   final VoidCallback? onCreateSummary;
+  final VoidCallback? onEditHealthRecords;
 
   @override
   Widget build(BuildContext context) {
@@ -388,6 +423,7 @@ class _ArchiveDetail extends StatelessWidget {
             ArchiveViewTab.clinical => ArchiveClinicalView(
               viewModel: cycle.clinical,
               onCreateSummary: onCreateSummary,
+              onEditHealthRecords: onEditHealthRecords,
             ),
           },
         ),

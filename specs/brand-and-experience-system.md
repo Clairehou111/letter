@@ -357,7 +357,10 @@ Each Letter has three views:
 2. `Pattern`
 3. `Clinical`
 
-`Story` contains the user-authored narrative and Care memories.
+`Story` contains one user-authored cycle reflection followed by grouped Care
+memories. Repeated Care actions summarize first and disclose event dates,
+outcomes, and preserved older Care notes only on expansion; these elements are
+not flattened into equal-level cards.
 
 `Pattern` contains cautious trends, action history, and confidence.
 

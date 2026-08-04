@@ -4,7 +4,7 @@ import '../../archive_views/domain/archive_repository.dart';
 import '../../archive_views/presentation/archive_views_screen.dart';
 import '../../care/domain/care_memory.dart';
 import '../../care/domain/care_memory_repository.dart';
-import '../../care/presentation/clearer_day_reflection_flow.dart';
+import '../../care/presentation/cycle_reflection_flow.dart';
 import '../../cycle/domain/local_date.dart';
 import '../../cycle/domain/period_record.dart';
 import '../../cycle/domain/period_repository.dart';
@@ -38,10 +38,9 @@ class LettersHomeScreen extends StatefulWidget {
 
 class _LettersHomeScreenState extends State<LettersHomeScreen> {
   CycleLettersViewModel _viewModel = const CycleLettersViewModel.loading();
-  List<CareRecord> _records = const [];
-  List<CareReflection> _reflections = const [];
+  List<CycleReflection> _cycleReflections = const [];
   String? _selectedLetterId;
-  String? _reflectionRecordId;
+  int? _reflectionCycleStartDay;
 
   @override
   void initState() {
@@ -57,6 +56,8 @@ class _LettersHomeScreenState extends State<LettersHomeScreen> {
       final periods = await widget.periodRepository.getAll();
       final records = await widget.careMemoryRepository.getRecords();
       final reflections = await widget.careMemoryRepository.getReflections();
+      final cycleReflections = await widget.careMemoryRepository
+          .getCycleReflections();
       final archive = CycleLettersAggregator.build(
         periods: periods,
         careRecords: records,
@@ -66,9 +67,13 @@ class _LettersHomeScreenState extends State<LettersHomeScreen> {
         return;
       }
       setState(() {
-        _records = records;
-        _reflections = reflections;
-        _viewModel = _toViewModel(archive, periods, reflections);
+        _cycleReflections = cycleReflections;
+        _viewModel = _toViewModel(
+          archive,
+          periods,
+          reflections,
+          cycleReflections,
+        );
       });
     } on Object {
       if (mounted) {
@@ -77,38 +82,22 @@ class _LettersHomeScreenState extends State<LettersHomeScreen> {
     }
   }
 
-  CareRecord? get _selectedRecord {
-    final id = _reflectionRecordId;
-    if (id == null) {
-      return null;
-    }
-    return _records.where((record) => record.id == id).firstOrNull;
-  }
-
-  CareReflection? _reflectionFor(String recordId) {
-    return _reflections
-        .where((reflection) => reflection.careRecordId == recordId)
+  CycleReflection? _cycleReflectionFor(int cycleStartDay) {
+    return _cycleReflections
+        .where((reflection) => reflection.cycleStartDay == cycleStartDay)
         .firstOrNull;
   }
 
-  Future<void> _saveReflection(
-    CareRecord record,
-    ClearerDayReflectionDraft draft,
+  Future<void> _saveCycleReflection(
+    int cycleStartDay,
+    CycleReflectionDraft draft,
   ) async {
-    await widget.careMemoryRepository.saveReflection(
-      record.id,
-      CareReflectionDraft(
-        observation: draft.stillFeelsTrue,
-        need: _toDomainNeed(draft.need),
-        whatHelped: draft.whatHelped,
-        futureSelfNote: draft.futureSelfNote,
-      ),
-    );
+    await widget.careMemoryRepository.saveCycleReflection(cycleStartDay, draft);
     await _reloadSourcesWithoutClosingReflection();
   }
 
-  Future<void> _deleteReflection(CareReflection reflection) async {
-    await widget.careMemoryRepository.deleteReflection(reflection.id);
+  Future<void> _deleteCycleReflection(CycleReflection reflection) async {
+    await widget.careMemoryRepository.deleteCycleReflection(reflection.id);
     await _reloadSourcesWithoutClosingReflection();
   }
 
@@ -117,6 +106,8 @@ class _LettersHomeScreenState extends State<LettersHomeScreen> {
       final periods = await widget.periodRepository.getAll();
       final records = await widget.careMemoryRepository.getRecords();
       final reflections = await widget.careMemoryRepository.getReflections();
+      final cycleReflections = await widget.careMemoryRepository
+          .getCycleReflections();
       final healthRecords = await widget.healthRecordRepository.getAll();
       final sorted = [...periods]
         ..sort((left, right) => left.startDate.compareTo(right.startDate));
@@ -146,12 +137,14 @@ class _LettersHomeScreenState extends State<LettersHomeScreen> {
       await Navigator.of(context).push<void>(
         MaterialPageRoute(
           builder: (context) => ArchiveViewsScreen(
+            healthRecordRepository: widget.healthRecordRepository,
             repository: InMemoryArchiveRepository(
               ArchiveInput(
                 cycles: cycles,
                 healthRecords: healthRecords,
                 careRecords: records,
                 reflections: reflections,
+                cycleReflections: cycleReflections,
               ),
             ),
           ),
@@ -194,6 +187,8 @@ class _LettersHomeScreenState extends State<LettersHomeScreen> {
     final periods = await widget.periodRepository.getAll();
     final records = await widget.careMemoryRepository.getRecords();
     final reflections = await widget.careMemoryRepository.getReflections();
+    final cycleReflections = await widget.careMemoryRepository
+        .getCycleReflections();
     final archive = CycleLettersAggregator.build(
       periods: periods,
       careRecords: records,
@@ -203,38 +198,33 @@ class _LettersHomeScreenState extends State<LettersHomeScreen> {
       return;
     }
     setState(() {
-      _records = records;
-      _reflections = reflections;
-      _viewModel = _toViewModel(archive, periods, reflections);
+      _cycleReflections = cycleReflections;
+      _viewModel = _toViewModel(
+        archive,
+        periods,
+        reflections,
+        cycleReflections,
+      );
     });
   }
 
   @override
   Widget build(BuildContext context) {
-    final record = _selectedRecord;
-    if (record != null) {
-      final existing = _reflectionFor(record.id);
-      return ClearerDayReflectionFlow(
-        careRecord: ClearerDayCareRecordContext(
-          recordId: record.id,
-          modeLabel: record.mode.label,
-          actionLabel: record.actionLabel,
-          outcomeLabel: _outcomeLabel(record.outcome),
-          occurredLabel: _formatDateTime(record.occurredAt),
-        ),
-        existingReflection: existing == null
+    final cycleStartDay = _reflectionCycleStartDay;
+    if (cycleStartDay != null) {
+      final existing = _cycleReflectionFor(cycleStartDay);
+      final letter = [
+        ..._viewModel.completedLetters,
+        ?_viewModel.currentCycle,
+      ].where((item) => item.cycleStartDay == cycleStartDay).firstOrNull;
+      return CycleReflectionFlow(
+        cycleLabel: letter?.dateRange ?? 'Saved cycle',
+        existingReflection: existing,
+        onSave: (draft) => _saveCycleReflection(cycleStartDay, draft),
+        onDelete: existing == null
             ? null
-            : ClearerDayReflectionViewModel(
-                reflectionId: existing.id,
-                stillFeelsTrue: existing.observation,
-                need: _toViewNeed(existing.need),
-                whatHelped: existing.whatHelped,
-                futureSelfNote: existing.futureSelfNote,
-              ),
-        onSave: (draft) => _saveReflection(record, draft),
-        onDelete: existing == null ? null : () => _deleteReflection(existing),
-        onDiscard: () => setState(() => _reflectionRecordId = null),
-        onDone: () => setState(() => _reflectionRecordId = null),
+            : () => _deleteCycleReflection(existing),
+        onClose: () => setState(() => _reflectionCycleStartDay = null),
       );
     }
     return CycleLettersScreen(
@@ -244,16 +234,8 @@ class _LettersHomeScreenState extends State<LettersHomeScreen> {
       onRetry: _load,
       onLetterOpen: (id) => setState(() => _selectedLetterId = id),
       onLetterClose: () => setState(() => _selectedLetterId = null),
-      onReflectionOpen: (reflectionId) {
-        final reflection = _reflections
-            .where((item) => item.id == reflectionId)
-            .firstOrNull;
-        if (reflection != null) {
-          setState(() => _reflectionRecordId = reflection.careRecordId);
-        }
-      },
-      onCareRecordReflect: (recordId) {
-        setState(() => _reflectionRecordId = recordId);
+      onCycleReflectionOpen: (cycleStartDay) {
+        setState(() => _reflectionCycleStartDay = cycleStartDay);
       },
       onOpenArchiveViews: _openArchiveViews,
       onOpenPersonalPatterns: _openPersonalPatterns,
@@ -264,6 +246,7 @@ class _LettersHomeScreenState extends State<LettersHomeScreen> {
     CycleLettersArchive archive,
     List<PeriodRecord> periods,
     List<CareReflection> reflections,
+    List<CycleReflection> cycleReflections,
   ) {
     final periodsByStart = {
       for (final period in periods) period.startDate: period,
@@ -274,9 +257,15 @@ class _LettersHomeScreenState extends State<LettersHomeScreen> {
 
     CycleLetterDisplay letter(CycleLetter source) {
       final period = periodsByStart[source.startDate];
-      final reflection = source.reflections.firstOrNull;
+      final cycleReflection = cycleReflections
+          .where(
+            (reflection) =>
+                reflection.cycleStartDay == source.startDate.epochDay,
+          )
+          .firstOrNull;
       return CycleLetterDisplay(
         id: 'cycle-${source.startDate.epochDay}',
+        cycleStartDay: source.startDate.epochDay,
         letterNumber: source.number,
         dateRange: source.endDate == null
             ? '${_formatDate(source.startDate)} - In progress'
@@ -307,11 +296,17 @@ class _LettersHomeScreenState extends State<LettersHomeScreen> {
               .where((record) => record.outcome == CareOutcome.worse)
               .length,
         ),
-        reflection: reflection == null
+        reflection: cycleReflection == null
             ? null
             : CycleLetterReflectionDisplay(
-                id: reflection.id,
-                dateLabel: _formatDateTime(reflection.updatedAt),
+                id: cycleReflection.id,
+                dateLabel: _formatDateTime(cycleReflection.updatedAt),
+                observation: cycleReflection.observation,
+                needLabel: cycleReflection.need == null
+                    ? null
+                    : _needLabel(cycleReflection.need!),
+                whatHelped: cycleReflection.whatHelped,
+                futureSelfNote: cycleReflection.futureSelfNote,
               ),
         notRecorded: const [
           'Symptoms and severity',
@@ -394,29 +389,12 @@ class _LettersHomeScreenState extends State<LettersHomeScreen> {
     return parts.join(' ');
   }
 
-  static ReflectionNeed? _toDomainNeed(ClearerDayNeed? need) {
-    return switch (need) {
-      ClearerDayNeed.boundaries => ReflectionNeed.boundaries,
-      ClearerDayNeed.connection => ReflectionNeed.connection,
-      ClearerDayNeed.autonomy => ReflectionNeed.autonomy,
-      ClearerDayNeed.restOrPhysicalCapacity =>
-        ReflectionNeed.restOrPhysicalCapacity,
-      ClearerDayNeed.somethingElse => ReflectionNeed.somethingElse,
-      ClearerDayNeed.notSure => ReflectionNeed.notSure,
-      null => null,
-    };
-  }
-
-  static ClearerDayNeed? _toViewNeed(ReflectionNeed? need) {
-    return switch (need) {
-      ReflectionNeed.boundaries => ClearerDayNeed.boundaries,
-      ReflectionNeed.connection => ClearerDayNeed.connection,
-      ReflectionNeed.autonomy => ClearerDayNeed.autonomy,
-      ReflectionNeed.restOrPhysicalCapacity =>
-        ClearerDayNeed.restOrPhysicalCapacity,
-      ReflectionNeed.somethingElse => ClearerDayNeed.somethingElse,
-      ReflectionNeed.notSure => ClearerDayNeed.notSure,
-      null => null,
-    };
-  }
+  static String _needLabel(ReflectionNeed need) => switch (need) {
+    ReflectionNeed.boundaries => 'Boundaries',
+    ReflectionNeed.connection => 'Connection',
+    ReflectionNeed.autonomy => 'Autonomy',
+    ReflectionNeed.restOrPhysicalCapacity => 'Rest or physical capacity',
+    ReflectionNeed.somethingElse => 'Something else',
+    ReflectionNeed.notSure => 'Not sure',
+  };
 }

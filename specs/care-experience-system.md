@@ -1,7 +1,71 @@
 # Letter Care Experience System
 
-Status: approved product direction; usability validation pending
-Date: 2026-07-28
+Status: active product direction; usability validation pending
+Date: 2026-08-03
+
+
+
+```text
+CHOOSE THE CLOSEST STATE
+  -> ENTER ITS MOTION
+  -> PUT THE FEELING SOMEWHERE
+  -> PARTICIPATE IN A VISIBLE CHANGE
+  -> RETURN TO NOW
+  -> GONE / LESS / SAME / MORE INTENSE
+  -> LEAVE OR TAKE A DISTINCT PRACTICAL NEXT STEP
+```
+
+Shared interaction rules:
+
+- each category opens directly into an emotion-specific living field
+- the field responds continuously to touch without tap counting, while one tap
+  or automatic continuation remains sufficient
+- one short app-authored line at a time may emerge from the field, become
+  readable, and dissolve back into it; there is no writing or reading route
+- reduced-motion settings preserve the same finite ending automatically, and
+  headache/migraine uses a dim motionless physical-Care presentation
+- sound is off by default, explicitly enabled, local, material, and never a
+  reward jingle, voice, heartbeat, notification, or requirement
+- the scene ends automatically at 90 seconds, and the user may choose
+  `Stay a moment` immediately; there is no timed extension screen
+- one Back control, an icon-only sound toggle, `Stay a moment`, and deterministic
+  safety remain fixed on screen
+- no infinite loop, autoplay, random feed, streak, score, or failure state
+- selected feeling, writing, touch trail, duration, and result are ephemeral
+  and are not treated as a symptom rating or persisted Care outcome
+- an explicit Better/Same/Worse check-back remains attached only to a completed
+  practical Care action
+- reduced motion changes the presentation, not the meaning or available route;
+  headache/migraine selection forces the still presentation
+- `More intense` stops novelty and does not prompt the user to keep trying
+
+The shared Letter signature is **Living Ink Fields**: the abstract material
+responds under the finger, has momentum and depth, and settles into a changed
+relationship rather than awarding a completion. The five scenes remain
+distinct:
+
+1. anger/impulse: concentric pressure rings and a hot core implode into a seal
+2. heaviness: autonomous rain thins until one warm light remains
+3. racing thoughts: layered strands are combed into one line and period
+4. needing space: an architectural door closes on a lit, crowded corridor and
+   leaves a quiet lamp on this side
+5. physical discomfort: cramps soften as a warm knot, nausea settles like
+   water, headache stays quiet and dim, and tension rings widen into one line
+
+The old crystal-smashing scene is retired as the lead anger interaction.
+Repeated aggressive impact is not the reward. The new scene matches the
+feeling's energy briefly, then supports compression, boundary, and quiet. The
+24-hour private draft remains an optional consequence-protection tool after
+the immediate experience; it is not presented as the thing that removes the
+feeling.
+
+Generic legacy Care actions must not follow every scene. Heavy and racing
+thoughts end after the shared scene because their old follow-up repeated the
+same purpose. Practical support appears only when it changes the job:
+
+- anger: protect a consequential decision with the impulse buffer
+- needing space: prepare a bounded boundary message
+- physical discomfort: choose a symptom-specific familiar comfort
 
 ## Product Objective
 
@@ -100,14 +164,14 @@ User-facing choices describe experience instead of diagnosis:
 2. `I feel heavy`
 3. `My mind won't stop`
 4. `I need everyone away`
-5. `My body hurts`
+5. `My body needs care`
 
 Each choice has a visible text label and a supporting icon. Entrance order is
 stable and identical for every user. The product never infers, ranks,
 reorders, preselects, or opens a mode automatically from cycle timing,
 history, or other behavior.
 
-## Mode 1: Shatter And Seal
+## Mode 1: Press Into A Seal
 
 State: rage, volatile energy, or a strong impulse to send, post, quit, buy, or
 end something.
@@ -120,11 +184,13 @@ HIGH ENERGY -> SUDDEN SILENCE -> TIME BETWEEN FEELING AND ACTION
 
 ### Immediate Scene
 
-- one abstract crystal fills most of the screen
-- taps create local cracks with optional glass sound and haptics
-- the object responds on every tap; controls do not shake
-- the sequence ends at 20 seconds or 20 taps, whichever comes first
-- skip and urgent-safety controls remain available
+- jagged abstract ink marks fill a near-black field
+- the first touch visibly gathers nearby marks toward one point
+- a broad swipe may enrich the compression, but one tap can complete it
+- the marks lock into a dense seal and all motion stops
+- the sequence has no target, breakable object, score, rapid-tap requirement,
+  sound dependency, or escalating aggressive feedback
+- Back, Leave, and urgent-safety controls remain fixed and available
 
 ### Transition
 
@@ -133,7 +199,7 @@ quiet surface.
 
 Suggested copy:
 
-> Done. The glass took the hit. Your life doesn't have to.
+> The force has a boundary. Nothing outside this screen had to carry it.
 
 > Don't send it. Don't post it. Don't quit tonight.
 
@@ -148,8 +214,8 @@ While sealed, Letter prevents read, copy, share, and export inside the app. The
 unopened envelope can always be deleted. After 24 hours the user chooses open,
 keep sealed, delete, rewrite, or convert to a future-self note.
 
-The Shatter scene is an expressive interaction, not a claim that aggressive
-catharsis reduces anger.
+The seal scene is an expressive interaction and impulse interruption, not a
+claim that it treats anger.
 
 ## Mode 2: A Light For Me
 
@@ -196,7 +262,7 @@ end at a specific time.
 Offer three large choices:
 
 - `Stay with me for 2 minutes`
-- `Bring me my Care Kit`
+- `Record symptoms`
 - `Nothing else right now`
 
 `I may not be safe` remains visible and replaces the normal flow with
@@ -204,7 +270,7 @@ deterministic locale-aware support.
 
 ## Mode 3: Make It Smaller
 
-State: racing thoughts, anxiety, cognitive overload, or many simultaneous
+State: racing thoughts, anxiety, panic, cognitive overload, or many simultaneous
 demands.
 
 Desired transformation:
@@ -304,8 +370,8 @@ schedule a reminder, or record whether the boundary helped.
 
 ## Mode 5: Physical Care
 
-State: cramps, back pain, headache or migraine, nausea, breast tenderness,
-muscle or joint pain, or severe physical depletion.
+State: cramps, back pain, headache or migraine, nausea, bloating, breast
+tenderness, muscle or joint pain, or severe physical depletion.
 
 The first Care response is comfort, not a form. A visible control always allows:
 
@@ -377,16 +443,23 @@ must route to urgent medical guidance.
 Letter does not record medication history or provide medication names, doses,
 intervals, reminders, interaction advice, or medication timers.
 
+Heart palpitations are not a routine Care interaction or six-point symptom
+rating. Selecting that signal routes to the physical medical boundary, which
+explains urgent and booked-assessment warning signs. Existing historical
+palpitation records remain readable.
+
 ## Later Reflection
 
-Reflection begins only after the user chooses to reopen the event or accepts a
-later prompt.
+Reflection begins only from a Cycle Letter. It is one editable, optional
+reflection for the whole cycle, not a repeated form attached to every Care
+event. The acute Care loop never asks for reflection.
 
-Maximum questions:
+The reflection may contain:
 
-1. `Does any part of this still feel true?`
+1. `What stood out this cycle?`
 2. `What did you need, if you know?`
-3. `What helped, even a little?`
+3. `What helped across the cycle?`
+4. `What do you want to remember next time?`
 
 Need prompts:
 
@@ -397,7 +470,7 @@ Need prompts:
 - something else
 - not sure
 
-The result becomes an editable Letter card:
+The result becomes one editable Cycle Letter card:
 
 ```text
 WHAT HAPPENED
@@ -414,6 +487,13 @@ user-approved action or note
 ```
 
 AI may suggest fields, but the user approves every interpretation.
+
+Repeated Care actions are summarized by action and outcome count in a Cycle
+Letter. Dates and individual outcomes are available as expandable factual
+detail and remain in Clinical. Reflections saved under the earlier per-Care
+model are preserved as `Saved Care note` content nested beneath the related
+Care action; they are not shown as equal-level Story entries and do not create
+new per-event reflection entrances.
 
 ## Personalization
 

@@ -7,7 +7,7 @@ enum RecoveryReceiptSignal {
   irritability('Angry or irritable', SymptomType.irritability),
   lowMood('Low mood', SymptomType.lowMood),
   anxiety('Anxious or tense', SymptomType.anxiety),
-  concentration('Difficulty concentrating', SymptomType.concentration),
+  concentration('Brain fog', SymptomType.brainFog),
   cramps('Cramps', SymptomType.cramps),
   headache('Headache', SymptomType.headache),
   breastTenderness('Breast tenderness', SymptomType.breastTenderness),

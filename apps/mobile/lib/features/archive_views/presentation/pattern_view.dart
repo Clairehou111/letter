@@ -106,12 +106,6 @@ class _MetricTile extends StatelessWidget {
               'Highest recorded severity: ${severity.label} (${severity.score}/6)',
             ),
           ],
-          if (metric.painDays > 0) ...[
-            const SizedBox(height: LetterSpacing.xxs),
-            Text(
-              'Pain rating recorded on ${metric.painDays} record${metric.painDays == 1 ? '' : 's'}.',
-            ),
-          ],
           const SizedBox(height: LetterSpacing.xs),
           Text(
             metric.sourceLabel,

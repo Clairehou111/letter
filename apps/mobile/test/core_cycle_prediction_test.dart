@@ -50,6 +50,34 @@ void main() {
       expect(p.confidence, PredictionConfidence.higher);
     });
 
+    test('all intervals below 21 days → returns null (no usable data)', () {
+      final p = CyclePredictionEngine.calculate([
+        _p(0), _p(19), _p(38), _p(57),
+      ]);
+      // Intervals: 19, 19, 19 — all below 21 → all filtered out.
+      // filtered < minimumIntervals AND filtered < raw → guard triggers.
+      expect(p, isNull);
+    });
+
+    test('only one valid interval after filtering → null', () {
+      final p = CyclePredictionEngine.calculate([
+        _p(0), _p(19), _p(39),
+      ]);
+      // Intervals: 19 (< 21 dropped), 20 (< 21 dropped).
+      // filtered=0, raw=2 → guard triggers → null.
+      expect(p, isNull);
+    });
+
+    test('two valid intervals survive filtering → still produces prediction', () {
+      final p = CyclePredictionEngine.calculate([
+        _p(0), _p(19), _p(41), _p(64),
+      ]);
+      // Intervals: 19 (< 21 dropped), 22 (valid), 23 (valid).
+      // filtered=2 ≥ minimumIntervals=2 → prediction produced.
+      expect(p, isNotNull);
+      expect(p!.intervalCount, 2);
+    });
+
     test('60-day missed cycle excluded', () {
       final p = CyclePredictionEngine.calculate([
         _p(0), _p(28), _p(56), _p(116), _p(144), _p(172),

@@ -30,12 +30,14 @@ final class ArchiveInput {
     required this.healthRecords,
     required this.careRecords,
     required this.reflections,
+    this.cycleReflections = const [],
   });
 
   final List<ArchiveCycleInput> cycles;
   final List<HealthRecord> healthRecords;
   final List<CareRecord> careRecords;
   final List<CareReflection> reflections;
+  final List<CycleReflection> cycleReflections;
 }
 
 abstract interface class ArchiveRepository {

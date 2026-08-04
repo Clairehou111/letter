@@ -7,12 +7,11 @@ import 'package:letter_mobile/features/care/presentation/care_checkback_flow.dar
 Future<void> pumpCheckBack(
   WidgetTester tester, {
   CareOutcome? recordedOutcome,
-  bool isPinned = false,
   bool isBusy = false,
   bool hasError = false,
   ValueChanged<CareOutcome>? onOutcome,
   VoidCallback? onSkip,
-  VoidCallback? onKeepInKit,
+  VoidCallback? onRecordSymptoms,
   VoidCallback? onDone,
   VoidCallback? onRetry,
   Size size = const Size(390, 844),
@@ -35,12 +34,11 @@ Future<void> pumpCheckBack(
         ),
         child: CareCheckBackFlow(
           recordedOutcome: recordedOutcome,
-          isPinned: isPinned,
           isBusy: isBusy,
           hasError: hasError,
           onOutcome: onOutcome ?? (_) {},
           onSkip: onSkip ?? () {},
-          onKeepInKit: onKeepInKit ?? () {},
+          onRecordSymptoms: onRecordSymptoms ?? () {},
           onDone: onDone ?? () {},
           onRetry: onRetry,
         ),
@@ -57,7 +55,7 @@ void expectMinimumTarget(WidgetTester tester, String key) {
 }
 
 void main() {
-  testWidgets('asks the approved single question with exactly four choices', (
+  testWidgets('asks one question with outcomes and symptom recording', (
     tester,
   ) async {
     await pumpCheckBack(tester);
@@ -66,8 +64,8 @@ void main() {
     expect(find.text('Better'), findsOneWidget);
     expect(find.text('Same'), findsOneWidget);
     expect(find.text('Worse'), findsOneWidget);
+    expect(find.text('Record symptoms'), findsOneWidget);
     expect(find.text('Skip'), findsOneWidget);
-    expect(find.byKey(const Key('care-checkback-keep')), findsNothing);
     expect(find.byKey(const Key('care-checkback-done')), findsNothing);
   });
 
@@ -102,43 +100,29 @@ void main() {
     expect(outcomes, isEmpty);
   });
 
-  testWidgets('preserves Worse exactly and offers explicit pinning', (
-    tester,
-  ) async {
-    var keeps = 0;
+  testWidgets('preserves Worse and offers symptom recording', (tester) async {
+    var symptomRecords = 0;
     var dones = 0;
     await pumpCheckBack(
       tester,
       recordedOutcome: CareOutcome.worse,
-      onKeepInKit: () => keeps += 1,
+      onRecordSymptoms: () => symptomRecords += 1,
       onDone: () => dones += 1,
     );
 
     expect(find.text('Recorded as Worse.'), findsOneWidget);
     expect(find.textContaining('progress'), findsNothing);
-    expect(find.byKey(const Key('care-checkback-keep')), findsOneWidget);
-    expect(find.text('Not now'), findsOneWidget);
+    expect(
+      find.byKey(const Key('care-checkback-record-symptoms')),
+      findsOneWidget,
+    );
+    expect(find.text('Done'), findsOneWidget);
 
-    await tester.tap(find.byKey(const Key('care-checkback-keep')));
+    await tester.tap(find.byKey(const Key('care-checkback-record-symptoms')));
     await tester.tap(find.byKey(const Key('care-checkback-done')));
     await tester.pump();
-    expect(keeps, 1);
+    expect(symptomRecords, 1);
     expect(dones, 1);
-  });
-
-  testWidgets('shows an already pinned state without another pin action', (
-    tester,
-  ) async {
-    await pumpCheckBack(
-      tester,
-      recordedOutcome: CareOutcome.same,
-      isPinned: true,
-    );
-
-    expect(find.text('Recorded as Same.'), findsOneWidget);
-    expect(find.text('This action is in your Care Kit.'), findsOneWidget);
-    expect(find.byKey(const Key('care-checkback-keep')), findsNothing);
-    expect(find.text('Done'), findsOneWidget);
   });
 
   testWidgets('busy state disables every state-changing action', (
@@ -157,6 +141,7 @@ void main() {
       'care-checkback-better',
       'care-checkback-same',
       'care-checkback-worse',
+      'care-checkback-record-symptoms',
     ]) {
       final button = tester.widget<OutlinedButton>(find.byKey(Key(key)));
       expect(button.onPressed, isNull);
@@ -212,7 +197,7 @@ void main() {
     }
 
     await pumpCheckBack(tester, recordedOutcome: CareOutcome.better);
-    expectMinimumTarget(tester, 'care-checkback-keep');
+    expectMinimumTarget(tester, 'care-checkback-record-symptoms');
     expectMinimumTarget(tester, 'care-checkback-done');
   });
 

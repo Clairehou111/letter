@@ -44,6 +44,16 @@ value must retain traceability to its underlying symptom code, scale, date, and
 provenance. Aggregation rules must be documented beside the report and must not
 turn counts into severity.
 
+The canonical implementation uses five scanability groups while retaining the
+original symptom code in each cell's evidence. A cell is nullable: a blank cell
+means no eligible observation was recorded for that relative day, while an
+explicit zero remains a reported zero. When multiple observations share a
+relative day, ratings are averaged within each observed cycle first and the
+cycle means are then averaged. This prevents a heavily logged cycle from
+outvoting a lightly logged cycle. Each populated cell exposes observation and
+cycle counts plus record id, experienced date, provenance, and functional-impact
+evidence for review.
+
 ## Header And Legend
 
 The preview and export show:
@@ -54,6 +64,7 @@ The preview and export show:
 - generated timestamp
 - days with confirmed ratings
 - missing days
+- observed-cycle and record coverage
 - provenance legend
 
 Until the clinical review gate is complete, do not use `DRSP`,

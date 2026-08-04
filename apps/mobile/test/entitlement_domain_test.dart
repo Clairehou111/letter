@@ -12,7 +12,6 @@ void main() {
     LetterCapability.localDataDelete,
   ];
   const premiumCapabilities = [
-    LetterCapability.careKitMemory,
     LetterCapability.futureSelfNotes,
     LetterCapability.prepareSurface,
     LetterCapability.personalPatterns,
@@ -94,7 +93,7 @@ void main() {
       repo.debugSet(const EntitlementState(status: EntitlementStatus.lapsed));
       expect(repo.current.canUse(LetterCapability.acuteCareFlows), isTrue);
       expect(repo.current.canUse(LetterCapability.localBackupExport), isTrue);
-      expect(repo.current.canUse(LetterCapability.careKitMemory), isFalse);
+      expect(repo.current.canUse(LetterCapability.personalPatterns), isFalse);
     });
   });
 }

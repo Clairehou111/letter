@@ -34,11 +34,11 @@ REQ-004: Provide five accessible Care entrances: `I want to explode`, `I feel
 heavy`, `My mind won't stop`, `I need everyone away`, and `My body hurts`.
 Icons must have visible text labels.
 
-REQ-005: Let angry/overloaded users enter an optional 20-second Shatter ritual
-followed by an immediate low-stimulation transition. Treat it as expressive
-interaction and an impulse interruption, not evidence that aggression has been
-discharged. Provide skip, reduced-motion, sensory controls, and a stable
-urgent-safety route.
+REQ-005: Let angry/overloaded users enter an immediate abstract ink-compression
+ritual followed by a low-stimulation seal. Treat it as expressive interaction
+and an impulse interruption, not evidence that aggression has been discharged.
+Do not require repeated aggressive impact. Provide a one-tap completion route,
+reduced motion, silence, and a stable urgent-safety route.
 
 REQ-006: Let users write a private no-recipient draft and explicitly seal it
 for a fixed 24-hour cooldown. During the cooldown Letter must prevent reading,
@@ -78,9 +78,10 @@ Care history, and personal letters stay on device by default.
 REQ-016: Update onboarding language and goals only after the redesigned core
 journey is accepted; do not discard the validated persistence and privacy work.
 
-REQ-017: Every acute scene must use a finite reward loop: immediate response,
-visible transformation, one protective line, one personal or practical
-hand-off, and an easy exit within 20 to 90 seconds.
+REQ-017: Every acute scene must use a finite state-shift loop: validation,
+immediate response, participatory visible change, a return to the present, and
+an easy exit. The scene ends automatically at 90 seconds, while the user may
+choose `Stay a moment` at any time to open the normal check-in directly.
 
 REQ-018: Do not optimize Care for time spent, cards consumed, or repeated
 distress entry. Exclude infinite feeds, streaks, coins, leaderboards, failure
@@ -90,6 +91,51 @@ REQ-019: Match interaction energy to the state: energetic then quiet for rage,
 near-zero effort for heavy/low, chaos-to-order for racing thoughts,
 outside-to-closed for social overload, and low-stimulation plus practical
 handoff for physical pain.
+
+REQ-031: Selecting one of the five Care entrances must open its full-screen
+motion scene immediately. Do not add a feeling picker or a `Touch`, `Words`,
+or `Still & dim` route selector. Physical Care may ask one short context
+question only because cramps/back pain, nausea/bloating, headache/migraine,
+and general tension require materially different visual behavior.
+
+REQ-032: Ask `Gone for now`, `Less intense`, `About the same`, or `More
+intense` only as an ephemeral navigation check after the experience. Do not
+store this as clinical severity or conflate it with the persisted
+Better/Same/Worse result for a completed practical Care action.
+
+REQ-033: Keep Back, Leave, and deterministic emotional/medical safety routing
+reachable at every Care Break phase, including small screens, large text, and
+reduced-motion use.
+
+REQ-034: Do not ask the user to write during the immediate scene. Short,
+app-authored supportive lines may surface only inside the motion at meaningful
+turning points. Show one line at a time; bring it from blur into focus, hold it
+briefly, then dissolve it back into the scene. It must never appear as a card,
+feed, modal, or separate reading route.
+
+REQ-035: Every motion scene must continuously respond to gesture position and
+movement when the user participates, while also providing a one-tap or
+automatic completion path. Do not use a tap counter, score, failure condition,
+target, or repeated aggressive impact.
+
+REQ-036: Do not expose `Still & dim` as a Care route. Reduced-motion settings
+must automatically preserve the scene's meaning without spatial animation,
+sound, haptics, typing, or a continuous hold. Headache/migraine must
+automatically use a dim, motionless physical-Care presentation.
+
+REQ-037: Optional Care sound is off by default and begins only after explicit
+opt-in. It must be local, abstract, low-volume, and nonessential. Do not use
+voices, heartbeats, reward jingles, notification-like tones, or user-derived
+audio.
+
+REQ-038: If the user reports `More intense`, stop additional novelty and offer
+exit, safety, or a genuinely distinct practical protection. Do not tell the
+user to repeat the same scene until it works.
+
+REQ-039: Do not append a universal legacy practical flow. Heavy and racing
+thoughts end after the shared state-shift. Anger, needing space, and physical
+discomfort may offer distinct consequence-protection, boundary, or familiar-
+comfort handoffs.
 
 REQ-020: Keep observed Care events, unconfirmed symptom candidates, and
 user-confirmed clinical ratings as separate data layers. Never map interaction

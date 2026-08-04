@@ -56,6 +56,17 @@ abstract interface class CareMemoryRepository {
 
   Future<void> deleteReflection(String reflectionId);
 
+  Future<List<CycleReflection>> getCycleReflections();
+
+  Future<CycleReflection?> getCycleReflection(int cycleStartDay);
+
+  Future<CycleReflection> saveCycleReflection(
+    int cycleStartDay,
+    CycleReflectionDraft draft,
+  );
+
+  Future<void> deleteCycleReflection(String reflectionId);
+
   Future<void> close();
 }
 
@@ -101,4 +112,21 @@ CareReflectionDraft validateCareReflection(CareReflectionDraft draft) {
     throw const CareMemoryException(CareMemoryFailure.emptyReflection);
   }
   return normalized;
+}
+
+CycleReflectionDraft validateCycleReflection(CycleReflectionDraft draft) {
+  final valid = validateCareReflection(
+    CareReflectionDraft(
+      observation: draft.observation,
+      need: draft.need,
+      whatHelped: draft.whatHelped,
+      futureSelfNote: draft.futureSelfNote,
+    ),
+  );
+  return CycleReflectionDraft(
+    observation: valid.observation,
+    need: valid.need,
+    whatHelped: valid.whatHelped,
+    futureSelfNote: valid.futureSelfNote,
+  );
 }

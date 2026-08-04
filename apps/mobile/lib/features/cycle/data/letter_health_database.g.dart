@@ -1983,6 +1983,549 @@ class CareReflectionRowsCompanion extends UpdateCompanion<CareReflectionRow> {
   }
 }
 
+class $CycleReflectionRowsTable extends CycleReflectionRows
+    with TableInfo<$CycleReflectionRowsTable, CycleReflectionRow> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $CycleReflectionRowsTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<String> id = GeneratedColumn<String>(
+    'id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _cycleStartDayMeta = const VerificationMeta(
+    'cycleStartDay',
+  );
+  @override
+  late final GeneratedColumn<int> cycleStartDay = GeneratedColumn<int>(
+    'cycle_start_day',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+    defaultConstraints: GeneratedColumn.constraintIsAlways('UNIQUE'),
+  );
+  static const VerificationMeta _observationMeta = const VerificationMeta(
+    'observation',
+  );
+  @override
+  late final GeneratedColumn<String> observation = GeneratedColumn<String>(
+    'observation',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _needMeta = const VerificationMeta('need');
+  @override
+  late final GeneratedColumn<String> need = GeneratedColumn<String>(
+    'need',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _whatHelpedMeta = const VerificationMeta(
+    'whatHelped',
+  );
+  @override
+  late final GeneratedColumn<String> whatHelped = GeneratedColumn<String>(
+    'what_helped',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _futureSelfNoteMeta = const VerificationMeta(
+    'futureSelfNote',
+  );
+  @override
+  late final GeneratedColumn<String> futureSelfNote = GeneratedColumn<String>(
+    'future_self_note',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _createdAtMillisMeta = const VerificationMeta(
+    'createdAtMillis',
+  );
+  @override
+  late final GeneratedColumn<int> createdAtMillis = GeneratedColumn<int>(
+    'created_at_millis',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _updatedAtMillisMeta = const VerificationMeta(
+    'updatedAtMillis',
+  );
+  @override
+  late final GeneratedColumn<int> updatedAtMillis = GeneratedColumn<int>(
+    'updated_at_millis',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    id,
+    cycleStartDay,
+    observation,
+    need,
+    whatHelped,
+    futureSelfNote,
+    createdAtMillis,
+    updatedAtMillis,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'cycle_reflection_rows';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<CycleReflectionRow> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    } else if (isInserting) {
+      context.missing(_idMeta);
+    }
+    if (data.containsKey('cycle_start_day')) {
+      context.handle(
+        _cycleStartDayMeta,
+        cycleStartDay.isAcceptableOrUnknown(
+          data['cycle_start_day']!,
+          _cycleStartDayMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_cycleStartDayMeta);
+    }
+    if (data.containsKey('observation')) {
+      context.handle(
+        _observationMeta,
+        observation.isAcceptableOrUnknown(
+          data['observation']!,
+          _observationMeta,
+        ),
+      );
+    }
+    if (data.containsKey('need')) {
+      context.handle(
+        _needMeta,
+        need.isAcceptableOrUnknown(data['need']!, _needMeta),
+      );
+    }
+    if (data.containsKey('what_helped')) {
+      context.handle(
+        _whatHelpedMeta,
+        whatHelped.isAcceptableOrUnknown(data['what_helped']!, _whatHelpedMeta),
+      );
+    }
+    if (data.containsKey('future_self_note')) {
+      context.handle(
+        _futureSelfNoteMeta,
+        futureSelfNote.isAcceptableOrUnknown(
+          data['future_self_note']!,
+          _futureSelfNoteMeta,
+        ),
+      );
+    }
+    if (data.containsKey('created_at_millis')) {
+      context.handle(
+        _createdAtMillisMeta,
+        createdAtMillis.isAcceptableOrUnknown(
+          data['created_at_millis']!,
+          _createdAtMillisMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_createdAtMillisMeta);
+    }
+    if (data.containsKey('updated_at_millis')) {
+      context.handle(
+        _updatedAtMillisMeta,
+        updatedAtMillis.isAcceptableOrUnknown(
+          data['updated_at_millis']!,
+          _updatedAtMillisMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_updatedAtMillisMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  CycleReflectionRow map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return CycleReflectionRow(
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}id'],
+      )!,
+      cycleStartDay: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}cycle_start_day'],
+      )!,
+      observation: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}observation'],
+      ),
+      need: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}need'],
+      ),
+      whatHelped: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}what_helped'],
+      ),
+      futureSelfNote: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}future_self_note'],
+      ),
+      createdAtMillis: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}created_at_millis'],
+      )!,
+      updatedAtMillis: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}updated_at_millis'],
+      )!,
+    );
+  }
+
+  @override
+  $CycleReflectionRowsTable createAlias(String alias) {
+    return $CycleReflectionRowsTable(attachedDatabase, alias);
+  }
+}
+
+class CycleReflectionRow extends DataClass
+    implements Insertable<CycleReflectionRow> {
+  final String id;
+  final int cycleStartDay;
+  final String? observation;
+  final String? need;
+  final String? whatHelped;
+  final String? futureSelfNote;
+  final int createdAtMillis;
+  final int updatedAtMillis;
+  const CycleReflectionRow({
+    required this.id,
+    required this.cycleStartDay,
+    this.observation,
+    this.need,
+    this.whatHelped,
+    this.futureSelfNote,
+    required this.createdAtMillis,
+    required this.updatedAtMillis,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<String>(id);
+    map['cycle_start_day'] = Variable<int>(cycleStartDay);
+    if (!nullToAbsent || observation != null) {
+      map['observation'] = Variable<String>(observation);
+    }
+    if (!nullToAbsent || need != null) {
+      map['need'] = Variable<String>(need);
+    }
+    if (!nullToAbsent || whatHelped != null) {
+      map['what_helped'] = Variable<String>(whatHelped);
+    }
+    if (!nullToAbsent || futureSelfNote != null) {
+      map['future_self_note'] = Variable<String>(futureSelfNote);
+    }
+    map['created_at_millis'] = Variable<int>(createdAtMillis);
+    map['updated_at_millis'] = Variable<int>(updatedAtMillis);
+    return map;
+  }
+
+  CycleReflectionRowsCompanion toCompanion(bool nullToAbsent) {
+    return CycleReflectionRowsCompanion(
+      id: Value(id),
+      cycleStartDay: Value(cycleStartDay),
+      observation: observation == null && nullToAbsent
+          ? const Value.absent()
+          : Value(observation),
+      need: need == null && nullToAbsent ? const Value.absent() : Value(need),
+      whatHelped: whatHelped == null && nullToAbsent
+          ? const Value.absent()
+          : Value(whatHelped),
+      futureSelfNote: futureSelfNote == null && nullToAbsent
+          ? const Value.absent()
+          : Value(futureSelfNote),
+      createdAtMillis: Value(createdAtMillis),
+      updatedAtMillis: Value(updatedAtMillis),
+    );
+  }
+
+  factory CycleReflectionRow.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return CycleReflectionRow(
+      id: serializer.fromJson<String>(json['id']),
+      cycleStartDay: serializer.fromJson<int>(json['cycleStartDay']),
+      observation: serializer.fromJson<String?>(json['observation']),
+      need: serializer.fromJson<String?>(json['need']),
+      whatHelped: serializer.fromJson<String?>(json['whatHelped']),
+      futureSelfNote: serializer.fromJson<String?>(json['futureSelfNote']),
+      createdAtMillis: serializer.fromJson<int>(json['createdAtMillis']),
+      updatedAtMillis: serializer.fromJson<int>(json['updatedAtMillis']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<String>(id),
+      'cycleStartDay': serializer.toJson<int>(cycleStartDay),
+      'observation': serializer.toJson<String?>(observation),
+      'need': serializer.toJson<String?>(need),
+      'whatHelped': serializer.toJson<String?>(whatHelped),
+      'futureSelfNote': serializer.toJson<String?>(futureSelfNote),
+      'createdAtMillis': serializer.toJson<int>(createdAtMillis),
+      'updatedAtMillis': serializer.toJson<int>(updatedAtMillis),
+    };
+  }
+
+  CycleReflectionRow copyWith({
+    String? id,
+    int? cycleStartDay,
+    Value<String?> observation = const Value.absent(),
+    Value<String?> need = const Value.absent(),
+    Value<String?> whatHelped = const Value.absent(),
+    Value<String?> futureSelfNote = const Value.absent(),
+    int? createdAtMillis,
+    int? updatedAtMillis,
+  }) => CycleReflectionRow(
+    id: id ?? this.id,
+    cycleStartDay: cycleStartDay ?? this.cycleStartDay,
+    observation: observation.present ? observation.value : this.observation,
+    need: need.present ? need.value : this.need,
+    whatHelped: whatHelped.present ? whatHelped.value : this.whatHelped,
+    futureSelfNote: futureSelfNote.present
+        ? futureSelfNote.value
+        : this.futureSelfNote,
+    createdAtMillis: createdAtMillis ?? this.createdAtMillis,
+    updatedAtMillis: updatedAtMillis ?? this.updatedAtMillis,
+  );
+  CycleReflectionRow copyWithCompanion(CycleReflectionRowsCompanion data) {
+    return CycleReflectionRow(
+      id: data.id.present ? data.id.value : this.id,
+      cycleStartDay: data.cycleStartDay.present
+          ? data.cycleStartDay.value
+          : this.cycleStartDay,
+      observation: data.observation.present
+          ? data.observation.value
+          : this.observation,
+      need: data.need.present ? data.need.value : this.need,
+      whatHelped: data.whatHelped.present
+          ? data.whatHelped.value
+          : this.whatHelped,
+      futureSelfNote: data.futureSelfNote.present
+          ? data.futureSelfNote.value
+          : this.futureSelfNote,
+      createdAtMillis: data.createdAtMillis.present
+          ? data.createdAtMillis.value
+          : this.createdAtMillis,
+      updatedAtMillis: data.updatedAtMillis.present
+          ? data.updatedAtMillis.value
+          : this.updatedAtMillis,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('CycleReflectionRow(')
+          ..write('id: $id, ')
+          ..write('cycleStartDay: $cycleStartDay, ')
+          ..write('observation: $observation, ')
+          ..write('need: $need, ')
+          ..write('whatHelped: $whatHelped, ')
+          ..write('futureSelfNote: $futureSelfNote, ')
+          ..write('createdAtMillis: $createdAtMillis, ')
+          ..write('updatedAtMillis: $updatedAtMillis')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(
+    id,
+    cycleStartDay,
+    observation,
+    need,
+    whatHelped,
+    futureSelfNote,
+    createdAtMillis,
+    updatedAtMillis,
+  );
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is CycleReflectionRow &&
+          other.id == this.id &&
+          other.cycleStartDay == this.cycleStartDay &&
+          other.observation == this.observation &&
+          other.need == this.need &&
+          other.whatHelped == this.whatHelped &&
+          other.futureSelfNote == this.futureSelfNote &&
+          other.createdAtMillis == this.createdAtMillis &&
+          other.updatedAtMillis == this.updatedAtMillis);
+}
+
+class CycleReflectionRowsCompanion extends UpdateCompanion<CycleReflectionRow> {
+  final Value<String> id;
+  final Value<int> cycleStartDay;
+  final Value<String?> observation;
+  final Value<String?> need;
+  final Value<String?> whatHelped;
+  final Value<String?> futureSelfNote;
+  final Value<int> createdAtMillis;
+  final Value<int> updatedAtMillis;
+  final Value<int> rowid;
+  const CycleReflectionRowsCompanion({
+    this.id = const Value.absent(),
+    this.cycleStartDay = const Value.absent(),
+    this.observation = const Value.absent(),
+    this.need = const Value.absent(),
+    this.whatHelped = const Value.absent(),
+    this.futureSelfNote = const Value.absent(),
+    this.createdAtMillis = const Value.absent(),
+    this.updatedAtMillis = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  CycleReflectionRowsCompanion.insert({
+    required String id,
+    required int cycleStartDay,
+    this.observation = const Value.absent(),
+    this.need = const Value.absent(),
+    this.whatHelped = const Value.absent(),
+    this.futureSelfNote = const Value.absent(),
+    required int createdAtMillis,
+    required int updatedAtMillis,
+    this.rowid = const Value.absent(),
+  }) : id = Value(id),
+       cycleStartDay = Value(cycleStartDay),
+       createdAtMillis = Value(createdAtMillis),
+       updatedAtMillis = Value(updatedAtMillis);
+  static Insertable<CycleReflectionRow> custom({
+    Expression<String>? id,
+    Expression<int>? cycleStartDay,
+    Expression<String>? observation,
+    Expression<String>? need,
+    Expression<String>? whatHelped,
+    Expression<String>? futureSelfNote,
+    Expression<int>? createdAtMillis,
+    Expression<int>? updatedAtMillis,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (cycleStartDay != null) 'cycle_start_day': cycleStartDay,
+      if (observation != null) 'observation': observation,
+      if (need != null) 'need': need,
+      if (whatHelped != null) 'what_helped': whatHelped,
+      if (futureSelfNote != null) 'future_self_note': futureSelfNote,
+      if (createdAtMillis != null) 'created_at_millis': createdAtMillis,
+      if (updatedAtMillis != null) 'updated_at_millis': updatedAtMillis,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  CycleReflectionRowsCompanion copyWith({
+    Value<String>? id,
+    Value<int>? cycleStartDay,
+    Value<String?>? observation,
+    Value<String?>? need,
+    Value<String?>? whatHelped,
+    Value<String?>? futureSelfNote,
+    Value<int>? createdAtMillis,
+    Value<int>? updatedAtMillis,
+    Value<int>? rowid,
+  }) {
+    return CycleReflectionRowsCompanion(
+      id: id ?? this.id,
+      cycleStartDay: cycleStartDay ?? this.cycleStartDay,
+      observation: observation ?? this.observation,
+      need: need ?? this.need,
+      whatHelped: whatHelped ?? this.whatHelped,
+      futureSelfNote: futureSelfNote ?? this.futureSelfNote,
+      createdAtMillis: createdAtMillis ?? this.createdAtMillis,
+      updatedAtMillis: updatedAtMillis ?? this.updatedAtMillis,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<String>(id.value);
+    }
+    if (cycleStartDay.present) {
+      map['cycle_start_day'] = Variable<int>(cycleStartDay.value);
+    }
+    if (observation.present) {
+      map['observation'] = Variable<String>(observation.value);
+    }
+    if (need.present) {
+      map['need'] = Variable<String>(need.value);
+    }
+    if (whatHelped.present) {
+      map['what_helped'] = Variable<String>(whatHelped.value);
+    }
+    if (futureSelfNote.present) {
+      map['future_self_note'] = Variable<String>(futureSelfNote.value);
+    }
+    if (createdAtMillis.present) {
+      map['created_at_millis'] = Variable<int>(createdAtMillis.value);
+    }
+    if (updatedAtMillis.present) {
+      map['updated_at_millis'] = Variable<int>(updatedAtMillis.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('CycleReflectionRowsCompanion(')
+          ..write('id: $id, ')
+          ..write('cycleStartDay: $cycleStartDay, ')
+          ..write('observation: $observation, ')
+          ..write('need: $need, ')
+          ..write('whatHelped: $whatHelped, ')
+          ..write('futureSelfNote: $futureSelfNote, ')
+          ..write('createdAtMillis: $createdAtMillis, ')
+          ..write('updatedAtMillis: $updatedAtMillis, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
 class $HealthRecordRowsTable extends HealthRecordRows
     with TableInfo<$HealthRecordRowsTable, HealthRecordRow> {
   @override
@@ -3385,6 +3928,8 @@ abstract class _$LetterHealthDatabase extends GeneratedDatabase {
   late final $CareRecordRowsTable careRecordRows = $CareRecordRowsTable(this);
   late final $CareReflectionRowsTable careReflectionRows =
       $CareReflectionRowsTable(this);
+  late final $CycleReflectionRowsTable cycleReflectionRows =
+      $CycleReflectionRowsTable(this);
   late final $HealthRecordRowsTable healthRecordRows = $HealthRecordRowsTable(
     this,
   );
@@ -3402,6 +3947,7 @@ abstract class _$LetterHealthDatabase extends GeneratedDatabase {
     impulseDraftRows,
     careRecordRows,
     careReflectionRows,
+    cycleReflectionRows,
     healthRecordRows,
     captureNoteRows,
     momentCheckInRows,
@@ -4446,6 +4992,291 @@ typedef $$CareReflectionRowsTableProcessedTableManager =
       CareReflectionRow,
       PrefetchHooks Function()
     >;
+typedef $$CycleReflectionRowsTableCreateCompanionBuilder =
+    CycleReflectionRowsCompanion Function({
+      required String id,
+      required int cycleStartDay,
+      Value<String?> observation,
+      Value<String?> need,
+      Value<String?> whatHelped,
+      Value<String?> futureSelfNote,
+      required int createdAtMillis,
+      required int updatedAtMillis,
+      Value<int> rowid,
+    });
+typedef $$CycleReflectionRowsTableUpdateCompanionBuilder =
+    CycleReflectionRowsCompanion Function({
+      Value<String> id,
+      Value<int> cycleStartDay,
+      Value<String?> observation,
+      Value<String?> need,
+      Value<String?> whatHelped,
+      Value<String?> futureSelfNote,
+      Value<int> createdAtMillis,
+      Value<int> updatedAtMillis,
+      Value<int> rowid,
+    });
+
+class $$CycleReflectionRowsTableFilterComposer
+    extends Composer<_$LetterHealthDatabase, $CycleReflectionRowsTable> {
+  $$CycleReflectionRowsTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get cycleStartDay => $composableBuilder(
+    column: $table.cycleStartDay,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get observation => $composableBuilder(
+    column: $table.observation,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get need => $composableBuilder(
+    column: $table.need,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get whatHelped => $composableBuilder(
+    column: $table.whatHelped,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get futureSelfNote => $composableBuilder(
+    column: $table.futureSelfNote,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get createdAtMillis => $composableBuilder(
+    column: $table.createdAtMillis,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get updatedAtMillis => $composableBuilder(
+    column: $table.updatedAtMillis,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$CycleReflectionRowsTableOrderingComposer
+    extends Composer<_$LetterHealthDatabase, $CycleReflectionRowsTable> {
+  $$CycleReflectionRowsTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get cycleStartDay => $composableBuilder(
+    column: $table.cycleStartDay,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get observation => $composableBuilder(
+    column: $table.observation,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get need => $composableBuilder(
+    column: $table.need,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get whatHelped => $composableBuilder(
+    column: $table.whatHelped,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get futureSelfNote => $composableBuilder(
+    column: $table.futureSelfNote,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get createdAtMillis => $composableBuilder(
+    column: $table.createdAtMillis,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get updatedAtMillis => $composableBuilder(
+    column: $table.updatedAtMillis,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$CycleReflectionRowsTableAnnotationComposer
+    extends Composer<_$LetterHealthDatabase, $CycleReflectionRowsTable> {
+  $$CycleReflectionRowsTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<int> get cycleStartDay => $composableBuilder(
+    column: $table.cycleStartDay,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get observation => $composableBuilder(
+    column: $table.observation,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get need =>
+      $composableBuilder(column: $table.need, builder: (column) => column);
+
+  GeneratedColumn<String> get whatHelped => $composableBuilder(
+    column: $table.whatHelped,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get futureSelfNote => $composableBuilder(
+    column: $table.futureSelfNote,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get createdAtMillis => $composableBuilder(
+    column: $table.createdAtMillis,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get updatedAtMillis => $composableBuilder(
+    column: $table.updatedAtMillis,
+    builder: (column) => column,
+  );
+}
+
+class $$CycleReflectionRowsTableTableManager
+    extends
+        RootTableManager<
+          _$LetterHealthDatabase,
+          $CycleReflectionRowsTable,
+          CycleReflectionRow,
+          $$CycleReflectionRowsTableFilterComposer,
+          $$CycleReflectionRowsTableOrderingComposer,
+          $$CycleReflectionRowsTableAnnotationComposer,
+          $$CycleReflectionRowsTableCreateCompanionBuilder,
+          $$CycleReflectionRowsTableUpdateCompanionBuilder,
+          (
+            CycleReflectionRow,
+            BaseReferences<
+              _$LetterHealthDatabase,
+              $CycleReflectionRowsTable,
+              CycleReflectionRow
+            >,
+          ),
+          CycleReflectionRow,
+          PrefetchHooks Function()
+        > {
+  $$CycleReflectionRowsTableTableManager(
+    _$LetterHealthDatabase db,
+    $CycleReflectionRowsTable table,
+  ) : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$CycleReflectionRowsTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$CycleReflectionRowsTableOrderingComposer(
+                $db: db,
+                $table: table,
+              ),
+          createComputedFieldComposer: () =>
+              $$CycleReflectionRowsTableAnnotationComposer(
+                $db: db,
+                $table: table,
+              ),
+          updateCompanionCallback:
+              ({
+                Value<String> id = const Value.absent(),
+                Value<int> cycleStartDay = const Value.absent(),
+                Value<String?> observation = const Value.absent(),
+                Value<String?> need = const Value.absent(),
+                Value<String?> whatHelped = const Value.absent(),
+                Value<String?> futureSelfNote = const Value.absent(),
+                Value<int> createdAtMillis = const Value.absent(),
+                Value<int> updatedAtMillis = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => CycleReflectionRowsCompanion(
+                id: id,
+                cycleStartDay: cycleStartDay,
+                observation: observation,
+                need: need,
+                whatHelped: whatHelped,
+                futureSelfNote: futureSelfNote,
+                createdAtMillis: createdAtMillis,
+                updatedAtMillis: updatedAtMillis,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required String id,
+                required int cycleStartDay,
+                Value<String?> observation = const Value.absent(),
+                Value<String?> need = const Value.absent(),
+                Value<String?> whatHelped = const Value.absent(),
+                Value<String?> futureSelfNote = const Value.absent(),
+                required int createdAtMillis,
+                required int updatedAtMillis,
+                Value<int> rowid = const Value.absent(),
+              }) => CycleReflectionRowsCompanion.insert(
+                id: id,
+                cycleStartDay: cycleStartDay,
+                observation: observation,
+                need: need,
+                whatHelped: whatHelped,
+                futureSelfNote: futureSelfNote,
+                createdAtMillis: createdAtMillis,
+                updatedAtMillis: updatedAtMillis,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$CycleReflectionRowsTableProcessedTableManager =
+    ProcessedTableManager<
+      _$LetterHealthDatabase,
+      $CycleReflectionRowsTable,
+      CycleReflectionRow,
+      $$CycleReflectionRowsTableFilterComposer,
+      $$CycleReflectionRowsTableOrderingComposer,
+      $$CycleReflectionRowsTableAnnotationComposer,
+      $$CycleReflectionRowsTableCreateCompanionBuilder,
+      $$CycleReflectionRowsTableUpdateCompanionBuilder,
+      (
+        CycleReflectionRow,
+        BaseReferences<
+          _$LetterHealthDatabase,
+          $CycleReflectionRowsTable,
+          CycleReflectionRow
+        >,
+      ),
+      CycleReflectionRow,
+      PrefetchHooks Function()
+    >;
 typedef $$HealthRecordRowsTableCreateCompanionBuilder =
     HealthRecordRowsCompanion Function({
       required String id,
@@ -5210,6 +6041,8 @@ class $LetterHealthDatabaseManager {
       $$CareRecordRowsTableTableManager(_db, _db.careRecordRows);
   $$CareReflectionRowsTableTableManager get careReflectionRows =>
       $$CareReflectionRowsTableTableManager(_db, _db.careReflectionRows);
+  $$CycleReflectionRowsTableTableManager get cycleReflectionRows =>
+      $$CycleReflectionRowsTableTableManager(_db, _db.cycleReflectionRows);
   $$HealthRecordRowsTableTableManager get healthRecordRows =>
       $$HealthRecordRowsTableTableManager(_db, _db.healthRecordRows);
   $$CaptureNoteRowsTableTableManager get captureNoteRows =>

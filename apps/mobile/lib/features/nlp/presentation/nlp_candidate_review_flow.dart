@@ -352,6 +352,7 @@ class _NlpEditSheetState extends State<_NlpEditSheet> {
               initialValue: _symptom,
               decoration: const InputDecoration(labelText: 'What was present?'),
               items: SymptomType.values
+                  .where((symptom) => symptom.availableForNewRecords)
                   .map(
                     (symptom) => DropdownMenuItem(
                       value: symptom,

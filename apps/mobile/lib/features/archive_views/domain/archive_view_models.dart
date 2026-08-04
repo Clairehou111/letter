@@ -27,6 +27,52 @@ final class ArchiveStoryItem {
   final DateTime occurredAt;
 }
 
+final class ArchiveStoryReflection {
+  const ArchiveStoryReflection({
+    required this.updatedLabel,
+    this.observation,
+    this.needLabel,
+    this.whatHelped,
+    this.futureSelfNote,
+  });
+
+  final String updatedLabel;
+  final String? observation;
+  final String? needLabel;
+  final String? whatHelped;
+  final String? futureSelfNote;
+}
+
+final class ArchiveStoryCareMoment {
+  const ArchiveStoryCareMoment({
+    required this.dateLabel,
+    required this.outcomeLabel,
+    this.careNote,
+  });
+
+  final String dateLabel;
+  final String outcomeLabel;
+  final String? careNote;
+}
+
+final class ArchiveStoryCareGroup {
+  const ArchiveStoryCareGroup({
+    required this.actionLabel,
+    required this.total,
+    required this.better,
+    required this.same,
+    required this.worse,
+    required this.moments,
+  });
+
+  final String actionLabel;
+  final int total;
+  final int better;
+  final int same;
+  final int worse;
+  final List<ArchiveStoryCareMoment> moments;
+}
+
 final class ArchiveStoryViewModel {
   const ArchiveStoryViewModel({
     required this.cycleId,
@@ -34,6 +80,8 @@ final class ArchiveStoryViewModel {
     required this.items,
     required this.evidence,
     required this.missingNote,
+    this.cycleReflection,
+    this.careGroups = const [],
   });
 
   final String cycleId;
@@ -41,6 +89,8 @@ final class ArchiveStoryViewModel {
   final List<ArchiveStoryItem> items;
   final ArchiveEvidenceState evidence;
   final String? missingNote;
+  final ArchiveStoryReflection? cycleReflection;
+  final List<ArchiveStoryCareGroup> careGroups;
 }
 
 final class ArchivePatternMetric {
@@ -52,7 +102,6 @@ final class ArchivePatternMetric {
     required this.evidence,
     required this.sourceLabel,
     this.highestSeverity,
-    this.painDays = 0,
   });
 
   final String label;
@@ -62,7 +111,6 @@ final class ArchivePatternMetric {
   final ArchiveEvidenceState evidence;
   final String sourceLabel;
   final SymptomSeverity? highestSeverity;
-  final int painDays;
 }
 
 final class ArchiveCareOutcomeSummary {
@@ -104,22 +152,20 @@ final class ArchivePatternViewModel {
 final class ArchiveClinicalRecordRow {
   const ArchiveClinicalRecordRow({
     required this.dateLabel,
+    required this.recordedAtLabel,
     required this.symptomLabel,
     required this.severityLabel,
     required this.severityScore,
-    required this.painLabel,
-    required this.locationLabel,
     required this.impactLabel,
     required this.provenanceLabel,
     required this.sourceLabel,
   });
 
   final String dateLabel;
+  final String recordedAtLabel;
   final String symptomLabel;
   final String severityLabel;
   final int severityScore;
-  final String painLabel;
-  final String locationLabel;
   final String impactLabel;
   final String provenanceLabel;
   final String sourceLabel;
@@ -221,6 +267,7 @@ ArchiveViewsViewModel buildArchiveViewsViewModel(ArchiveInput input) {
               healthRecords: confirmedRecords,
               careRecords: input.careRecords,
               reflections: input.reflections,
+              cycleReflections: input.cycleReflections,
             ),
           )
           .toList()
@@ -241,6 +288,7 @@ ArchiveCycleSummaryViewModel _buildCycleViewModel({
   required List<HealthRecord> healthRecords,
   required List<CareRecord> careRecords,
   required List<CareReflection> reflections,
+  required List<CycleReflection> cycleReflections,
 }) {
   final end = cycle.endDate;
   final inCycle = healthRecords.where(
@@ -259,7 +307,18 @@ ArchiveCycleSummaryViewModel _buildCycleViewModel({
   );
   final range = _dateRange(cycle.startDate, end);
   final periodDates = cycle.periodDates.map(_formatDate).join(', ');
-  final story = _buildStory(cycle, careInCycle, reflectionsInCycle, range);
+  final cycleReflection = cycleReflections
+      .where(
+        (reflection) => reflection.cycleStartDay == cycle.startDate.epochDay,
+      )
+      .firstOrNull;
+  final story = _buildStory(
+    cycle,
+    careInCycle,
+    reflectionsInCycle,
+    cycleReflection,
+    range,
+  );
   final pattern = _buildPattern(cycle, inCycle, careInCycle, range);
   final clinical = _buildClinical(cycle, inCycle, careInCycle, range);
   final observedDays = {
@@ -283,6 +342,9 @@ ArchiveCycleSummaryViewModel _buildCycleViewModel({
     range,
     ...inCycle.map((record) => record.symptom.label),
     ...careInCycle.map((record) => record.actionLabel),
+    cycleReflection?.observation ?? '',
+    cycleReflection?.whatHelped ?? '',
+    cycleReflection?.futureSelfNote ?? '',
   ].join(' ').toLowerCase();
 
   return ArchiveCycleSummaryViewModel(
@@ -309,12 +371,17 @@ ArchiveStoryViewModel _buildStory(
   ArchiveCycleInput cycle,
   Iterable<CareRecord> careRecords,
   Iterable<CareReflection> reflections,
+  CycleReflection? cycleReflection,
   String range,
 ) {
   final items = <ArchiveStoryItem>[];
   final reflectionsByRecord = {
     for (final reflection in reflections) reflection.careRecordId: reflection,
   };
+  final recordsByAction = <String, List<CareRecord>>{};
+  for (final record in careRecords) {
+    recordsByAction.putIfAbsent(record.actionLabel, () => []).add(record);
+  }
   for (final record
       in careRecords.toList()
         ..sort((left, right) => left.occurredAt.compareTo(right.occurredAt))) {
@@ -365,18 +432,77 @@ ArchiveStoryViewModel _buildStory(
       );
     }
   }
+  final careGroups = [
+    for (final entry in recordsByAction.entries)
+      ArchiveStoryCareGroup(
+        actionLabel: entry.key,
+        total: entry.value.length,
+        better: entry.value
+            .where((record) => record.outcome == CareOutcome.better)
+            .length,
+        same: entry.value
+            .where((record) => record.outcome == CareOutcome.same)
+            .length,
+        worse: entry.value
+            .where((record) => record.outcome == CareOutcome.worse)
+            .length,
+        moments: List.unmodifiable([
+          for (final record
+              in entry.value..sort(
+                (left, right) => left.occurredAt.compareTo(right.occurredAt),
+              ))
+            ArchiveStoryCareMoment(
+              dateLabel: _formatDateTime(record.occurredAt),
+              outcomeLabel: _outcomeLabel(record.outcome),
+              careNote: _legacyCareNote(reflectionsByRecord[record.id]),
+            ),
+        ]),
+      ),
+  ]..sort((left, right) => left.actionLabel.compareTo(right.actionLabel));
   return ArchiveStoryViewModel(
     cycleId: cycle.id,
     dateRange: range,
     items: List.unmodifiable(items),
-    evidence: items.isEmpty
+    cycleReflection: cycleReflection == null
+        ? null
+        : ArchiveStoryReflection(
+            updatedLabel: _formatDateTime(cycleReflection.updatedAt),
+            observation: cycleReflection.observation,
+            needLabel: cycleReflection.need == null
+                ? null
+                : _needLabel(cycleReflection.need!),
+            whatHelped: cycleReflection.whatHelped,
+            futureSelfNote: cycleReflection.futureSelfNote,
+          ),
+    careGroups: List.unmodifiable(careGroups),
+    evidence: items.isEmpty && cycleReflection == null
         ? ArchiveEvidenceState.notRecorded
         : ArchiveEvidenceState.observed,
-    missingNote: items.isEmpty
-        ? 'No saved Care memories or reflections.'
+    missingNote: items.isEmpty && cycleReflection == null
+        ? 'No saved Care moments or cycle reflection.'
         : null,
   );
 }
+
+String? _legacyCareNote(CareReflection? reflection) {
+  if (reflection == null) return null;
+  final parts = <String>[
+    ?reflection.observation,
+    if (reflection.need case final value?) 'Needed: ${_needLabel(value)}',
+    if (reflection.whatHelped case final value?) 'What helped: $value',
+    if (reflection.futureSelfNote case final value?) 'For next time: $value',
+  ];
+  return parts.isEmpty ? null : parts.join('\n');
+}
+
+String _needLabel(ReflectionNeed need) => switch (need) {
+  ReflectionNeed.boundaries => 'Boundaries',
+  ReflectionNeed.connection => 'Connection',
+  ReflectionNeed.autonomy => 'Autonomy',
+  ReflectionNeed.restOrPhysicalCapacity => 'Rest or physical capacity',
+  ReflectionNeed.somethingElse => 'Something else',
+  ReflectionNeed.notSure => 'Not sure',
+};
 
 ArchivePatternViewModel _buildPattern(
   ArchiveCycleInput cycle,
@@ -399,9 +525,6 @@ ArchivePatternViewModel _buildPattern(
     final highest = symptomRecords
         .map((record) => record.severity)
         .reduce((left, right) => left.score >= right.score ? left : right);
-    final painDays = symptomRecords
-        .where((record) => record.painRating != null)
-        .length;
     return ArchivePatternMetric(
       label: symptom.label,
       confirmedCount: symptomRecords.length,
@@ -414,7 +537,6 @@ ArchivePatternViewModel _buildPattern(
           : ArchiveEvidenceState.observed,
       sourceLabel: 'Confirmed health records · local only',
       highestSeverity: highest,
-      painDays: painDays,
     );
   }).toList();
   final outcomesByAction = <String, List<CareRecord>>{};
@@ -476,15 +598,10 @@ ArchiveClinicalViewModel _buildClinical(
       for (final record in healthRows)
         ArchiveClinicalRecordRow(
           dateLabel: _formatDate(record.experiencedDate),
+          recordedAtLabel: _formatDateTime(record.recordedAt),
           symptomLabel: record.symptom.label,
           severityLabel: record.severity.label,
           severityScore: record.severity.score,
-          painLabel: record.painRating == null
-              ? 'Not recorded'
-              : '${record.painRating}/10',
-          locationLabel: _labels(
-            record.painLocations.map((item) => item.label),
-          ),
           impactLabel: _labels(
             record.functionalImpacts.map((item) => item.label),
           ),

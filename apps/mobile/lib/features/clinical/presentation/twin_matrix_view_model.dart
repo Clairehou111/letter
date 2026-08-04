@@ -1,267 +1,318 @@
 import '../../health_records/domain/health_record.dart';
-import '../../patterns/domain/personal_pattern.dart';
+import '../../cycle/domain/local_date.dart';
 
-/// View-state for the Twin Matrix clinical report.
+/// View-state for a clinician-readable summary of confirmed local evidence.
 ///
-/// Maps confirmed personal-pattern data into a black-and-white clinical grid.
-/// X-axis: observed days -14 to -1 before menses on the left and observed cycle
-/// days 1 to 14 on the right.
-///
-/// Design spec: clinical_representation.md.
+/// The left axis contains observed days -14 to -1 before a subsequent
+/// observed period start. The right axis contains observed cycle days 1 to 14.
+/// Cells are nullable: null means no observation, while a numeric value is an
+/// average of confirmed ratings. No value is inferred from the other axis.
 class TwinMatrixViewModel {
   const TwinMatrixViewModel({
     required this.clusters,
     required this.cycleLabel,
     required this.exportTimestamp,
     required this.totalDays,
+    this.todayDay,
+    this.totalObservations = 0,
+    this.lutealMapped = 0,
+    this.cycleMapped = 0,
   });
 
-  /// The 4 PMDD clusters with their severity data.
   final List<TwinMatrixCluster> clusters;
-
-  /// e.g. "last 3 cycles"
   final String cycleLabel;
-
-  /// Export timestamp for the header.
   final String exportTimestamp;
-
-  /// Total days across the matrix (28).
   final int totalDays;
+  final int? todayDay;
+  final int totalObservations;
+  final int lutealMapped;
+  final int cycleMapped;
 
-  /// Maps SymptomTypes to PMDD clusters.
-  static const clusterMap = {
-    1: 'irritability/anger',
-    2: 'depressed mood/anxiety',
-    3: 'social withdrawal',
-    4: 'physical cramps/pain',
+  /// The grouping is for scanability only; each cell retains its evidence.
+  static const clusterMap = <int, String>{
+    1: 'mood/irritability',
+    2: 'anxiety/cognition',
+    3: 'energy/sleep',
+    4: 'social withdrawal',
+    5: 'physical symptoms',
   };
 
-  factory TwinMatrixViewModel.fromPatterns({
-    required List<ObservedSymptomPattern> patterns,
-    required String cycleLabel,
-    required String exportTimestamp,
-  }) {
-    final clusters = <TwinMatrixCluster>[];
-
-    // Cluster 1: irritability
-    final irritabilityMatrix = _mergeSymptomMatrices(patterns, [
-      SymptomType.irritability,
-    ]);
-    final irritabilityCycleDays = _mergeCycleDayMatrices(patterns, [
-      SymptomType.irritability,
-    ]);
-    clusters.add(
-      TwinMatrixCluster(
-        label: clusterMap[1]!,
-        lutealSeverities: _matrixToList(irritabilityMatrix),
-        mensesSeverities: _cycleDayMatrixToList(irritabilityCycleDays),
-      ),
-    );
-
-    // Cluster 2: depressed mood + anxiety
-    final moodMatrix = _mergeSymptomMatrices(patterns, [
+  static const _clusterDefinitions = <_TwinMatrixClusterDefinition>[
+    _TwinMatrixClusterDefinition('mood/irritability', <SymptomType>{
       SymptomType.lowMood,
+      SymptomType.irritability,
+      SymptomType.crying,
+      SymptomType.hopelessness,
+      SymptomType.anhedonia,
+      SymptomType.moodSwings,
+      SymptomType.rage,
+      SymptomType.hypersensitivity,
+      SymptomType.paranoia,
+      SymptomType.impulsiveUrges,
+    }),
+    _TwinMatrixClusterDefinition('anxiety/cognition', <SymptomType>{
       SymptomType.anxiety,
-    ]);
-    final moodCycleDays = _mergeCycleDayMatrices(patterns, [
-      SymptomType.lowMood,
-      SymptomType.anxiety,
-    ]);
-    clusters.add(
-      TwinMatrixCluster(
-        label: clusterMap[2]!,
-        lutealSeverities: _matrixToList(moodMatrix),
-        mensesSeverities: _cycleDayMatrixToList(moodCycleDays),
-      ),
-    );
-
-    // Cluster 3: social withdrawal (from functional impacts)
-    clusters.add(
-      TwinMatrixCluster(
-        label: clusterMap[3]!,
-        lutealSeverities: List.filled(14, 0),
-        mensesSeverities: List.filled(14, 0),
-      ),
-    );
-
-    // Cluster 4: physical symptoms
-    final physicalMatrix = _mergeSymptomMatrices(patterns, [
+      SymptomType.panicAttack,
+      SymptomType.brainFog,
+      SymptomType.concentration,
+    }),
+    _TwinMatrixClusterDefinition('energy/sleep', <SymptomType>{
+      SymptomType.lowEnergy,
+      SymptomType.fatigue,
+      SymptomType.sleepDifficulty,
+      SymptomType.sleepiness,
+      SymptomType.hypersomnia,
+      SymptomType.insomnia,
+      SymptomType.sleepDisruption,
+    }),
+    _TwinMatrixClusterDefinition('social withdrawal', <SymptomType>{
+      SymptomType.socialWithdrawal,
+    }),
+    _TwinMatrixClusterDefinition('physical symptoms', <SymptomType>{
       SymptomType.cramps,
       SymptomType.headache,
-      SymptomType.bodyAches,
       SymptomType.breastTenderness,
       SymptomType.bloating,
-    ]);
-    final physicalCycleDays = _mergeCycleDayMatrices(patterns, [
-      SymptomType.cramps,
-      SymptomType.headache,
+      SymptomType.nausea,
       SymptomType.bodyAches,
-      SymptomType.breastTenderness,
-      SymptomType.bloating,
-    ]);
-    clusters.add(
-      TwinMatrixCluster(
-        label: clusterMap[4]!,
-        lutealSeverities: _matrixToList(physicalMatrix),
-        mensesSeverities: _cycleDayMatrixToList(physicalCycleDays),
-      ),
-    );
+      SymptomType.pelvicPain,
+      SymptomType.backPain,
+      SymptomType.jointMusclePain,
+      SymptomType.waterRetention,
+      SymptomType.appetiteChange,
+      SymptomType.constipation,
+      SymptomType.hotFlashes,
+      SymptomType.palpitations,
+    }),
+  ];
 
-    return TwinMatrixViewModel(
-      clusters: clusters,
-      cycleLabel: cycleLabel,
-      exportTimestamp: exportTimestamp,
-      totalDays: 28,
-    );
-  }
-
+  /// Builds the canonical matrix from confirmed, source-linked observations.
   factory TwinMatrixViewModel.fromObservations({
     required List<TwinMatrixObservation> observations,
     required String cycleLabel,
     required String exportTimestamp,
+    int? todayDay,
   }) {
-    TwinMatrixCluster cluster(String label, Set<SymptomType> symptoms) {
-      final relevant = observations.where(
-        (observation) => symptoms.contains(observation.symptom),
-      );
-      final before = <int, List<int>>{};
-      final after = <int, List<int>>{};
-      for (final observation in relevant) {
-        final beforeDay = observation.daysBeforeMenses;
-        if (beforeDay != null && beforeDay >= -14 && beforeDay <= -1) {
-          before
-              .putIfAbsent(beforeDay, () => [])
-              .add(observation.severity.score);
-        }
-        final cycleDay = observation.cycleDay;
-        if (cycleDay != null && cycleDay >= 1 && cycleDay <= 14) {
-          after.putIfAbsent(cycleDay, () => []).add(observation.severity.score);
-        }
-      }
-      double average(List<int>? values) {
-        if (values == null || values.isEmpty) return 0;
-        return values.fold<int>(0, (sum, value) => sum + value) / values.length;
-      }
-
-      return TwinMatrixCluster(
-        label: label,
-        lutealSeverities: [
-          for (var day = -14; day <= -1; day++) average(before[day]),
-        ],
-        mensesSeverities: [
-          for (var day = 1; day <= 14; day++) average(after[day]),
-        ],
-      );
-    }
-
+    final eligible = observations
+        .where((observation) => observation.userConfirmed)
+        .toList(growable: false);
+    final clusters = [
+      for (final definition in _clusterDefinitions)
+        _buildCluster(definition, eligible),
+    ];
     return TwinMatrixViewModel(
-      clusters: [
-        cluster(clusterMap[1]!, {SymptomType.irritability}),
-        cluster(clusterMap[2]!, {SymptomType.lowMood, SymptomType.anxiety}),
-        TwinMatrixCluster(
-          label: clusterMap[3]!,
-          lutealSeverities: List.filled(14, 0),
-          mensesSeverities: List.filled(14, 0),
-        ),
-        cluster(clusterMap[4]!, {
-          SymptomType.cramps,
-          SymptomType.headache,
-          SymptomType.bodyAches,
-          SymptomType.breastTenderness,
-          SymptomType.bloating,
-        }),
-      ],
+      clusters: List.unmodifiable(clusters),
       cycleLabel: cycleLabel,
       exportTimestamp: exportTimestamp,
       totalDays: 28,
+      todayDay: todayDay,
+      totalObservations: eligible.length,
+      lutealMapped: eligible
+          .where((observation) => _isLutealDay(observation.daysBeforeMenses))
+          .length,
+      cycleMapped: eligible
+          .where((observation) => _isCycleDay(observation.cycleDay))
+          .length,
     );
   }
 
-  /// Merges severityByDaysBeforeMenses across matching SymptomTypes.
-  static Map<int, double> _mergeSymptomMatrices(
-    List<ObservedSymptomPattern> patterns,
-    List<SymptomType> types,
+  static TwinMatrixCluster _buildCluster(
+    _TwinMatrixClusterDefinition definition,
+    List<TwinMatrixObservation> observations,
   ) {
-    final merged = <int, List<double>>{};
-    for (final pattern in patterns) {
-      if (!types.contains(pattern.symptom)) continue;
-      for (final entry in pattern.severityByDaysBeforeMenses.entries) {
-        merged.putIfAbsent(entry.key, () => []).add(entry.value);
-      }
-    }
-    final result = <int, double>{};
-    for (final entry in merged.entries) {
-      result[entry.key] =
-          entry.value.reduce((a, b) => a + b) / entry.value.length;
-    }
-    return result;
+    return TwinMatrixCluster(
+      label: definition.label,
+      lutealCells: List.unmodifiable(
+        _buildCells(
+          observations,
+          definition.symptoms,
+          (observation) => observation.daysBeforeMenses,
+          minDay: -14,
+          maxDay: -1,
+        ),
+      ),
+      cycleCells: List.unmodifiable(
+        _buildCells(
+          observations,
+          definition.symptoms,
+          (observation) => observation.cycleDay,
+          minDay: 1,
+          maxDay: 14,
+        ),
+      ),
+    );
   }
 
-  static Map<int, double> _mergeCycleDayMatrices(
-    List<ObservedSymptomPattern> patterns,
-    List<SymptomType> types,
+  /// Aggregates within each observed cycle first, then averages cycles.
+  /// This prevents a heavily logged cycle from dominating a lightly logged
+  /// cycle at the same relative day. Evidence remains attached to the cell.
+  static List<TwinMatrixCell> _buildCells(
+    List<TwinMatrixObservation> observations,
+    Set<SymptomType> symptoms,
+    int? Function(TwinMatrixObservation) dayFor, {
+    required int minDay,
+    required int maxDay,
+  }) {
+    final grouped = <int, Map<String, List<TwinMatrixObservation>>>{};
+    for (final observation in observations) {
+      if (!symptoms.contains(observation.symptom)) continue;
+      final day = dayFor(observation);
+      if (day == null || day < minDay || day > maxDay) continue;
+      final cycleKey = observation.cycleKey ?? 'record:${observation.recordId}';
+      grouped
+          .putIfAbsent(day, () => {})
+          .putIfAbsent(cycleKey, () => [])
+          .add(observation);
+    }
+
+    return [
+      for (var day = minDay; day <= maxDay; day++) _cellFor(grouped[day]),
+    ];
+  }
+
+  static TwinMatrixCell _cellFor(
+    Map<String, List<TwinMatrixObservation>>? byCycle,
   ) {
-    final merged = <int, List<double>>{};
-    for (final pattern in patterns) {
-      if (!types.contains(pattern.symptom)) continue;
-      for (final entry in pattern.severityByCycleDay.entries) {
-        merged.putIfAbsent(entry.key, () => []).add(entry.value);
-      }
+    if (byCycle == null || byCycle.isEmpty) {
+      return const TwinMatrixCell.empty();
     }
-    final result = <int, double>{};
-    for (final entry in merged.entries) {
-      result[entry.key] =
-          entry.value.reduce((a, b) => a + b) / entry.value.length;
+    final cycleMeans = <double>[];
+    final evidence = <TwinMatrixEvidence>[];
+    for (final observations in byCycle.values) {
+      cycleMeans.add(_mean(observations.map((item) => item.severity.score)));
+      evidence.addAll(
+        observations.map(
+          (observation) => TwinMatrixEvidence.fromObservation(observation),
+        ),
+      );
     }
-    return result;
+    return TwinMatrixCell(
+      severity: _mean(cycleMeans),
+      observationCount: evidence.length,
+      cycleCount: byCycle.length,
+      evidence: List.unmodifiable(evidence),
+    );
   }
 
-  /// Converts a `Map<int, double>` to a 14-element list for days -14 to -1.
-  static List<double> _matrixToList(Map<int, double> matrix) {
-    final list = <double>[];
-    for (var day = -14; day <= -1; day++) {
-      list.add(matrix[day] ?? 0.0);
-    }
-    return list;
+  static double _mean(Iterable<num> values) {
+    final list = values.toList(growable: false);
+    if (list.isEmpty) return 0;
+    return list.fold<double>(0, (sum, value) => sum + value) / list.length;
   }
 
-  static List<double> _cycleDayMatrixToList(Map<int, double> matrix) {
-    final list = <double>[];
-    for (var day = 1; day <= 14; day++) {
-      list.add(matrix[day] ?? 0.0);
+  static bool _isLutealDay(int? day) => day != null && day >= -14 && day <= -1;
+
+  static bool _isCycleDay(int? day) => day != null && day >= 1 && day <= 14;
+
+  /// A compact text alternative for screen readers and non-visual review.
+  String get accessibilitySummary {
+    final lines = <String>[
+      'Cyclical Symptom Summary. $cycleLabel.',
+      '${clusters.length} symptom groups. Blank cells have no observation.',
+    ];
+    for (final cluster in clusters) {
+      final observed = [
+        ...cluster.lutealCells,
+        ...cluster.cycleCells,
+      ].where((cell) => cell.severity != null).length;
+      lines.add('${cluster.label}: $observed observed cells.');
     }
-    return list;
+    return lines.join(' ');
   }
 }
 
-/// One PMDD cluster row in the Twin Matrix.
-class TwinMatrixCluster {
+final class _TwinMatrixClusterDefinition {
+  const _TwinMatrixClusterDefinition(this.label, this.symptoms);
+
+  final String label;
+  final Set<SymptomType> symptoms;
+}
+
+final class TwinMatrixCluster {
   const TwinMatrixCluster({
     required this.label,
-    required this.lutealSeverities,
-    required this.mensesSeverities,
+    required this.lutealCells,
+    required this.cycleCells,
   });
 
-  /// e.g. "irritability/anger"
   final String label;
+  final List<TwinMatrixCell> lutealCells;
+  final List<TwinMatrixCell> cycleCells;
+}
 
-  /// 14 values for days -14 to -1 (luteal phase, left of center).
-  final List<double> lutealSeverities;
+final class TwinMatrixCell {
+  const TwinMatrixCell({
+    required this.severity,
+    required this.observationCount,
+    required this.cycleCount,
+    required this.evidence,
+  });
 
-  /// 14 values for days 1 to 14 (menses/follicular, right of center).
-  final List<double> mensesSeverities;
+  const TwinMatrixCell.empty()
+    : severity = null,
+      observationCount = 0,
+      cycleCount = 0,
+      evidence = const [];
+
+  final double? severity;
+  final int observationCount;
+  final int cycleCount;
+  final List<TwinMatrixEvidence> evidence;
+}
+
+final class TwinMatrixEvidence {
+  const TwinMatrixEvidence({
+    required this.recordId,
+    required this.experiencedDate,
+    required this.symptom,
+    required this.severity,
+    required this.provenance,
+    required this.functionalImpacts,
+  });
+
+  factory TwinMatrixEvidence.fromObservation(
+    TwinMatrixObservation observation,
+  ) {
+    return TwinMatrixEvidence(
+      recordId: observation.recordId,
+      experiencedDate: observation.experiencedDate,
+      symptom: observation.symptom,
+      severity: observation.severity,
+      provenance: observation.provenance,
+      functionalImpacts: Set.unmodifiable(observation.functionalImpacts),
+    );
+  }
+
+  final String recordId;
+  final LocalDate experiencedDate;
+  final SymptomType symptom;
+  final SymptomSeverity severity;
+  final HealthRecordProvenance provenance;
+  final Set<FunctionalImpact> functionalImpacts;
 }
 
 final class TwinMatrixObservation {
   const TwinMatrixObservation({
+    required this.recordId,
+    required this.experiencedDate,
     required this.symptom,
     required this.severity,
     required this.daysBeforeMenses,
     required this.cycleDay,
+    required this.provenance,
+    required this.userConfirmed,
+    this.cycleKey,
+    this.functionalImpacts = const {},
   });
 
+  final String recordId;
+  final LocalDate experiencedDate;
   final SymptomType symptom;
   final SymptomSeverity severity;
   final int? daysBeforeMenses;
   final int? cycleDay;
+  final String? cycleKey;
+  final HealthRecordProvenance provenance;
+  final bool userConfirmed;
+  final Set<FunctionalImpact> functionalImpacts;
 }

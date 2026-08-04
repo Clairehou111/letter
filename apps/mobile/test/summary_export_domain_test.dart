@@ -98,6 +98,10 @@ void main() {
       expect(summary.notes.single.text, 'A quiet room helped.');
       expect(summary.predictions.single.sourceLabel, 'Local cycle estimate');
       expect(summary.missingness, isEmpty);
+      final periodRange = observedPeriodRanges(summary.periodDays).single;
+      expect(periodRange.dayCount, 2);
+      expect(summaryDateLabel(periodRange.start), '7/1/2026');
+      expect(summaryDateLabel(periodRange.end), '7/2/2026');
     },
   );
 
@@ -119,6 +123,8 @@ void main() {
       );
       expect(first.bytes, second.bytes);
       expect(text, contains('This is a user-recorded summary'));
+      expect(text, contains('Observed period dates (2 days)'));
+      expect(text, contains('7/1/2026 to 7/2/2026'));
       expect(text, contains('Cramps'));
       expect(text, contains('Same day'));
       expect(text, contains('Factual Care event'));
@@ -127,4 +133,17 @@ void main() {
       expect(text, isNot(contains('A quiet room helped.')));
     },
   );
+
+  test('keeps derived matrix cells out of the CSV sidecar', () {
+    final summary = buildCycleAndCareSummary(
+      input: summaryExportInput(),
+      range: range,
+      selectedNoteIds: const {},
+    );
+    final text = utf8.decode(buildCycleAndCareCsv(summary).bytes);
+
+    expect(text, isNot(contains('Matrix cell')));
+    expect(text, isNot(contains('Cycle-balanced average')));
+    expect(text, contains('Confirmed health record'));
+  });
 }

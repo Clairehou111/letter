@@ -3,6 +3,19 @@ import 'package:letter_mobile/features/cycle/domain/local_date.dart';
 import 'package:letter_mobile/features/health_records/domain/health_record.dart';
 
 void main() {
+  test('vocabulary version 2 preserves legacy codes and adds corpus terms', () {
+    expect(healthRecordVocabularyVersion, 2);
+    expect(SymptomType.cramps.name, 'cramps');
+    expect(SymptomType.concentration.availableForNewRecords, isFalse);
+    expect(SymptomType.brainFog.availableForNewRecords, isTrue);
+    expect(SymptomType.crying.label, 'Crying');
+    expect(SymptomType.rage.category, SymptomCategory.mood);
+    expect(SymptomType.palpitations.category, SymptomCategory.physical);
+    expect(SafetySignal.values, hasLength(3));
+    expect(SafetySignal.suicidalThoughts.label, 'Suicidal thoughts');
+    expect(SafetySignal.palpitations.physical, isTrue);
+  });
+
   test('severity vocabulary exposes six explicit anchors', () {
     expect(SymptomSeverity.values, hasLength(6));
     expect(SymptomSeverity.notAtAll.score, 1);

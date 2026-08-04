@@ -265,7 +265,7 @@ void main() {
     await tester.tap(find.byKey(const Key('open-care-button')));
     await tester.pumpAndSettle();
     expect(find.byType(CareScreen), findsOneWidget);
-    expect(find.text('What is closest to this moment?'), findsOneWidget);
+    expect(find.text('Change the next minute.'), findsOneWidget);
 
     await tester.tap(find.byKey(const Key('navigation-today')));
     await tester.pumpAndSettle();
@@ -274,7 +274,7 @@ void main() {
     await tester.tap(find.byKey(const Key('navigation-care')));
     await tester.pumpAndSettle();
     expect(find.byType(CareScreen), findsOneWidget);
-    expect(find.text('What is closest to this moment?'), findsOneWidget);
+    expect(find.text('Change the next minute.'), findsOneWidget);
   });
 
   testWidgets('returning from Cycle reloads the new period on Today', (

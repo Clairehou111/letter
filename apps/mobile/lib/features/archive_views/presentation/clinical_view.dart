@@ -8,10 +8,12 @@ class ArchiveClinicalView extends StatelessWidget {
     required this.viewModel,
     super.key,
     this.onCreateSummary,
+    this.onEditHealthRecords,
   });
 
   final ArchiveClinicalViewModel viewModel;
   final VoidCallback? onCreateSummary;
+  final VoidCallback? onEditHealthRecords;
 
   @override
   Widget build(BuildContext context) {
@@ -31,9 +33,22 @@ class ArchiveClinicalView extends StatelessWidget {
           const SizedBox(height: LetterSpacing.md),
         ],
         if (viewModel.healthRows.isNotEmpty) ...[
-          const Text(
-            'Confirmed health records',
-            style: TextStyle(fontWeight: FontWeight.w800),
+          Row(
+            children: [
+              const Expanded(
+                child: Text(
+                  'Confirmed health records',
+                  style: TextStyle(fontWeight: FontWeight.w800),
+                ),
+              ),
+              if (onEditHealthRecords != null)
+                TextButton.icon(
+                  key: const Key('archive-edit-health-records'),
+                  onPressed: onEditHealthRecords,
+                  icon: const Icon(Icons.edit_outlined, size: 16),
+                  label: const Text('Edit'),
+                ),
+            ],
           ),
           const SizedBox(height: LetterSpacing.xs),
           _HealthTable(rows: viewModel.healthRows),
@@ -101,13 +116,23 @@ class _HealthTable extends StatelessWidget {
           TableRow(
             children: [
               _TableCell(row.dateLabel),
-              _TableCell(
-                '${row.symptomLabel}: ${row.severityLabel} (${row.severityScore}/6)\n'
-                'Pain: ${row.painLabel}\n'
-                'Location: ${row.locationLabel}\n'
-                'Impact: ${row.impactLabel}\n'
-                'Provenance: ${row.provenanceLabel}\n'
-                '${row.sourceLabel}',
+              Padding(
+                padding: const EdgeInsets.all(LetterSpacing.xs),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      [
+                        '${row.symptomLabel}: ${row.severityLabel} (${row.severityScore}/6)',
+                        'Impact: ${row.impactLabel}',
+                        'Provenance: ${row.provenanceLabel}',
+                        'Recorded: ${row.recordedAtLabel}',
+                        row.sourceLabel,
+                      ].join('\n'),
+                      style: const TextStyle(fontSize: 12, height: 1.35),
+                    ),
+                  ],
+                ),
               ),
             ],
           ),

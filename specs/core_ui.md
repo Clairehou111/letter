@@ -78,6 +78,20 @@ The completion surface shows the save time, `Add details`, and `Undo`. Adding
 details opens confirmed symptom recording but does not change the original
 check-in into a clinical rating.
 
+Confirmed symptom recording is a focused repeatable interaction:
+
+1. choose one plain-language symptom
+2. confirm one of the six visible intensity anchors
+3. add another symptom or continue to shared context
+
+The symptom directory is grouped into Physical, Mood, Energy, and Sleep. A
+chosen symptom becomes a compact editable summary rather than expanding a
+long inline form beneath the directory. No intensity is preselected.
+
+`Suicidal thoughts` and `Self-harm` are visually separated safety actions in
+the Mood directory. Either action interrupts symptom capture with the
+region-aware crisis boundary and creates no routine symptom record.
+
 Moment check-ins:
 
 - are visible in Today's activity and the containing cycle Story
@@ -95,8 +109,31 @@ Today presents one chronological, editable view of:
 - factual Care moments and outcomes
 
 Period controls remain contextual to the cycle surface. Private notes and
-confirmed symptom details remain directly accessible without being hidden
-inside the quick check-in.
+saved confirmed symptom details remain directly accessible from activity.
+Today does not promote a separate symptom-creation entrance alongside quick
+check-in.
+
+Today is a current-state activity view, not an audit log. Creating a record makes
+it visible; editing updates that record and may show an `Edited today` marker;
+deleting removes it from the activity view and is confirmed with transient
+feedback. Deleted health content is not retained as a persistent activity item.
+If a future audit or revision history is needed, it must be a separate,
+explicitly user-facing local history with its own export policy.
+
+## Cycle Care And Reflection
+
+Cycle Letters group repeated Care actions instead of rendering an unbounded
+event list. Each group shows usage and Better/Same/Worse totals first; its
+dates, individual outcomes, and preserved older Care notes are expandable.
+
+Each cycle has at most one editable cycle reflection. New reflection entrances
+must not be repeated on individual Care events. The archive Story hierarchy is:
+
+1. the user-authored cycle reflection
+2. grouped factual Care overview
+3. expandable event details and preserved older Care notes
+
+Individual Care events remain available in Clinical records.
 
 ## Spectrum Log
 

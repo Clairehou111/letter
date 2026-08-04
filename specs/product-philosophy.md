@@ -88,7 +88,7 @@ Icons support the labels but never replace them:
 2. `I feel heavy`
 3. `My mind won't stop`
 4. `I need everyone away`
-5. `My body hurts`
+5. `My body needs care`
 
 The user names their state. Letter must not infer or declare it from a cycle
 prediction.

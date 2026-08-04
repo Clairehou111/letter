@@ -98,6 +98,20 @@ ArchiveInput archiveInput({bool includeRecords = true}) {
             ),
           ]
         : const [],
+    cycleReflections: includeRecords
+        ? [
+            CycleReflection(
+              id: 'cycle-reflection-1',
+              cycleStartDay: const LocalDate(2026, 7, 1).epochDay,
+              observation: 'The middle of this cycle needed a quieter pace.',
+              need: ReflectionNeed.restOrPhysicalCapacity,
+              whatHelped: 'Warmth and fewer plans.',
+              futureSelfNote: 'Leave more room next time.',
+              createdAt: DateTime.utc(2026, 7, 29),
+              updatedAt: DateTime.utc(2026, 7, 29),
+            ),
+          ]
+        : const [],
   );
 }
 
@@ -113,6 +127,15 @@ void main() {
     expect(cycle.coverageLabel, '1/28 days with confirmed records');
     expect(
       cycle.story.items.map((item) => item.body),
+      contains('The warmth made the next hour easier.'),
+    );
+    expect(
+      cycle.story.cycleReflection?.observation,
+      'The middle of this cycle needed a quieter pace.',
+    );
+    expect(cycle.story.careGroups.single.total, 1);
+    expect(
+      cycle.story.careGroups.single.moments.single.careNote,
       contains('The warmth made the next hour easier.'),
     );
     expect(
@@ -133,7 +156,6 @@ void main() {
     expect(cycle.pattern.careOutcomes.single.better, 1);
     expect(cycle.clinical.healthRows, hasLength(1));
     expect(cycle.clinical.healthRows.single.provenanceLabel, 'Same day');
-    expect(cycle.clinical.healthRows.single.painLabel, '8/10');
     expect(
       cycle.clinical.careRows.single.outcomeLabel,
       'Better after the action',
