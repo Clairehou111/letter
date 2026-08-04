@@ -5,6 +5,7 @@ import 'package:letter_mobile/features/local_backup/application/local_backup_ser
 import 'package:letter_mobile/features/local_backup/data/in_memory_local_backup_store.dart';
 import 'package:letter_mobile/features/local_backup/domain/local_backup_import.dart';
 import 'package:letter_mobile/features/local_backup/domain/local_backup_models.dart';
+import 'package:letter_mobile/features/local_backup/domain/local_backup_package.dart';
 
 void main() {
   final service = LocalBackupService();
@@ -35,6 +36,25 @@ void main() {
       restored.collections.single.records.single.data['symptom'],
       'Cramps',
     );
+  });
+
+  test('uses fresh public salt and nonce metadata for every export', () async {
+    final first = await service.encryptSnapshot(
+      snapshot: snapshot,
+      passphrase: 'private backup password',
+    );
+    final second = await service.encryptSnapshot(
+      snapshot: snapshot,
+      passphrase: 'private backup password',
+    );
+    final firstPackage = LocalEncryptedBackupPackage.fromBytes(first);
+    final secondPackage = LocalEncryptedBackupPackage.fromBytes(second);
+
+    expect(firstPackage.salt, hasLength(16));
+    expect(firstPackage.nonce, hasLength(12));
+    expect(firstPackage.mac, hasLength(16));
+    expect(firstPackage.salt, isNot(equals(secondPackage.salt)));
+    expect(firstPackage.nonce, isNot(equals(secondPackage.nonce)));
   });
 
   test('fails closed for a wrong password and tampered package', () async {
@@ -144,29 +164,32 @@ void main() {
     );
   });
 
-  test('rejects a valid JSON package with a malformed payload inside', () async {
-    final bytes = await service.encryptSnapshot(
-      snapshot: snapshot,
-      passphrase: 'private backup password',
-    );
-    final decoded = jsonDecode(utf8.decode(bytes)) as Map<String, Object?>;
-    decoded['ciphertext'] = 'AAAA';
-
-    // With a drastically wrong ciphertext, integrity failure is expected.
-    await expectLater(
-      service.decryptSnapshot(
-        packageBytes: utf8.encode(jsonEncode(decoded)),
+  test(
+    'rejects a valid JSON package with a malformed payload inside',
+    () async {
+      final bytes = await service.encryptSnapshot(
+        snapshot: snapshot,
         passphrase: 'private backup password',
-      ),
-      throwsA(
-        isA<LocalBackupException>().having(
-          (error) => error.failure,
-          'failure',
-          LocalBackupFailure.integrityCheckFailed,
+      );
+      final decoded = jsonDecode(utf8.decode(bytes)) as Map<String, Object?>;
+      decoded['ciphertext'] = 'AAAA';
+
+      // With a drastically wrong ciphertext, integrity failure is expected.
+      await expectLater(
+        service.decryptSnapshot(
+          packageBytes: utf8.encode(jsonEncode(decoded)),
+          passphrase: 'private backup password',
         ),
-      ),
-    );
-  });
+        throwsA(
+          isA<LocalBackupException>().having(
+            (error) => error.failure,
+            'failure',
+            LocalBackupFailure.integrityCheckFailed,
+          ),
+        ),
+      );
+    },
+  );
 
   test('merge has deterministic stable-ID conflict rules', () {
     final destination = _snapshot(

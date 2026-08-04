@@ -26,6 +26,9 @@ final class DriftLocalBackupStore implements LocalBackupStore {
       final careReflections = await _database
           .select(_database.careReflectionRows)
           .get();
+      final cycleReflections = await _database
+          .select(_database.cycleReflectionRows)
+          .get();
       final healthRecords = await _database
           .select(_database.healthRecordRows)
           .get();
@@ -73,6 +76,21 @@ final class DriftLocalBackupStore implements LocalBackupStore {
               (row) => _record(row.id, row.updatedAtMillis, {
                 'careRecordId': row.careRecordId,
                 'mode': row.mode,
+                'observation': row.observation,
+                'need': row.need,
+                'whatHelped': row.whatHelped,
+                'futureSelfNote': row.futureSelfNote,
+                'createdAtMillis': row.createdAtMillis,
+                'updatedAtMillis': row.updatedAtMillis,
+              }),
+            ),
+          ),
+          LocalBackupCollection(
+            name: _cycleReflections,
+            schemaVersion: 1,
+            records: cycleReflections.map(
+              (row) => _record(row.id, row.updatedAtMillis, {
+                'cycleStartDay': row.cycleStartDay,
                 'observation': row.observation,
                 'need': row.need,
                 'whatHelped': row.whatHelped,
@@ -152,6 +170,7 @@ final class DriftLocalBackupStore implements LocalBackupStore {
 const _periods = 'periods';
 const _careRecords = 'care_records';
 const _careReflections = 'care_reflections';
+const _cycleReflections = 'cycle_reflections';
 const _healthRecords = 'health_records';
 const _captureNotes = 'capture_notes';
 const _momentCheckIns = 'moment_check_ins';
@@ -162,7 +181,11 @@ const _requiredCollections = {
   _healthRecords,
   _captureNotes,
 };
-const _supportedCollections = {..._requiredCollections, _momentCheckIns};
+const _supportedCollections = {
+  ..._requiredCollections,
+  _cycleReflections,
+  _momentCheckIns,
+};
 
 LocalBackupRecord _record(
   String id,
@@ -179,6 +202,7 @@ final class _ParsedSnapshot {
     required this.periods,
     required this.careRecords,
     required this.careReflections,
+    required this.cycleReflections,
     required this.healthRecords,
     required this.captureNotes,
     required this.momentCheckIns,
@@ -187,6 +211,7 @@ final class _ParsedSnapshot {
   final List<PeriodRowsCompanion> periods;
   final List<CareRecordRowsCompanion> careRecords;
   final List<CareReflectionRowsCompanion> careReflections;
+  final List<CycleReflectionRowsCompanion> cycleReflections;
   final List<HealthRecordRowsCompanion> healthRecords;
   final List<CaptureNoteRowsCompanion> captureNotes;
   final List<MomentCheckInRowsCompanion> momentCheckIns;
@@ -209,6 +234,11 @@ final class _ParsedSnapshot {
       careReflections: byName[_careReflections]!.records
           .map(_careReflection)
           .toList(growable: false),
+      cycleReflections:
+          byName[_cycleReflections]?.records
+              .map(_cycleReflection)
+              .toList(growable: false) ??
+          const [],
       healthRecords: byName[_healthRecords]!.records
           .map(_healthRecord)
           .toList(growable: false),
@@ -247,6 +277,7 @@ final class _DriftStagedLocalBackupImport implements StagedLocalBackupImport {
     try {
       await database.transaction(() async {
         await database.delete(database.careReflectionRows).go();
+        await database.delete(database.cycleReflectionRows).go();
         await database.delete(database.careRecordRows).go();
         await database.delete(database.healthRecordRows).go();
         await database.delete(database.captureNoteRows).go();
@@ -256,6 +287,10 @@ final class _DriftStagedLocalBackupImport implements StagedLocalBackupImport {
           batch.insertAll(database.periodRows, parsed.periods);
           batch.insertAll(database.careRecordRows, parsed.careRecords);
           batch.insertAll(database.careReflectionRows, parsed.careReflections);
+          batch.insertAll(
+            database.cycleReflectionRows,
+            parsed.cycleReflections,
+          );
           batch.insertAll(database.healthRecordRows, parsed.healthRecords);
           batch.insertAll(database.captureNoteRows, parsed.captureNotes);
           batch.insertAll(database.momentCheckInRows, parsed.momentCheckIns);
@@ -336,6 +371,30 @@ CareReflectionRowsCompanion _careReflection(LocalBackupRecord record) {
     id: record.id,
     careRecordId: _string(data, 'careRecordId'),
     mode: _string(data, 'mode'),
+    observation: Value(_nullableString(data, 'observation')),
+    need: Value(_nullableString(data, 'need')),
+    whatHelped: Value(_nullableString(data, 'whatHelped')),
+    futureSelfNote: Value(_nullableString(data, 'futureSelfNote')),
+    createdAtMillis: _int(data, 'createdAtMillis'),
+    updatedAtMillis: updated,
+  );
+}
+
+CycleReflectionRowsCompanion _cycleReflection(LocalBackupRecord record) {
+  final data = _data(record, {
+    'cycleStartDay',
+    'observation',
+    'need',
+    'whatHelped',
+    'futureSelfNote',
+    'createdAtMillis',
+    'updatedAtMillis',
+  });
+  final updated = _int(data, 'updatedAtMillis');
+  _matchesUpdatedAt(record, updated);
+  return CycleReflectionRowsCompanion.insert(
+    id: record.id,
+    cycleStartDay: _int(data, 'cycleStartDay'),
     observation: Value(_nullableString(data, 'observation')),
     need: Value(_nullableString(data, 'need')),
     whatHelped: Value(_nullableString(data, 'whatHelped')),

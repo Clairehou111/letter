@@ -20,13 +20,48 @@ void main() {
       ),
     );
 
+    await tester.scrollUntilVisible(
+      find.byKey(const Key('local-backup-export')),
+      200,
+      scrollable: find.byType(Scrollable),
+    );
     expect(find.byKey(const Key('local-backup-export')), findsOneWidget);
+    await tester.scrollUntilVisible(
+      find.byKey(const Key('local-backup-import-merge')),
+      200,
+      scrollable: find.byType(Scrollable),
+    );
     expect(find.byKey(const Key('local-backup-import-merge')), findsOneWidget);
+    await tester.scrollUntilVisible(
+      find.byKey(const Key('local-backup-import-replace')),
+      200,
+      scrollable: find.byType(Scrollable),
+    );
     expect(
       find.byKey(const Key('local-backup-import-replace')),
       findsOneWidget,
     );
+    expect(find.byKey(const Key('local-backup-help')), findsOneWidget);
+    expect(find.textContaining('Remember this password'), findsOneWidget);
     expect(find.textContaining('Sealed impulse letters'), findsOneWidget);
+  });
+
+  testWidgets('opens export and import help', (tester) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        home: LocalBackupScreen(
+          store: InMemoryLocalBackupStore(_emptySnapshot()),
+          filePort: const _FakeBackupFilePort(),
+        ),
+      ),
+    );
+
+    await tester.tap(find.byKey(const Key('local-backup-help')));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Export and import help'), findsOneWidget);
+    expect(find.text('Is it safe to see salt and nonce?'), findsOneWidget);
+    expect(find.textContaining('cannot recover'), findsOneWidget);
   });
 }
 
@@ -51,5 +86,14 @@ final class _FakeBackupFilePort implements LocalBackupFilePort {
   Future<Uint8List?> pickEncryptedBackup() async => null;
 
   @override
-  Future<void> shareEncryptedBackup(Uint8List bytes) async {}
+  Future<String> shareEncryptedBackup(Uint8List bytes) async =>
+      'letter-backup.letter';
+
+  @override
+  Future<String> saveEncryptedBackupLocally(Uint8List bytes) async =>
+      '/tmp/letter-backup.letter';
+
+  @override
+  String get exportLocationDescription =>
+      'The backup file is saved in the app documents folder.';
 }

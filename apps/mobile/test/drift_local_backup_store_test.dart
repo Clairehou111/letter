@@ -57,6 +57,19 @@ void main() {
           ),
         );
         batch.insert(
+          source.cycleReflectionRows,
+          CycleReflectionRowsCompanion.insert(
+            id: 'cycle-reflection-source',
+            cycleStartDay: 20400,
+            observation: const Value('This cycle needed a quieter pace.'),
+            need: const Value('restOrPhysicalCapacity'),
+            whatHelped: const Value('Fewer plans.'),
+            futureSelfNote: const Value('Keep an evening open.'),
+            createdAtMillis: 610,
+            updatedAtMillis: 620,
+          ),
+        );
+        batch.insert(
           source.healthRecordRows,
           HealthRecordRowsCompanion.insert(
             id: 'health-source',
@@ -126,6 +139,7 @@ void main() {
           'periods',
           'care_records',
           'care_reflections',
+          'cycle_reflections',
           'health_records',
           'capture_notes',
           'moment_check_ins',
@@ -177,6 +191,12 @@ void main() {
             .single
             .id,
         'reflection-source',
+      );
+      expect(
+        (await destination.select(destination.cycleReflectionRows).get())
+            .single
+            .id,
+        'cycle-reflection-source',
       );
       expect(
         (await destination.select(destination.healthRecordRows).get())

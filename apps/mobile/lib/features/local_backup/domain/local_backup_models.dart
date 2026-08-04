@@ -190,6 +190,37 @@ final class LocalBackupSnapshot {
 
 enum LocalBackupImportPolicy { replace, merge }
 
+/// Describes what will happen to one specific record during import.
+enum LocalBackupRecordChangeKind { add, replace, keep, remove }
+
+final class LocalBackupRecordChange {
+  const LocalBackupRecordChange({
+    required this.recordId,
+    required this.label,
+    required this.kind,
+    this.reason,
+  });
+
+  /// Stable record identifier (e.g. the Drift row id).
+  final String recordId;
+
+  /// One-line human-readable description derived from structured fields.
+  /// Never contains free-text notes or impulse-draft content.
+  final String label;
+
+  final LocalBackupRecordChangeKind kind;
+
+  /// Optional short explanation (e.g. "local is newer", "only in backup").
+  final String? reason;
+
+  String get actionLabel => switch (kind) {
+    LocalBackupRecordChangeKind.add => 'Added',
+    LocalBackupRecordChangeKind.replace => 'Replaced',
+    LocalBackupRecordChangeKind.keep => 'Kept',
+    LocalBackupRecordChangeKind.remove => 'Removed',
+  };
+}
+
 final class LocalBackupCollectionPreview {
   const LocalBackupCollectionPreview({
     required this.name,
@@ -199,6 +230,7 @@ final class LocalBackupCollectionPreview {
     required this.wouldReplace,
     required this.wouldKeepDestination,
     required this.wouldRemove,
+    this.changes = const [],
   });
 
   final String name;
@@ -208,6 +240,10 @@ final class LocalBackupCollectionPreview {
   final int wouldReplace;
   final int wouldKeepDestination;
   final int wouldRemove;
+
+  /// Per-record change detail, one entry per affected record.
+  /// Empty when the collection has no changes or the list was not computed.
+  final List<LocalBackupRecordChange> changes;
 }
 
 final class LocalBackupImportPreview {
