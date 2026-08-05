@@ -2,6 +2,7 @@ import 'dart:math';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
+
 import 'package:flutter/services.dart';
 import 'package:flutter_soloud/flutter_soloud.dart';
 
@@ -30,6 +31,8 @@ import '../../../design_system/letter_theme.dart';
 /// silence isn't dead air. Off by default; `wordless` swaps the words for soft
 /// hums for when language is too much.
 enum BreathPattern { coherent, longExhale, box }
+
+enum BreathSound { off, voice, wordless }
 
 class BreathPhase {
   const BreathPhase(this.word, this.seconds, this.kind);
@@ -94,23 +97,23 @@ class _BreathFlowState extends State<BreathFlow> with SingleTickerProviderStateM
   bool _picking = false;
   int _phaseIndex = -1;
   bool _minutePassed = false;
+  bool _settled = false;
 
-  // Audio
-  SoLoud? _soloud;
-  AudioSource? _bedSource;
-  SoundHandle? _bedHandle;
-  bool _audioReady = false;
-  bool _sound = false;
+  late BreathSound _sound;
+  _BreathAudio? _audio;
 
-  // ── Letter palette ────────────────────────────────────────────────
+  // ── Letter palette & assets ─────────────────────────────────────
   static const _bg = LetterColors.night;
   static const _ink = LetterColors.canvas;
   static const _glow = LetterColors.moonMetal;
+  static const _bedAsset = 'assets/audio/care/prototype/breath.mp3';
 
   @override
   void initState() {
     super.initState();
-    _initAudio();
+    _sound = BreathSound.off;
+    
+    if (_sound != BreathSound.off) _openAudio();
     _ticker = createTicker((d) {
       setState(() => _elapsed = d);
       _onFrame(d.inMicroseconds / 1e6);
@@ -118,38 +121,25 @@ class _BreathFlowState extends State<BreathFlow> with SingleTickerProviderStateM
       ..start();
   }
 
-  static const _bedAsset = 'assets/audio/care/prototype/breath.mp3';
-
-  Future<void> _initAudio() async {
-    try {
-      _soloud = SoLoud.instance;
-      await _soloud!.init();
-      _bedSource = await _soloud!.loadAsset(_bedAsset);
-      _audioReady = true;
-    } catch (_) {}
-  }
-
-  Future<void> _startBed() async {
-    if (!_audioReady || _bedSource == null || _bedHandle != null) return;
-    try {
-      _bedHandle = _soloud!.play(_bedSource!, volume: 0, looping: true);
-    } catch (_) {}
-  }
-
-  void _setSwell(double v) {
-    if (_bedHandle == null || !_sound) return;
-    try {
-      _soloud!.setVolume(_bedHandle!, (v * 0.5).clamp(0.0, 0.5));
-    } catch (_) {}
+  /// The bed sits far back on purpose: it is there so the gaps between cues
+  /// aren't dead air, never something you'd notice on its own.
+  Future<void> _openAudio() async {
+    if (_audio != null) return;
+    final a = await _BreathAudio.start(_bedAsset, gain: 0.3, rate: 0.97);
+    if (!mounted || _sound == BreathSound.off) {
+      await a.stop();
+      return;
+    }
+    _audio = a;
+    
+    a.setLevel(0.5);
   }
 
   @override
   void dispose() {
     _ticker.dispose();
-    if (_bedHandle != null) {
-      try { _soloud!.stop(_bedHandle!); } catch (_) {}
-    }
-    _soloud?.deinit();
+    _audio?.stop();
+    
     super.dispose();
   }
 
@@ -167,13 +157,41 @@ class _BreathFlowState extends State<BreathFlow> with SingleTickerProviderStateM
     return (phase: _phases.last, index: _phases.length - 1, t: 1);
   }
 
-  void _toggleSound() {
-    final next = !_sound;
+  /// The voice leads the turning point rather than reporting it: one short cue,
+  /// then silence for the rest of the phase.
+  void _speak(BreathPhase phase) {
+    final a = _audio;
+    if (a == null) return;
+    if (_sound == BreathSound.voice) {
+      final asset = switch (phase.kind) {
+        0 => 'assets/ambience/voice-in.mp3',
+        1 => 'assets/ambience/voice-hold.mp3',
+        _ => 'assets/ambience/voice-out.mp3',
+      };
+      a.cue(asset, gain: 0.9);
+    } else if (_sound == BreathSound.wordless) {
+      // no hum on a hold — a hold should feel like nothing happening
+      if (phase.kind == 1) return;
+      a.cue(
+        phase.kind == 0 ? 'assets/ambience/hum-in.mp3' : 'assets/ambience/hum-out.mp3',
+        gain: 0.8,
+      );
+    }
+  }
+
+  Future<void> _cycleSound() async {
+    final next = switch (_sound) {
+      BreathSound.off => BreathSound.voice,
+      BreathSound.voice => BreathSound.wordless,
+      BreathSound.wordless => BreathSound.off,
+    };
     setState(() => _sound = next);
-    if (next) {
-      _startBed();
+        if (next == BreathSound.off) {
+      final a = _audio;
+      _audio = null;
+      await a?.stop();
     } else {
-      _setSwell(0);
+      await _openAudio();
     }
   }
 
@@ -184,18 +202,34 @@ class _BreathFlowState extends State<BreathFlow> with SingleTickerProviderStateM
     _phaseIndex = now.index;
     // one soft cue at each turning point, nothing during the phase itself
     switch (now.phase.kind) {
-      case 0: HapticFeedback.lightImpact();
-      case 1: HapticFeedback.mediumImpact();
-      default: HapticFeedback.heavyImpact();
+      case 0:
+        HapticFeedback.lightImpact();
+      case 1:
+        HapticFeedback.mediumImpact();
+      default:
+        HapticFeedback.heavyImpact();
     }
-    _setSwell(now.phase.kind == 2 ? 0.72 : 1.16);
+    _speak(now.phase);
+    // the bed leans with the breath too, so the pace survives closed eyes
+    _audio?.setSwell(now.phase.kind == 2 ? 0.78 : 1.14,
+        seconds: max(1.2, now.phase.seconds * 0.8));
+    if (_minutePassed && !_settled && now.phase.kind == 0) {
+      _settled = true;
+      if (_sound == BreathSound.voice) {
+        _audio?.cue('assets/ambience/voice-settle.mp3', gain: 0.75);
+      }
+    }
   }
 
-String get _soundLabel => _sound ? 'sound on' : 'sound off';
+  String get _soundLabel => switch (_sound) {
+        BreathSound.off => 'sound off',
+        BreathSound.voice => 'a voice',
+        BreathSound.wordless => 'wordless',
+      };
 
   @override
   Widget build(BuildContext context) {
-    // Letter palette
+    
     final seconds = _elapsed.inMicroseconds / 1e6;
     final now = _at(seconds);
 
@@ -293,15 +327,24 @@ String get _soundLabel => _sound ? 'sound on' : 'sound off';
                               _PatternChoice(
                                 info: BreathPatternInfo(
                                   _pattern,
-                                  _sound ? 'Sound: on' : 'Sound: off',
-                                  _sound
-                                      ? 'ambient bed — swells with the breath'
-                                      : 'silent — the ring and haptics are enough',
+                                  switch (_sound) {
+                                    BreathSound.off => 'Sound: off',
+                                    BreathSound.voice => 'Sound: a voice',
+                                    BreathSound.wordless => 'Sound: wordless',
+                                  },
+                                  switch (_sound) {
+                                    BreathSound.off =>
+                                      'silent — the ring and the haptics are enough',
+                                    BreathSound.voice =>
+                                      'a few soft words at the turning points, then quiet',
+                                    BreathSound.wordless =>
+                                      'a soft hum instead of words, no language',
+                                  },
                                   const [],
                                 ),
-                                selected: _sound,
+                                selected: _sound != BreathSound.off,
                                 glow: _glow,
-                                onTap: _toggleSound,
+                                onTap: _cycleSound,
                               ),
                             ],
                           ),
@@ -322,8 +365,7 @@ String get _soundLabel => _sound ? 'sound on' : 'sound off';
                   children: [
                     _Ghost(label: 'Back', glow: _glow, onTap: widget.onClose),
                     _Ghost(
-                      label: '${breathPatternInfo(_pattern).label.toLowerCase()}'
-                          ' · $_soundLabel',
+                      label: '${breathPatternInfo(_pattern).label.toLowerCase()} · $_soundLabel',
                       glow: _glow,
                       onTap: () => setState(() => _picking = !_picking),
                     ),
@@ -411,7 +453,7 @@ class _BreathPainter extends CustomPainter {
     required this.ink,
     required this.glow,
     required this.bg,
-  });
+    });
 
   final double expand;
   final double seconds;
@@ -482,4 +524,70 @@ class _BreathPainter extends CustomPainter {
 
   @override
   bool shouldRepaint(_BreathPainter old) => true;
+}
+
+// ── Audio: thin wrapper around flutter_soloud ────────────────────────
+// Replaces SceneAudio from scene-mind-soothe-flutter.
+// start() loads and loops a bed, cue() plays a one-shot on top,
+// setSwell() ramps bed volume, stop() tears everything down.
+
+class _BreathAudio {
+  _BreathAudio._(this._soloud, this._bedHandle);
+
+  final SoLoud _soloud;
+  final SoundHandle _bedHandle;
+  final _cues = <String, SoundHandle>{};
+  bool _stopped = false;
+
+  static Future<_BreathAudio> start(
+    String asset, {
+    double gain = 0.3,
+    double rate = 0.97,
+  }) async {
+    final soloud = SoLoud.instance;
+    await soloud.init();
+    final src = await soloud.loadAsset(asset);
+    final handle = soloud.play(src, volume: gain, looping: true);
+    return _BreathAudio._(soloud, handle);
+  }
+
+  void setLevel(double v) {
+    if (_stopped) return;
+    try { _soloud.setVolume(_bedHandle, v.clamp(0.0, 1.0)); } catch (_) {}
+  }
+
+  Future<void> cue(String asset, {double gain = 0.8}) async {
+    if (_stopped) return;
+    try {
+      // Reuse cached handle, or load once.
+      SoundHandle? h = _cues[asset];
+      if (h == null) {
+        final src = await _soloud.loadAsset(asset);
+        h = _soloud.play(src, volume: gain);
+        _cues[asset] = h;
+      } else {
+        _soloud.setVolume(h, gain);
+        // Seek to start by stopping and replaying
+        _soloud.stop(h);
+        final src = await _soloud.loadAsset(asset);
+        final nh = _soloud.play(src, volume: gain);
+        _cues[asset] = nh;
+      }
+    } catch (_) {}
+  }
+
+  void setSwell(double v, {double seconds = 1.6}) {
+    if (_stopped) return;
+    try { _soloud.setVolume(_bedHandle, (v * 0.5).clamp(0.0, 0.5)); } catch (_) {}
+  }
+
+  Future<void> stop() async {
+    _stopped = true;
+    try { _soloud.stop(_bedHandle); } catch (_) {}
+    for (final h in _cues.values) {
+      try { _soloud.stop(h); } catch (_) {}
+    }
+    _cues.clear();
+    _soloud.deinit();
+  }
 }
