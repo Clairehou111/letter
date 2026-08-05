@@ -102,6 +102,7 @@ class _BreathFlowState extends State<BreathFlow>
   double _w = 0, _h = 0, _dpr = 1;
   double _t = 0;
   Duration _last = Duration.zero;
+  int _frameSkip = 0; // draw buffer every N ticks
 
   BreathPattern _pattern = BreathPattern.coherent;
   bool _picking = false;
@@ -252,18 +253,37 @@ class _BreathFlowState extends State<BreathFlow>
       setState(() => _minutePassed = true);
     }
 
-    _drawBuffer(dt);
+    // Draw buffer every 2nd tick (~30fps visual, 60fps physics/haptics)
+    _frameSkip = (_frameSkip + 1) % 2;
+    if (_frameSkip == 0) _drawBuffer(dt);
   }
 
   // ── Generative canvas buffer ──────────────────────────────────────
   // Each frame draws the previous frame's image (creating motion trails),
   // washes it with a translucent background, then paints the current ring,
   // halos, and drifting motes on top.
+  //
+  // Render at a capped internal resolution regardless of device DPR —
+  // the bloom and halos are intentionally soft, so the drop is invisible
+  // but memory drops from ~12MB/frame to ~1MB/frame.
+
+  static const _renderMaxDim = 512.0;
+
+  double get _renderScale {
+    final longest = _w > _h ? _w : _h;
+    if (longest <= 0) return 1;
+    final s = _renderMaxDim / longest;
+    return s < 1 ? s : 1;
+  }
 
   void _drawBuffer(double dt) {
+    final rw = (_w * _renderScale).round();
+    final rh = (_h * _renderScale).round();
+    if (rw <= 0 || rh <= 0) return;
+
     final rec = ui.PictureRecorder();
-    final canvas = Canvas(rec, Rect.fromLTWH(0, 0, _w * _dpr, _h * _dpr));
-    canvas.scale(_dpr);
+    final canvas = Canvas(rec, Rect.fromLTWH(0, 0, rw.toDouble(), rh.toDouble()));
+    canvas.scale(_renderScale);
 
     final prev = _buffer;
     if (prev != null) {
@@ -278,7 +298,7 @@ class _BreathFlowState extends State<BreathFlow>
     _draw(canvas, dt);
 
     final pic = rec.endRecording();
-    final img = pic.toImageSync((_w * _dpr).round(), (_h * _dpr).round());
+    final img = pic.toImageSync(rw, rh);
     pic.dispose();
     _buffer?.dispose();
     _buffer = img;
