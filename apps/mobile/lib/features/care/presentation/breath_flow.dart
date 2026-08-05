@@ -7,19 +7,37 @@ import 'package:flutter_soloud/flutter_soloud.dart';
 
 import '../../../design_system/letter_theme.dart';
 
-/// A breathing activity inside Care.
+/// A breathing activity inside "My body needs care".
 ///
-/// Deliberately quieter than the other scenes — this is the one activity where
-/// nothing should be moving except your breathing. A single ring with soft halos,
-/// haptic rhythm cues, and an optional ambient bed that swells with the breath.
+/// Learned from what holds up in the calm apps that do this well:
+/// Apple Breathe's single expanding ring with no numbers, Headspace naming the
+/// pattern, Oak letting you pick a pace. What's deliberately left out: counters,
+/// progress bars, a fixed session length, and any breath-holding by default —
+/// holds can make anxiety and cramping worse.
+///
+/// Default is coherent breathing at ~5.5 breaths/min (5.5s in, 5.5s out), the
+/// pattern with the strongest calming evidence. The visual is the instruction.
+/// Haptics carry the rhythm so it works with eyes closed, phone face-down.
 /// Nothing counts down; it runs until you leave.
+///
+/// Deliberately quieter to look at than the other scenes: this is the one
+/// activity where nothing should be moving except your breathing, so it stays a
+/// single ring rather than a generative field you could end up tracking.
+///
+/// The sound is a human voice, not a synth pad — the same thing Calm,
+/// Headspace, Breathwrk and Oak all land on. Sparse words at the turning points
+/// only, a long silence in between, and a very low warm bed underneath so the
+/// silence isn't dead air. Off by default; `wordless` swaps the words for soft
+/// hums for when language is too much.
 enum BreathPattern { coherent, longExhale, box }
 
 class BreathPhase {
   const BreathPhase(this.word, this.seconds, this.kind);
   final String word;
   final double seconds;
-  final int kind; // 0 = inhale, 1 = hold, 2 = exhale
+
+  /// 0 = inhale, 1 = hold, 2 = exhale
+  final int kind;
 }
 
 class BreathPatternInfo {
@@ -59,7 +77,6 @@ const breathPatterns = <BreathPatternInfo>[
 BreathPatternInfo breathPatternInfo(BreathPattern p) =>
     breathPatterns.firstWhere((b) => b.id == p);
 
-/// Full-screen breathing activity. Push as a MaterialPageRoute.
 class BreathFlow extends StatefulWidget {
   const BreathFlow({super.key, required this.onClose});
 
@@ -69,8 +86,7 @@ class BreathFlow extends StatefulWidget {
   State<BreathFlow> createState() => _BreathFlowState();
 }
 
-class _BreathFlowState extends State<BreathFlow>
-    with SingleTickerProviderStateMixin {
+class _BreathFlowState extends State<BreathFlow> with SingleTickerProviderStateMixin {
   late final Ticker _ticker;
   Duration _elapsed = Duration.zero;
 
@@ -83,24 +99,26 @@ class _BreathFlowState extends State<BreathFlow>
   SoLoud? _soloud;
   AudioSource? _bedSource;
   SoundHandle? _bedHandle;
-  bool _sound = false;
   bool _audioReady = false;
+  bool _sound = false;
 
   // ── Letter palette ────────────────────────────────────────────────
   static const _bg = LetterColors.night;
   static const _ink = LetterColors.canvas;
   static const _glow = LetterColors.moonMetal;
-  static const _bedAsset = 'assets/audio/care/prototype/breath.mp3';
 
   @override
   void initState() {
     super.initState();
+    _initAudio();
     _ticker = createTicker((d) {
       setState(() => _elapsed = d);
       _onFrame(d.inMicroseconds / 1e6);
-    })..start();
-    _initAudio();
+    })
+      ..start();
   }
+
+  static const _bedAsset = 'assets/audio/care/prototype/breath.mp3';
 
   Future<void> _initAudio() async {
     try {
@@ -118,24 +136,11 @@ class _BreathFlowState extends State<BreathFlow>
     } catch (_) {}
   }
 
-  // Swell: the bed rises through the in-breath, eases through the out-breath.
   void _setSwell(double v) {
     if (_bedHandle == null || !_sound) return;
     try {
       _soloud!.setVolume(_bedHandle!, (v * 0.5).clamp(0.0, 0.5));
     } catch (_) {}
-  }
-
-  void _toggleSound() {
-    final next = !_sound;
-    setState(() => _sound = next);
-    if (next) {
-      _startBed();
-    } else if (_bedHandle != null) {
-      try {
-        _soloud!.setVolume(_bedHandle!, 0);
-      } catch (_) {}
-    }
   }
 
   @override
@@ -151,6 +156,7 @@ class _BreathFlowState extends State<BreathFlow>
   List<BreathPhase> get _phases => breathPatternInfo(_pattern).phases;
   double get _cycleSeconds => _phases.fold(0.0, (a, p) => a + p.seconds);
 
+  /// Position inside the current cycle, and which phase that lands in.
   ({BreathPhase phase, int index, double t}) _at(double seconds) {
     var x = seconds % _cycleSeconds;
     for (var i = 0; i < _phases.length; i++) {
@@ -161,27 +167,39 @@ class _BreathFlowState extends State<BreathFlow>
     return (phase: _phases.last, index: _phases.length - 1, t: 1);
   }
 
+  void _toggleSound() {
+    final next = !_sound;
+    setState(() => _sound = next);
+    if (next) {
+      _startBed();
+    } else {
+      _setSwell(0);
+    }
+  }
+
   void _onFrame(double seconds) {
     if (!_minutePassed && seconds > 60) _minutePassed = true;
     final now = _at(seconds);
     if (now.index == _phaseIndex) return;
     _phaseIndex = now.index;
-
-    // One soft cue at each turning point, nothing during the phase itself.
+    // one soft cue at each turning point, nothing during the phase itself
     switch (now.phase.kind) {
       case 0: HapticFeedback.lightImpact();
       case 1: HapticFeedback.mediumImpact();
       default: HapticFeedback.heavyImpact();
     }
-    // Bed leans with the breath — pace survives closed eyes.
     _setSwell(now.phase.kind == 2 ? 0.72 : 1.16);
   }
 
+String get _soundLabel => _sound ? 'sound on' : 'sound off';
+
   @override
   Widget build(BuildContext context) {
+    // Letter palette
     final seconds = _elapsed.inMicroseconds / 1e6;
     final now = _at(seconds);
 
+    // radius eases with the breath: fuller on the in-breath, held flat on holds
     final eased = switch (now.phase.kind) {
       0 => Curves.easeInOut.transform(now.t),
       1 => 1.0,
@@ -204,9 +222,12 @@ class _BreathFlowState extends State<BreathFlow>
               ),
             ),
           ),
-          // Word, low in the frame — cross-fades, never snaps.
+          // the word, low in the frame — no counter, no progress bar. It
+          // cross-fades rather than snapping, so nothing arrives abruptly.
           Positioned(
-            left: 0, right: 0, bottom: 148,
+            left: 0,
+            right: 0,
+            bottom: 148,
             child: Center(
               child: AnimatedOpacity(
                 opacity: hold ? 0.5 : 0.85,
@@ -231,19 +252,17 @@ class _BreathFlowState extends State<BreathFlow>
           ),
           if (_minutePassed)
             Positioned(
-              left: 24, right: 24, bottom: 112,
+              left: 24,
+              right: 24,
+              bottom: 112,
               child: Center(
                 child: Text(
                   "that's a minute. stay as long as you like.",
                   textAlign: TextAlign.center,
-                  style: TextStyle(
-                    fontSize: 11.5,
-                    color: _glow.withValues(alpha: 0.4),
-                  ),
+                  style: TextStyle(fontSize: 11.5, color: _glow.withValues(alpha: 0.4)),
                 ),
               ),
             ),
-          // ── Pattern + sound overlay ─────────────────────────────
           if (_picking)
             Positioned.fill(
               child: GestureDetector(
@@ -273,7 +292,7 @@ class _BreathFlowState extends State<BreathFlow>
                               const SizedBox(height: 10),
                               _PatternChoice(
                                 info: BreathPatternInfo(
-                                  _pattern, // unused
+                                  _pattern,
                                   _sound ? 'Sound: on' : 'Sound: off',
                                   _sound
                                       ? 'ambient bed — swells with the breath'
@@ -293,7 +312,6 @@ class _BreathFlowState extends State<BreathFlow>
                 ),
               ),
             ),
-          // ── Bottom controls ────────────────────────────────────
           SafeArea(
             child: Align(
               alignment: Alignment.bottomCenter,
@@ -305,15 +323,11 @@ class _BreathFlowState extends State<BreathFlow>
                     _Ghost(label: 'Back', glow: _glow, onTap: widget.onClose),
                     _Ghost(
                       label: '${breathPatternInfo(_pattern).label.toLowerCase()}'
-                          ' · ${_sound ? "sound on" : "sound off"}',
+                          ' · $_soundLabel',
                       glow: _glow,
                       onTap: () => setState(() => _picking = !_picking),
                     ),
-                    _Ghost(
-                      label: "that's enough",
-                      glow: _glow,
-                      onTap: widget.onClose,
-                    ),
+                    _Ghost(label: "that's enough", glow: _glow, onTap: widget.onClose),
                   ],
                 ),
               ),
@@ -324,95 +338,6 @@ class _BreathFlowState extends State<BreathFlow>
     );
   }
 }
-
-// ── Simple ring painter — no buffer, no generative canvas ────────────
-
-class _BreathPainter extends CustomPainter {
-  _BreathPainter({
-    required this.expand,
-    required this.seconds,
-    required this.ink,
-    required this.glow,
-    required this.bg,
-  });
-
-  final double expand;
-  final double seconds;
-  final Color ink;
-  final Color glow;
-  final Color bg;
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final center = Offset(size.width / 2, size.height * 0.44);
-    final base = min(size.width, size.height) * 0.16;
-    final reach = base * 0.7;
-    final r = base + reach * expand;
-
-    // deep field wash
-    canvas.drawRect(
-      Offset.zero & size,
-      Paint()
-        ..shader = RadialGradient(
-          colors: [
-            glow.withValues(alpha: 0.10 + 0.10 * expand),
-            bg,
-          ],
-          stops: const [0, 1],
-        ).createShader(
-          Rect.fromCircle(center: center, radius: size.height * 0.8),
-        ),
-    );
-
-    // trailing halos
-    for (var i = 4; i >= 1; i--) {
-      final k = i / 4;
-      canvas.drawCircle(
-        center,
-        r * (1 + k * 0.55),
-        Paint()
-          ..color = glow.withValues(alpha: 0.05 * (1 - k) + 0.03)
-          ..maskFilter = MaskFilter.blur(BlurStyle.normal, 18 + 26 * k),
-      );
-    }
-
-    // the ring itself
-    canvas.drawCircle(
-      center, r,
-      Paint()
-        ..color = glow.withValues(alpha: 0.16 + 0.12 * expand)
-        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 24),
-    );
-    canvas.drawCircle(
-      center, r,
-      Paint()
-        ..style = PaintingStyle.stroke
-        ..strokeWidth = 1.4
-        ..color = ink.withValues(alpha: 0.45 + 0.35 * expand),
-    );
-
-    // slow drift of motes — field is never quite static
-    final rnd = Random(7);
-    for (var i = 0; i < 26; i++) {
-      final a = rnd.nextDouble() * pi * 2;
-      final d = base * (1.4 + rnd.nextDouble() * 3.4);
-      final wob = sin(seconds * 0.22 + i) * 8;
-      final p = center + Offset(
-        cos(a) * (d + wob),
-        sin(a) * (d + wob) * 0.72,
-      );
-      canvas.drawCircle(
-        p, 0.9 + rnd.nextDouble() * 1.6,
-        Paint()..color = glow.withValues(alpha: 0.05 + 0.09 * expand),
-      );
-    }
-  }
-
-  @override
-  bool shouldRepaint(_BreathPainter old) => true;
-}
-
-// ── Shared widgets ───────────────────────────────────────────────────
 
 class _PatternChoice extends StatelessWidget {
   const _PatternChoice({
@@ -443,15 +368,11 @@ class _PatternChoice extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(info.label,
-                    style: TextStyle(
-                        fontSize: 14,
-                        color: glow.withValues(alpha: 0.9))),
+                    style: TextStyle(fontSize: 14, color: glow.withValues(alpha: 0.9))),
                 const SizedBox(height: 3),
                 Text(info.note,
                     style: TextStyle(
-                        fontSize: 11.5,
-                        height: 1.5,
-                        color: glow.withValues(alpha: 0.5))),
+                        fontSize: 11.5, height: 1.5, color: glow.withValues(alpha: 0.5))),
               ],
             ),
           ),
@@ -462,12 +383,7 @@ class _PatternChoice extends StatelessWidget {
 }
 
 class _Ghost extends StatelessWidget {
-  const _Ghost({
-    required this.label,
-    required this.glow,
-    required this.onTap,
-  });
-
+  const _Ghost({required this.label, required this.glow, required this.onTap});
   final String label;
   final Color glow;
   final VoidCallback onTap;
@@ -484,4 +400,86 @@ class _Ghost extends StatelessWidget {
       child: Text(label),
     );
   }
+}
+
+/// One soft ring, breathing. Concentric halos trail behind it so the motion
+/// reads as warmth spreading rather than a shape resizing.
+class _BreathPainter extends CustomPainter {
+  _BreathPainter({
+    required this.expand,
+    required this.seconds,
+    required this.ink,
+    required this.glow,
+    required this.bg,
+  });
+
+  final double expand;
+  final double seconds;
+  final Color ink;
+  final Color glow;
+  final Color bg;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final center = Offset(size.width / 2, size.height * 0.44);
+    final base = min(size.width, size.height) * 0.16;
+    final reach = base * 0.7;
+    final r = base + reach * expand;
+
+    // deep field wash
+    canvas.drawRect(
+      Offset.zero & size,
+      Paint()
+        ..shader = RadialGradient(
+          colors: [glow.withValues(alpha: 0.10 + 0.10 * expand), bg],
+          stops: const [0, 1],
+        ).createShader(Rect.fromCircle(center: center, radius: size.height * 0.8)),
+    );
+
+    // trailing halos
+    for (var i = 4; i >= 1; i--) {
+      final k = i / 4;
+      canvas.drawCircle(
+        center,
+        r * (1 + k * 0.55),
+        Paint()
+          ..color = glow.withValues(alpha: 0.05 * (1 - k) + 0.03)
+          ..maskFilter = MaskFilter.blur(BlurStyle.normal, 18 + 26 * k),
+      );
+    }
+
+    // the ring itself
+    canvas.drawCircle(
+      center,
+      r,
+      Paint()
+        ..color = glow.withValues(alpha: 0.16 + 0.12 * expand)
+        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 24),
+    );
+    canvas.drawCircle(
+      center,
+      r,
+      Paint()
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 1.4
+        ..color = ink.withValues(alpha: 0.45 + 0.35 * expand),
+    );
+
+    // a slow drift of motes so the field is never quite static
+    final rnd = Random(7);
+    for (var i = 0; i < 26; i++) {
+      final a = rnd.nextDouble() * pi * 2;
+      final d = base * (1.4 + rnd.nextDouble() * 3.4);
+      final wob = sin(seconds * 0.22 + i) * 8;
+      final p = center + Offset(cos(a) * (d + wob), sin(a) * (d + wob) * 0.72);
+      canvas.drawCircle(
+        p,
+        0.9 + rnd.nextDouble() * 1.6,
+        Paint()..color = glow.withValues(alpha: 0.05 + 0.09 * expand),
+      );
+    }
+  }
+
+  @override
+  bool shouldRepaint(_BreathPainter old) => true;
 }
