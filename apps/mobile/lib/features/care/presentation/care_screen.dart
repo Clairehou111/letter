@@ -11,6 +11,7 @@ import '../../health_records/presentation/health_record_form_screen.dart';
 import '../../recovery_receipt/application/recovery_receipt_controller.dart';
 import '../../recovery_receipt/presentation/recovery_receipt_flow.dart';
 import 'angry_impulse_flow.dart';
+import 'breath_flow.dart';
 import 'care_break_flow.dart';
 import 'care_checkback_flow.dart';
 import 'care_safety_boundary_sheet.dart';
@@ -73,6 +74,19 @@ class _CareScreenState extends State<CareScreen> {
       }
     }
   }
+
+  // ── Breathing ────────────────────────────────────────────────────
+
+  Future<void> _openBreath() async {
+    await Navigator.of(context).push(
+      MaterialPageRoute<void>(
+        builder: (context) =>
+            BreathFlow(onClose: () => Navigator.of(context).pop()),
+      ),
+    );
+  }
+
+  // ── Motion scene → practical help ─────────────────────────────────
 
   void _openMode(CareMode mode) {
     setState(() {
@@ -330,6 +344,10 @@ class _CareScreenState extends State<CareScreen> {
                       const SizedBox(height: LetterSpacing.lg),
                       const LetterEyebrow('Choose what should change'),
                       const SizedBox(height: LetterSpacing.sm),
+                      _BreathEntry(
+                        onPressed: _openBreath,
+                      ),
+                      const SizedBox(height: LetterSpacing.xs),
                       ...CareMode.values.map(
                         (mode) => Padding(
                           padding: const EdgeInsets.only(
@@ -345,6 +363,91 @@ class _CareScreenState extends State<CareScreen> {
                   ),
                 ),
               ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// A quieter entry below the five care modes — no motion scene,
+/// no check-back, just a breathing ring with pattern picker.
+class _BreathEntry extends StatelessWidget {
+  const _BreathEntry({required this.onPressed});
+
+  final VoidCallback onPressed;
+
+  @override
+  Widget build(BuildContext context) {
+    return Semantics(
+      button: true,
+      label: 'I want to breathe with something. Opens a guided breathing ring.',
+      child: Material(
+        color: LetterColors.surface.withValues(alpha: 0.74),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+          side: BorderSide(color: LetterColors.ink.withValues(alpha: 0.08)),
+        ),
+        clipBehavior: Clip.antiAlias,
+        child: InkWell(
+          key: const Key('care-breathe-entry'),
+          onTap: onPressed,
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(minHeight: 72),
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(16, 12, 14, 12),
+              child: Row(
+                children: [
+                  Container(
+                    width: 46,
+                    height: 46,
+                    decoration: BoxDecoration(
+                      color: LetterColors.moonMetal.withValues(alpha: 0.15),
+                      borderRadius:
+                          BorderRadius.circular(LetterRadius.control),
+                    ),
+                    child: const Icon(
+                      Icons.air_outlined,
+                      color: LetterColors.moonMetal,
+                      size: 22,
+                    ),
+                  ),
+                  const SizedBox(width: LetterSpacing.sm),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        const Text(
+                          'I want to breathe with something',
+                          style: TextStyle(
+                            fontFamily: 'Newsreader',
+                            fontSize: 16,
+                            height: 1.1,
+                            fontWeight: FontWeight.w800,
+                          ),
+                        ),
+                        const SizedBox(height: LetterSpacing.xxs),
+                        Text(
+                          'One ring, one pace — nothing to count.',
+                          style: TextStyle(
+                            color: LetterColors.muted,
+                            fontSize: 11.5,
+                            height: 1.3,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(width: LetterSpacing.xs),
+                  Icon(
+                    Icons.arrow_forward,
+                    color: LetterColors.ink.withValues(alpha: 0.4),
+                    size: 18,
+                  ),
+                ],
+              ),
             ),
           ),
         ),
