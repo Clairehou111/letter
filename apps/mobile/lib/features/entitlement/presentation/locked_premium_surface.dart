@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
 
 import '../../../experience/theme/experience_foundation.dart';
-import 'entitlement_scope.dart';
-import 'plans_sheet.dart';
 
 /// Honest locked state for premium surfaces (REQ-004): says what the surface
 /// would contain and offers one calm upgrade action. Never fabricates
@@ -16,13 +14,13 @@ class LockedPremiumSurface extends StatelessWidget {
   const LockedPremiumSurface({
     required this.title,
     required this.description,
-    this.onOpenPlans,
+    required this.onOpenPlans,
     super.key,
   });
 
   final String title;
   final String description;
-  final VoidCallback? onOpenPlans;
+  final VoidCallback onOpenPlans;
 
   @override
   Widget build(BuildContext context) {
@@ -86,19 +84,7 @@ class LockedPremiumSurface extends StatelessWidget {
                             ),
                             child: InkWell(
                               key: const Key('locked-see-plans'),
-                              onTap: () {
-                                final callback = onOpenPlans;
-                                if (callback != null) {
-                                  callback();
-                                  return;
-                                }
-                                final repo = EntitlementScope.repositoryOf(
-                                  context,
-                                );
-                                if (repo != null) {
-                                  PlansSheet.show(context, repo);
-                                }
-                              },
+                              onTap: onOpenPlans,
                               borderRadius: ExperienceRadius.chipRadius,
                               child: ConstrainedBox(
                                 constraints: const BoxConstraints(
