@@ -7,6 +7,7 @@ import 'package:supabase_flutter/supabase_flutter.dart' as supabase;
 import '../../../design_system/letter_brand_mark.dart';
 import '../../../experience/theme/experience_foundation.dart';
 import '../domain/auth_service.dart';
+import 'auth_error_message.dart';
 
 class AuthScreen extends StatefulWidget {
   const AuthScreen({
@@ -67,64 +68,12 @@ class _AuthScreenState extends State<AuthScreen> {
           'Letter Within auth request failed (status: ${error.statusCode ?? 'unknown'}).',
         );
       }
-      if (mounted) setState(() => _error = _messageForAuthError(error));
-    } on TimeoutException {
-      if (mounted) setState(() => _error = _networkMessage);
-    } on Object {
-      if (mounted) {
-        setState(
-          () => _error =
-              'Letter Within could not start sign-in. Check your connection and try again.',
-        );
-      }
+      if (mounted) setState(() => _error = AuthErrorMessage.from(error));
+    } on Object catch (error) {
+      if (mounted) setState(() => _error = AuthErrorMessage.from(error));
     } finally {
       if (mounted) setState(() => _working = false);
     }
-  }
-
-  static const _networkMessage =
-      'Letter Within could not make a secure connection to sign-in. '
-      'Try another network or pause your VPN, then try again.';
-
-  String _messageForAuthError(supabase.AuthException error) {
-    final status = error.statusCode;
-    final code = error.code?.toLowerCase() ?? '';
-    final message = error.message.toLowerCase();
-    final networkUnavailable =
-        code.contains('network') ||
-        code.contains('retryable') ||
-        message.contains('clientexception') ||
-        message.contains('connection') ||
-        message.contains('failed host lookup') ||
-        message.contains('handshake') ||
-        message.contains('socket') ||
-        message.contains('timed out') ||
-        message.contains('timeout');
-    if (networkUnavailable) return _networkMessage;
-    final rateLimited =
-        status == '429' ||
-        code.contains('rate') ||
-        message.contains('rate limit') ||
-        message.contains('too many requests') ||
-        message.contains('email rate');
-    if (rateLimited) {
-      return 'Too many sign-in emails were requested. Wait a few minutes and try again.';
-    }
-    final serverUnavailable =
-        (int.tryParse(status ?? '') ?? 0) >= 500 ||
-        code == 'unexpected_failure';
-    if (serverUnavailable) {
-      return "Letter Within's email service is temporarily unavailable. Please try again in a few minutes.";
-    }
-    final emailUnavailable =
-        message.contains('email provider') ||
-        message.contains('invalid email') ||
-        (code.contains('email') &&
-            (code.contains('disabled') || code.contains('invalid')));
-    if (emailUnavailable) {
-      return 'That email could not be used for sign-in. Check it and try again.';
-    }
-    return 'Letter Within could not start sign-in. Check your connection and try again.';
   }
 
   @override

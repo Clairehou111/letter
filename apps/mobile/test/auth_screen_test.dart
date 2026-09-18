@@ -88,7 +88,7 @@ void main() {
       ),
       findsOneWidget,
     );
-    expect(find.textContaining('Check your connection'), findsNothing);
+    expect(find.textContaining('reach the sign-in service'), findsNothing);
   });
 
   testWidgets('magic-link failure never exposes provider details', (
@@ -106,7 +106,7 @@ void main() {
     await tester.tap(find.byKey(const Key('auth-magic-link')));
     await tester.pumpAndSettle();
 
-    expect(find.textContaining('Check your connection'), findsOneWidget);
+    expect(find.textContaining('could not start sign-in'), findsOneWidget);
     expect(find.textContaining('secret@example.com'), findsNothing);
     expect(find.textContaining('token=abc'), findsNothing);
   });
@@ -136,10 +136,12 @@ void main() {
       ),
       findsOneWidget,
     );
-    expect(find.textContaining('Check your connection'), findsNothing);
+    expect(find.textContaining('reach the sign-in service'), findsNothing);
   });
 
-  testWidgets('network auth failure points to network or VPN', (tester) async {
+  testWidgets('network auth failure does not guess at its cause', (
+    tester,
+  ) async {
     final service = _ThrowingAuthService(
       const supabase.AuthException(
         'ClientException: HandshakeException: connection terminated',
@@ -155,11 +157,12 @@ void main() {
     await tester.tap(find.byKey(const Key('auth-magic-link')));
     await tester.pumpAndSettle();
 
-    expect(find.textContaining('pause your VPN'), findsOneWidget);
+    expect(find.textContaining('reach the sign-in service'), findsOneWidget);
+    expect(find.textContaining('VPN'), findsNothing);
     expect(find.textContaining('HandshakeException'), findsNothing);
   });
 
-  testWidgets('timed-out auth request points to network or VPN', (
+  testWidgets('timed-out auth request uses the shared service message', (
     tester,
   ) async {
     final service = _ThrowingAuthService(TimeoutException('provider details'));
@@ -172,7 +175,8 @@ void main() {
     await tester.tap(find.byKey(const Key('auth-magic-link')));
     await tester.pumpAndSettle();
 
-    expect(find.textContaining('pause your VPN'), findsOneWidget);
+    expect(find.textContaining('reach the sign-in service'), findsOneWidget);
+    expect(find.textContaining('VPN'), findsNothing);
     expect(find.textContaining('provider details'), findsNothing);
   });
 
