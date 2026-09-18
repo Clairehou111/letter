@@ -4,6 +4,7 @@ import 'package:letter_mobile/design_system/letter_theme.dart';
 import 'package:letter_mobile/features/care/domain/care_mode.dart';
 import 'package:letter_mobile/features/cycle/domain/local_date.dart';
 import 'package:letter_mobile/features/health_records/domain/health_record.dart';
+import 'package:letter_mobile/features/insights/presentation/hormonal_spectrum_strip.dart';
 import 'package:letter_mobile/features/patterns/domain/personal_pattern.dart';
 import 'package:letter_mobile/features/patterns/presentation/personal_patterns_screen.dart';
 
@@ -15,7 +16,6 @@ const _symptom = ObservedSymptomPattern(
   lastDate: LocalDate(2026, 7, 14),
   coveredDates: [LocalDate(2026, 7, 10), LocalDate(2026, 7, 14)],
   severityCounts: {SymptomSeverity.moderate: 1, SymptomSeverity.severe: 1},
-  painLocationCounts: {},
   functionalImpactCounts: {},
   sources: [
     PatternSourceReference(
@@ -95,16 +95,32 @@ Future<void> pumpPatterns(
   await tester.pump();
 }
 
-Future<void> scrollPatterns(WidgetTester tester, {required bool down}) async {
-  final offset = down ? const Offset(0, -620) : const Offset(0, 620);
-  for (var index = 0; index < 3; index++) {
-    await tester.drag(
-      find.byType(Scrollable).first,
-      offset,
-      warnIfMissed: false,
-    );
+Finder _verticalPatternsScrollable() {
+  return find
+      .descendant(
+        of: find.byKey(const Key('personal-patterns-scroll')),
+        matching: find.byWidgetPredicate(
+          (widget) =>
+              widget is Scrollable &&
+              widget.axisDirection == AxisDirection.down,
+        ),
+      )
+      .first;
+}
+
+Future<void> revealPatternContent(
+  WidgetTester tester,
+  Finder content, {
+  double coarseDelta = -600,
+}) async {
+  final scrollable = _verticalPatternsScrollable();
+  for (var index = 0; index < 6 && content.evaluate().isEmpty; index++) {
+    await tester.drag(scrollable, Offset(0, coarseDelta), warnIfMissed: false);
     await tester.pump();
   }
+  if (content.evaluate().isEmpty) return;
+  await tester.scrollUntilVisible(content, 260, scrollable: scrollable);
+  await tester.pumpAndSettle();
 }
 
 void main() {
@@ -113,20 +129,36 @@ void main() {
   ) async {
     await pumpPatterns(tester);
 
-    expect(find.text('What has repeated'), findsOneWidget);
-    expect(
-      find.text('Recorded 2 times from 2026-07-10 to 2026-07-14.'),
-      findsOneWidget,
+    expect(find.text('Two views of the same records'), findsOneWidget);
+    await revealPatternContent(tester, find.text('Nothing to show yet'));
+    expect(find.text('Spectrum Log'), findsOneWidget);
+    expect(find.byType(HormonalSpectrumStrip), findsOneWidget);
+    expect(find.text('Nothing to show yet'), findsOneWidget);
+    final evidenceToggle = find.byKey(
+      const Key('symptom-evidence-toggle-symptom:cramps'),
     );
-    expect(find.text('Observed dates: 2026-07-10, 2026-07-14'), findsOneWidget);
-    await scrollPatterns(tester, down: true);
+    await revealPatternContent(tester, evidenceToggle);
+    expect(find.text('DATES YOU RECORDED IT'), findsNothing);
+    await tester.tap(evidenceToggle);
+    await tester.pumpAndSettle();
+    expect(find.text('DATES YOU RECORDED IT'), findsOneWidget);
+    expect(find.text('2026-07-10'), findsOneWidget);
+    expect(find.text('2026-07-14'), findsOneWidget);
+    final careToggle = find.byKey(const Key('personal-patterns-care-toggle'));
+    await revealPatternContent(tester, careToggle);
+    await tester.tap(careToggle);
+    await tester.pumpAndSettle();
+    await revealPatternContent(
+      tester,
+      find.text('Better in 1 of 3 check-backs'),
+    );
     expect(find.text('Better in 1 of 3 check-backs'), findsOneWidget);
     expect(find.text('Same 1 · Worse 1'), findsOneWidget);
     expect(
       find.text('Your words: “The room felt less demanding.”'),
       findsOneWidget,
     );
-    expect(find.textContaining('diagnos'), findsNothing);
+    expect(find.textContaining('does not diagnose'), findsNothing);
     expect(find.textContaining('hormone'), findsNothing);
   });
 
@@ -145,12 +177,23 @@ void main() {
       onDelete: deleted.add,
     );
 
+    await revealPatternContent(
+      tester,
+      find.byKey(const Key('pattern-menu-symptom:cramps')),
+    );
     await tester.tap(find.byKey(const Key('pattern-menu-symptom:cramps')));
     await tester.pumpAndSettle();
     await tester.tap(find.text('Edit source record'));
     expect(edited, ['health-one']);
 
-    await scrollPatterns(tester, down: true);
+    final careToggle = find.byKey(const Key('personal-patterns-care-toggle'));
+    await revealPatternContent(tester, careToggle);
+    await tester.tap(careToggle);
+    await tester.pumpAndSettle();
+    await revealPatternContent(
+      tester,
+      find.byKey(const Key('pattern-menu-action:physical:lower-input')),
+    );
     await tester.tap(
       find.byKey(const Key('pattern-menu-action:physical:lower-input')),
     );
@@ -158,13 +201,20 @@ void main() {
     await tester.tap(find.text('Unpin this action'));
     expect(unpinned, ['care-one']);
 
-    await scrollPatterns(tester, down: false);
+    await revealPatternContent(
+      tester,
+      find.byKey(const Key('pattern-menu-symptom:cramps')),
+      coarseDelta: 600,
+    );
     await tester.tap(find.byKey(const Key('pattern-menu-symptom:cramps')));
     await tester.pumpAndSettle();
     await tester.tap(find.text('Hide this view'));
     expect(dismissed, ['symptom:cramps']);
 
-    await scrollPatterns(tester, down: true);
+    await revealPatternContent(
+      tester,
+      find.byKey(const Key('pattern-menu-action:physical:lower-input')),
+    );
     await tester.tap(
       find.byKey(const Key('pattern-menu-action:physical:lower-input')),
     );
@@ -173,21 +223,22 @@ void main() {
     expect(deleted, ['care-one']);
   });
 
-  testWidgets(
-    'insufficient history is explicit and separates generic comfort',
-    (tester) async {
-      await pumpPatterns(
-        tester,
-        analysis: PersonalPatternAnalysis(
-          symptomPatterns: const [],
-          supportActions: const [],
-          selectedCareMode: null,
-        ),
-      );
-      expect(find.text('Not enough repeated records yet'), findsOneWidget);
-      await scrollPatterns(tester, down: true);
-      expect(find.text('General comfort ideas'), findsOneWidget);
-      expect(find.textContaining('not personal findings'), findsOneWidget);
-    },
-  );
+  testWidgets('insufficient history is explicit and avoids diagnosis', (
+    tester,
+  ) async {
+    await pumpPatterns(
+      tester,
+      analysis: PersonalPatternAnalysis(
+        symptomPatterns: const [],
+        supportActions: const [],
+        selectedCareMode: null,
+      ),
+    );
+    await revealPatternContent(
+      tester,
+      find.text('Not enough repeated records yet'),
+    );
+    expect(find.text('Not enough repeated records yet'), findsOneWidget);
+    expect(find.textContaining('does not diagnose'), findsNothing);
+  });
 }

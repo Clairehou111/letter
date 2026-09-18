@@ -41,6 +41,46 @@ Future<void> pumpCapture(
 }
 
 void main() {
+  testWidgets('close exits the flow through Navigator.maybePop', (
+    tester,
+  ) async {
+    final controller = TextVoiceCaptureController(
+      speechAdapter: FakeSpeechToTextAdapter(),
+      noteStore: InMemoryCaptureNoteStore(),
+    );
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: LetterTheme.light,
+        home: Builder(
+          builder: (context) => Scaffold(
+            body: Center(
+              child: TextButton(
+                onPressed: () {
+                  Navigator.of(context).push(
+                    MaterialPageRoute<void>(
+                      builder: (_) =>
+                          TextVoiceCaptureFlow(controller: controller),
+                    ),
+                  );
+                },
+                child: const Text('Open capture'),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.tap(find.text('Open capture'));
+    await tester.pumpAndSettle();
+
+    expect(find.byKey(const Key('capture-flow')), findsOneWidget);
+    await tester.tap(find.byKey(const Key('capture-close')));
+    await tester.pumpAndSettle();
+
+    expect(find.byKey(const Key('capture-flow')), findsNothing);
+    expect(find.text('Open capture'), findsOneWidget);
+  });
+
   testWidgets('text remains usable and save is explicit', (tester) async {
     final store = InMemoryCaptureNoteStore();
     final controller = TextVoiceCaptureController(
@@ -81,6 +121,65 @@ void main() {
     expect(store.notes.single.text, 'A sentence I authored myself.');
     expect(find.byKey(const Key('capture-saved-note')), findsOneWidget);
     expect(find.text('Saved on this device'), findsOneWidget);
+  });
+
+  testWidgets('saved note Done exits the flow', (tester) async {
+    final controller = TextVoiceCaptureController(
+      speechAdapter: FakeSpeechToTextAdapter(
+        availability: SpeechAvailability.unavailable,
+      ),
+      noteStore: InMemoryCaptureNoteStore(),
+    );
+    tester.view.devicePixelRatio = 1;
+    tester.view.physicalSize = const Size(390, 844);
+    addTearDown(tester.view.reset);
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: LetterTheme.light,
+        home: Builder(
+          builder: (context) => Scaffold(
+            body: Center(
+              child: TextButton(
+                onPressed: () {
+                  Navigator.of(context).push(
+                    MaterialPageRoute<void>(
+                      builder: (_) =>
+                          TextVoiceCaptureFlow(controller: controller),
+                    ),
+                  );
+                },
+                child: const Text('Open capture'),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.tap(find.text('Open capture'));
+    await tester.pumpAndSettle();
+    await tester.enterText(
+      find.byKey(const Key('capture-text-field')),
+      'Done exits after saving.',
+    );
+    await tester.drag(
+      find.byKey(const Key('capture-scroll')),
+      const Offset(0, -500),
+    );
+    await tester.pump();
+    await tester.tap(find.byKey(const Key('capture-save-note')));
+    await tester.pumpAndSettle();
+
+    await tester.drag(
+      find.byKey(const Key('capture-scroll')),
+      const Offset(0, -500),
+    );
+    await tester.pump();
+    expect(find.byKey(const Key('capture-done')), findsOneWidget);
+    await tester.tap(find.byKey(const Key('capture-done')));
+    await tester.pumpAndSettle();
+
+    expect(find.byKey(const Key('capture-flow')), findsNothing);
+    expect(find.text('Open capture'), findsOneWidget);
   });
 
   testWidgets('partial transcript is visible and final text needs review', (
@@ -155,6 +254,11 @@ void main() {
     await tester.pump();
     adapter.emitPartial('No audio should survive cancel.');
     await tester.pump();
+    await tester.drag(
+      find.byKey(const Key('capture-scroll')),
+      const Offset(0, -500),
+    );
+    await tester.pump();
     await tester.tap(find.byKey(const Key('capture-cancel-voice')));
     await tester.pump();
 
@@ -185,6 +289,11 @@ void main() {
     await tester.pump();
     await tester.tap(find.byKey(const Key('capture-save-note')));
     await tester.pumpAndSettle();
+    await tester.drag(
+      find.byKey(const Key('capture-scroll')),
+      const Offset(0, -500),
+    );
+    await tester.pump();
     await tester.tap(find.byKey(const Key('capture-delete-note')));
     await tester.pumpAndSettle();
 

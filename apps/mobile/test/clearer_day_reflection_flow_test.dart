@@ -264,7 +264,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(
-      find.text('Letter could not save this reflection. Try again.'),
+      find.text('Letter Within could not save this reflection. Try again.'),
       findsOneWidget,
     );
     expect(find.text('The deadline still felt too close.'), findsOneWidget);
@@ -355,7 +355,7 @@ void main() {
 
     expect(find.text('Synthetic saved reflection.'), findsOneWidget);
     expect(
-      find.text('Letter could not delete this reflection. Try again.'),
+      find.text('Letter Within could not delete this reflection. Try again.'),
       findsOneWidget,
     );
     expect(find.textContaining('private delete details'), findsNothing);

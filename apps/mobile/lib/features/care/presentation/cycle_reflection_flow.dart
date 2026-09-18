@@ -85,7 +85,8 @@ class _CycleReflectionFlowState extends State<CycleReflectionFlow> {
       if (!mounted) return;
       setState(() {
         _busy = false;
-        _error = 'Letter could not save this cycle reflection. Try again.';
+        _error =
+            'Letter Within could not save this cycle reflection. Try again.';
       });
     }
   }
@@ -126,7 +127,8 @@ class _CycleReflectionFlowState extends State<CycleReflectionFlow> {
       if (!mounted) return;
       setState(() {
         _busy = false;
-        _error = 'Letter could not delete this cycle reflection. Try again.';
+        _error =
+            'Letter Within could not delete this cycle reflection. Try again.';
       });
     }
   }

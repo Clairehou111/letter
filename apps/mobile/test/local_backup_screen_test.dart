@@ -43,10 +43,10 @@ void main() {
     );
     expect(find.byKey(const Key('local-backup-help')), findsOneWidget);
     expect(find.textContaining('Remember this password'), findsOneWidget);
-    expect(find.textContaining('Sealed impulse letters'), findsOneWidget);
+    expect(find.textContaining('Sealed impulse letters'), findsNothing);
   });
 
-  testWidgets('opens export and import help', (tester) async {
+  testWidgets('opens current backup help', (tester) async {
     await tester.pumpWidget(
       MaterialApp(
         home: LocalBackupScreen(
@@ -59,8 +59,9 @@ void main() {
     await tester.tap(find.byKey(const Key('local-backup-help')));
     await tester.pumpAndSettle();
 
-    expect(find.text('Export and import help'), findsOneWidget);
-    expect(find.text('Is it safe to see salt and nonce?'), findsOneWidget);
+    expect(find.text('Backup help'), findsOneWidget);
+    expect(find.text('Is it safe to see salt and nonce?'), findsNothing);
+    expect(find.textContaining('You → Encrypted backup'), findsOneWidget);
     expect(find.textContaining('cannot recover'), findsOneWidget);
   });
 }
