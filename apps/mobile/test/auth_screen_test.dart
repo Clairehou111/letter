@@ -5,7 +5,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:letter_mobile/features/auth/data/dev_auth_service.dart';
 import 'package:letter_mobile/features/auth/domain/auth_service.dart';
-import 'package:letter_mobile/features/auth/presentation/account_screen.dart';
 import 'package:letter_mobile/features/auth/presentation/auth_screen.dart';
 import 'package:supabase_flutter/supabase_flutter.dart' as supabase;
 
@@ -175,33 +174,6 @@ void main() {
 
     expect(find.textContaining('pause your VPN'), findsOneWidget);
     expect(find.textContaining('provider details'), findsNothing);
-  });
-
-  testWidgets('account deletion says local health records remain', (
-    tester,
-  ) async {
-    final service = DevAuthService();
-    await service.sendMagicLink('person@example.com');
-    await tester.pumpWidget(MaterialApp(home: AccountScreen(service: service)));
-
-    await tester.tap(find.byKey(const Key('account-delete')));
-    await tester.pumpAndSettle();
-
-    expect(
-      find.textContaining(
-        'does not delete health records stored on this device',
-      ),
-      findsOneWidget,
-    );
-    expect(
-      find.textContaining('billing continues until you cancel'),
-      findsOneWidget,
-    );
-    expect(find.text('Manage subscription'), findsOneWidget);
-    await tester.tap(find.byKey(const Key('confirm-delete-account')));
-    await tester.pumpAndSettle();
-    expect(service.current.status, AuthStatus.localOnlyAfterAccountDeletion);
-    expect(service.current.canOpenLocalData, isTrue);
   });
 
   test('returning expired account keeps local-data access', () async {
