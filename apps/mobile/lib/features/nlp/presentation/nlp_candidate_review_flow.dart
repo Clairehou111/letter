@@ -23,9 +23,6 @@ class NlpCandidateReviewFlow extends StatefulWidget {
 }
 
 class _NlpCandidateReviewFlowState extends State<NlpCandidateReviewFlow> {
-  final Map<String, TextEditingController> _painControllers = {};
-  final Map<String, int?> _painRatings = {};
-
   NlpReviewController get _review => widget.controller;
 
   @override
@@ -37,9 +34,6 @@ class _NlpCandidateReviewFlowState extends State<NlpCandidateReviewFlow> {
   @override
   void dispose() {
     _review.removeListener(_onReviewChanged);
-    for (final controller in _painControllers.values) {
-      controller.dispose();
-    }
     super.dispose();
   }
 
@@ -64,15 +58,11 @@ class _NlpCandidateReviewFlowState extends State<NlpCandidateReviewFlow> {
       isPresent: result.isPresent,
       severity: result.severity,
       clearSeverity: result.severity == null,
-      painLocations: result.painLocations,
     );
   }
 
   void _confirm() {
-    final drafts = _review.confirmedDrafts(
-      fallbackDate: widget.fallbackDate,
-      painRatings: _painRatings,
-    );
+    final drafts = _review.confirmedDrafts(fallbackDate: widget.fallbackDate);
     if (drafts.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
@@ -111,7 +101,7 @@ class _NlpCandidateReviewFlowState extends State<NlpCandidateReviewFlow> {
             const SizedBox(height: LetterSpacing.xs),
             const Text(
               'Nothing becomes a health record until you confirm or edit it. '
-              'Letter never estimates severity from emotion, writing, voice, or taps.',
+              'Letter Within never estimates severity from emotion, writing, voice, or taps.',
               style: TextStyle(color: LetterColors.muted, height: 1.45),
             ),
             if (error != null) ...[
@@ -145,9 +135,6 @@ class _NlpCandidateReviewFlowState extends State<NlpCandidateReviewFlow> {
   }
 
   Widget _candidateCard(NlpCandidate candidate) {
-    final painController = candidate.painLocations.isEmpty
-        ? null
-        : (_painControllers[candidate.id] ??= TextEditingController());
     final statusLabel = switch (candidate.status) {
       NlpCandidateStatus.unresolved => 'Needs your read',
       NlpCandidateStatus.accepted => 'Accepted by you',
@@ -216,30 +203,6 @@ class _NlpCandidateReviewFlowState extends State<NlpCandidateReviewFlow> {
                   : 'Severity you can review: ${candidate.severity!.label}',
               style: const TextStyle(color: LetterColors.muted, fontSize: 13),
             ),
-            if (candidate.painLocations.isNotEmpty) ...[
-              const SizedBox(height: LetterSpacing.xs),
-              Text(
-                'Pain location: ${candidate.painLocations.map((location) => location.label).join(', ')}',
-                style: const TextStyle(color: LetterColors.muted, fontSize: 13),
-              ),
-              const SizedBox(height: LetterSpacing.xs),
-              TextField(
-                key: Key('nlp-pain-rating-${candidate.id}'),
-                controller: painController,
-                keyboardType: TextInputType.number,
-                decoration: const InputDecoration(
-                  labelText: 'Pain score, 0-10',
-                  helperText: 'Required before this pain entry can be added.',
-                ),
-                onChanged: (value) {
-                  final rating = int.tryParse(value);
-                  _painRatings[candidate.id] =
-                      rating != null && rating >= 0 && rating <= 10
-                      ? rating
-                      : null;
-                },
-              ),
-            ],
             const SizedBox(height: LetterSpacing.sm),
             Wrap(
               spacing: LetterSpacing.xs,
@@ -299,13 +262,11 @@ final class _NlpEditValues {
     required this.symptom,
     required this.isPresent,
     required this.severity,
-    required this.painLocations,
   });
 
   final SymptomType symptom;
   final bool isPresent;
   final SymptomSeverity? severity;
-  final Set<PainLocation> painLocations;
 }
 
 class _NlpEditSheet extends StatefulWidget {
@@ -321,13 +282,11 @@ class _NlpEditSheetState extends State<_NlpEditSheet> {
   late SymptomType _symptom = widget.candidate.symptom;
   late bool _isPresent = widget.candidate.isPresent;
   SymptomSeverity? _severity;
-  late final Set<PainLocation> _locations;
 
   @override
   void initState() {
     super.initState();
     _severity = widget.candidate.severity;
-    _locations = {...widget.candidate.painLocations};
   }
 
   @override
@@ -405,7 +364,6 @@ class _NlpEditSheetState extends State<_NlpEditSheet> {
                   symptom: _symptom,
                   isPresent: _isPresent,
                   severity: _severity,
-                  painLocations: _locations,
                 ),
               ),
               child: const Text('Use this correction'),

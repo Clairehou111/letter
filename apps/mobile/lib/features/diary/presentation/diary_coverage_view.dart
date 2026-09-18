@@ -32,9 +32,9 @@ class DiaryCoverageView extends StatelessWidget {
     final start = _startOfWeek(entries.first.experiencedDate);
     final end = _endOfWeek(
       entries.last.experiencedDate.compareTo(
-            LocalDate.fromDateTime(DateTime.now()),
-          ) >
-          0
+                LocalDate.fromDateTime(DateTime.now()),
+              ) >
+              0
           ? entries.last.experiencedDate
           : LocalDate.fromDateTime(DateTime.now()),
     );
@@ -62,7 +62,8 @@ class DiaryCoverageView extends StatelessWidget {
             child: Row(
               children: week.map((date) {
                 final hasEntry = entryDates.contains(date);
-                final isAfterStart = date.compareTo(
+                final isAfterStart =
+                    date.compareTo(
                       LocalDate.fromDateTime(enrollment.startedAt),
                     ) >=
                     0;
@@ -198,10 +199,7 @@ class _LegendDot extends StatelessWidget {
         const SizedBox(width: LetterSpacing.xxs),
         Text(
           label,
-          style: const TextStyle(
-            fontSize: 11,
-            color: LetterColors.muted,
-          ),
+          style: const TextStyle(fontSize: 11, color: LetterColors.muted),
         ),
       ],
     );

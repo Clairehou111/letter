@@ -9,10 +9,12 @@ class TextVoiceCaptureFlow extends StatefulWidget {
     required this.controller,
     super.key,
     this.onSaved,
+    this.onClose,
   });
 
   final TextVoiceCaptureController controller;
   final ValueChanged<CaptureNote>? onSaved;
+  final VoidCallback? onClose;
 
   @override
   State<TextVoiceCaptureFlow> createState() => _TextVoiceCaptureFlowState();
@@ -70,6 +72,15 @@ class _TextVoiceCaptureFlowState extends State<TextVoiceCaptureFlow> {
     }
   }
 
+  void _close() {
+    final callback = widget.onClose;
+    if (callback != null) {
+      callback();
+      return;
+    }
+    Navigator.of(context).maybePop();
+  }
+
   @override
   Widget build(BuildContext context) {
     final state = _capture.state;
@@ -89,6 +100,23 @@ class _TextVoiceCaptureFlowState extends State<TextVoiceCaptureFlow> {
                   padding: const EdgeInsets.fromLTRB(18, 24, 18, 28),
                   sliver: SliverList.list(
                     children: [
+                      Align(
+                        alignment: Alignment.centerLeft,
+                        child: TextButton.icon(
+                          key: const Key('capture-close'),
+                          onPressed: _close,
+                          style: TextButton.styleFrom(
+                            minimumSize: const Size(48, 48),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: LetterSpacing.xs,
+                            ),
+                            foregroundColor: LetterColors.muted,
+                          ),
+                          icon: const Icon(Icons.arrow_back),
+                          label: const Text('Close'),
+                        ),
+                      ),
+                      const SizedBox(height: LetterSpacing.sm),
                       const LetterEyebrow(
                         'Your words',
                         color: LetterColors.teal,
@@ -107,7 +135,7 @@ class _TextVoiceCaptureFlowState extends State<TextVoiceCaptureFlow> {
                       ),
                       const SizedBox(height: LetterSpacing.xs),
                       const Text(
-                        'Use your own words. Letter does not interpret them here, and nothing is saved until you choose.',
+                        'Use your own words. Letter Within does not interpret them here, and nothing is saved until you choose.',
                         style: TextStyle(
                           color: LetterColors.muted,
                           fontSize: 14,
@@ -144,6 +172,7 @@ class _TextVoiceCaptureFlowState extends State<TextVoiceCaptureFlow> {
                         capture: _capture,
                         onSave: _save,
                         onRetrySave: _retrySave,
+                        onDone: _close,
                       ),
                     ],
                   ),
@@ -290,12 +319,14 @@ class _CaptureActions extends StatelessWidget {
     required this.capture,
     required this.onSave,
     required this.onRetrySave,
+    required this.onDone,
   });
 
   final CaptureState state;
   final TextVoiceCaptureController capture;
   final Future<void> Function() onSave;
   final Future<void> Function() onRetrySave;
+  final VoidCallback onDone;
 
   @override
   Widget build(BuildContext context) {
@@ -303,6 +334,7 @@ class _CaptureActions extends StatelessWidget {
       return _SavedNoteCard(
         note: state.savedNote!,
         onDelete: capture.deleteSavedNote,
+        onDone: onDone,
       );
     }
 
@@ -382,10 +414,15 @@ class _CaptureActions extends StatelessWidget {
 }
 
 class _SavedNoteCard extends StatelessWidget {
-  const _SavedNoteCard({required this.note, required this.onDelete});
+  const _SavedNoteCard({
+    required this.note,
+    required this.onDelete,
+    required this.onDone,
+  });
 
   final CaptureNote note;
   final Future<void> Function() onDelete;
+  final VoidCallback onDone;
 
   @override
   Widget build(BuildContext context) {
@@ -416,6 +453,14 @@ class _SavedNoteCard extends StatelessWidget {
             const SizedBox(height: LetterSpacing.sm),
             Text(note.text, style: const TextStyle(height: 1.4)),
             const SizedBox(height: LetterSpacing.sm),
+            FilledButton.icon(
+              key: const Key('capture-done'),
+              onPressed: onDone,
+              style: _primaryButtonStyle(),
+              icon: const Icon(Icons.check),
+              label: const Text('Done'),
+            ),
+            const SizedBox(height: LetterSpacing.xs),
             TextButton.icon(
               key: const Key('capture-delete-note'),
               onPressed: onDelete,

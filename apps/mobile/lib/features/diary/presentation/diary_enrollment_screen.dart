@@ -102,14 +102,16 @@ class _DiaryEnrollmentScreenState extends State<DiaryEnrollmentScreen> {
                 _InfoCard(
                   icon: Icons.edit_calendar_outlined,
                   title: 'You choose the pace',
-                  body: 'Rate the symptoms that matter to you each day. '
+                  body:
+                      'Rate the symptoms that matter to you each day. '
                       'Stop or pause anytime. Your data stays local.',
                 ),
                 const SizedBox(height: LetterSpacing.sm),
                 _InfoCard(
                   icon: Icons.visibility_off_outlined,
                   title: 'Missed days stay blank',
-                  body: 'The diary never guesses, fills in, or backfills '
+                  body:
+                      'The diary never guesses, fills in, or backfills '
                       'a rating you did not enter. Gaps are visible '
                       'and honest.',
                 ),
@@ -117,17 +119,15 @@ class _DiaryEnrollmentScreenState extends State<DiaryEnrollmentScreen> {
                 _InfoCard(
                   icon: Icons.description_outlined,
                   title: 'For your clinician conversation',
-                  body: 'After two cycles you can export a summary with '
+                  body:
+                      'After two cycles you can export a summary with '
                       'visible provenance, missingness, and dates. '
                       'It never claims to diagnose.',
                 ),
                 const SizedBox(height: LetterSpacing.lg),
                 const Text(
                   'What you will rate each day',
-                  style: TextStyle(
-                    fontSize: 15,
-                    fontWeight: FontWeight.w700,
-                  ),
+                  style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700),
                 ),
                 const SizedBox(height: LetterSpacing.sm),
                 Text(
@@ -151,10 +151,7 @@ class _DiaryEnrollmentScreenState extends State<DiaryEnrollmentScreen> {
                 const SizedBox(height: LetterSpacing.lg),
                 const Text(
                   'Daily reminder (optional)',
-                  style: TextStyle(
-                    fontSize: 15,
-                    fontWeight: FontWeight.w700,
-                  ),
+                  style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700),
                 ),
                 const SizedBox(height: LetterSpacing.xs),
                 SwitchListTile(
@@ -179,10 +176,7 @@ class _DiaryEnrollmentScreenState extends State<DiaryEnrollmentScreen> {
                         child: _TimeDropdown(
                           label: 'Hour',
                           value: _reminderHour,
-                          items: List.generate(
-                            24,
-                            (h) => h,
-                          ),
+                          items: List.generate(24, (h) => h),
                           onChanged: (value) {
                             setState(() => _reminderHour = value!);
                           },
@@ -210,9 +204,7 @@ class _DiaryEnrollmentScreenState extends State<DiaryEnrollmentScreen> {
                     minimumSize: const Size.fromHeight(52),
                     backgroundColor: LetterColors.teal,
                     shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(
-                        LetterRadius.control,
-                      ),
+                      borderRadius: BorderRadius.circular(LetterRadius.control),
                     ),
                   ),
                   icon: _starting
@@ -230,8 +222,7 @@ class _DiaryEnrollmentScreenState extends State<DiaryEnrollmentScreen> {
                 const SizedBox(height: LetterSpacing.sm),
                 Center(
                   child: TextButton(
-                    onPressed:
-                        _starting ? null : () => widget.onCancel?.call(),
+                    onPressed: _starting ? null : () => widget.onCancel?.call(),
                     child: const Text(
                       'Not right now',
                       style: TextStyle(color: LetterColors.muted),
@@ -248,7 +239,11 @@ class _DiaryEnrollmentScreenState extends State<DiaryEnrollmentScreen> {
 }
 
 class _InfoCard extends StatelessWidget {
-  const _InfoCard({required this.icon, required this.title, required this.body});
+  const _InfoCard({
+    required this.icon,
+    required this.title,
+    required this.body,
+  });
 
   final IconData icon;
   final String title;
@@ -351,7 +346,10 @@ class _TimeDropdown extends StatelessWidget {
       initialValue: value,
       decoration: InputDecoration(
         labelText: label,
-        contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: 12,
+          vertical: 10,
+        ),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(LetterRadius.control),
           borderSide: const BorderSide(color: LetterColors.line),

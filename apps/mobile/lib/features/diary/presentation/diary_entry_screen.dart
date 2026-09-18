@@ -42,8 +42,9 @@ class _DiaryEntryScreenState extends State<DiaryEntryScreen> {
   void initState() {
     super.initState();
     _symptoms = Map.from(widget.existingEntry?.symptoms ?? {});
-    _functionalImpacts =
-        Map.from(widget.existingEntry?.functionalImpacts ?? {});
+    _functionalImpacts = Map.from(
+      widget.existingEntry?.functionalImpacts ?? {},
+    );
   }
 
   bool get _hasChanges {
@@ -51,7 +52,10 @@ class _DiaryEntryScreenState extends State<DiaryEntryScreen> {
       return _symptoms.isNotEmpty || _functionalImpacts.isNotEmpty;
     }
     return !_mapEquals(_symptoms, widget.existingEntry!.symptoms) ||
-        !_mapEquals(_functionalImpacts, widget.existingEntry!.functionalImpacts);
+        !_mapEquals(
+          _functionalImpacts,
+          widget.existingEntry!.functionalImpacts,
+        );
   }
 
   static bool _mapEquals(Map<String, int> left, Map<String, int> right) {
@@ -116,8 +120,10 @@ class _DiaryEntryScreenState extends State<DiaryEntryScreen> {
     final theme = Theme.of(context);
     final dateLabel = _isToday
         ? 'Today'
-        : widget.experiencedDate.asLocalDateTime.toIso8601String()
-            .substring(0, 10);
+        : widget.experiencedDate.asLocalDateTime.toIso8601String().substring(
+            0,
+            10,
+          );
     final provenanceNote = _isToday
         ? null
         : 'Recording for $dateLabel (later recall)';
@@ -154,9 +160,7 @@ class _DiaryEntryScreenState extends State<DiaryEntryScreen> {
                     padding: const EdgeInsets.all(LetterSpacing.sm),
                     decoration: BoxDecoration(
                       color: LetterColors.amberSoft,
-                      borderRadius: BorderRadius.circular(
-                        LetterRadius.control,
-                      ),
+                      borderRadius: BorderRadius.circular(LetterRadius.control),
                     ),
                     child: Row(
                       children: [
@@ -230,15 +234,12 @@ class _DiaryEntryScreenState extends State<DiaryEntryScreen> {
                 const SizedBox(height: LetterSpacing.xl),
                 FilledButton.icon(
                   key: const Key('diary-save-entry'),
-                  onPressed:
-                      _saving || !_hasChanges ? null : _save,
+                  onPressed: _saving || !_hasChanges ? null : _save,
                   style: FilledButton.styleFrom(
                     minimumSize: const Size.fromHeight(52),
                     backgroundColor: LetterColors.teal,
                     shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(
-                        LetterRadius.control,
-                      ),
+                      borderRadius: BorderRadius.circular(LetterRadius.control),
                     ),
                   ),
                   icon: _saving
@@ -357,7 +358,11 @@ class _RatingRow extends StatelessWidget {
                   onTap: () => onChanged(null),
                   child: const Padding(
                     padding: EdgeInsets.all(4),
-                    child: Icon(Icons.close, size: 14, color: LetterColors.muted),
+                    child: Icon(
+                      Icons.close,
+                      size: 14,
+                      color: LetterColors.muted,
+                    ),
                   ),
                 ),
             ],
@@ -386,7 +391,9 @@ class _RatingRow extends StatelessWidget {
                       }
                     },
                     child: AnimatedContainer(
-                      duration: LetterMotion.responsive,
+                      duration: MediaQuery.disableAnimationsOf(context)
+                          ? Duration.zero
+                          : LetterMotion.responsive,
                       curve: LetterMotion.standard,
                       width: 44,
                       decoration: BoxDecoration(

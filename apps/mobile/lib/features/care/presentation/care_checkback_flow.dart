@@ -4,7 +4,7 @@ import '../../../design_system/letter_theme.dart';
 import '../domain/care_memory.dart';
 
 const _careMemoryError =
-    'Letter could not update private Care memory. Try again.';
+    'Letter Within could not update private Care memory. Try again.';
 
 class CareCheckBackFlow extends StatelessWidget {
   const CareCheckBackFlow({
@@ -17,6 +17,9 @@ class CareCheckBackFlow extends StatelessWidget {
     this.isBusy = false,
     this.hasError = false,
     this.onRetry,
+    this.onReturnToScene,
+    this.onRestart,
+    this.rememberedActionLabel,
   });
 
   final ValueChanged<CareOutcome> onOutcome;
@@ -27,6 +30,9 @@ class CareCheckBackFlow extends StatelessWidget {
   final bool isBusy;
   final bool hasError;
   final VoidCallback? onRetry;
+  final VoidCallback? onReturnToScene;
+  final VoidCallback? onRestart;
+  final String? rememberedActionLabel;
 
   @override
   Widget build(BuildContext context) {
@@ -85,6 +91,9 @@ class CareCheckBackFlow extends StatelessWidget {
                           isBusy: isBusy,
                           onRecordSymptoms: onRecordSymptoms,
                           onDone: onDone,
+                          onReturnToScene: onReturnToScene,
+                          onRestart: onRestart,
+                          rememberedActionLabel: rememberedActionLabel,
                         ),
                       if (isBusy) ...[
                         const SizedBox(height: LetterSpacing.md),
@@ -267,12 +276,18 @@ class _RecordedOutcome extends StatelessWidget {
     required this.isBusy,
     required this.onRecordSymptoms,
     required this.onDone,
+    this.onReturnToScene,
+    this.onRestart,
+    this.rememberedActionLabel,
   });
 
   final CareOutcome outcome;
   final bool isBusy;
   final VoidCallback onRecordSymptoms;
   final VoidCallback onDone;
+  final VoidCallback? onReturnToScene;
+  final VoidCallback? onRestart;
+  final String? rememberedActionLabel;
 
   @override
   Widget build(BuildContext context) {
@@ -312,10 +327,15 @@ class _RecordedOutcome extends StatelessWidget {
               ),
             ),
             const SizedBox(height: LetterSpacing.xs),
-            const Text(
-              'You can also record symptoms as a separate health record.',
+            Text(
+              outcome == CareOutcome.better && rememberedActionLabel != null
+                  ? 'Letter will remember that ${rememberedActionLabel!} helped, and bring it back next time.'
+                  : 'Stay with the quiet scene, add details, or finish here.',
+              key: outcome == CareOutcome.better
+                  ? const Key('care-checkback-remembered')
+                  : null,
               textAlign: TextAlign.center,
-              style: TextStyle(
+              style: const TextStyle(
                 color: LetterColors.muted,
                 fontSize: 14,
                 height: 1.4,
@@ -323,28 +343,63 @@ class _RecordedOutcome extends StatelessWidget {
             ),
             const SizedBox(height: LetterSpacing.lg),
             FilledButton.icon(
-              key: const Key('care-checkback-record-symptoms'),
-              onPressed: isBusy ? null : onRecordSymptoms,
+              key: const Key('care-checkback-done'),
+              onPressed: isBusy ? null : onDone,
               style: FilledButton.styleFrom(
                 minimumSize: const Size.fromHeight(50),
-                backgroundColor: LetterColors.violet,
+                backgroundColor: LetterColors.teal,
                 foregroundColor: Colors.white,
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(LetterRadius.control),
                 ),
               ),
-              icon: const Icon(Icons.medical_information_outlined),
-              label: const Text('Record symptoms'),
+              icon: const Icon(Icons.check_rounded),
+              label: const Text('Done'),
             ),
-            const SizedBox(height: LetterSpacing.xs),
-            TextButton(
-              key: const Key('care-checkback-done'),
-              onPressed: isBusy ? null : onDone,
-              style: TextButton.styleFrom(
-                minimumSize: const Size.fromHeight(48),
-                foregroundColor: LetterColors.ink,
+            if (onReturnToScene != null) ...[
+              const SizedBox(height: LetterSpacing.xs),
+              OutlinedButton.icon(
+                key: const Key('care-checkback-return-scene'),
+                onPressed: isBusy ? null : onReturnToScene,
+                style: OutlinedButton.styleFrom(
+                  minimumSize: const Size.fromHeight(50),
+                  foregroundColor: LetterColors.blue,
+                  side: const BorderSide(color: LetterColors.blue),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(LetterRadius.control),
+                  ),
+                ),
+                icon: const Icon(Icons.waves_rounded),
+                label: const Text('Return to the settled scene'),
               ),
-              child: const Text('Done'),
+            ],
+            if (onRestart != null) ...[
+              const SizedBox(height: LetterSpacing.xs),
+              TextButton.icon(
+                key: const Key('care-checkback-restart-scene'),
+                onPressed: isBusy ? null : onRestart,
+                style: TextButton.styleFrom(
+                  minimumSize: const Size.fromHeight(48),
+                  foregroundColor: LetterColors.muted,
+                ),
+                icon: const Icon(Icons.replay_rounded),
+                label: const Text('Begin the scene again'),
+              ),
+            ],
+            const SizedBox(height: LetterSpacing.xs),
+            OutlinedButton.icon(
+              key: const Key('care-checkback-record-symptoms'),
+              onPressed: isBusy ? null : onRecordSymptoms,
+              style: OutlinedButton.styleFrom(
+                minimumSize: const Size.fromHeight(50),
+                foregroundColor: LetterColors.violet,
+                side: const BorderSide(color: LetterColors.violet),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(LetterRadius.control),
+                ),
+              ),
+              icon: const Icon(Icons.medical_information_outlined),
+              label: const Text('Add check-in details'),
             ),
           ],
         ),

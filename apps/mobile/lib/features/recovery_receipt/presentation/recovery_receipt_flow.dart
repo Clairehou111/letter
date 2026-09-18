@@ -238,7 +238,8 @@ class _RecoveryReceiptFlowState extends State<RecoveryReceiptFlow> {
       }
       setState(() {
         _saving = false;
-        _error = 'Letter could not save this private receipt. Try again.';
+        _error =
+            'Letter Within could not save this private receipt. Try again.';
       });
     }
   }
@@ -381,7 +382,7 @@ class _RecoveryReceiptFlowState extends State<RecoveryReceiptFlow> {
     _ReceiptStage.physical =>
       'Optional. These will be kept at the same intensity you confirm above.',
     _ReceiptStage.review =>
-      'Only after you confirm will Letter place these values in your private health record.',
+      'Only after you confirm will Letter Within place these values in your private health record.',
   };
 
   Widget get _stageBody => switch (_stage) {

@@ -204,7 +204,7 @@ class _ClearerDayReflectionFlowState extends State<ClearerDayReflectionFlow> {
       }
       setState(() {
         _busy = false;
-        _error = 'Letter could not save this reflection. Try again.';
+        _error = 'Letter Within could not save this reflection. Try again.';
       });
     }
   }
@@ -260,7 +260,7 @@ class _ClearerDayReflectionFlowState extends State<ClearerDayReflectionFlow> {
       }
       setState(() {
         _busy = false;
-        _error = 'Letter could not delete this reflection. Try again.';
+        _error = 'Letter Within could not delete this reflection. Try again.';
       });
     }
   }
@@ -617,7 +617,7 @@ class _FinalQuestion extends StatelessWidget {
         ),
         const SizedBox(height: LetterSpacing.xs),
         const Text(
-          'Letter will not interpret or rewrite this note.',
+          'Letter Within will not interpret or rewrite this note.',
           style: TextStyle(color: LetterColors.muted, height: 1.4),
         ),
         const SizedBox(height: LetterSpacing.sm),
@@ -808,7 +808,7 @@ class _Completion extends StatelessWidget {
           Text(
             deleted
                 ? 'The reflection and future-self note are no longer here.'
-                : 'Letter saved only what you reviewed and confirmed.',
+                : 'Letter Within saved only what you reviewed and confirmed.',
             textAlign: TextAlign.center,
             style: const TextStyle(color: LetterColors.muted, height: 1.45),
           ),

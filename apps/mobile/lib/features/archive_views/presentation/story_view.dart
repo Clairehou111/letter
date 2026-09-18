@@ -16,11 +16,7 @@ class ArchiveStoryView extends StatelessWidget {
       key: const Key('archive-story-scroll'),
       padding: const EdgeInsets.fromLTRB(20, 8, 20, 32),
       children: [
-        const _EvidenceNote(
-          text:
-              'Story organizes your saved words and factual Care memories. '
-              'Letter does not add a narrative or interpretation.',
-        ),
+        _LetterInfoCard(viewModel: viewModel),
         const SizedBox(height: LetterSpacing.lg),
         if (!hasContent)
           const _EmptyArchiveSection(
@@ -61,10 +57,10 @@ class ArchiveStoryView extends StatelessWidget {
             for (final group in viewModel.careGroups)
               _CareGroupCard(group: group),
         ],
-        if (viewModel.missingNote case final missing?) ...[
-          const SizedBox(height: LetterSpacing.md),
-          _MissingNote(text: missing),
-        ],
+        const SizedBox(height: LetterSpacing.md),
+        _MissingNote(
+          text: viewModel.missingNote ?? 'Some fields were not recorded.',
+        ),
       ],
     );
   }
@@ -97,6 +93,46 @@ class _SectionHeading extends StatelessWidget {
   }
 }
 
+class _LetterInfoCard extends StatelessWidget {
+  const _LetterInfoCard({required this.viewModel});
+
+  final ArchiveStoryViewModel viewModel;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      key: const Key('archive-story-letter-info'),
+      padding: const EdgeInsets.all(LetterSpacing.md),
+      decoration: BoxDecoration(
+        color: LetterColors.violetSoft,
+        border: Border.all(color: LetterColors.line),
+        borderRadius: BorderRadius.circular(LetterRadius.panel),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const LetterEyebrow('LETTER', color: LetterColors.violet),
+          const SizedBox(height: LetterSpacing.xxs),
+          Text(
+            viewModel.dateRange,
+            style: const TextStyle(
+              fontFamily: 'Newsreader',
+              fontSize: 24,
+              height: 1.1,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+          const SizedBox(height: LetterSpacing.xs),
+          const Text(
+            'Saved words and Care memories from this cycle.',
+            style: TextStyle(color: LetterColors.muted, height: 1.45),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 class _CycleReflectionCard extends StatelessWidget {
   const _CycleReflectionCard({required this.reflection});
 
@@ -105,10 +141,10 @@ class _CycleReflectionCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final rows = <(String, String)>[
-      if (reflection.observation case final value?) ('What stood out', value),
-      if (reflection.needLabel case final value?) ('What you needed', value),
-      if (reflection.whatHelped case final value?) ('What helped', value),
-      if (reflection.futureSelfNote case final value?) ('For next time', value),
+      ('What stood out', reflection.observation ?? 'Not recorded'),
+      ('What you needed', reflection.needLabel ?? 'Not recorded'),
+      ('What helped', reflection.whatHelped ?? 'Not recorded'),
+      ('For next time', reflection.futureSelfNote ?? 'Not recorded'),
     ];
     return Container(
       key: const Key('archive-cycle-reflection'),
@@ -136,7 +172,18 @@ class _CycleReflectionCard extends StatelessWidget {
               ),
             ),
             const SizedBox(height: LetterSpacing.xxs),
-            Text(row.$2, style: const TextStyle(height: 1.45)),
+            Text(
+              row.$2,
+              style: TextStyle(
+                height: 1.45,
+                color: row.$2 == 'Not recorded'
+                    ? LetterColors.muted
+                    : LetterColors.ink,
+                fontStyle: row.$2 == 'Not recorded'
+                    ? FontStyle.italic
+                    : FontStyle.normal,
+              ),
+            ),
           ],
         ],
       ),
@@ -190,7 +237,11 @@ class _CareGroupCard extends StatelessWidget {
             style: const TextStyle(color: LetterColors.muted, fontSize: 12),
           ),
           children: [
-            for (final moment in group.moments) _CareMomentRow(moment: moment),
+            for (var index = 0; index < group.moments.length; index++)
+              _CareMomentRow(
+                key: Key('archive-care-moment-${group.actionLabel}-$index'),
+                moment: group.moments[index],
+              ),
           ],
         ),
       ),
@@ -199,7 +250,7 @@ class _CareGroupCard extends StatelessWidget {
 }
 
 class _CareMomentRow extends StatelessWidget {
-  const _CareMomentRow({required this.moment});
+  const _CareMomentRow({required this.moment, super.key});
 
   final ArchiveStoryCareMoment moment;
 
@@ -222,6 +273,11 @@ class _CareMomentRow extends StatelessWidget {
           Text(
             moment.outcomeLabel,
             style: const TextStyle(color: LetterColors.muted),
+          ),
+          const SizedBox(height: LetterSpacing.xxs),
+          const Text(
+            'Source: Saved Care memory',
+            style: TextStyle(color: LetterColors.muted, fontSize: 12),
           ),
           if (moment.careNote case final note?) ...[
             const SizedBox(height: LetterSpacing.sm),
@@ -253,24 +309,6 @@ class _CareMomentRow extends StatelessWidget {
           ],
         ],
       ),
-    );
-  }
-}
-
-class _EvidenceNote extends StatelessWidget {
-  const _EvidenceNote({required this.text});
-
-  final String text;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(LetterSpacing.md),
-      decoration: const BoxDecoration(
-        color: LetterColors.violetSoft,
-        border: Border(left: BorderSide(color: LetterColors.violet, width: 4)),
-      ),
-      child: Text(text, style: const TextStyle(height: 1.45)),
     );
   }
 }
@@ -343,10 +381,18 @@ class _MissingNote extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Text(
-      text,
+    return Container(
       key: const Key('archive-story-missing'),
-      style: const TextStyle(color: LetterColors.muted, height: 1.45),
+      padding: const EdgeInsets.all(LetterSpacing.md),
+      decoration: BoxDecoration(
+        color: LetterColors.amberSoft,
+        border: Border.all(color: LetterColors.line),
+        borderRadius: BorderRadius.circular(LetterRadius.panel),
+      ),
+      child: Text(
+        '$text Gaps are not estimated or interpreted.',
+        style: const TextStyle(color: LetterColors.muted, height: 1.45),
+      ),
     );
   }
 }
