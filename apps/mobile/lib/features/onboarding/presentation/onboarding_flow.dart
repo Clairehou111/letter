@@ -1,10 +1,17 @@
 import 'package:flutter/material.dart';
 
-import '../../../design_system/letter_theme.dart';
+import '../../../design_system/letter_brand_mark.dart';
+import '../../../experience/theme/experience_foundation.dart';
 import '../domain/onboarding_profile.dart';
+import 'privacy_explainer_sheet.dart';
 
 typedef CompleteOnboarding = Future<void> Function(OnboardingProfile profile);
 
+/// The first minute of Letter Within: promise → privacy → goals, spoken in
+/// the same warm daylight language as the Today screen that follows it —
+/// cream canvas, plum Georgia lockup, an ember progress track, and one ember
+/// primary action. Crossing this threshold never registers as leaving the
+/// product.
 class OnboardingFlow extends StatefulWidget {
   const OnboardingFlow({required this.onComplete, super.key});
 
@@ -17,8 +24,10 @@ class OnboardingFlow extends StatefulWidget {
 class _OnboardingFlowState extends State<OnboardingFlow> {
   static const _stepCount = 3;
 
+  /// Daylight max-content-width convention, centered on wide surfaces.
+  static const double _maxContentWidth = 440;
+
   int _step = 0;
-  CloudToolsPreference _cloudPreference = CloudToolsPreference.off;
   final Set<OnboardingGoal> _selectedGoals = {};
   bool _saving = false;
   String? _saveError;
@@ -39,7 +48,7 @@ class _OnboardingFlowState extends State<OnboardingFlow> {
     try {
       await widget.onComplete(
         OnboardingProfile(
-          cloudToolsPreference: _cloudPreference,
+          cloudToolsPreference: CloudToolsPreference.off,
           selectedGoals: _selectedGoals,
         ),
       );
@@ -49,7 +58,8 @@ class _OnboardingFlowState extends State<OnboardingFlow> {
       }
       setState(() {
         _saving = false;
-        _saveError = 'Letter could not save this on your device. Try again.';
+        _saveError =
+            'Letter Within could not save this on your device. Try again.';
       });
     }
   }
@@ -65,6 +75,7 @@ class _OnboardingFlowState extends State<OnboardingFlow> {
   }
 
   void _toggleGoal(OnboardingGoal goal) {
+    ExperienceHaptics.pick();
     setState(() {
       if (!_selectedGoals.add(goal)) {
         _selectedGoals.remove(goal);
@@ -75,11 +86,13 @@ class _OnboardingFlowState extends State<OnboardingFlow> {
   @override
   Widget build(BuildContext context) {
     final progress = (_step + 1) / _stepCount;
+    final reduceMotion = ExperienceMotion.reducedMotion(context);
     return Scaffold(
+      backgroundColor: ExperienceColors.canvas,
       body: SafeArea(
         child: Center(
           child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 560),
+            constraints: const BoxConstraints(maxWidth: _maxContentWidth),
             child: Column(
               children: [
                 Padding(
@@ -90,29 +103,35 @@ class _OnboardingFlowState extends State<OnboardingFlow> {
                         maxScaleFactor: 1.3,
                         child: Row(
                           children: [
-                            const _LetterMark(),
-                            const Spacer(),
+                            Expanded(
+                              child: Align(
+                                alignment: Alignment.centerLeft,
+                                child: LetterBrandLockup(
+                                  compact:
+                                      MediaQuery.sizeOf(context).width < 360,
+                                ),
+                              ),
+                            ),
                             Text(
                               '${_step + 1} of $_stepCount',
-                              style: const TextStyle(
-                                color: LetterColors.muted,
-                                fontSize: 12,
-                                fontWeight: FontWeight.w700,
+                              style: ExperienceType.data(
+                                ExperienceColors.inkSoft,
+                                size: 13,
+                                weight: FontWeight.w700,
                               ),
                             ),
                           ],
                         ),
                       ),
-                      const SizedBox(height: LetterSpacing.md),
+                      const SizedBox(height: ExperienceSpacing.sm),
                       Semantics(
                         label: 'Onboarding step ${_step + 1} of $_stepCount',
                         value: '${(progress * 100).round()} percent',
-                        child: LinearProgressIndicator(
-                          value: progress,
-                          minHeight: 4,
-                          borderRadius: BorderRadius.circular(2),
-                          color: LetterColors.teal,
-                          backgroundColor: LetterColors.tealSoft,
+                        child: _EmberProgressBar(
+                          progress: progress,
+                          duration: reduceMotion
+                              ? Duration.zero
+                              : const Duration(milliseconds: 250),
                         ),
                       ),
                     ],
@@ -123,17 +142,16 @@ class _OnboardingFlowState extends State<OnboardingFlow> {
                     key: const Key('onboarding-scroll'),
                     padding: const EdgeInsets.fromLTRB(20, 12, 20, 24),
                     child: AnimatedSwitcher(
-                      duration: const Duration(milliseconds: 180),
+                      duration: reduceMotion
+                          ? Duration.zero
+                          : const Duration(milliseconds: 250),
+                      switchInCurve: Curves.easeOut,
+                      switchOutCurve: Curves.easeOut,
                       child: KeyedSubtree(
                         key: ValueKey(_step),
                         child: switch (_step) {
                           0 => const _PromiseStep(),
-                          1 => _PrivacyStep(
-                            preference: _cloudPreference,
-                            onSelected: (value) {
-                              setState(() => _cloudPreference = value);
-                            },
-                          ),
+                          1 => const _PrivacyStep(),
                           _ => _GoalsStep(
                             selectedGoals: _selectedGoals,
                             onToggle: _toggleGoal,
@@ -145,8 +163,10 @@ class _OnboardingFlowState extends State<OnboardingFlow> {
                 ),
                 Container(
                   decoration: const BoxDecoration(
-                    color: LetterColors.surface,
-                    border: Border(top: BorderSide(color: LetterColors.line)),
+                    color: ExperienceColors.canvas,
+                    border: Border(
+                      top: BorderSide(color: ExperienceColors.hairline),
+                    ),
                   ),
                   padding: const EdgeInsets.fromLTRB(20, 12, 20, 16),
                   child: SafeArea(
@@ -157,17 +177,32 @@ class _OnboardingFlowState extends State<OnboardingFlow> {
                         if (_saveError case final error?)
                           Padding(
                             padding: const EdgeInsets.only(
-                              bottom: LetterSpacing.sm,
+                              bottom: ExperienceSpacing.unit,
                             ),
                             child: Semantics(
                               liveRegion: true,
-                              child: Text(
-                                error,
-                                key: const Key('onboarding-save-error'),
-                                style: const TextStyle(
-                                  color: LetterColors.safetyRed,
-                                  fontWeight: FontWeight.w700,
-                                ),
+                              child: Row(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  const Padding(
+                                    padding: EdgeInsets.only(top: 1),
+                                    child: Icon(
+                                      Icons.error_outline,
+                                      size: 18,
+                                      color: ExperienceColors.error,
+                                    ),
+                                  ),
+                                  const SizedBox(width: ExperienceSpacing.unit),
+                                  Expanded(
+                                    child: Text(
+                                      error,
+                                      key: const Key('onboarding-save-error'),
+                                      style: ExperienceType.bodySmall(
+                                        ExperienceColors.error,
+                                      ).copyWith(fontWeight: FontWeight.w700),
+                                    ),
+                                  ),
+                                ],
                               ),
                             ),
                           ),
@@ -182,37 +217,56 @@ class _OnboardingFlowState extends State<OnboardingFlow> {
                                       key: const Key('onboarding-back'),
                                       tooltip: 'Previous step',
                                       onPressed: _saving ? null : _back,
+                                      style: IconButton.styleFrom(
+                                        foregroundColor: ExperienceColors.ink,
+                                        side: const BorderSide(
+                                          color: ExperienceColors.hairline,
+                                        ),
+                                      ),
                                       icon: const Icon(Icons.arrow_back),
                                     ),
                             ),
-                            const SizedBox(width: LetterSpacing.sm),
+                            const SizedBox(width: 12),
                             Expanded(
-                              child: FilledButton(
-                                key: const Key('onboarding-continue'),
-                                onPressed: _saving ? null : _continue,
-                                style: FilledButton.styleFrom(
-                                  minimumSize: const Size.fromHeight(48),
-                                  backgroundColor: LetterColors.teal,
-                                  foregroundColor: Colors.white,
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(
-                                      LetterRadius.control,
+                              child: Material(
+                                color: Colors.transparent,
+                                child: Ink(
+                                  decoration: BoxDecoration(
+                                    gradient: _saving
+                                        ? null
+                                        : ExperienceColors.emberGradient,
+                                    color: _saving
+                                        ? ExperienceColors.surfaceWarm
+                                        : null,
+                                    borderRadius: ExperienceRadius.chipRadius,
+                                  ),
+                                  child: InkWell(
+                                    key: const Key('onboarding-continue'),
+                                    onTap: _saving ? null : _continue,
+                                    borderRadius: ExperienceRadius.chipRadius,
+                                    child: Container(
+                                      width: double.infinity,
+                                      constraints: const BoxConstraints(
+                                        minHeight: 52,
+                                      ),
+                                      alignment: Alignment.center,
+                                      child: _saving
+                                          ? const EmberLoadingIndicator(
+                                              size: 22,
+                                              semanticLabel:
+                                                  'Saving your choices',
+                                            )
+                                          : Text(
+                                              _step == _stepCount - 1
+                                                  ? 'Open Letter Within'
+                                                  : 'Continue',
+                                              style: ExperienceType.label(
+                                                Colors.white,
+                                              ),
+                                            ),
                                     ),
                                   ),
                                 ),
-                                child: _saving
-                                    ? const SizedBox.square(
-                                        dimension: 20,
-                                        child: CircularProgressIndicator(
-                                          strokeWidth: 2,
-                                          color: Colors.white,
-                                        ),
-                                      )
-                                    : Text(
-                                        _step == _stepCount - 1
-                                            ? 'Open Letter'
-                                            : 'Continue',
-                                      ),
                               ),
                             ),
                           ],
@@ -230,35 +284,71 @@ class _OnboardingFlowState extends State<OnboardingFlow> {
   }
 }
 
-class _LetterMark extends StatelessWidget {
-  const _LetterMark();
+/// The Ember's Path, applied to step progress: a small ember-gradient fill
+/// traveling a warm hairline track. Never a teal bar, never a bare Material
+/// progress indicator.
+class _EmberProgressBar extends StatelessWidget {
+  const _EmberProgressBar({required this.progress, required this.duration});
+
+  final double progress;
+  final Duration duration;
 
   @override
   Widget build(BuildContext context) {
-    return Row(
-      children: [
-        Container(
-          width: 30,
-          height: 30,
-          decoration: BoxDecoration(
-            color: LetterColors.teal,
-            borderRadius: BorderRadius.circular(LetterRadius.control),
-          ),
-          child: const Icon(
-            Icons.description_outlined,
-            size: 18,
-            color: Colors.white,
+    return ExcludeSemantics(
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(2),
+        child: Container(
+          height: 4,
+          color: ExperienceColors.hairline,
+          child: Align(
+            alignment: Alignment.centerLeft,
+            child: AnimatedFractionallySizedBox(
+              duration: duration,
+              curve: Curves.easeOut,
+              widthFactor: progress,
+              heightFactor: 1,
+              child: Container(
+                decoration: const BoxDecoration(
+                  gradient: ExperienceColors.emberGradient,
+                ),
+              ),
+            ),
           ),
         ),
-        const SizedBox(width: LetterSpacing.sm),
-        const Text(
-          'LETTER',
-          style: TextStyle(
-            fontFamily: 'Newsreader',
-            fontSize: 16,
-            fontWeight: FontWeight.w900,
-            letterSpacing: 2,
-          ),
+      ),
+    );
+  }
+}
+
+/// Step header in the foundation's editorial voice: tracked ember eyebrow,
+/// Georgia serif title, quiet supporting line.
+class _StepHeader extends StatelessWidget {
+  const _StepHeader({
+    required this.eyebrow,
+    required this.title,
+    required this.support,
+  });
+
+  final String eyebrow;
+  final String title;
+  final String support;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          eyebrow.toUpperCase(),
+          style: ExperienceType.eyebrow(ExperienceColors.emberDeep),
+        ),
+        const SizedBox(height: ExperienceSpacing.xs),
+        Text(title, style: ExperienceType.title(ExperienceColors.ink)),
+        const SizedBox(height: ExperienceSpacing.xs),
+        Text(
+          support,
+          style: ExperienceType.bodySmall(ExperienceColors.inkSoft),
         ),
       ],
     );
@@ -273,43 +363,30 @@ class _PromiseStep extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const SizedBox(height: LetterSpacing.lg),
+        const SizedBox(height: ExperienceSpacing.lg),
         Container(
           width: 58,
           height: 58,
           decoration: BoxDecoration(
-            color: LetterColors.tealSoft,
-            borderRadius: BorderRadius.circular(LetterRadius.panel),
+            color: ExperienceColors.surfaceWarm,
+            borderRadius: ExperienceRadius.cardRadius,
+            border: Border.all(color: ExperienceColors.hairline),
           ),
           child: const Icon(
             Icons.mark_unread_chat_alt_outlined,
-            color: LetterColors.teal,
+            color: ExperienceColors.emberDeep,
             size: 29,
           ),
         ),
-        const SizedBox(height: LetterSpacing.xl),
-        const LetterEyebrow('A clearer cycle starts here'),
-        const SizedBox(height: LetterSpacing.sm),
-        const Text(
-          "Read your body's letter.",
-          style: TextStyle(
-            fontFamily: 'Newsreader',
-            fontSize: 38,
-            height: 1.05,
-            fontWeight: FontWeight.w700,
-          ),
+        const SizedBox(height: ExperienceSpacing.lg),
+        const _StepHeader(
+          eyebrow: 'A clearer cycle starts here',
+          title: "Read your body's letter.",
+          support:
+              'Track the full pattern: energy, flow, good days, difficult days, '
+              'and what helps you feel more like yourself.',
         ),
-        const SizedBox(height: LetterSpacing.md),
-        const Text(
-          'Track the full pattern: energy, flow, good days, difficult days, '
-          'and what helps you feel more like yourself.',
-          style: TextStyle(
-            color: LetterColors.muted,
-            fontSize: 16,
-            height: 1.5,
-          ),
-        ),
-        const SizedBox(height: LetterSpacing.xl),
+        const SizedBox(height: ExperienceSpacing.lg),
         const _PromiseRow(
           icon: Icons.calendar_month_outlined,
           title: 'Understand your rhythm',
@@ -345,30 +422,21 @@ class _PromiseRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.only(bottom: LetterSpacing.lg),
+      padding: const EdgeInsets.only(bottom: ExperienceSpacing.lg),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(icon, color: LetterColors.teal, size: 23),
-          const SizedBox(width: LetterSpacing.md),
+          Icon(icon, color: ExperienceColors.emberDeep, size: 23),
+          const SizedBox(width: ExperienceSpacing.sm),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  title,
-                  style: const TextStyle(
-                    fontSize: 15,
-                    fontWeight: FontWeight.w800,
-                  ),
-                ),
-                const SizedBox(height: LetterSpacing.xxs),
+                Text(title, style: ExperienceType.label(ExperienceColors.ink)),
+                const SizedBox(height: ExperienceSpacing.xs),
                 Text(
                   body,
-                  style: const TextStyle(
-                    color: LetterColors.muted,
-                    height: 1.4,
-                  ),
+                  style: ExperienceType.bodySmall(ExperienceColors.inkSoft),
                 ),
               ],
             ),
@@ -380,69 +448,60 @@ class _PromiseRow extends StatelessWidget {
 }
 
 class _PrivacyStep extends StatelessWidget {
-  const _PrivacyStep({required this.preference, required this.onSelected});
-
-  final CloudToolsPreference preference;
-  final ValueChanged<CloudToolsPreference> onSelected;
+  const _PrivacyStep();
 
   @override
   Widget build(BuildContext context) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const SizedBox(height: LetterSpacing.lg),
-        const LetterEyebrow('Private by default'),
-        const SizedBox(height: LetterSpacing.sm),
-        const Text(
-          'Your story stays with you.',
-          style: TextStyle(
-            fontFamily: 'Newsreader',
-            fontSize: 34,
-            height: 1.05,
-            fontWeight: FontWeight.w700,
+        const SizedBox(height: ExperienceSpacing.lg),
+        const _StepHeader(
+          eyebrow: 'Private by default',
+          title: 'Your story stays with you.',
+          support:
+              'Period dates, symptoms, notes, and Care records stay on this device. '
+              'They move only when you create an encrypted backup or export.',
+        ),
+        const SizedBox(height: ExperienceSpacing.unit),
+        Align(
+          alignment: Alignment.centerLeft,
+          child: TextButton.icon(
+            key: const Key('onboarding-see-privacy'),
+            onPressed: () => PrivacyExplainerSheet.show(context),
+            style: TextButton.styleFrom(
+              minimumSize: const Size(
+                ExperienceSpacing.minTouchTarget,
+                ExperienceSpacing.minTouchTarget,
+              ),
+              foregroundColor: ExperienceColors.emberDeep,
+              padding: const EdgeInsets.symmetric(
+                horizontal: ExperienceSpacing.sm,
+                vertical: ExperienceSpacing.unit,
+              ),
+            ),
+            icon: const Icon(Icons.arrow_forward, size: 18),
+            iconAlignment: IconAlignment.end,
+            label: Text(
+              'See how privacy works',
+              style: ExperienceType.label(
+                ExperienceColors.emberDeep,
+              ).copyWith(fontWeight: FontWeight.w700),
+            ),
           ),
         ),
-        const SizedBox(height: LetterSpacing.md),
-        const Text(
-          'Your records stay on this device. Letter never sends them to a '
-          'cloud tool unless you first see what is selected and approve that '
-          'specific request.',
-          style: TextStyle(
-            color: LetterColors.muted,
-            fontSize: 15,
-            height: 1.5,
-          ),
+        const SizedBox(height: ExperienceSpacing.lg),
+        const _PrivacyFact(
+          icon: Icons.phone_android_outlined,
+          text: 'Your cycle and Care records are stored locally.',
         ),
-        const SizedBox(height: LetterSpacing.xl),
-        _SelectionTile(
-          key: const Key('cloud-tools-off'),
-          selected: preference == CloudToolsPreference.off,
-          icon: Icons.cloud_off_outlined,
-          title: 'Cloud tools off',
-          body: 'Keep optional AI tools unavailable for now.',
-          onTap: () => onSelected(CloudToolsPreference.off),
-        ),
-        const SizedBox(height: LetterSpacing.sm),
-        _SelectionTile(
-          key: const Key('cloud-tools-ask'),
-          selected: preference == CloudToolsPreference.askEachTime,
-          icon: Icons.visibility_outlined,
-          title: 'Ask me each time',
-          body: 'Show the exact purpose and selected data before I decide.',
-          onTap: () => onSelected(CloudToolsPreference.askEachTime),
-        ),
-        const SizedBox(height: LetterSpacing.xl),
         const _PrivacyFact(
           icon: Icons.lock_outline,
-          text: 'Onboarding choices are stored securely on this device.',
+          text: 'Encrypted backup and restore are available from the You tab.',
         ),
         const _PrivacyFact(
-          icon: Icons.delete_outline,
-          text: 'You can clear these choices from the You tab.',
-        ),
-        const _PrivacyFact(
-          icon: Icons.no_accounts_outlined,
-          text: 'No account is required to begin.',
+          icon: Icons.account_circle_outlined,
+          text: 'Account details stay separate from your health records.',
         ),
       ],
     );
@@ -458,16 +517,18 @@ class _PrivacyFact extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.only(bottom: LetterSpacing.md),
+      padding: const EdgeInsets.only(bottom: ExperienceSpacing.sm),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(icon, size: 20, color: LetterColors.teal),
-          const SizedBox(width: LetterSpacing.sm),
+          Icon(icon, size: 20, color: ExperienceColors.emberDeep),
+          const SizedBox(width: 12),
           Expanded(
             child: Text(
               text,
-              style: const TextStyle(height: 1.4, fontWeight: FontWeight.w600),
+              style: ExperienceType.bodySmall(
+                ExperienceColors.ink,
+              ).copyWith(fontWeight: FontWeight.w600),
             ),
           ),
         ],
@@ -487,28 +548,14 @@ class _GoalsStep extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const SizedBox(height: LetterSpacing.lg),
-        const LetterEyebrow('Start with what matters'),
-        const SizedBox(height: LetterSpacing.sm),
-        const Text(
-          'What would you like Letter to help with?',
-          style: TextStyle(
-            fontFamily: 'Newsreader',
-            fontSize: 32,
-            height: 1.08,
-            fontWeight: FontWeight.w700,
-          ),
+        const SizedBox(height: ExperienceSpacing.lg),
+        const _StepHeader(
+          eyebrow: 'Start with what matters',
+          title: 'What would you like Letter Within to help with?',
+          support:
+              'Choose any, or skip for now. These are goals, not diagnoses.',
         ),
-        const SizedBox(height: LetterSpacing.md),
-        const Text(
-          'Choose any, or skip for now. These are goals, not diagnoses.',
-          style: TextStyle(
-            color: LetterColors.muted,
-            fontSize: 15,
-            height: 1.45,
-          ),
-        ),
-        const SizedBox(height: LetterSpacing.xl),
+        const SizedBox(height: ExperienceSpacing.lg),
         for (final goal in OnboardingGoal.values) ...[
           _SelectionTile(
             key: Key('goal-${goal.storageId}'),
@@ -518,13 +565,16 @@ class _GoalsStep extends StatelessWidget {
             body: goal.description,
             onTap: () => onToggle(goal),
           ),
-          const SizedBox(height: LetterSpacing.sm),
+          const SizedBox(height: 12),
         ],
       ],
     );
   }
 }
 
+/// Multi-select goal tile in the outlined-selected treatment: resting on
+/// warm surface with a hairline; selected takes a `surfaceWarm` fill, an
+/// ember 1.6 border, and an ember check.
 class _SelectionTile extends StatelessWidget {
   const _SelectionTile({
     required this.selected,
@@ -547,56 +597,59 @@ class _SelectionTile extends StatelessWidget {
       button: true,
       selected: selected,
       child: Material(
-        color: selected ? LetterColors.tealSoft : LetterColors.surface,
+        color: selected
+            ? ExperienceColors.surfaceWarm
+            : ExperienceColors.surface,
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(LetterRadius.panel),
+          borderRadius: ExperienceRadius.cardRadius,
           side: BorderSide(
-            color: selected ? LetterColors.teal : LetterColors.line,
-            width: selected ? 1.5 : 1,
+            color: selected
+                ? ExperienceColors.ember
+                : ExperienceColors.hairline,
+            width: selected ? 1.6 : 1,
           ),
         ),
         child: InkWell(
           onTap: onTap,
-          borderRadius: BorderRadius.circular(LetterRadius.panel),
+          borderRadius: ExperienceRadius.cardRadius,
           child: ConstrainedBox(
             constraints: const BoxConstraints(minHeight: 72),
             child: Padding(
-              padding: const EdgeInsets.all(LetterSpacing.md),
+              padding: const EdgeInsets.all(ExperienceSpacing.sm),
               child: Row(
                 children: [
                   Icon(
                     icon,
-                    color: selected ? LetterColors.teal : LetterColors.muted,
+                    color: selected
+                        ? ExperienceColors.emberDeep
+                        : ExperienceColors.inkSoft,
                     size: 24,
                   ),
-                  const SizedBox(width: LetterSpacing.md),
+                  const SizedBox(width: ExperienceSpacing.sm),
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
                           title,
-                          style: const TextStyle(
-                            fontSize: 15,
-                            fontWeight: FontWeight.w800,
-                          ),
+                          style: ExperienceType.label(ExperienceColors.ink),
                         ),
-                        const SizedBox(height: LetterSpacing.xxs),
+                        const SizedBox(height: ExperienceSpacing.xs),
                         Text(
                           body,
-                          style: const TextStyle(
-                            color: LetterColors.muted,
-                            fontSize: 13,
-                            height: 1.35,
+                          style: ExperienceType.caption(
+                            ExperienceColors.inkSoft,
                           ),
                         ),
                       ],
                     ),
                   ),
-                  const SizedBox(width: LetterSpacing.sm),
+                  const SizedBox(width: 12),
                   Icon(
                     selected ? Icons.check_circle : Icons.circle_outlined,
-                    color: selected ? LetterColors.teal : LetterColors.line,
+                    color: selected
+                        ? ExperienceColors.ember
+                        : ExperienceColors.hairline,
                   ),
                 ],
               ),
