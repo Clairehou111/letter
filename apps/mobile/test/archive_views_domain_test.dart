@@ -12,15 +12,11 @@ HealthRecord healthRecord({
   required LocalDate date,
   SymptomSeverity severity = SymptomSeverity.moderate,
   bool confirmed = true,
-  int? painRating,
-  Set<PainLocation> painLocations = const {},
 }) {
   return HealthRecord(
     id: id,
     symptom: symptom,
     severity: severity,
-    painRating: painRating,
-    painLocations: painLocations,
     functionalImpacts: const {FunctionalImpact.workOrSchool},
     experiencedDate: date,
     recordedAt: DateTime.utc(2026, 7, 20),
@@ -50,7 +46,6 @@ ArchiveInput archiveInput({bool includeRecords = true}) {
     cycles: const [
       ArchiveCycleInput(
         id: 'complete-1',
-        number: 12,
         startDate: LocalDate(2026, 7, 1),
         endDate: LocalDate(2026, 7, 28),
         periodDates: [LocalDate(2026, 7, 1), LocalDate(2026, 7, 2)],
@@ -71,8 +66,6 @@ ArchiveInput archiveInput({bool includeRecords = true}) {
               symptom: SymptomType.cramps,
               date: const LocalDate(2026, 7, 18),
               severity: SymptomSeverity.severe,
-              painRating: 8,
-              painLocations: const {PainLocation.lowerAbdomen},
             ),
             healthRecord(
               id: 'unconfirmed-anxiety',
@@ -102,7 +95,8 @@ ArchiveInput archiveInput({bool includeRecords = true}) {
         ? [
             CycleReflection(
               id: 'cycle-reflection-1',
-              cycleStartDay: const LocalDate(2026, 7, 1).epochDay,
+              startingPeriodId: 'complete-1',
+              cycleStartDay: const LocalDate(2026, 6, 30).epochDay,
               observation: 'The middle of this cycle needed a quieter pace.',
               need: ReflectionNeed.restOrPhysicalCapacity,
               whatHelped: 'Warmth and fewer plans.',
@@ -123,8 +117,9 @@ void main() {
     expect(viewModel.currentCycle?.isComplete, isFalse);
     final cycle = viewModel.completedCycles.single;
 
-    expect(cycle.periodDatesLabel, contains('7/1/2026'));
-    expect(cycle.coverageLabel, '1/28 days with confirmed records');
+    expect(cycle.title, '7/1/2026 - 7/28/2026');
+    expect(cycle.periodDatesLabel, 'Bleeding: Jul 1–2 · 2 days');
+    expect(cycle.coverageLabel, 'Confirmed symptoms: 1 of 28 days');
     expect(
       cycle.story.items.map((item) => item.body),
       contains('The warmth made the next hour easier.'),
@@ -183,6 +178,33 @@ void main() {
     expect(current.missingLabel, contains('still open'));
     expect(current.pattern.missingNote, contains('No confirmed'));
     expect(current.clinical.missingNote, contains('No confirmed'));
+  });
+
+  test('bleeding summary compacts dates without inventing continuity', () {
+    final viewModel = buildArchiveViewsViewModel(
+      const ArchiveInput(
+        cycles: [
+          ArchiveCycleInput(
+            id: 'split-bleeding',
+            startDate: LocalDate(2026, 6, 13),
+            endDate: LocalDate(2026, 7, 13),
+            periodDates: [
+              LocalDate(2026, 6, 13),
+              LocalDate(2026, 6, 14),
+              LocalDate(2026, 6, 16),
+            ],
+            isComplete: true,
+          ),
+        ],
+        healthRecords: [],
+        careRecords: [],
+        reflections: [],
+      ),
+    );
+
+    final cycle = viewModel.completedCycles.single;
+    expect(cycle.title, '6/13/2026 - 7/13/2026');
+    expect(cycle.periodDatesLabel, 'Bleeding: Jun 13–14, Jun 16 · 3 days');
   });
 
   test(

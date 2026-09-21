@@ -14,7 +14,6 @@ HealthRecord health(
   SymptomType symptom = SymptomType.cramps,
   SymptomSeverity severity = SymptomSeverity.moderate,
   bool confirmed = true,
-  Set<PainLocation> painLocations = const {},
   Set<FunctionalImpact> functionalImpacts = const {},
 }) {
   final recordedAt = DateTime.utc(date.year, date.month, date.day, 12);
@@ -22,8 +21,6 @@ HealthRecord health(
     id: id,
     symptom: symptom,
     severity: severity,
-    painRating: null,
-    painLocations: painLocations,
     functionalImpacts: functionalImpacts,
     experiencedDate: date,
     recordedAt: recordedAt,
@@ -88,7 +85,6 @@ void main() {
             'two',
             const LocalDate(2026, 7, 14),
             severity: SymptomSeverity.severe,
-            painLocations: const {PainLocation.lowerAbdomen},
             functionalImpacts: const {FunctionalImpact.workOrSchool},
           ),
         ],
@@ -104,7 +100,6 @@ void main() {
     ]);
     expect(pattern.severityCounts[SymptomSeverity.moderate], 1);
     expect(pattern.severityCounts[SymptomSeverity.severe], 1);
-    expect(pattern.painLocationCounts[PainLocation.lowerAbdomen], 1);
     expect(pattern.functionalImpactCounts[FunctionalImpact.workOrSchool], 1);
   });
 
@@ -133,8 +128,6 @@ void main() {
       id: 'newer',
       symptom: older.symptom,
       severity: SymptomSeverity.severe,
-      painRating: null,
-      painLocations: const {},
       functionalImpacts: const {},
       experiencedDate: older.experiencedDate,
       recordedAt: older.recordedAt,

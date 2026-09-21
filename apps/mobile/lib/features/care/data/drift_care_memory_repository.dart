@@ -1,6 +1,7 @@
 import 'dart:math';
 
 import 'package:drift/drift.dart';
+import 'package:flutter/foundation.dart';
 
 import '../../cycle/data/letter_health_database.dart';
 import '../domain/care_memory.dart';
@@ -86,9 +87,6 @@ final class DriftCareMemoryRepository implements CareMemoryRepository {
         if (deleted == 0) {
           throw const CareMemoryException(CareMemoryFailure.notFound);
         }
-        await (_database.delete(
-          _database.careReflectionRows,
-        )..where((row) => row.careRecordId.equals(recordId))).go();
       });
     });
   }
@@ -168,8 +166,19 @@ final class DriftCareMemoryRepository implements CareMemoryRepository {
   }
 
   @override
-  Future<CycleReflection?> getCycleReflection(int cycleStartDay) {
+  Future<CycleReflection?> getCycleReflection(
+    int cycleStartDay, {
+    String? startingPeriodId,
+  }) {
     return _guardStorage(() async {
+      if (startingPeriodId != null) {
+        final byPeriod =
+            await (_database.select(_database.cycleReflectionRows)..where(
+                  (row) => row.startingPeriodId.equals(startingPeriodId),
+                ))
+                .getSingleOrNull();
+        if (byPeriod != null) return _cycleReflectionFromRow(byPeriod);
+      }
       final row =
           await (_database.select(_database.cycleReflectionRows)
                 ..where((row) => row.cycleStartDay.equals(cycleStartDay)))
@@ -181,14 +190,19 @@ final class DriftCareMemoryRepository implements CareMemoryRepository {
   @override
   Future<CycleReflection> saveCycleReflection(
     int cycleStartDay,
-    CycleReflectionDraft draft,
-  ) {
+    CycleReflectionDraft draft, {
+    String? startingPeriodId,
+  }) {
     final valid = validateCycleReflection(draft);
     return _guardStorage(() async {
-      final existing = await getCycleReflection(cycleStartDay);
+      final existing = await getCycleReflection(
+        cycleStartDay,
+        startingPeriodId: startingPeriodId,
+      );
       final now = _clock().toUtc();
       final reflection = CycleReflection(
         id: existing?.id ?? _idGenerator(),
+        startingPeriodId: startingPeriodId ?? existing?.startingPeriodId,
         cycleStartDay: cycleStartDay,
         observation: valid.observation,
         need: valid.need,
@@ -238,7 +252,11 @@ final class DriftCareMemoryRepository implements CareMemoryRepository {
       return await operation();
     } on CareMemoryException {
       rethrow;
-    } on Object {
+    } on Object catch (error, stackTrace) {
+      if (kDebugMode) {
+        debugPrint('Care storage failed: $error');
+        debugPrintStack(stackTrace: stackTrace);
+      }
       throw const CareMemoryException(CareMemoryFailure.storageUnavailable);
     }
   }
@@ -304,6 +322,7 @@ final class DriftCareMemoryRepository implements CareMemoryRepository {
   static CycleReflection _cycleReflectionFromRow(CycleReflectionRow row) {
     return CycleReflection(
       id: row.id,
+      startingPeriodId: row.startingPeriodId,
       cycleStartDay: row.cycleStartDay,
       observation: row.observation,
       need: row.need == null ? null : ReflectionNeed.values.byName(row.need!),
@@ -319,6 +338,7 @@ final class DriftCareMemoryRepository implements CareMemoryRepository {
   ) {
     return CycleReflectionRowsCompanion.insert(
       id: reflection.id,
+      startingPeriodId: Value(reflection.startingPeriodId),
       cycleStartDay: reflection.cycleStartDay,
       observation: Value(reflection.observation),
       need: Value(reflection.need?.name),

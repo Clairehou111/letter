@@ -1,4 +1,4 @@
-# Letter Mobile Instructions
+# Letter Within Mobile Instructions
 
 Follow the repository `AGENTS.md` and the active feature specification.
 
@@ -19,7 +19,7 @@ Follow the repository `AGENTS.md` and the active feature specification.
 - Use immutable models and explicit state transitions.
 - Start with Flutter SDK capabilities; add packages only when they remove
   meaningful complexity.
-- Define Letter design tokens for color, typography, spacing, dimensions,
+- Define Letter Within design tokens for color, typography, spacing, dimensions,
   borders, and motion. Do not expose unthemed default Material widgets as the
   product design.
 - Use platform-adaptive behavior for navigation, sheets, pickers, switches,

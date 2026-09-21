@@ -30,9 +30,7 @@ final class InMemoryDiaryEnrollmentRepository
 
   @override
   Future<DiaryEnrollment> create(DiaryEnrollmentDraft draft) async {
-    final active = _enrollments.any(
-      (enrollment) => enrollment.isActive,
-    );
+    final active = _enrollments.any((enrollment) => enrollment.isActive);
     if (active) {
       throw const DiaryException(DiaryFailure.enrollmentAlreadyActive);
     }
@@ -83,8 +81,9 @@ final class InMemoryDiaryEntryRepository implements DiaryEntryRepository {
     return _entries
         .where((entry) => entry.enrollmentId == enrollmentId)
         .toList()
-      ..sort((left, right) =>
-          left.experiencedDate.compareTo(right.experiencedDate));
+      ..sort(
+        (left, right) => left.experiencedDate.compareTo(right.experiencedDate),
+      );
   }
 
   @override
@@ -134,8 +133,9 @@ final class InMemoryDiaryEntryRepository implements DiaryEntryRepository {
               entry.experiencedDate.compareTo(end) <= 0,
         )
         .toList()
-      ..sort((left, right) =>
-          left.experiencedDate.compareTo(right.experiencedDate));
+      ..sort(
+        (left, right) => left.experiencedDate.compareTo(right.experiencedDate),
+      );
   }
 
   void _validateRatings(DiaryEntryDraft draft) {

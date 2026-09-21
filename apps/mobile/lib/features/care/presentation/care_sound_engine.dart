@@ -5,6 +5,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_soloud/flutter_soloud.dart';
 
 import '../domain/care_mode.dart';
+import 'care_audio_runtime.dart';
 
 /// Local ambience engine matching the Lovable Web Audio graph.
 ///
@@ -12,8 +13,7 @@ import '../domain/care_mode.dart';
 /// low-pass filter as the door closes. Crossfading three rendered recordings
 /// changes the room tone and cannot reproduce that effect.
 class CareSoundEngine {
-  static final SoLoud _engine = SoLoud.instance;
-  static Future<void>? _initializing;
+  static final SoLoud _engine = CareAudioRuntime.engine;
 
   static const _assets = <CareMode, String>{
     CareMode.explode: 'assets/audio/care/prototype/explode.mp3',
@@ -38,12 +38,7 @@ class CareSoundEngine {
       rate: 0.96,
     ),
     CareMode.space: _AudioShape(cutoff: 1100, open: 700, gain: 0.46, rate: 1),
-    CareMode.physical: _AudioShape(
-      cutoff: 420,
-      open: 220,
-      gain: 0.85,
-      rate: 0.98,
-    ),
+    CareMode.physical: _AudioShape(cutoff: 420, open: 220, gain: 0.85, rate: 1),
   };
 
   _Voice? _voice;
@@ -51,6 +46,8 @@ class CareSoundEngine {
   double _level = 0.6;
   double _intensity = 0;
   double _outside = 1;
+  double _sceneProgress = 0;
+  double _interaction = 0;
   int _generation = 0;
 
   Future<bool> play(
@@ -65,6 +62,8 @@ class CareSoundEngine {
 
     _mode = mode;
     _intensity = intensity.clamp(0.0, 1.0);
+    _sceneProgress = 0;
+    _interaction = 0;
     await _ensureEngine();
 
     final shape = _shape[mode]!;
@@ -85,22 +84,7 @@ class CareSoundEngine {
   }
 
   static Future<void> _ensureEngine() async {
-    if (_engine.isInitialized) return;
-    final pending = _initializing;
-    if (pending != null) return pending;
-
-    final initializing = _engine.init(
-      sampleRate: 44100,
-      bufferSize: 2048,
-      channels: Channels.stereo,
-      lowLatency: true,
-    );
-    _initializing = initializing;
-    try {
-      await initializing;
-    } finally {
-      if (identical(_initializing, initializing)) _initializing = null;
-    }
+    await CareAudioRuntime.ensureInitialized();
   }
 
   Future<_Voice?> _spin(
@@ -201,6 +185,24 @@ class CareSoundEngine {
     return shape.gain * (0.15 + _level * 0.85);
   }
 
+  double _sceneGain(CareMode mode) => switch (mode) {
+    CareMode.heavy => 1 - _sceneProgress * 0.28,
+    CareMode.racing => 1 - _sceneProgress * 0.18,
+    _ => 1,
+  };
+
+  double _sceneCutoff(CareMode mode) {
+    final shape = _shape[mode]!;
+    final openCutoff = shape.cutoff + _intensity * shape.open;
+    final reduction = switch (mode) {
+      CareMode.heavy => 0.45,
+      CareMode.racing => 0.35,
+      _ => 0.0,
+    };
+    final settled = openCutoff * (1 - _sceneProgress * reduction);
+    return max(180, settled * (1 + _interaction * 0.08));
+  }
+
   void _apply({double seconds = 3}) {
     final voice = _voice;
     final mode = _mode;
@@ -208,7 +210,7 @@ class CareSoundEngine {
 
     final target = mode == CareMode.space
         ? _base() * 1.25 * pow(_outside.clamp(0.0, 1.0), 1.7)
-        : _base();
+        : _base() * _sceneGain(mode);
     _engine.fadeVolume(
       voice.handle,
       target.clamp(0.0, 1.0),
@@ -222,12 +224,46 @@ class CareSoundEngine {
     final voice = _voice;
     final mode = _mode;
     if (voice == null || mode == null || mode == CareMode.space) return;
-    final shape = _shape[mode]!;
     voice.source.filters.biquadFilter
         .frequency(soundHandle: voice.handle)
         .fadeFilterParameter(
-          to: shape.cutoff + _intensity * shape.open,
+          to: _sceneCutoff(mode),
           time: const Duration(milliseconds: 2500),
+        );
+  }
+
+  /// Slowly follows the visual settling envelope without beat-locking the
+  /// randomized ambient loop to individual frames.
+  Future<void> setSceneProgress(double value) async {
+    _sceneProgress = value.clamp(0.0, 1.0);
+    final voice = _voice;
+    final mode = _mode;
+    if (voice == null ||
+        mode == null ||
+        (mode != CareMode.heavy && mode != CareMode.racing)) {
+      return;
+    }
+    voice.source.filters.biquadFilter
+        .frequency(soundHandle: voice.handle)
+        .fadeFilterParameter(
+          to: _sceneCutoff(mode),
+          time: const Duration(milliseconds: 750),
+        );
+    _apply(seconds: 0.75);
+  }
+
+  /// Gives direct touch a small, smooth timbral response without adding a
+  /// synthetic click or re-timing the ambient loop.
+  Future<void> setInteraction(double value) async {
+    _interaction = value.clamp(0.0, 1.0);
+    final voice = _voice;
+    final mode = _mode;
+    if (voice == null || mode != CareMode.heavy) return;
+    voice.source.filters.biquadFilter
+        .frequency(soundHandle: voice.handle)
+        .fadeFilterParameter(
+          to: _sceneCutoff(mode!),
+          time: const Duration(milliseconds: 320),
         );
   }
 

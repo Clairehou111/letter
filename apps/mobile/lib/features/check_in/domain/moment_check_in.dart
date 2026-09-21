@@ -1,9 +1,15 @@
 enum MomentCheckInState {
   good('Good'),
   steady('Steady'),
+  calm('Calm'),
   energized('Energized'),
+  hopeful('Hopeful'),
+  tender('Tender'),
   low('Low'),
   irritable('Irritable'),
+  anxious('Anxious'),
+  overwhelmed('Overwhelmed'),
+  exhausted('Exhausted'),
   physical('Physical');
 
   const MomentCheckInState(this.label);

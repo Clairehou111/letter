@@ -1,4 +1,5 @@
 import 'local_date.dart';
+import 'bleeding_flow.dart';
 import 'period_record.dart';
 
 enum PeriodWriteFailure {
@@ -7,6 +8,10 @@ enum PeriodWriteFailure {
   overlap,
   anotherPeriodOpen,
   notFound,
+  flowPeriodNotFound,
+  flowDateInFuture,
+  flowDateOutsidePeriod,
+  flowRequiredForColor,
   storageUnavailable,
 }
 
@@ -25,8 +30,16 @@ final class PeriodWriteException implements Exception {
       'End your current period before starting another one.',
     PeriodWriteFailure.notFound =>
       'This period is no longer in your history. Refresh and try again.',
+    PeriodWriteFailure.flowPeriodNotFound =>
+      'This period is no longer in your history. Refresh and try again.',
+    PeriodWriteFailure.flowDateInFuture =>
+      'Bleeding flow cannot be recorded for a future date.',
+    PeriodWriteFailure.flowDateOutsidePeriod =>
+      'Bleeding flow must be recorded within this period.',
+    PeriodWriteFailure.flowRequiredForColor =>
+      'Choose a flow before adding its color.',
     PeriodWriteFailure.storageUnavailable =>
-      'Letter could not open private cycle storage. Try again.',
+      'Letter Within could not open private cycle storage. Try again.',
   };
 
   @override
@@ -45,6 +58,25 @@ abstract interface class PeriodRepository {
   });
 
   Future<void> delete(String id);
+
+  Future<List<BleedingDayRecord>> getAllFlowDays();
+
+  Future<BleedingDayRecord> setFlow(
+    String periodId,
+    LocalDate date,
+    BleedingFlow flow, {
+    required LocalDate today,
+  });
+
+  Future<BleedingDayRecord> setBleedingColor(
+    String periodId,
+    LocalDate date,
+    BleedingColor color,
+  );
+
+  Future<void> clearBleedingColor(String periodId, LocalDate date);
+
+  Future<void> clearFlow(String periodId, LocalDate date);
 
   Future<void> close();
 }

@@ -59,7 +59,9 @@ void main() {
 
   group('two-cycle diary validation', () {
     test('entries span at least two cycle-length windows', () async {
-      final enrollmentRepo = InMemoryDiaryEnrollmentRepository(clock: fakeClock);
+      final enrollmentRepo = InMemoryDiaryEnrollmentRepository(
+        clock: fakeClock,
+      );
       final entryRepo = InMemoryDiaryEntryRepository(clock: fakeClock);
 
       await seedTwoCycles(enrollmentRepo: enrollmentRepo, entryRepo: entryRepo);
@@ -80,7 +82,9 @@ void main() {
     });
 
     test('missed days are absent, not zero-filled', () async {
-      final enrollmentRepo = InMemoryDiaryEnrollmentRepository(clock: fakeClock);
+      final enrollmentRepo = InMemoryDiaryEnrollmentRepository(
+        clock: fakeClock,
+      );
       final entryRepo = InMemoryDiaryEntryRepository(clock: fakeClock);
 
       await seedTwoCycles(enrollmentRepo: enrollmentRepo, entryRepo: entryRepo);
@@ -90,8 +94,11 @@ void main() {
 
       // Verify no entry has all-zeros (would indicate backfill).
       for (final entry in entries) {
-        expect(entry.isEmpty, isFalse,
-            reason: 'Entry for ${entry.experiencedDate} should not be empty');
+        expect(
+          entry.isEmpty,
+          isFalse,
+          reason: 'Entry for ${entry.experiencedDate} should not be empty',
+        );
         expect(
           entry.symptoms.values.every((v) => v == 0),
           isFalse,
@@ -101,7 +108,9 @@ void main() {
     });
 
     test('provenance marks laterRecall correctly', () async {
-      final enrollmentRepo = InMemoryDiaryEnrollmentRepository(clock: fakeClock);
+      final enrollmentRepo = InMemoryDiaryEnrollmentRepository(
+        clock: fakeClock,
+      );
       final entryRepo = InMemoryDiaryEntryRepository(clock: fakeClock);
 
       await seedTwoCycles(enrollmentRepo: enrollmentRepo, entryRepo: entryRepo);
@@ -112,12 +121,17 @@ void main() {
       final laterRecallEntries = entries
           .where((e) => e.provenance == DiaryEntryProvenance.laterRecall)
           .toList();
-      expect(laterRecallEntries, isNotEmpty,
-          reason: 'Should have some later-recall entries mixed in');
+      expect(
+        laterRecallEntries,
+        isNotEmpty,
+        reason: 'Should have some later-recall entries mixed in',
+      );
     });
 
     test('date range query returns correct subset', () async {
-      final enrollmentRepo = InMemoryDiaryEnrollmentRepository(clock: fakeClock);
+      final enrollmentRepo = InMemoryDiaryEnrollmentRepository(
+        clock: fakeClock,
+      );
       final entryRepo = InMemoryDiaryEntryRepository(clock: fakeClock);
 
       await seedTwoCycles(enrollmentRepo: enrollmentRepo, entryRepo: entryRepo);
@@ -143,7 +157,9 @@ void main() {
     });
 
     test('pause and resume does not lose entries', () async {
-      final enrollmentRepo = InMemoryDiaryEnrollmentRepository(clock: fakeClock);
+      final enrollmentRepo = InMemoryDiaryEnrollmentRepository(
+        clock: fakeClock,
+      );
       final entryRepo = InMemoryDiaryEntryRepository(clock: fakeClock);
 
       final enrollment = await enrollmentRepo.create(
@@ -177,7 +193,9 @@ void main() {
     });
 
     test('stop does not delete existing entries', () async {
-      final enrollmentRepo = InMemoryDiaryEnrollmentRepository(clock: fakeClock);
+      final enrollmentRepo = InMemoryDiaryEnrollmentRepository(
+        clock: fakeClock,
+      );
       final entryRepo = InMemoryDiaryEntryRepository(clock: fakeClock);
 
       final enrollment = await enrollmentRepo.create(

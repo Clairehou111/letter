@@ -108,16 +108,6 @@ class _PrivacyProtectionScreenState extends State<PrivacyProtectionScreen> {
     );
   }
 
-  Future<void> _setAnalyticsConsent(bool enabled) {
-    return _savePrivacyPreferences(
-      _preferences.copyWith(
-        analyticsConsent: enabled
-            ? AnalyticsConsent.granted
-            : AnalyticsConsent.optedOut,
-      ),
-    );
-  }
-
   Future<void> _savePrivacyPreferences(PrivacyPreferences preferences) async {
     if (_updatingPrivacy) return;
     if (!mounted) return;
@@ -224,30 +214,6 @@ class _PrivacyProtectionScreenState extends State<PrivacyProtectionScreen> {
                         ),
                       ),
                     ],
-                  ),
-                ),
-                const SizedBox(height: LetterSpacing.md),
-                LetterCard(
-                  child: Material(
-                    color: Colors.transparent,
-                    child: SwitchListTile.adaptive(
-                      key: const Key('analytics-consent-toggle'),
-                      contentPadding: EdgeInsets.zero,
-                      secondary: const Icon(
-                        Icons.insights_outlined,
-                        color: LetterColors.teal,
-                      ),
-                      title: const Text('Optional product analytics'),
-                      subtitle: const Text(
-                        'If enabled, Letter Within sends limited operational events '
-                        'such as startup and export completion. It never '
-                        'includes dates, symptoms, Care, notes, text, or email.',
-                      ),
-                      value:
-                          _preferences.analyticsConsent ==
-                          AnalyticsConsent.granted,
-                      onChanged: _updatingPrivacy ? null : _setAnalyticsConsent,
-                    ),
                   ),
                 ),
               ],

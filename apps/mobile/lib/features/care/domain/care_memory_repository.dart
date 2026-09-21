@@ -18,7 +18,7 @@ final class CareMemoryException implements Exception {
 
   String get userMessage => switch (failure) {
     CareMemoryFailure.invalidAction =>
-      'Letter could not recognize this Care action.',
+      'Letter Within could not recognize this Care action.',
     CareMemoryFailure.emptyReflection =>
       'Add one thought before saving this reflection.',
     CareMemoryFailure.invalidText =>
@@ -26,7 +26,7 @@ final class CareMemoryException implements Exception {
     CareMemoryFailure.notFound =>
       'This Care memory is no longer available. Refresh and try again.',
     CareMemoryFailure.storageUnavailable =>
-      'Letter could not update private Care memory. Try again.',
+      'Letter Within could not update private Care memory. Try again.',
   };
 
   @override
@@ -58,12 +58,16 @@ abstract interface class CareMemoryRepository {
 
   Future<List<CycleReflection>> getCycleReflections();
 
-  Future<CycleReflection?> getCycleReflection(int cycleStartDay);
+  Future<CycleReflection?> getCycleReflection(
+    int cycleStartDay, {
+    String? startingPeriodId,
+  });
 
   Future<CycleReflection> saveCycleReflection(
     int cycleStartDay,
-    CycleReflectionDraft draft,
-  );
+    CycleReflectionDraft draft, {
+    String? startingPeriodId,
+  });
 
   Future<void> deleteCycleReflection(String reflectionId);
 

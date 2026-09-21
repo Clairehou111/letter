@@ -1,11 +1,10 @@
 import 'dart:convert';
 import 'dart:io';
-import 'dart:typed_data';
 
-import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
 
 import '../../care/domain/care_memory.dart';
+import '../../local_export/domain/letter_local_export_store.dart';
 import 'cycle_care_summary.dart';
 
 sealed class LocalExportFile {
@@ -64,32 +63,31 @@ final class UnavailableLocalFileShareAdapter implements LocalFileShareAdapter {
 /// Saves files locally on desktop platforms and uses the operating-system
 /// share sheet on iOS and Android.
 final class SystemLocalFileShareAdapter implements LocalFileShareAdapter {
-  const SystemLocalFileShareAdapter();
+  const SystemLocalFileShareAdapter({
+    this.localStore = const LetterLocalExportStore(),
+  });
+
+  final LetterLocalExportStore localStore;
 
   @override
   Future<LocalFileShareResult> share(LocalExportFile file) async {
-    if (Platform.isAndroid || Platform.isIOS) {
-      try {
-        await Share.shareXFiles([
-          XFile.fromData(
-            Uint8List.fromList(file.bytes),
-            name: file.fileName,
-            mimeType: file.mimeType,
-          ),
-        ]);
-        return const LocalFileShareResult.shared();
-      } on Object {
-        return const LocalFileShareResult.failed();
-      }
-    }
-    if (!Platform.isMacOS && !Platform.isWindows && !Platform.isLinux) {
+    final isMobile = Platform.isAndroid || Platform.isIOS;
+    final isDesktop =
+        Platform.isMacOS || Platform.isWindows || Platform.isLinux;
+    if (!isMobile && !isDesktop) {
       return const LocalFileShareResult.unavailable();
     }
     try {
-      final dir = await getApplicationDocumentsDirectory();
-      final output = File('${dir.path}/${file.fileName}');
-      await output.writeAsBytes(file.bytes);
-      return LocalFileShareResult.shared(savedPath: output.path);
+      final savedPath = await localStore.save(
+        fileName: file.fileName,
+        bytes: file.bytes,
+      );
+      if (isMobile) {
+        await SharePlus.instance.share(
+          ShareParams(files: [XFile(savedPath, mimeType: file.mimeType)]),
+        );
+      }
+      return LocalFileShareResult.shared(savedPath: savedPath);
     } on Object {
       return const LocalFileShareResult.failed();
     }
@@ -180,10 +178,25 @@ LocalCsvFile buildCycleAndCareCsv(CycleAndCareSummary summary) {
         summaryDateTimeLabel(row.recordedAt),
         row.cycleDay?.toString() ?? 'Not available',
         row.symptom.label,
-        '${row.severity.score}/6',
+        '${row.severity.score}/5',
         _labels(row.functionalImpacts.map((item) => item.label)),
         '',
         row.provenance.label,
+        row.sourceLabel,
+        '',
+        '',
+      ],
+    for (final row in summary.checkInRows)
+      [
+        'Today check-in',
+        summaryDateLabel(row.date),
+        summaryDateTimeLabel(row.recordedAt),
+        row.cycleDay?.toString() ?? 'Not available',
+        row.state.label,
+        '',
+        '',
+        '',
+        'Today check-in',
         row.sourceLabel,
         '',
         '',

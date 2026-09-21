@@ -15,6 +15,7 @@ LocalBackupImportPlan planLocalBackupImport({
   required LocalBackupSnapshot destination,
   required LocalBackupImportPolicy policy,
 }) {
+  validateLocalBackupReferentialIntegrity(incoming);
   final incomingByName = {
     for (final collection in incoming.collections) collection.name: collection,
   };
@@ -52,6 +53,38 @@ LocalBackupImportPlan planLocalBackupImport({
   );
 }
 
+void validateLocalBackupReferentialIntegrity(LocalBackupSnapshot snapshot) {
+  final collections = {
+    for (final collection in snapshot.collections) collection.name: collection,
+  };
+  final periodIds = _recordIds(collections['periods']);
+  final careRecordIds = _recordIds(collections['care_records']);
+
+  for (final record in collections['period_flows']?.records ?? const []) {
+    final periodId = record.data['periodId'];
+    if (periodId is! String || !periodIds.contains(periodId)) {
+      throw const LocalBackupException(LocalBackupFailure.malformedPayload);
+    }
+  }
+  for (final record in collections['care_reflections']?.records ?? const []) {
+    final careRecordId = record.data['careRecordId'];
+    if (careRecordId is! String || !careRecordIds.contains(careRecordId)) {
+      throw const LocalBackupException(LocalBackupFailure.malformedPayload);
+    }
+  }
+  for (final record in collections['cycle_reflections']?.records ?? const []) {
+    final startingPeriodId = record.data['startingPeriodId'];
+    if (startingPeriodId != null &&
+        (startingPeriodId is! String ||
+            !periodIds.contains(startingPeriodId))) {
+      throw const LocalBackupException(LocalBackupFailure.malformedPayload);
+    }
+  }
+}
+
+Set<String> _recordIds(LocalBackupCollection? collection) =>
+    collection?.records.map((record) => record.id).toSet() ?? const {};
+
 LocalBackupCollectionPreview _replacePreview(
   String name,
   LocalBackupCollection? source,
@@ -67,33 +100,39 @@ LocalBackupCollectionPreview _replacePreview(
   // Records added from backup (not on device).
   for (final record in sourceRecords) {
     if (!destinationIds.contains(record.id)) {
-      changes.add(LocalBackupRecordChange(
-        recordId: record.id,
-        label: _recordLabel(name, record),
-        kind: LocalBackupRecordChangeKind.add,
-        reason: 'Only in backup',
-      ));
+      changes.add(
+        LocalBackupRecordChange(
+          recordId: record.id,
+          label: _recordLabel(name, record),
+          kind: LocalBackupRecordChangeKind.add,
+          reason: 'Only in backup',
+        ),
+      );
     }
   }
   // Records replaced (in both, backup wins unconditionally for replace).
   for (final record in sourceRecords) {
     if (destinationIds.contains(record.id)) {
-      changes.add(LocalBackupRecordChange(
-        recordId: record.id,
-        label: _recordLabel(name, record),
-        kind: LocalBackupRecordChangeKind.replace,
-        reason: 'Backup overwrites device',
-      ));
+      changes.add(
+        LocalBackupRecordChange(
+          recordId: record.id,
+          label: _recordLabel(name, record),
+          kind: LocalBackupRecordChangeKind.replace,
+          reason: 'Backup overwrites device',
+        ),
+      );
     }
   }
   // Records removed (on device but not in backup).
   for (final id in destinationIds.difference(sourceIds)) {
-    changes.add(LocalBackupRecordChange(
-      recordId: id,
-      label: _recordIdOnlyLabel(name, id),
-      kind: LocalBackupRecordChangeKind.remove,
-      reason: 'Not in backup',
-    ));
+    changes.add(
+      LocalBackupRecordChange(
+        recordId: id,
+        label: _recordIdOnlyLabel(name, id),
+        kind: LocalBackupRecordChangeKind.remove,
+        reason: 'Not in backup',
+      ),
+    );
   }
 
   return LocalBackupCollectionPreview(
@@ -123,12 +162,14 @@ _MergeResult _mergeCollection(
   if (source == null) {
     final destRecords = destination!.records;
     final changes = destRecords
-        .map((r) => LocalBackupRecordChange(
-              recordId: r.id,
-              label: _recordLabel(name, r),
-              kind: LocalBackupRecordChangeKind.keep,
-              reason: 'Only on device',
-            ))
+        .map(
+          (r) => LocalBackupRecordChange(
+            recordId: r.id,
+            label: _recordLabel(name, r),
+            kind: LocalBackupRecordChangeKind.keep,
+            reason: 'Only on device',
+          ),
+        )
         .toList(growable: false);
     return _MergeResult(
       collection: destination,
@@ -146,12 +187,14 @@ _MergeResult _mergeCollection(
   }
   if (destination == null) {
     final changes = source.records
-        .map((r) => LocalBackupRecordChange(
-              recordId: r.id,
-              label: _recordLabel(name, r),
-              kind: LocalBackupRecordChangeKind.add,
-              reason: 'Only in backup',
-            ))
+        .map(
+          (r) => LocalBackupRecordChange(
+            recordId: r.id,
+            label: _recordLabel(name, r),
+            kind: LocalBackupRecordChangeKind.add,
+            reason: 'Only in backup',
+          ),
+        )
         .toList(growable: false);
     return _MergeResult(
       collection: source,
@@ -181,43 +224,51 @@ _MergeResult _mergeCollection(
     if (incoming == null) {
       target.add(existing);
       keep++;
-      changes.add(LocalBackupRecordChange(
-        recordId: existing.id,
-        label: _recordLabel(name, existing),
-        kind: LocalBackupRecordChangeKind.keep,
-        reason: 'Only on device',
-      ));
+      changes.add(
+        LocalBackupRecordChange(
+          recordId: existing.id,
+          label: _recordLabel(name, existing),
+          kind: LocalBackupRecordChangeKind.keep,
+          reason: 'Only on device',
+        ),
+      );
     } else if (incoming.updatedAt.isAfter(existing.updatedAt)) {
       target.add(incoming);
       replace++;
-      changes.add(LocalBackupRecordChange(
-        recordId: incoming.id,
-        label: _recordLabel(name, incoming),
-        kind: LocalBackupRecordChangeKind.replace,
-        reason: 'Backup is newer',
-      ));
+      changes.add(
+        LocalBackupRecordChange(
+          recordId: incoming.id,
+          label: _recordLabel(name, incoming),
+          kind: LocalBackupRecordChangeKind.replace,
+          reason: 'Backup is newer',
+        ),
+      );
     } else {
       target.add(existing);
       keep++;
-      changes.add(LocalBackupRecordChange(
-        recordId: existing.id,
-        label: _recordLabel(name, existing),
-        kind: LocalBackupRecordChangeKind.keep,
-        reason: existing.updatedAt == incoming.updatedAt
-            ? 'Same timestamp'
-            : 'Device is newer',
-      ));
+      changes.add(
+        LocalBackupRecordChange(
+          recordId: existing.id,
+          label: _recordLabel(name, existing),
+          kind: LocalBackupRecordChangeKind.keep,
+          reason: existing.updatedAt == incoming.updatedAt
+              ? 'Same timestamp'
+              : 'Device is newer',
+        ),
+      );
     }
   }
   for (final incoming in sourceById.values) {
     target.add(incoming);
     add++;
-    changes.add(LocalBackupRecordChange(
-      recordId: incoming.id,
-      label: _recordLabel(name, incoming),
-      kind: LocalBackupRecordChangeKind.add,
-      reason: 'Only in backup',
-    ));
+    changes.add(
+      LocalBackupRecordChange(
+        recordId: incoming.id,
+        label: _recordLabel(name, incoming),
+        kind: LocalBackupRecordChangeKind.add,
+        reason: 'Only in backup',
+      ),
+    );
   }
   return _MergeResult(
     collection: LocalBackupCollection(
@@ -271,7 +322,7 @@ abstract interface class StagedLocalBackupImport {
 // ── Record labelling for preview ──────────────────────────────────────
 //
 // These produce short, privacy-safe labels from structured record fields.
-// Free-text note content and impulse drafts are never included.
+// Free-text note content is never included.
 
 /// Derives a one-line label from a [record]'s structured fields based on its
 /// [collectionName]. Returns a fallback using the record id when data is
@@ -280,6 +331,7 @@ String _recordLabel(String collectionName, LocalBackupRecord record) {
   final data = record.data;
   return switch (collectionName) {
     'periods' => _periodLabel(data),
+    'period_flows' => _periodFlowLabel(data),
     'care_records' => _careRecordLabel(data),
     'care_reflections' => _careReflectionLabel(data),
     'cycle_reflections' => _cycleReflectionLabel(data),
@@ -309,6 +361,27 @@ String _periodLabel(Map<String, Object?> data) {
   return startStr;
 }
 
+String _periodFlowLabel(Map<String, Object?> data) {
+  final flow = _maybeString(data, 'flow');
+  final color = _maybeString(data, 'color');
+  final day = _maybeInt(data, 'day');
+  final parts = <String>[];
+  if (flow != null && flow.isNotEmpty) parts.add(_capitalize(flow));
+  if (color != null && color.isNotEmpty) {
+    parts.add(
+      _capitalize(
+        color.replaceAllMapped(
+          RegExp(r'([A-Z])'),
+          (m) => ' ${m[1]!.toLowerCase()}',
+        ),
+      ),
+    );
+  }
+  final dayLabel = day == null ? '' : _epochDayString(day);
+  if (dayLabel.isNotEmpty) parts.add(dayLabel);
+  return parts.isEmpty ? 'Period flow' : parts.join(' · ');
+}
+
 String _careRecordLabel(Map<String, Object?> data) {
   final mode = _maybeString(data, 'mode');
   final action = _maybeString(data, 'actionLabel');
@@ -324,7 +397,9 @@ String _careReflectionLabel(Map<String, Object?> data) {
   final mode = _maybeString(data, 'mode');
   final createdStr = _dayString(_maybeInt(data, 'createdAtMillis'));
   final parts = <String>[];
-  if (mode != null && mode.isNotEmpty) parts.add('Reflection · ${_capitalize(mode)}');
+  if (mode != null && mode.isNotEmpty) {
+    parts.add('Reflection · ${_capitalize(mode)}');
+  }
   if (createdStr.isNotEmpty) parts.add(createdStr);
   return parts.isEmpty ? 'Care reflection' : parts.join(' · ');
 }
@@ -369,6 +444,7 @@ String _momentCheckInLabel(Map<String, Object?> data) {
 
 String _collectionDisplayName(String name) => switch (name) {
   'periods' => 'Period',
+  'period_flows' => 'Period flow',
   'care_records' => 'Care',
   'care_reflections' => 'Reflection',
   'cycle_reflections' => 'Cycle',
@@ -385,8 +461,44 @@ String _dayString(int? millis) {
   try {
     final dt = DateTime.fromMillisecondsSinceEpoch(millis, isUtc: true);
     const months = [
-      'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'May',
+      'Jun',
+      'Jul',
+      'Aug',
+      'Sep',
+      'Oct',
+      'Nov',
+      'Dec',
+    ];
+    return '${months[dt.month - 1]} ${dt.day}';
+  } catch (_) {
+    return '';
+  }
+}
+
+String _epochDayString(int epochDay) {
+  try {
+    final dt = DateTime.fromMillisecondsSinceEpoch(
+      epochDay * Duration.millisecondsPerDay,
+      isUtc: true,
+    );
+    const months = [
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'May',
+      'Jun',
+      'Jul',
+      'Aug',
+      'Sep',
+      'Oct',
+      'Nov',
+      'Dec',
     ];
     return '${months[dt.month - 1]} ${dt.day}';
   } catch (_) {

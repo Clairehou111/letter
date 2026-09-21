@@ -11,7 +11,7 @@ final class MomentCheckInException implements Exception {
     MomentCheckInFailure.notFound =>
       'This check-in is no longer available. Refresh and try again.',
     MomentCheckInFailure.storageUnavailable =>
-      'Letter could not update your private check-in. Try again.',
+      'Letter Within could not update your private check-in. Try again.',
   };
 }
 

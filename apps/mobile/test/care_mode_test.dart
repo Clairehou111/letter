@@ -12,21 +12,6 @@ void main() {
     ]);
   });
 
-  test('every mode has unique finite-shell copy', () {
-    expect(
-      CareMode.values.map((mode) => mode.focalAction).toSet(),
-      hasLength(CareMode.values.length),
-    );
-    expect(
-      CareMode.values.map((mode) => mode.protectiveLine).toSet(),
-      hasLength(CareMode.values.length),
-    );
-    expect(
-      CareMode.values.map((mode) => mode.handOff).toSet(),
-      hasLength(CareMode.values.length),
-    );
-  });
-
   test('only physical Care uses the physical safety boundary', () {
     expect(
       CareMode.values

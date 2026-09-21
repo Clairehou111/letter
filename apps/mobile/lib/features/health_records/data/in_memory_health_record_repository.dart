@@ -89,8 +89,6 @@ final class InMemoryHealthRecordRepository implements HealthRecordRepository {
       id: id,
       symptom: draft.symptom,
       severity: draft.severity,
-      painRating: draft.painRating,
-      painLocations: Set.unmodifiable(draft.painLocations),
       functionalImpacts: Set.unmodifiable(draft.functionalImpacts),
       experiencedDate: draft.experiencedDate,
       recordedAt: recordedAt,

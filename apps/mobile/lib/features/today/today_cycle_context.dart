@@ -1,4 +1,5 @@
 import '../cycle/domain/cycle_prediction.dart';
+import '../cycle/domain/cycle_read_snapshot.dart';
 import '../cycle/domain/local_date.dart';
 import '../cycle/domain/period_record.dart';
 
@@ -17,9 +18,12 @@ final class TodayCycleContext {
     required Iterable<PeriodRecord> records,
     required LocalDate today,
   }) {
-    final ordered = records.toList()
-      ..sort((left, right) => right.startDate.compareTo(left.startDate));
-    if (ordered.isEmpty) {
+    final snapshot = CycleReadSnapshot.fromRecords(
+      records: records,
+      today: today,
+    );
+    final current = snapshot.currentCycle;
+    if (current == null) {
       return TodayCycleContext(
         kind: TodayCycleKind.noHistory,
         today: today,
@@ -29,16 +33,18 @@ final class TodayCycleContext {
       );
     }
 
-    final latest = ordered.first;
-    final dayNumber = today.epochDay - latest.startDate.epochDay + 1;
     return TodayCycleContext(
-      kind: latest.isOpen
+      // Closing a period on its final day must not erase that day's factual
+      // period context. It becomes between-periods only tomorrow.
+      kind:
+          current.bleedingState == BleedingState.open ||
+              current.bleedingState == BleedingState.endedToday
           ? TodayCycleKind.periodInProgress
           : TodayCycleKind.betweenPeriods,
       today: today,
-      latestStart: latest.startDate,
-      dayNumber: dayNumber < 1 ? 1 : dayNumber,
-      prediction: CyclePredictionEngine.calculate(ordered),
+      latestStart: current.period.startDate,
+      dayNumber: current.cycleDay < 1 ? 1 : current.cycleDay,
+      prediction: snapshot.visiblePrediction,
     );
   }
 

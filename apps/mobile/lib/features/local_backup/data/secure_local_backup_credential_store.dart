@@ -9,9 +9,8 @@ import '../domain/local_backup_credential_store.dart';
 /// included in app backups or logs.
 final class SecureLocalBackupCredentialStore
     implements LocalBackupCredentialStore {
-  SecureLocalBackupCredentialStore({
-    FlutterSecureStorage? storage,
-  }) : _storage = storage ?? const FlutterSecureStorage();
+  SecureLocalBackupCredentialStore({FlutterSecureStorage? storage})
+    : _storage = storage ?? const FlutterSecureStorage();
 
   final FlutterSecureStorage _storage;
 

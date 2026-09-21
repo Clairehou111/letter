@@ -72,6 +72,62 @@ abstract final class LetterRadius {
   static const panel = 8.0;
 }
 
+abstract final class LetterDimensions {
+  static const tapTarget = 44.0;
+  static const maxContentWidth = 480.0;
+  static const narrowWidth = 340.0;
+}
+
+abstract final class LetterButtonStyles {
+  static final filled = FilledButton.styleFrom(
+    minimumSize: const Size(
+      LetterDimensions.tapTarget,
+      LetterDimensions.tapTarget,
+    ),
+    backgroundColor: LetterColors.teal,
+    foregroundColor: LetterColors.surface,
+    disabledBackgroundColor: LetterColors.line,
+    disabledForegroundColor: LetterColors.muted,
+    padding: const EdgeInsets.symmetric(
+      horizontal: LetterSpacing.md,
+      vertical: LetterSpacing.sm,
+    ),
+    shape: RoundedRectangleBorder(
+      borderRadius: BorderRadius.circular(LetterRadius.control),
+    ),
+    textStyle: const TextStyle(fontSize: 14, fontWeight: FontWeight.w700),
+  );
+
+  static final outlined = OutlinedButton.styleFrom(
+    minimumSize: const Size(
+      LetterDimensions.tapTarget,
+      LetterDimensions.tapTarget,
+    ),
+    foregroundColor: LetterColors.tealDark,
+    side: const BorderSide(color: LetterColors.line),
+    padding: const EdgeInsets.symmetric(
+      horizontal: LetterSpacing.md,
+      vertical: LetterSpacing.sm,
+    ),
+    shape: RoundedRectangleBorder(
+      borderRadius: BorderRadius.circular(LetterRadius.control),
+    ),
+    textStyle: const TextStyle(fontSize: 14, fontWeight: FontWeight.w700),
+  );
+}
+
+extension LetterMedia on BuildContext {
+  bool get reduceMotion => MediaQuery.maybeDisableAnimationsOf(this) ?? false;
+
+  Duration letterMotion(Duration duration) =>
+      reduceMotion ? Duration.zero : duration;
+
+  bool get isLetterNarrow =>
+      MediaQuery.sizeOf(this).width <= LetterDimensions.narrowWidth;
+
+  bool get isLetterLargeText => MediaQuery.textScalerOf(this).scale(16) > 22;
+}
+
 abstract final class LetterTheme {
   static ThemeData get light {
     final base = ThemeData(
@@ -112,7 +168,7 @@ abstract final class LetterTheme {
       ),
       dividerColor: LetterColors.line,
       // Keep stock Material pickers, dialogs, bars, and indicators inside the
-      // Letter visual language instead of default web chrome (AGENTS.md).
+      // Letter Within visual language instead of default web chrome (AGENTS.md).
       datePickerTheme: DatePickerThemeData(
         backgroundColor: LetterColors.canvas,
         surfaceTintColor: Colors.transparent,
@@ -224,6 +280,81 @@ abstract final class LetterTheme {
         }),
         trackOutlineColor: WidgetStateProperty.all(Colors.transparent),
       ),
+    );
+  }
+}
+
+class LetterPageHeader extends StatelessWidget {
+  const LetterPageHeader({
+    required this.title,
+    super.key,
+    this.eyebrow,
+    this.support,
+  });
+
+  final String? eyebrow;
+  final String title;
+  final String? support;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        if (eyebrow case final value?) ...[
+          LetterEyebrow(value),
+          const SizedBox(height: LetterSpacing.xs),
+        ],
+        Semantics(
+          header: true,
+          child: Text(
+            title,
+            style: TextStyle(
+              fontFamily: 'Newsreader',
+              fontSize: context.isLetterNarrow ? 28 : 32,
+              height: 1.08,
+              fontWeight: FontWeight.w700,
+              color: LetterColors.ink,
+            ),
+          ),
+        ),
+        if (support case final value?) ...[
+          const SizedBox(height: LetterSpacing.sm),
+          Text(
+            value,
+            style: const TextStyle(
+              color: LetterColors.muted,
+              fontSize: 14,
+              height: 1.5,
+            ),
+          ),
+        ],
+      ],
+    );
+  }
+}
+
+class LetterSurface extends StatelessWidget {
+  const LetterSurface({
+    required this.child,
+    super.key,
+    this.padding = const EdgeInsets.all(LetterSpacing.md),
+    this.color = LetterColors.surface,
+  });
+
+  final Widget child;
+  final EdgeInsetsGeometry padding;
+  final Color color;
+
+  @override
+  Widget build(BuildContext context) {
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: color,
+        border: Border.all(color: LetterColors.line),
+        borderRadius: BorderRadius.circular(LetterRadius.panel),
+      ),
+      child: Padding(padding: padding, child: child),
     );
   }
 }

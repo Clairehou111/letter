@@ -187,4 +187,44 @@ void main() {
     expect(records, hasLength(1));
     expect(records.single.id, 'period-1');
   });
+
+  test(
+    'inserting an older period preserves existing period identities',
+    () async {
+      final repository = InMemoryPeriodRepository(
+        seed: [
+          PeriodRecord(
+            id: 'may-period',
+            startDate: const LocalDate(2026, 5, 10),
+            endDate: const LocalDate(2026, 5, 14),
+            createdAt: DateTime.utc(2026, 5, 10),
+            updatedAt: DateTime.utc(2026, 5, 10),
+          ),
+          PeriodRecord(
+            id: 'july-period',
+            startDate: const LocalDate(2026, 7, 14),
+            endDate: const LocalDate(2026, 7, 18),
+            createdAt: DateTime.utc(2026, 7, 14),
+            updatedAt: DateTime.utc(2026, 7, 14),
+          ),
+        ],
+        idGenerator: () => 'march-period',
+      );
+
+      await repository.create(
+        const PeriodDraft(
+          startDate: LocalDate(2026, 3, 2),
+          endDate: LocalDate(2026, 3, 6),
+        ),
+        today: today,
+      );
+
+      final records = await repository.getAll();
+      expect(records.map((record) => record.id), [
+        'july-period',
+        'may-period',
+        'march-period',
+      ]);
+    },
+  );
 }

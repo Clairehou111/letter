@@ -1,0 +1,6 @@
+# Copy to key.properties (ignored by Git) and keep all values private.
+# storeFile may be absolute or relative to android/app.
+storeFile=/absolute/path/to/letter-upload-key.jks
+storePassword=REPLACE_ME
+keyAlias=letter-upload
+keyPassword=REPLACE_ME

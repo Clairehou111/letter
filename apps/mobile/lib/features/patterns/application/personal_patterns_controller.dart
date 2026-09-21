@@ -17,6 +17,7 @@ final class PersonalPatternsController extends ChangeNotifier {
   final PersonalPatternEngine _engine;
   final PatternMutationPort? _mutations;
   PersonalPatternAnalysis _analysis = PersonalPatternAnalysis.empty;
+  PatternSourceSnapshot _sourceSnapshot = const PatternSourceSnapshot();
   CareMode? _selectedCareMode;
   final Set<String> _dismissedPatternIds = {};
   bool _isLoading = false;
@@ -37,6 +38,7 @@ final class PersonalPatternsController extends ChangeNotifier {
   }
 
   CareMode? get selectedCareMode => _selectedCareMode;
+  PatternSourceSnapshot get sourceSnapshot => _sourceSnapshot;
   bool get isLoading => _isLoading;
   Object? get error => _error;
 
@@ -56,6 +58,7 @@ final class PersonalPatternsController extends ChangeNotifier {
 
   Future<void> refresh({bool notify = true}) async {
     final source = await _source.read();
+    _sourceSnapshot = source;
     _analysis = _engine.analyze(source, selectedCareMode: _selectedCareMode);
     _error = null;
     if (notify) {

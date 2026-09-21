@@ -129,7 +129,16 @@ final class InMemoryCareMemoryRepository implements CareMemoryRepository {
   }
 
   @override
-  Future<CycleReflection?> getCycleReflection(int cycleStartDay) async {
+  Future<CycleReflection?> getCycleReflection(
+    int cycleStartDay, {
+    String? startingPeriodId,
+  }) async {
+    if (startingPeriodId != null) {
+      final byPeriod = _cycleReflections
+          .where((item) => item.startingPeriodId == startingPeriodId)
+          .firstOrNull;
+      if (byPeriod != null) return byPeriod;
+    }
     return _cycleReflections
         .where((item) => item.cycleStartDay == cycleStartDay)
         .firstOrNull;
@@ -138,18 +147,27 @@ final class InMemoryCareMemoryRepository implements CareMemoryRepository {
   @override
   Future<CycleReflection> saveCycleReflection(
     int cycleStartDay,
-    CycleReflectionDraft draft,
-  ) async {
+    CycleReflectionDraft draft, {
+    String? startingPeriodId,
+  }) async {
     final valid = validateCycleReflection(draft);
     final now = _clock().toUtc();
-    final existingIndex = _cycleReflections.indexWhere(
-      (item) => item.cycleStartDay == cycleStartDay,
-    );
+    var existingIndex = startingPeriodId == null
+        ? -1
+        : _cycleReflections.indexWhere(
+            (item) => item.startingPeriodId == startingPeriodId,
+          );
+    if (existingIndex == -1) {
+      existingIndex = _cycleReflections.indexWhere(
+        (item) => item.cycleStartDay == cycleStartDay,
+      );
+    }
     final existing = existingIndex == -1
         ? null
         : _cycleReflections[existingIndex];
     final reflection = CycleReflection(
       id: existing?.id ?? _idGenerator(),
+      startingPeriodId: startingPeriodId ?? existing?.startingPeriodId,
       cycleStartDay: cycleStartDay,
       observation: valid.observation,
       need: valid.need,

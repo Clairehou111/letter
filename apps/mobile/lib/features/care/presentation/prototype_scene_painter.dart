@@ -5,6 +5,164 @@ import 'package:flutter/material.dart';
 import '../domain/care_mode.dart';
 import 'care_motion_flow.dart' show CareBreakVisuals, PhysicalCareContext;
 
+/// Parameter sets used for production and blinded pre-TestFlight captures.
+///
+/// [productionHybrid] applies the path-specific findings from the blinded
+/// review. A/B/C remain stable references and do not change scene timing,
+/// interaction timing, copy, or random seeds.
+enum CareSceneVariant {
+  productionHybrid,
+  aBaseline,
+  bConservative,
+  cSimplified,
+}
+
+class _CareSceneTuning {
+  const _CareSceneTuning({
+    required this.heavyVelocityScale,
+    required this.heavyDensityScale,
+    required this.heavyFlowReduction,
+    required this.heavyTrailCount,
+    required this.heavyAlphaScale,
+    required this.heavyDensityDecayExponent,
+    required this.heavyMinimumDrops,
+    required this.heavyHaloAlphaScale,
+    required this.heavyHaloProgressScale,
+    required this.heavyRadiusProgressScale,
+    required this.racingStrandCount,
+    required this.racingChaosSpeed,
+    required this.racingAmplitudeScale,
+    required this.racingTrailCount,
+    required this.racingAlphaScale,
+  });
+
+  final double heavyVelocityScale;
+  final double heavyDensityScale;
+  final double heavyFlowReduction;
+  final int heavyTrailCount;
+  final double heavyAlphaScale;
+  final double heavyDensityDecayExponent;
+  final int heavyMinimumDrops;
+  final double heavyHaloAlphaScale;
+  final double heavyHaloProgressScale;
+  final double heavyRadiusProgressScale;
+  final int racingStrandCount;
+  final double racingChaosSpeed;
+  final double racingAmplitudeScale;
+  final int racingTrailCount;
+  final double racingAlphaScale;
+}
+
+extension on CareSceneVariant {
+  _CareSceneTuning get tuning => switch (this) {
+    CareSceneVariant.productionHybrid => const _CareSceneTuning(
+      // Keep the baseline's clearly heavy opening, but use the conservative
+      // candidate's lower velocity, shorter persistence, and opacity.
+      heavyVelocityScale: 0.5,
+      heavyDensityScale: 1,
+      heavyFlowReduction: 0.96,
+      heavyTrailCount: 6,
+      heavyAlphaScale: 0.82,
+      heavyDensityDecayExponent: 1.35,
+      heavyMinimumDrops: 0,
+      heavyHaloAlphaScale: 0.62,
+      heavyHaloProgressScale: 0.18,
+      heavyRadiusProgressScale: 0.08,
+      // Default-intensity Racing starts from the simplified candidate.
+      // High intensity is selected dynamically below.
+      racingStrandCount: 16,
+      racingChaosSpeed: 1.45,
+      racingAmplitudeScale: 0.62,
+      racingTrailCount: 4,
+      racingAlphaScale: 0.62,
+    ),
+    CareSceneVariant.aBaseline => const _CareSceneTuning(
+      heavyVelocityScale: 1,
+      heavyDensityScale: 1,
+      heavyFlowReduction: 0.85,
+      heavyTrailCount: 8,
+      heavyAlphaScale: 1,
+      heavyDensityDecayExponent: 1,
+      heavyMinimumDrops: 1,
+      heavyHaloAlphaScale: 1,
+      heavyHaloProgressScale: 0.32,
+      heavyRadiusProgressScale: 0.1,
+      racingStrandCount: 30,
+      racingChaosSpeed: 3,
+      racingAmplitudeScale: 1,
+      racingTrailCount: 11,
+      racingAlphaScale: 1,
+    ),
+    CareSceneVariant.bConservative => const _CareSceneTuning(
+      heavyVelocityScale: 0.7,
+      heavyDensityScale: 0.75,
+      heavyFlowReduction: 0.92,
+      heavyTrailCount: 6,
+      heavyAlphaScale: 0.82,
+      heavyDensityDecayExponent: 1,
+      heavyMinimumDrops: 1,
+      heavyHaloAlphaScale: 1,
+      heavyHaloProgressScale: 0.32,
+      heavyRadiusProgressScale: 0.1,
+      racingStrandCount: 22,
+      racingChaosSpeed: 2.1,
+      racingAmplitudeScale: 0.8,
+      racingTrailCount: 7,
+      racingAlphaScale: 0.78,
+    ),
+    CareSceneVariant.cSimplified => const _CareSceneTuning(
+      heavyVelocityScale: 0.45,
+      heavyDensityScale: 0.5,
+      heavyFlowReduction: 0.97,
+      heavyTrailCount: 4,
+      heavyAlphaScale: 0.68,
+      heavyDensityDecayExponent: 1,
+      heavyMinimumDrops: 1,
+      heavyHaloAlphaScale: 1,
+      heavyHaloProgressScale: 0.32,
+      heavyRadiusProgressScale: 0.1,
+      racingStrandCount: 16,
+      racingChaosSpeed: 1.45,
+      racingAmplitudeScale: 0.62,
+      racingTrailCount: 4,
+      racingAlphaScale: 0.62,
+    ),
+  };
+}
+
+_CareSceneTuning _tuningFor(
+  CareSceneVariant variant,
+  CareMode mode,
+  double intensity,
+) {
+  if (variant == CareSceneVariant.productionHybrid &&
+      mode == CareMode.racing &&
+      intensity > 0.75) {
+    return _productionHighRacingTuning;
+  }
+  return variant.tuning;
+}
+
+const _productionHighRacingTuning = _CareSceneTuning(
+  heavyVelocityScale: 0.5,
+  heavyDensityScale: 1,
+  heavyFlowReduction: 0.96,
+  heavyTrailCount: 6,
+  heavyAlphaScale: 0.82,
+  heavyDensityDecayExponent: 1.35,
+  heavyMinimumDrops: 0,
+  heavyHaloAlphaScale: 0.62,
+  heavyHaloProgressScale: 0.18,
+  heavyRadiusProgressScale: 0.08,
+  // Keep B's readable intermediate transformation while moving its density,
+  // speed, persistence, and contrast modestly toward C.
+  racingStrandCount: 20,
+  racingChaosSpeed: 1.8,
+  racingAmplitudeScale: 0.72,
+  racingTrailCount: 6,
+  racingAlphaScale: 0.72,
+);
+
 /// Mutable scene data translated directly from the prototype's SceneStage.
 /// Math.random() at canvas mount becomes one Random-backed initialization here.
 class PrototypeSceneModel {
@@ -83,8 +241,29 @@ class PrototypeSceneModel {
     _lastSparkAt = 0;
   }
 
+  /// Selects a reduced strand count without cropping the field vertically.
+  /// Strands are stored from top to bottom, so taking the first N strands
+  /// incorrectly confines production motion to the upper part of the canvas.
+  Iterable<_Strand> _racingStrands(int count) sync* {
+    final selectedCount = math.min(count, _strands.length);
+    if (selectedCount <= 0) return;
+    if (selectedCount == _strands.length) {
+      yield* _strands;
+      return;
+    }
+    for (var position = 0; position < selectedCount; position++) {
+      final index = math.min(
+        _strands.length - 1,
+        ((position + 0.5) * _strands.length / selectedCount).floor(),
+      );
+      yield _strands[index];
+    }
+  }
+
   void advance({
     required CareMode mode,
+    required CareSceneVariant variant,
+    required double intensity,
     required double elapsed,
     required double progress,
     required double closeProgress,
@@ -102,9 +281,10 @@ class PrototypeSceneModel {
     final dt = rawDt * 60;
 
     if (mode == CareMode.heavy) {
-      final flow = 1 - progress * 0.85;
+      final tuning = _tuningFor(variant, mode, intensity);
+      final flow = 1 - progress * tuning.heavyFlowReduction;
       for (final drop in _drops) {
-        drop.y += drop.velocity * flow * dt;
+        drop.y += drop.velocity * flow * dt * tuning.heavyVelocityScale;
         if (drop.y > 1.2) {
           drop.y = -0.2;
           drop.x = _random.nextDouble();
@@ -113,8 +293,10 @@ class PrototypeSceneModel {
     }
 
     if (mode == CareMode.racing) {
+      final tuning = _tuningFor(variant, mode, intensity);
+      final strands = _racingStrands(tuning.racingStrandCount);
       var tamed = 0.0;
-      for (final strand in _strands) {
+      for (final strand in strands) {
         if (pointer != null && closeProgress == 0) {
           final distance = (pointer.dy - strand.y * size.height).abs();
           final proximity = math.exp(-distance / 90);
@@ -130,7 +312,7 @@ class PrototypeSceneModel {
         strand.momentum = math.max(0, strand.momentum - dt * 0.6);
         tamed += strand.tame;
       }
-      calm = tamed / _strands.length;
+      calm = tamed / tuning.racingStrandCount;
     }
 
     // Explode hold phase: spray sparks outward so pressure feels like a
@@ -238,6 +420,7 @@ class PrototypeScenePainter extends CustomPainter {
     required this.visuals,
     required this.physicalContext,
     required this.still,
+    this.variant = CareSceneVariant.aBaseline,
     this.breath = false,
   });
 
@@ -253,6 +436,7 @@ class PrototypeScenePainter extends CustomPainter {
   final CareBreakVisuals visuals;
   final PhysicalCareContext? physicalContext;
   final bool still;
+  final CareSceneVariant variant;
   final bool breath;
 
   double get energy => 0.35 + intensity * 0.65;
@@ -280,8 +464,17 @@ class PrototypeScenePainter extends CustomPainter {
         ? const Color(0xFF08060A)
         : visuals.background;
     canvas.drawRect(Offset.zero & size, Paint()..color = bg);
+    if (still && variant != CareSceneVariant.aBaseline) {
+      canvas.save();
+      canvas.clipRect(Offset.zero & size);
+      _reducedMotionFrame(canvas, size);
+      canvas.restore();
+      return;
+    }
     model.advance(
       mode: mode,
+      variant: variant,
+      intensity: intensity,
       elapsed: elapsedSeconds,
       progress: progress,
       closeProgress: closeProgress,
@@ -305,6 +498,61 @@ class PrototypeScenePainter extends CustomPainter {
         _care(canvas, size);
     }
     canvas.restore();
+  }
+
+  void _reducedMotionFrame(Canvas canvas, Size size) {
+    final center = size.center(Offset.zero);
+    switch (mode) {
+      case CareMode.explode:
+        _seal(canvas, size, 1);
+      case CareMode.heavy:
+        canvas.drawCircle(
+          Offset(size.width / 2, size.height * 0.52),
+          size.shortestSide * 0.42,
+          Paint()
+            ..blendMode = BlendMode.plus
+            ..shader =
+                RadialGradient(
+                  colors: [
+                    const Color(0xFFFFD9A8).withValues(alpha: 0.28),
+                    visuals.accent.withValues(alpha: 0.18),
+                    Colors.transparent,
+                  ],
+                ).createShader(
+                  Rect.fromCircle(
+                    center: Offset(size.width / 2, size.height * 0.52),
+                    radius: size.shortestSide * 0.42,
+                  ),
+                ),
+        );
+      case CareMode.racing:
+        canvas.drawLine(
+          Offset(size.width * 0.18, center.dy),
+          Offset(size.width * 0.82, center.dy),
+          _paint(visuals.glow, 0.52, style: PaintingStyle.stroke)
+            ..strokeWidth = 1.6,
+        );
+      case CareMode.space:
+        canvas.drawCircle(
+          center,
+          size.shortestSide * 0.28,
+          Paint()
+            ..shader =
+                RadialGradient(
+                  colors: [
+                    visuals.glow.withValues(alpha: 0.14),
+                    Colors.transparent,
+                  ],
+                ).createShader(
+                  Rect.fromCircle(
+                    center: center,
+                    radius: size.shortestSide * 0.28,
+                  ),
+                ),
+        );
+      case CareMode.physical:
+        _care(canvas, size);
+    }
   }
 
   void _seal(Canvas canvas, Size size, double amount) {
@@ -457,14 +705,22 @@ class PrototypeScenePainter extends CustomPainter {
   }
 
   void _heavy(Canvas canvas, Size size) {
+    final tuning = _tuningFor(variant, mode, intensity);
     final p = progress.clamp(0.0, 1.0);
-    final flow = 1 - p * 0.85;
-    final live = math.max(1, (model._drops.length * (1 - p * 0.97)).round());
+    final flow = 1 - p * tuning.heavyFlowReduction;
+    final available = (model._drops.length * tuning.heavyDensityScale).round();
+    final densityEnvelope = math
+        .pow(1 - p, tuning.heavyDensityDecayExponent)
+        .toDouble();
+    final live = math.max(
+      tuning.heavyMinimumDrops,
+      (available * densityEnvelope).round(),
+    );
     for (var index = 0; index < live; index++) {
       final drop = model._drops[index];
       final x = drop.x * size.width;
       final length = drop.length * (0.25 + flow * 0.75);
-      for (var trail = 8; trail >= 0; trail--) {
+      for (var trail = tuning.heavyTrailCount; trail >= 0; trail--) {
         final decay = math.pow(0.78, trail).toDouble();
         final y = (drop.y - drop.velocity * flow * trail / 60) * size.height;
         canvas.drawLine(
@@ -477,10 +733,12 @@ class PrototypeScenePainter extends CustomPainter {
               colors: [
                 Colors.transparent,
                 visuals.accent.withValues(
-                  alpha: ((0.08 + 0.24 * flow) * energy * decay).clamp(
-                    0.0,
-                    1.0,
-                  ),
+                  alpha:
+                      ((0.08 + 0.24 * flow) *
+                              energy *
+                              decay *
+                              tuning.heavyAlphaScale)
+                          .clamp(0.0, 1.0),
                 ),
               ],
               begin: Alignment.topCenter,
@@ -518,9 +776,10 @@ class PrototypeScenePainter extends CustomPainter {
     final wobble = breath ? 0.5 + 0.5 * math.sin(elapsedSeconds * 0.31) : 0.5;
     final radius =
         size.shortestSide *
-        (0.1 + p * 0.1 + wobble * 0.05) *
+        (0.1 + p * tuning.heavyRadiusProgressScale + wobble * 0.05) *
         (0.7 + energy * 0.3);
     final center = Offset(size.width / 2, size.height * 0.52);
+    final haloAlphaScale = tuning.heavyHaloAlphaScale * (breath ? 1.25 : 1.0);
     canvas.drawCircle(
       center,
       radius * 2.2,
@@ -529,28 +788,70 @@ class PrototypeScenePainter extends CustomPainter {
         ..shader = RadialGradient(
           colors: [
             const Color(0xFFFFD9A8).withValues(
-              alpha: ((0.1 + p * 0.32) * energy * _heavyAccum).clamp(0, 1),
+              alpha:
+                  ((0.1 + p * tuning.heavyHaloProgressScale) *
+                          energy *
+                          _heavyAccum *
+                          haloAlphaScale)
+                      .clamp(0, 1),
             ),
             visuals.accent.withValues(
-              alpha: ((0.1 + p * 0.32) * energy * _heavyAccum).clamp(0, 1),
+              alpha:
+                  ((0.1 + p * tuning.heavyHaloProgressScale) *
+                          energy *
+                          _heavyAccum *
+                          haloAlphaScale)
+                      .clamp(0, 1),
             ),
             Colors.transparent,
           ],
           stops: const [0, 0.35, 1],
         ).createShader(Rect.fromCircle(center: center, radius: radius * 2.2)),
     );
+
+    // Optional grounding response: a finger temporarily clears a small patch
+    // of rain and leaves a soft water ring. The global rain envelope remains
+    // time-driven, so the scene still resolves without any interaction.
+    final pointer = touchPoint;
+    if (pointer != null) {
+      final wipeRadius = size.shortestSide * (0.13 + pointerSpeed * 0.035);
+      canvas.drawCircle(
+        pointer,
+        wipeRadius,
+        Paint()
+          ..shader = RadialGradient(
+            colors: [
+              visuals.background.withValues(alpha: 0.72),
+              visuals.background.withValues(alpha: 0.34),
+              Colors.transparent,
+            ],
+            stops: const [0, 0.58, 1],
+          ).createShader(Rect.fromCircle(center: pointer, radius: wipeRadius)),
+      );
+      canvas.drawCircle(
+        pointer,
+        wipeRadius * (0.72 + pointerSpeed * 0.12),
+        Paint()
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = 1.2
+          ..color = visuals.accent.withValues(
+            alpha: (0.18 + pointerSpeed * 0.12) * (1 - p * 0.55),
+          ),
+      );
+    }
   }
 
   void _racing(Canvas canvas, Size size) {
+    final tuning = _tuningFor(variant, mode, intensity);
     final gather = closeProgress.clamp(0.0, 1.0);
     final gathered = gather * gather * (3 - 2 * gather);
     final near = touchPoint != null;
-    for (final strand in model._strands) {
+    for (final strand in model._racingStrands(tuning.racingStrandCount)) {
       final base =
           strand.y * size.height +
           (size.height / 2 - strand.y * size.height) * gathered;
       final chaos = (1 - strand.tame) * (1 - gathered);
-      for (var trail = 11; trail >= 0; trail--) {
+      for (var trail = tuning.racingTrailCount; trail >= 0; trail--) {
         final decay = math.pow(0.86, trail).toDouble();
         final time = math.max(0, elapsedSeconds - trail / 60);
         final path = Path();
@@ -558,10 +859,13 @@ class PrototypeScenePainter extends CustomPainter {
           final wave =
               math.sin(
                 x * (0.02 + chaos * 0.05) +
-                    time * strand.speed * (0.6 + chaos * 3) +
+                    time *
+                        strand.speed *
+                        (0.6 + chaos * tuning.racingChaosSpeed) +
                     strand.phase,
               ) *
               strand.amplitude *
+              tuning.racingAmplitudeScale *
               (0.15 + chaos) *
               energy;
           final pull = near
@@ -580,7 +884,11 @@ class PrototypeScenePainter extends CustomPainter {
           path,
           _paint(
             strand.tame > 0.5 ? visuals.glow : visuals.accent,
-            (0.1 + strand.tame * 0.25) * energy * (1 - gathered * 0.55) * decay,
+            (0.1 + strand.tame * 0.25) *
+                energy *
+                (1 - gathered) *
+                decay *
+                tuning.racingAlphaScale,
             style: PaintingStyle.stroke,
           )..strokeWidth = 1 + strand.tame * 1.4,
         );
@@ -589,20 +897,35 @@ class PrototypeScenePainter extends CustomPainter {
     if (gathered > 0.05) {
       final y = size.height / 2;
       final start = size.width * 0.16;
+      final settledPulse = still
+          ? 0.5
+          : 0.5 + 0.5 * math.sin(elapsedSeconds * 0.35);
+      final acknowledgment = near ? 1.0 : 0.0;
+      final focusLength =
+          size.width *
+          (0.6 +
+              gathered * 0.02 +
+              settledPulse * 0.012 +
+              acknowledgment * 0.01);
       canvas.drawLine(
         Offset(start, y),
-        Offset(start + size.width * 0.62 * gathered, y),
+        Offset(start + focusLength * gathered, y),
         _paint(
           visuals.glow,
-          gathered * 0.85 * energy,
+          gathered *
+              (0.58 + settledPulse * 0.12 + acknowledgment * 0.12) *
+              energy,
           style: PaintingStyle.stroke,
-        )..strokeWidth = 1.6,
+        )..strokeWidth = 1.5 + acknowledgment * 0.35,
       );
       if (gathered > 0.85) {
         canvas.drawCircle(
-          Offset(size.width * 0.16 + size.width * 0.62 + 12, y),
-          3.2,
-          _paint(visuals.glow, (gathered - 0.85) / 0.15),
+          Offset(start + focusLength * gathered + 12, y),
+          2.6 + settledPulse * 0.8 + acknowledgment * 1.1,
+          _paint(
+            visuals.glow,
+            ((gathered - 0.85) / 0.15) * (0.58 + acknowledgment * 0.24),
+          ),
         );
       }
     }
@@ -877,19 +1200,31 @@ class PrototypeScenePainter extends CustomPainter {
 
   void _care(Canvas canvas, Size size) {
     if (still || physicalContext == PhysicalCareContext.headache) {
-      final center = Offset(size.width / 2, size.height * 0.55);
+      final center = Offset(size.width / 2, size.height * 0.58);
       canvas.drawRect(
         Offset.zero & size,
         Paint()
           ..shader =
               RadialGradient(
                 colors: [
-                  const Color(0xFFE8A34A).withValues(alpha: 0.1),
+                  const Color(0xFFFFE0AB).withValues(alpha: 0.18),
+                  const Color(0xFFE8A34A).withValues(alpha: 0.065),
                   Colors.transparent,
                 ],
+                stops: const [0, 0.38, 1],
               ).createShader(
-                Rect.fromCircle(center: center, radius: size.longestSide * 0.7),
+                Rect.fromCircle(
+                  center: center,
+                  radius: size.longestSide * 0.62,
+                ),
               ),
+      );
+      canvas.drawLine(
+        Offset(size.width * 0.24, center.dy),
+        Offset(size.width * 0.76, center.dy),
+        Paint()
+          ..color = const Color(0xFFFFE0AB).withValues(alpha: 0.14)
+          ..strokeWidth = 1.1,
       );
       return;
     }

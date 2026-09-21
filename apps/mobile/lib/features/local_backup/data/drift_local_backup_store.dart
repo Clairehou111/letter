@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:drift/drift.dart';
 
 import '../../cycle/data/letter_health_database.dart';
@@ -6,9 +8,8 @@ import '../domain/local_backup_models.dart';
 
 /// Bridges the encrypted Drift database to the encrypted backup package.
 ///
-/// Impulse drafts are deliberately excluded: a sealed draft must not gain an
-/// export path before its lock expires. All other records here were explicitly
-/// saved by the user and retain their stable IDs and timestamps.
+/// Every record here was explicitly saved by the user and retains its stable
+/// ID and timestamps.
 final class DriftLocalBackupStore implements LocalBackupStore {
   DriftLocalBackupStore(this._database, {DateTime Function()? clock})
     : _clock = clock ?? DateTime.now;
@@ -20,6 +21,9 @@ final class DriftLocalBackupStore implements LocalBackupStore {
   Future<LocalBackupSnapshot> captureSnapshot() async {
     try {
       final periods = await _database.select(_database.periodRows).get();
+      final periodFlows = await _database
+          .select(_database.periodFlowRows)
+          .get();
       final careRecords = await _database
           .select(_database.careRecordRows)
           .get();
@@ -38,6 +42,12 @@ final class DriftLocalBackupStore implements LocalBackupStore {
       final momentCheckIns = await _database
           .select(_database.momentCheckInRows)
           .get();
+      final preparationPlans = await _database
+          .select(_database.preparationPlanRows)
+          .get();
+      final preparationDismissals = await _database
+          .select(_database.preparationDismissalRows)
+          .get();
       return LocalBackupSnapshot(
         createdAt: _clock().toUtc(),
         collections: [
@@ -51,6 +61,21 @@ final class DriftLocalBackupStore implements LocalBackupStore {
                 'createdAtMillis': row.createdAtMillis,
                 'updatedAtMillis': row.updatedAtMillis,
               }),
+            ),
+          ),
+          LocalBackupCollection(
+            name: _periodFlows,
+            schemaVersion: 2,
+            records: periodFlows.map(
+              (row) =>
+                  _record('${row.periodId}:${row.day}', row.updatedAtMillis, {
+                    'periodId': row.periodId,
+                    'day': row.day,
+                    'flow': row.flow,
+                    'color': row.color,
+                    'createdAtMillis': row.createdAtMillis,
+                    'updatedAtMillis': row.updatedAtMillis,
+                  }),
             ),
           ),
           LocalBackupCollection(
@@ -87,10 +112,11 @@ final class DriftLocalBackupStore implements LocalBackupStore {
           ),
           LocalBackupCollection(
             name: _cycleReflections,
-            schemaVersion: 1,
+            schemaVersion: 2,
             records: cycleReflections.map(
               (row) => _record(row.id, row.updatedAtMillis, {
                 'cycleStartDay': row.cycleStartDay,
+                'startingPeriodId': row.startingPeriodId,
                 'observation': row.observation,
                 'need': row.need,
                 'whatHelped': row.whatHelped,
@@ -102,13 +128,11 @@ final class DriftLocalBackupStore implements LocalBackupStore {
           ),
           LocalBackupCollection(
             name: _healthRecords,
-            schemaVersion: 1,
+            schemaVersion: 2,
             records: healthRecords.map(
               (row) => _record(row.id, row.updatedAtMillis, {
                 'symptom': row.symptom,
                 'severity': row.severity,
-                'painRating': row.painRating,
-                'painLocationsJson': row.painLocationsJson,
                 'functionalImpactsJson': row.functionalImpactsJson,
                 'experiencedDay': row.experiencedDay,
                 'recordedAtMillis': row.recordedAtMillis,
@@ -141,6 +165,38 @@ final class DriftLocalBackupStore implements LocalBackupStore {
               }),
             ),
           ),
+          LocalBackupCollection(
+            name: _preparationPlans,
+            schemaVersion: 2,
+            records: preparationPlans.map(
+              (row) => _record(row.id, row.updatedAtMillis, {
+                'status': row.status,
+                'evidenceFingerprint': row.evidenceFingerprint,
+                'sourceRecordIdsJson': row.sourceRecordIdsJson,
+                'includeCare': row.includeCare,
+                'careActionId': row.careActionId,
+                'careActionLabel': row.careActionLabel,
+                'careMode': row.careMode,
+                'betterCount': row.betterCount,
+                'sameCount': row.sameCount,
+                'worseCount': row.worseCount,
+                'noteText': row.noteText,
+                'personalText': row.personalText,
+                'createdAtMillis': row.createdAtMillis,
+                'updatedAtMillis': row.updatedAtMillis,
+              }),
+            ),
+          ),
+          LocalBackupCollection(
+            name: _preparationDismissals,
+            schemaVersion: 1,
+            records: preparationDismissals.map(
+              (row) => _record(row.fingerprint, row.dismissedAtMillis, {
+                'evidenceLine': row.evidenceLine,
+                'dismissedAtMillis': row.dismissedAtMillis,
+              }),
+            ),
+          ),
         ],
       );
     } on LocalBackupException {
@@ -168,12 +224,15 @@ final class DriftLocalBackupStore implements LocalBackupStore {
 }
 
 const _periods = 'periods';
+const _periodFlows = 'period_flows';
 const _careRecords = 'care_records';
 const _careReflections = 'care_reflections';
 const _cycleReflections = 'cycle_reflections';
 const _healthRecords = 'health_records';
 const _captureNotes = 'capture_notes';
 const _momentCheckIns = 'moment_check_ins';
+const _preparationPlans = 'preparation_plans';
+const _preparationDismissals = 'preparation_dismissals';
 const _requiredCollections = {
   _periods,
   _careRecords,
@@ -183,8 +242,11 @@ const _requiredCollections = {
 };
 const _supportedCollections = {
   ..._requiredCollections,
+  _periodFlows,
   _cycleReflections,
   _momentCheckIns,
+  _preparationPlans,
+  _preparationDismissals,
 };
 
 LocalBackupRecord _record(
@@ -200,34 +262,49 @@ LocalBackupRecord _record(
 final class _ParsedSnapshot {
   const _ParsedSnapshot({
     required this.periods,
+    required this.periodFlows,
     required this.careRecords,
     required this.careReflections,
     required this.cycleReflections,
     required this.healthRecords,
     required this.captureNotes,
     required this.momentCheckIns,
+    required this.preparationPlans,
+    required this.preparationDismissals,
   });
 
   final List<PeriodRowsCompanion> periods;
+  final List<PeriodFlowRowsCompanion> periodFlows;
   final List<CareRecordRowsCompanion> careRecords;
   final List<CareReflectionRowsCompanion> careReflections;
   final List<CycleReflectionRowsCompanion> cycleReflections;
   final List<HealthRecordRowsCompanion> healthRecords;
   final List<CaptureNoteRowsCompanion> captureNotes;
   final List<MomentCheckInRowsCompanion> momentCheckIns;
+  final List<PreparationPlanRowsCompanion> preparationPlans;
+  final List<PreparationDismissalRowsCompanion> preparationDismissals;
 
   factory _ParsedSnapshot.fromSnapshot(LocalBackupSnapshot snapshot) {
+    validateLocalBackupReferentialIntegrity(snapshot);
     final byName = {
       for (final collection in snapshot.collections)
         collection.name: collection,
     };
     if (!byName.keys.toSet().containsAll(_requiredCollections) ||
         !byName.keys.every(_supportedCollections.contains) ||
-        byName.values.any((collection) => collection.schemaVersion != 1)) {
+        byName.values.any((collection) => !_supportsSchema(collection))) {
       throw const LocalBackupException(LocalBackupFailure.unsupportedFormat);
     }
     return _ParsedSnapshot(
       periods: byName[_periods]!.records.map(_period).toList(growable: false),
+      periodFlows:
+          byName[_periodFlows]?.records
+              .map(
+                (record) =>
+                    _periodFlow(record, byName[_periodFlows]!.schemaVersion),
+              )
+              .toList(growable: false) ??
+          const [],
       careRecords: byName[_careRecords]!.records
           .map(_careRecord)
           .toList(growable: false),
@@ -236,7 +313,12 @@ final class _ParsedSnapshot {
           .toList(growable: false),
       cycleReflections:
           byName[_cycleReflections]?.records
-              .map(_cycleReflection)
+              .map(
+                (record) => _cycleReflection(
+                  record,
+                  byName[_cycleReflections]!.schemaVersion,
+                ),
+              )
               .toList(growable: false) ??
           const [],
       healthRecords: byName[_healthRecords]!.records
@@ -248,6 +330,21 @@ final class _ParsedSnapshot {
       momentCheckIns:
           byName[_momentCheckIns]?.records
               .map(_momentCheckIn)
+              .toList(growable: false) ??
+          const [],
+      preparationPlans:
+          byName[_preparationPlans]?.records
+              .map(
+                (record) => _preparationPlan(
+                  record,
+                  byName[_preparationPlans]!.schemaVersion,
+                ),
+              )
+              .toList(growable: false) ??
+          const [],
+      preparationDismissals:
+          byName[_preparationDismissals]?.records
+              .map(_preparationDismissal)
               .toList(growable: false) ??
           const [],
     );
@@ -282,9 +379,13 @@ final class _DriftStagedLocalBackupImport implements StagedLocalBackupImport {
         await database.delete(database.healthRecordRows).go();
         await database.delete(database.captureNoteRows).go();
         await database.delete(database.momentCheckInRows).go();
+        await database.delete(database.periodFlowRows).go();
+        await database.delete(database.preparationDismissalRows).go();
+        await database.delete(database.preparationPlanRows).go();
         await database.delete(database.periodRows).go();
         await database.batch((batch) {
           batch.insertAll(database.periodRows, parsed.periods);
+          batch.insertAll(database.periodFlowRows, parsed.periodFlows);
           batch.insertAll(database.careRecordRows, parsed.careRecords);
           batch.insertAll(database.careReflectionRows, parsed.careReflections);
           batch.insertAll(
@@ -294,6 +395,14 @@ final class _DriftStagedLocalBackupImport implements StagedLocalBackupImport {
           batch.insertAll(database.healthRecordRows, parsed.healthRecords);
           batch.insertAll(database.captureNoteRows, parsed.captureNotes);
           batch.insertAll(database.momentCheckInRows, parsed.momentCheckIns);
+          batch.insertAll(
+            database.preparationPlanRows,
+            parsed.preparationPlans,
+          );
+          batch.insertAll(
+            database.preparationDismissalRows,
+            parsed.preparationDismissals,
+          );
         });
       });
       _used = true;
@@ -323,6 +432,44 @@ PeriodRowsCompanion _period(LocalBackupRecord record) {
     id: record.id,
     startDay: _int(data, 'startDay'),
     endDay: Value(_nullableInt(data, 'endDay')),
+    createdAtMillis: _int(data, 'createdAtMillis'),
+    updatedAtMillis: updated,
+  );
+}
+
+PeriodFlowRowsCompanion _periodFlow(
+  LocalBackupRecord record,
+  int schemaVersion,
+) {
+  final data = _data(record, {
+    'periodId',
+    'day',
+    'flow',
+    if (schemaVersion >= 2) 'color',
+    'createdAtMillis',
+    'updatedAtMillis',
+  });
+  final periodId = _string(data, 'periodId');
+  final day = _int(data, 'day');
+  final updated = _int(data, 'updatedAtMillis');
+  _matchesUpdatedAt(record, updated);
+  if (record.id != '$periodId:$day') {
+    throw const LocalBackupException(LocalBackupFailure.malformedPayload);
+  }
+  final flow = _string(data, 'flow');
+  if (!const {'spotting', 'light', 'medium', 'heavy'}.contains(flow)) {
+    throw const LocalBackupException(LocalBackupFailure.malformedPayload);
+  }
+  final color = schemaVersion >= 2 ? _nullableString(data, 'color') : null;
+  if (color != null &&
+      !const {'pink', 'brightRed', 'darkRed', 'brown'}.contains(color)) {
+    throw const LocalBackupException(LocalBackupFailure.malformedPayload);
+  }
+  return PeriodFlowRowsCompanion.insert(
+    periodId: periodId,
+    day: day,
+    flow: flow,
+    color: Value(color),
     createdAtMillis: _int(data, 'createdAtMillis'),
     updatedAtMillis: updated,
   );
@@ -380,9 +527,13 @@ CareReflectionRowsCompanion _careReflection(LocalBackupRecord record) {
   );
 }
 
-CycleReflectionRowsCompanion _cycleReflection(LocalBackupRecord record) {
+CycleReflectionRowsCompanion _cycleReflection(
+  LocalBackupRecord record,
+  int schemaVersion,
+) {
   final data = _data(record, {
     'cycleStartDay',
+    if (schemaVersion >= 2) 'startingPeriodId',
     'observation',
     'need',
     'whatHelped',
@@ -394,6 +545,9 @@ CycleReflectionRowsCompanion _cycleReflection(LocalBackupRecord record) {
   _matchesUpdatedAt(record, updated);
   return CycleReflectionRowsCompanion.insert(
     id: record.id,
+    startingPeriodId: Value(
+      schemaVersion >= 2 ? _nullableString(data, 'startingPeriodId') : null,
+    ),
     cycleStartDay: _int(data, 'cycleStartDay'),
     observation: Value(_nullableString(data, 'observation')),
     need: Value(_nullableString(data, 'need')),
@@ -408,8 +562,6 @@ HealthRecordRowsCompanion _healthRecord(LocalBackupRecord record) {
   final data = _data(record, {
     'symptom',
     'severity',
-    'painRating',
-    'painLocationsJson',
     'functionalImpactsJson',
     'experiencedDay',
     'recordedAtMillis',
@@ -424,8 +576,6 @@ HealthRecordRowsCompanion _healthRecord(LocalBackupRecord record) {
     id: record.id,
     symptom: _string(data, 'symptom'),
     severity: _int(data, 'severity'),
-    painRating: Value(_nullableInt(data, 'painRating')),
-    painLocationsJson: _string(data, 'painLocationsJson'),
     functionalImpactsJson: _string(data, 'functionalImpactsJson'),
     experiencedDay: _int(data, 'experiencedDay'),
     recordedAtMillis: _int(data, 'recordedAtMillis'),
@@ -457,6 +607,105 @@ MomentCheckInRowsCompanion _momentCheckIn(LocalBackupRecord record) {
     state: _string(data, 'state'),
     occurredAtMillis: _int(data, 'occurredAtMillis'),
     createdAtMillis: created,
+  );
+}
+
+PreparationPlanRowsCompanion _preparationPlan(
+  LocalBackupRecord record,
+  int schemaVersion,
+) {
+  final keys = {
+    'status',
+    'evidenceFingerprint',
+    'sourceRecordIdsJson',
+    'includeCare',
+    'careActionId',
+    'careActionLabel',
+    'careMode',
+    'betterCount',
+    'sameCount',
+    'worseCount',
+    'noteText',
+    'createdAtMillis',
+    'updatedAtMillis',
+    if (schemaVersion >= 2) 'personalText',
+  };
+  final data = _data(record, keys);
+  final updated = _int(data, 'updatedAtMillis');
+  _matchesUpdatedAt(record, updated);
+  final status = _string(data, 'status');
+  final careMode = _string(data, 'careMode');
+  final sourceIdsJson = _string(data, 'sourceRecordIdsJson');
+  final counts = [
+    _int(data, 'betterCount'),
+    _int(data, 'sameCount'),
+    _int(data, 'worseCount'),
+  ];
+  try {
+    final sourceIds = jsonDecode(sourceIdsJson);
+    if (!const {'current', 'privateReference'}.contains(status) ||
+        !const {
+          'explode',
+          'heavy',
+          'racing',
+          'space',
+          'physical',
+        }.contains(careMode) ||
+        sourceIds is! List ||
+        sourceIds.any((value) => value is! String) ||
+        counts.any((value) => value < 0)) {
+      throw const FormatException();
+    }
+  } on Object {
+    throw const LocalBackupException(LocalBackupFailure.malformedPayload);
+  }
+  return PreparationPlanRowsCompanion.insert(
+    id: record.id,
+    status: status,
+    evidenceFingerprint: _string(data, 'evidenceFingerprint'),
+    sourceRecordIdsJson: sourceIdsJson,
+    includeCare: _bool(data, 'includeCare'),
+    careActionId: _string(data, 'careActionId'),
+    careActionLabel: _string(data, 'careActionLabel'),
+    careMode: careMode,
+    betterCount: counts[0],
+    sameCount: counts[1],
+    worseCount: counts[2],
+    noteText: Value(_nullableString(data, 'noteText')),
+    personalText: Value(
+      schemaVersion >= 2 ? _nullableString(data, 'personalText') : null,
+    ),
+    createdAtMillis: _int(data, 'createdAtMillis'),
+    updatedAtMillis: updated,
+  );
+}
+
+bool _supportsSchema(LocalBackupCollection collection) {
+  if (collection.name == _periodFlows) {
+    return collection.schemaVersion == 1 || collection.schemaVersion == 2;
+  }
+  if (collection.name == _cycleReflections) {
+    return collection.schemaVersion == 1 || collection.schemaVersion == 2;
+  }
+  if (collection.name == _preparationPlans) {
+    return collection.schemaVersion == 1 || collection.schemaVersion == 2;
+  }
+  if (collection.name == _healthRecords) {
+    return collection.schemaVersion == 2;
+  }
+  return collection.schemaVersion == 1;
+}
+
+PreparationDismissalRowsCompanion _preparationDismissal(
+  LocalBackupRecord record,
+) {
+  final data = _data(record, {'evidenceLine', 'dismissedAtMillis'});
+  final dismissedAt = _int(data, 'dismissedAtMillis');
+  _matchesUpdatedAt(record, dismissedAt);
+  return PreparationDismissalRowsCompanion.insert(
+    fingerprint: record.id,
+    evidenceLine: _string(data, 'evidenceLine'),
+    dismissedAtMillis: dismissedAt,
   );
 }
 

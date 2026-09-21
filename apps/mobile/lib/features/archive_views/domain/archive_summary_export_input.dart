@@ -65,6 +65,7 @@ SummaryExportInput summaryExportInputFromArchive(ArchiveInput input) {
     periodDays: [for (final date in periodDates) SummaryPeriodDay(date)],
     predictions: const [],
     healthRecords: input.healthRecords,
+    checkIns: const [],
     careRecords: input.careRecords,
     notes: notes,
   );

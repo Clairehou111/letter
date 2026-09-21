@@ -28,17 +28,17 @@ final class LocalBackupException implements Exception {
     LocalBackupFailure.invalidPackage =>
       'This backup package could not be read.',
     LocalBackupFailure.unsupportedFormat =>
-      'This backup was created by an unsupported version of Letter.',
+      'This backup was created by an unsupported version of Letter Within.',
     LocalBackupFailure.incompatibleCrypto =>
-      'This backup uses security settings this version of Letter cannot open.',
+      'This backup uses security settings this version of Letter Within cannot open.',
     LocalBackupFailure.integrityCheckFailed =>
       'The password is incorrect or this backup has been changed.',
     LocalBackupFailure.malformedPayload =>
-      'This backup does not contain a valid Letter data package.',
+      'This backup does not contain a valid Letter Within data package.',
     LocalBackupFailure.payloadTooLarge =>
-      'This backup is too large for Letter to open safely.',
+      'This backup is too large for Letter Within to open safely.',
     LocalBackupFailure.stagingFailed =>
-      'Letter could not safely prepare this import. Your data is unchanged.',
+      'Letter Within could not safely prepare this import. Your data is unchanged.',
   };
 
   @override
@@ -205,7 +205,7 @@ final class LocalBackupRecordChange {
   final String recordId;
 
   /// One-line human-readable description derived from structured fields.
-  /// Never contains free-text notes or impulse-draft content.
+  /// Never contains free-text note content.
   final String label;
 
   final LocalBackupRecordChangeKind kind;

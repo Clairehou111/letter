@@ -1,59 +1,46 @@
-import 'dart:async';
 import 'dart:developer' as developer;
 
 import '../domain/analytics_service.dart';
 
-/// Dev adapter that logs analytics events to the console. Rejects any event
-/// with health-related properties. Never sends data off-device.
-///
-/// In production this is replaced by PostHogAnalyticsAdapter behind the same
-/// interface.
+/// Local development adapter. Events created before consent are discarded and
+/// are never buffered or flushed later.
 final class DevAnalyticsService implements AnalyticsService {
-  DevAnalyticsService() : _enabled = false;
-
-  bool _enabled;
-  final List<AnalyticsPayload> _buffer = [];
+  bool _enabled = false;
 
   @override
   bool get isEnabled => _enabled;
 
   @override
   Future<void> track(AnalyticsPayload payload) async {
-    final violations = payload.validate();
-    if (violations != null) {
-      developer.log(
-        'Analytics event REJECTED — health keys found: $violations',
-        name: 'analytics',
-        level: 900, // severe
-      );
-      return;
-    }
-    if (!_enabled) {
-      _buffer.add(payload);
-      return;
-    }
+    if (!_enabled) return;
     developer.log(
-      '[analytics] ${payload.event.name} ${payload.properties}',
+      '[analytics] ${payload.event.name} ${payload.toRecord()}',
       name: 'analytics',
     );
   }
 
   @override
-  Future<void> enable() async {
-    _enabled = true;
-    // Flush buffered events collected during opt-out.
-    for (final payload in _buffer) {
-      await track(payload);
-    }
-    _buffer.clear();
+  Future<void> enable() async => _enabled = true;
+
+  @override
+  Future<void> disable() async => _enabled = false;
+
+  @override
+  Future<void> identifyAuthenticatedUser(String supabaseUserId) async {
+    if (!_isUuid(supabaseUserId)) return;
+    // Deliberately do not log or retain the identifier in the dev adapter.
   }
 
   @override
-  Future<void> disable() async {
-    _enabled = false;
-    _buffer.clear();
-  }
+  Future<void> clearAuthenticatedUser() async {}
 
   @override
-  Future<void> dispose() async => _buffer.clear();
+  Future<void> dispose() async => _enabled = false;
+}
+
+bool _isUuid(String value) {
+  final uuid = RegExp(
+    r'^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-5][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}$',
+  );
+  return uuid.hasMatch(value);
 }

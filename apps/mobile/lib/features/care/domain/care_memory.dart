@@ -103,12 +103,14 @@ final class CareReflection {
 
 /// One editable, user-authored reflection for a recorded cycle.
 ///
-/// `cycleStartDay` is the cycle's stable local epoch-day key. Keeping this
-/// separate from a Care record prevents a repeated reflection form for every
-/// individual Care outcome.
+/// `startingPeriodId` is the stable owner. `cycleStartDay` remains as a legacy
+/// snapshot for older backups and migration fallback; it is not identity.
+/// Keeping this separate from a Care record prevents a repeated reflection
+/// form for every individual Care outcome.
 final class CycleReflection {
   const CycleReflection({
     required this.id,
+    this.startingPeriodId,
     required this.cycleStartDay,
     required this.observation,
     required this.need,
@@ -119,6 +121,7 @@ final class CycleReflection {
   });
 
   final String id;
+  final String? startingPeriodId;
   final int cycleStartDay;
   final String? observation;
   final ReflectionNeed? need;

@@ -81,7 +81,7 @@ void main() {
     expect(drafts.single.provenance, HealthRecordProvenance.laterRecall);
   });
 
-  test('pain locations require an explicit pain score before conversion', () {
+  test('pain symptoms use the shared five-level severity', () {
     final candidate = parser
         .parse(
           'I had severe cramps in my lower back.',
@@ -94,13 +94,6 @@ void main() {
     controller.accept(candidate.id);
     expect(
       controller.confirmedDrafts(fallbackDate: const LocalDate(2026, 7, 28)),
-      isEmpty,
-    );
-    expect(
-      controller.confirmedDrafts(
-        fallbackDate: const LocalDate(2026, 7, 28),
-        painRatings: {candidate.id: 7},
-      ),
       hasLength(1),
     );
   });
@@ -128,7 +121,6 @@ void main() {
             symptom: SymptomType.irritability,
             isPresent: true,
             severity: SymptomSeverity.extreme,
-            painLocations: const {},
             experiencedDate: const LocalDate(2026, 7, 28),
             source: NlpCandidateSource.typedText,
             evidence: const NlpEvidence(

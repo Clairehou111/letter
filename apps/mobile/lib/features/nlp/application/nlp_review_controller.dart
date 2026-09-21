@@ -43,7 +43,6 @@ final class NlpReviewController extends ChangeNotifier {
     bool? isPresent,
     SymptomSeverity? severity,
     bool clearSeverity = false,
-    Set<PainLocation>? painLocations,
     LocalDate? experiencedDate,
     bool clearExperiencedDate = false,
   }) {
@@ -57,7 +56,6 @@ final class NlpReviewController extends ChangeNotifier {
         isPresent: isPresent,
         severity: severity,
         clearSeverity: clearSeverity,
-        painLocations: painLocations,
         experiencedDate: experiencedDate,
         clearExperiencedDate: clearExperiencedDate,
         status: NlpCandidateStatus.edited,
@@ -81,16 +79,10 @@ final class NlpReviewController extends ChangeNotifier {
     _replace(candidate.copyWith(status: NlpCandidateStatus.unresolved));
   }
 
-  List<HealthRecordDraft> confirmedDrafts({
-    required LocalDate fallbackDate,
-    Map<String, int?> painRatings = const {},
-  }) {
+  List<HealthRecordDraft> confirmedDrafts({required LocalDate fallbackDate}) {
     final drafts = <HealthRecordDraft>[];
     for (final candidate in _candidates) {
-      final draft = candidate.toHealthRecordDraft(
-        fallbackDate: fallbackDate,
-        painRating: painRatings[candidate.id],
-      );
+      final draft = candidate.toHealthRecordDraft(fallbackDate: fallbackDate);
       if (draft != null) {
         drafts.add(draft);
       }

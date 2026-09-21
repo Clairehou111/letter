@@ -1,0 +1,78 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Care blinded A/B/C comparison",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "group_id",
+    "candidate_assessments",
+    "ranking",
+    "preferred_candidate",
+    "selection_rationale",
+    "revision_recommendations",
+    "confidence",
+    "human_validation_questions",
+    "limitations"
+  ],
+  "properties": {
+    "group_id": {"type": "string"},
+    "candidate_assessments": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "candidate",
+          "intent_legibility",
+          "transition_quality",
+          "agency_and_endpoint",
+          "potential_risks",
+          "timestamped_observations"
+        ],
+        "properties": {
+          "candidate": {"type": "string", "enum": ["X", "Y", "Z"]},
+          "intent_legibility": {"type": "string", "enum": ["strong", "mixed", "weak", "uncertain"]},
+          "transition_quality": {"type": "string"},
+          "agency_and_endpoint": {"type": "string"},
+          "potential_risks": {"type": "array", "items": {"type": "string"}},
+          "timestamped_observations": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["timestamp_seconds", "observation", "evidence_type"],
+              "properties": {
+                "timestamp_seconds": {"type": "number"},
+                "observation": {"type": "string"},
+                "evidence_type": {"type": "string", "enum": ["IMAGE", "METRIC", "INFERENCE"]}
+              }
+            }
+          }
+        }
+      }
+    },
+    "ranking": {
+      "type": "array",
+      "items": {"type": "string", "enum": ["X", "Y", "Z"]}
+    },
+    "preferred_candidate": {"type": "string", "enum": ["X", "Y", "Z", "no_clear_winner"]},
+    "selection_rationale": {"type": "string"},
+    "revision_recommendations": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["candidate", "parameter", "proposed_change", "acceptance_check"],
+        "properties": {
+          "candidate": {"type": "string", "enum": ["X", "Y", "Z"]},
+          "parameter": {"type": "string"},
+          "proposed_change": {"type": "string"},
+          "acceptance_check": {"type": "string"}
+        }
+      }
+    },
+    "confidence": {"type": "string", "enum": ["high", "medium", "low"]},
+    "human_validation_questions": {"type": "array", "items": {"type": "string"}},
+    "limitations": {"type": "array", "items": {"type": "string"}}
+  }
+}

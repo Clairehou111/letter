@@ -3,14 +3,12 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:letter_mobile/app/letter_app.dart';
+import 'package:letter_mobile/experience/letter_experience_shell.dart';
 import 'package:letter_mobile/design_system/letter_theme.dart';
-import 'package:letter_mobile/features/care/presentation/care_screen.dart';
 import 'package:letter_mobile/features/cycle/data/in_memory_period_repository.dart';
-import 'package:letter_mobile/features/cycle/domain/period_repository.dart';
 import 'package:letter_mobile/features/onboarding/data/onboarding_repository.dart';
 import 'package:letter_mobile/features/onboarding/domain/onboarding_profile.dart';
 import 'package:letter_mobile/features/onboarding/presentation/onboarding_flow.dart';
-import 'package:letter_mobile/features/today/today_screen.dart';
 
 final class FakeOnboardingRepository implements OnboardingRepository {
   FakeOnboardingRepository({this.profile});
@@ -122,7 +120,7 @@ void main() {
     expect(find.text("Read your body's letter."), findsOneWidget);
   });
 
-  testWidgets('completes first use with cloud tools off by default', (
+  testWidgets('completes first use with local records by default', (
     tester,
   ) async {
     final repository = FakeOnboardingRepository();
@@ -142,10 +140,25 @@ void main() {
       OnboardingGoal.understandCycle,
       OnboardingGoal.emotionalChanges,
     });
-    expect(find.byType(TodayScreen), findsOneWidget);
+    expect(find.byType(LetterExperienceShell), findsOneWidget);
   });
 
-  testWidgets('allows ask-each-time and permits skipping all goals', (
+  testWidgets('permits skipping all goals', (tester) async {
+    final repository = FakeOnboardingRepository();
+    await pumpLetter(tester, repository);
+
+    await tester.tap(find.byKey(const Key('onboarding-continue')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('onboarding-continue')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('onboarding-continue')));
+    await tester.pumpAndSettle();
+
+    expect(repository.profile!.cloudToolsPreference, CloudToolsPreference.off);
+    expect(repository.profile!.selectedGoals, isEmpty);
+  });
+
+  testWidgets('privacy explanation is factual and preserves the step choice', (
     tester,
   ) async {
     final repository = FakeOnboardingRepository();
@@ -153,17 +166,44 @@ void main() {
 
     await tester.tap(find.byKey(const Key('onboarding-continue')));
     await tester.pumpAndSettle();
-    await tester.tap(find.byKey(const Key('cloud-tools-ask')));
-    await tester.tap(find.byKey(const Key('onboarding-continue')));
-    await tester.pumpAndSettle();
-    await tester.tap(find.byKey(const Key('onboarding-continue')));
+    expect(
+      find.text('Account details stay separate from your health records.'),
+      findsOneWidget,
+    );
+    expect(find.textContaining('records stay on this device'), findsOneWidget);
+
+    await tester.tap(find.byKey(const Key('onboarding-see-privacy')));
     await tester.pumpAndSettle();
 
+    expect(find.byKey(const Key('privacy-explainer-sheet')), findsOneWidget);
+    expect(find.text('How privacy works'), findsOneWidget);
+    expect(find.text('Your account is separate'), findsOneWidget);
+    expect(find.text('Your records stay here'), findsOneWidget);
+    expect(find.text('You choose when records move'), findsOneWidget);
     expect(
-      repository.profile!.cloudToolsPreference,
-      CloudToolsPreference.askEachTime,
+      find.textContaining('does not upload them to our servers'),
+      findsOneWidget,
     );
-    expect(repository.profile!.selectedGoals, isEmpty);
+
+    await tester.scrollUntilVisible(
+      find.byKey(const Key('privacy-explainer-close')),
+      240,
+      scrollable: find
+          .descendant(
+            of: find.byKey(const Key('privacy-explainer-sheet')),
+            matching: find.byType(Scrollable),
+          )
+          .first,
+    );
+    await tester.tap(find.byKey(const Key('privacy-explainer-close')));
+    await tester.pumpAndSettle();
+
+    expect(find.byKey(const Key('privacy-explainer-sheet')), findsNothing);
+    await tester.tap(find.byKey(const Key('onboarding-continue')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('onboarding-continue')));
+    await tester.pumpAndSettle();
+    expect(repository.profile!.cloudToolsPreference, CloudToolsPreference.off);
   });
 
   testWidgets('failed save stays in onboarding and can retry', (tester) async {
@@ -175,137 +215,26 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.byKey(const Key('onboarding-save-error')), findsOneWidget);
-    expect(find.byType(TodayScreen), findsNothing);
+    expect(find.byType(LetterExperienceShell), findsNothing);
     expect(repository.profile, isNull);
 
     repository.failSave = false;
     await tester.tap(find.byKey(const Key('onboarding-continue')));
     await tester.pumpAndSettle();
-    expect(find.byType(TodayScreen), findsOneWidget);
+    expect(find.byType(LetterExperienceShell), findsOneWidget);
   });
 
   testWidgets('load failure is explicit and retryable', (tester) async {
     final repository = FakeOnboardingRepository()..failNextLoad = true;
     await pumpLetter(tester, repository);
 
-    expect(find.text('Letter could not open secure storage.'), findsOneWidget);
+    expect(
+      find.text('Letter Within could not open secure storage.'),
+      findsOneWidget,
+    );
     await tester.tap(find.byKey(const Key('retry-onboarding-load')));
     await tester.pumpAndSettle();
     expect(find.text("Read your body's letter."), findsOneWidget);
-  });
-
-  testWidgets('returning user can update privacy mode and reset choices', (
-    tester,
-  ) async {
-    final repository = FakeOnboardingRepository(
-      profile: OnboardingProfile(
-        cloudToolsPreference: CloudToolsPreference.askEachTime,
-        selectedGoals: const {OnboardingGoal.energyAndSleep},
-      ),
-    );
-    await pumpLetter(tester, repository);
-
-    expect(find.text("Read your body's letter."), findsNothing);
-    await tester.tap(find.byKey(const Key('navigation-you')));
-    await tester.pumpAndSettle();
-    expect(find.text('You decide what leaves your phone.'), findsOneWidget);
-    expect(find.text('Energy and sleep'), findsOneWidget);
-
-    await tester.tap(find.byKey(const Key('privacy-center-off')));
-    await tester.pumpAndSettle();
-    expect(repository.profile!.cloudToolsPreference, CloudToolsPreference.off);
-
-    await tester.scrollUntilVisible(
-      find.byKey(const Key('reset-onboarding')),
-      300,
-      scrollable: find.byType(Scrollable).first,
-    );
-    await tester.pumpAndSettle();
-    await tester.tap(find.byKey(const Key('reset-onboarding')));
-    await tester.pumpAndSettle();
-    await tester.tap(find.byKey(const Key('confirm-reset-onboarding')));
-    await tester.pumpAndSettle();
-
-    expect(repository.profile, isNull);
-    expect(find.text("Read your body's letter."), findsOneWidget);
-  });
-
-  testWidgets('returning user can open the Cycle destination', (tester) async {
-    final repository = FakeOnboardingRepository(
-      profile: OnboardingProfile(
-        cloudToolsPreference: CloudToolsPreference.off,
-        selectedGoals: const {},
-      ),
-    );
-    await pumpLetter(tester, repository);
-
-    await tester.tap(find.byKey(const Key('navigation-cycle')));
-    await tester.pumpAndSettle();
-
-    expect(find.text('Your cycle record'), findsOneWidget);
-    expect(find.byKey(const Key('start-period-today')), findsOneWidget);
-  });
-
-  testWidgets('Today action and bottom tab open the same Care destination', (
-    tester,
-  ) async {
-    final repository = FakeOnboardingRepository(
-      profile: OnboardingProfile(
-        cloudToolsPreference: CloudToolsPreference.off,
-        selectedGoals: const {},
-      ),
-    );
-    await pumpLetter(tester, repository);
-
-    await tester.drag(
-      find.byKey(const Key('today-scroll')),
-      const Offset(0, -1000),
-    );
-    await tester.pumpAndSettle();
-    await tester.tap(find.byKey(const Key('open-care-button')));
-    await tester.pumpAndSettle();
-    expect(find.byType(CareScreen), findsOneWidget);
-    expect(find.text('Change the next minute.'), findsOneWidget);
-
-    await tester.tap(find.byKey(const Key('navigation-today')));
-    await tester.pumpAndSettle();
-    expect(find.byType(TodayScreen), findsOneWidget);
-
-    await tester.tap(find.byKey(const Key('navigation-care')));
-    await tester.pumpAndSettle();
-    expect(find.byType(CareScreen), findsOneWidget);
-    expect(find.text('Change the next minute.'), findsOneWidget);
-  });
-
-  testWidgets('returning from Cycle reloads the new period on Today', (
-    tester,
-  ) async {
-    final onboardingRepository = FakeOnboardingRepository(
-      profile: OnboardingProfile(
-        cloudToolsPreference: CloudToolsPreference.off,
-        selectedGoals: const {},
-      ),
-    );
-    final periodRepository = InMemoryPeriodRepository(
-      idGenerator: () => 'current',
-    );
-    await pumpLetter(
-      tester,
-      onboardingRepository,
-      periodRepository: periodRepository,
-    );
-
-    expect(find.text('Start with a real cycle record.'), findsOneWidget);
-
-    await tester.tap(find.byKey(const Key('navigation-cycle')));
-    await tester.pumpAndSettle();
-    await tester.tap(find.byKey(const Key('start-period-today')));
-    await tester.pumpAndSettle();
-    await tester.tap(find.byKey(const Key('navigation-today')));
-    await tester.pumpAndSettle();
-
-    expect(find.text('Your period is in progress.'), findsOneWidget);
-    expect(find.textContaining('Period day 1.'), findsOneWidget);
   });
 
   testWidgets('all steps fit at 320 width and 200 percent text scale', (
@@ -321,6 +250,31 @@ void main() {
 
     expect(tester.takeException(), isNull);
     await tester.tap(find.byKey(const Key('onboarding-continue')));
+    await tester.pumpAndSettle();
+    expect(tester.takeException(), isNull);
+    await tester.scrollUntilVisible(
+      find.byKey(const Key('onboarding-see-privacy')),
+      200,
+      scrollable: find.descendant(
+        of: find.byKey(const Key('onboarding-scroll')),
+        matching: find.byType(Scrollable),
+      ),
+    );
+    await tester.tap(find.byKey(const Key('onboarding-see-privacy')));
+    await tester.pumpAndSettle();
+    expect(find.byKey(const Key('privacy-explainer-sheet')), findsOneWidget);
+    expect(tester.takeException(), isNull);
+    await tester.scrollUntilVisible(
+      find.byKey(const Key('privacy-explainer-close')),
+      240,
+      scrollable: find
+          .descendant(
+            of: find.byKey(const Key('privacy-explainer-sheet')),
+            matching: find.byType(Scrollable),
+          )
+          .first,
+    );
+    await tester.tap(find.byKey(const Key('privacy-explainer-close')));
     await tester.pumpAndSettle();
     expect(tester.takeException(), isNull);
     await tester.tap(find.byKey(const Key('onboarding-continue')));
@@ -347,6 +301,30 @@ void main() {
     await expectLater(
       find.byType(OnboardingFlow),
       matchesGoldenFile('goldens/onboarding_privacy_390x844.png'),
+    );
+  });
+
+  testWidgets('privacy explanation matches the visual baseline', (
+    tester,
+  ) async {
+    tester.view.devicePixelRatio = 1;
+    tester.view.physicalSize = const Size(390, 844);
+    addTearDown(tester.view.reset);
+    await tester.pumpWidget(
+      MaterialApp(
+        debugShowCheckedModeBanner: false,
+        theme: LetterTheme.light,
+        home: OnboardingFlow(onComplete: (_) async {}),
+      ),
+    );
+    await tester.tap(find.byKey(const Key('onboarding-continue')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('onboarding-see-privacy')));
+    await tester.pumpAndSettle();
+
+    await expectLater(
+      find.byType(MaterialApp),
+      matchesGoldenFile('goldens/onboarding_privacy_explainer_390x844.png'),
     );
   });
 }

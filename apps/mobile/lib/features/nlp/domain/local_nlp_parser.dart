@@ -36,7 +36,6 @@ final class LocalNlpParser {
         evidence.excerpt,
         mention.start - evidence.start,
       );
-      final locations = _painLocations(evidence.excerpt);
       final date = _dateMention(evidence.excerpt, referenceDate);
       final negated = _isNegated(
         evidence.excerpt,
@@ -48,7 +47,6 @@ final class LocalNlpParser {
           symptom: mention.symptom,
           isPresent: !negated,
           severity: severity,
-          painLocations: locations,
           experiencedDate: date,
           source: source.isSealedAngryDraft
               ? NlpCandidateSource.selectedSealedExcerpt
@@ -144,19 +142,6 @@ final class LocalNlpParser {
       }
     }
     return null;
-  }
-
-  Set<PainLocation> _painLocations(String excerpt) {
-    final locations = <PainLocation>{};
-    for (final entry in _locationPhrases.entries) {
-      if (RegExp(
-        r'\b' + RegExp.escape(entry.key) + r'\b',
-        caseSensitive: false,
-      ).hasMatch(excerpt)) {
-        locations.add(entry.value);
-      }
-    }
-    return Set.unmodifiable(locations);
   }
 
   bool _isNegated(String excerpt, int symptomOffset) {
@@ -359,7 +344,6 @@ final class _VocabularyEntry {
 }
 
 const _severityPhrases = <String, SymptomSeverity>{
-  'not at all': SymptomSeverity.notAtAll,
   'minimal': SymptomSeverity.minimal,
   'slight': SymptomSeverity.minimal,
   'a little': SymptomSeverity.minimal,
@@ -369,19 +353,6 @@ const _severityPhrases = <String, SymptomSeverity>{
   'severe': SymptomSeverity.severe,
   'extreme': SymptomSeverity.extreme,
   'unbearable': SymptomSeverity.extreme,
-};
-
-const _locationPhrases = <String, PainLocation>{
-  'lower abdomen': PainLocation.lowerAbdomen,
-  'lower belly': PainLocation.lowerAbdomen,
-  'belly': PainLocation.lowerAbdomen,
-  'stomach': PainLocation.lowerAbdomen,
-  'lower back': PainLocation.lowerBack,
-  'pelvis': PainLocation.pelvis,
-  'pelvic': PainLocation.pelvis,
-  'head': PainLocation.head,
-  'joints': PainLocation.jointsOrMuscles,
-  'muscles': PainLocation.jointsOrMuscles,
 };
 
 const _monthNames = <String>[

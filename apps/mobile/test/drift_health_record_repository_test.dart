@@ -22,8 +22,6 @@ void main() {
         const HealthRecordDraft(
           symptom: SymptomType.cramps,
           severity: SymptomSeverity.extreme,
-          painRating: 9,
-          painLocations: {PainLocation.lowerAbdomen, PainLocation.lowerBack},
           functionalImpacts: {
             FunctionalImpact.workOrSchool,
             FunctionalImpact.sleep,
@@ -36,11 +34,6 @@ void main() {
       final loaded = (await repository.getAll()).single;
       expect(loaded.id, created.id);
       expect(loaded.severity, SymptomSeverity.extreme);
-      expect(loaded.painRating, 9);
-      expect(loaded.painLocations, {
-        PainLocation.lowerAbdomen,
-        PainLocation.lowerBack,
-      });
       expect(loaded.functionalImpacts, {
         FunctionalImpact.workOrSchool,
         FunctionalImpact.sleep,

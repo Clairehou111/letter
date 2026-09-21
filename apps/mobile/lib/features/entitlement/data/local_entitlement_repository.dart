@@ -23,15 +23,48 @@ class LocalEntitlementRepository implements EntitlementRepository {
   Stream<EntitlementState> watch() => _controller.stream;
 
   @override
-  Future<EntitlementState> startIntroMonth(String planId) async {
+  Future<List<LetterPlan>> loadPlans() async => letterPlans;
+
+  @override
+  Future<PurchaseResult> purchase(String planId) async {
+    LetterPlan? plan;
+    for (final candidate in letterPlans) {
+      if (candidate.id == planId) {
+        plan = candidate;
+        break;
+      }
+    }
+    if (plan == null) {
+      return PurchaseResult(
+        outcome: PurchaseOutcome.failed,
+        state: _state,
+        message: 'That plan is not available.',
+      );
+    }
     _set(
-      EntitlementState(status: EntitlementStatus.activeIntro, planId: planId),
+      EntitlementState(status: EntitlementStatus.activeIntro, planId: plan.id),
     );
-    return _state;
+    return PurchaseResult(outcome: PurchaseOutcome.activated, state: _state);
   }
 
   @override
+  Future<EntitlementState> startIntroMonth(String planId) async =>
+      (await purchase(planId)).state;
+
+  @override
   Future<EntitlementState> restorePurchases() async => _state;
+
+  @override
+  Future<EntitlementState> refresh() async => _state;
+
+  @override
+  Future<void> identifyAuthenticatedUser(String userId) async {}
+
+  @override
+  Future<void> clearAuthenticatedUser() async {}
+
+  @override
+  Future<Uri?> managementUrl() async => null;
 
   /// Test/development helper: move into any state directly.
   void debugSet(EntitlementState state) => _set(state);
@@ -41,5 +74,6 @@ class LocalEntitlementRepository implements EntitlementRepository {
     _controller.add(next);
   }
 
+  @override
   Future<void> dispose() => _controller.close();
 }

@@ -76,16 +76,17 @@ void main() {
     expect(find.text('Call 911'), findsNothing);
   });
 
-  testWidgets('crisis sheet states Letter cannot provide emergency help', (
-    tester,
-  ) async {
-    await pumpSheet(tester, kind: CareSafetyKind.emotional);
-    expect(
-      find.textContaining('Letter cannot provide emergency help'),
-      findsOneWidget,
-    );
-    expect(find.textContaining('someone you trust'), findsOneWidget);
-  });
+  testWidgets(
+    'crisis sheet states Letter Within cannot provide emergency help',
+    (tester) async {
+      await pumpSheet(tester, kind: CareSafetyKind.emotional);
+      expect(
+        find.textContaining('Letter Within cannot provide emergency help'),
+        findsOneWidget,
+      );
+      expect(find.textContaining('someone you trust'), findsOneWidget);
+    },
+  );
 
   testWidgets('physical sheet shows both red-flag tiers without diagnosis', (
     tester,
@@ -101,12 +102,12 @@ void main() {
     expect(find.textContaining('Fainting'), findsOneWidget);
     expect(find.textContaining('palpitations'), findsOneWidget);
     expect(
-      find.textContaining('Letter cannot assess symptoms'),
+      find.textContaining('Letter Within cannot assess symptoms'),
       findsOneWidget,
     );
   });
 
-  testWidgets('leave and return controls remain available', (tester) async {
+  testWidgets('leave and close controls remain available', (tester) async {
     var left = 0;
     await pumpSheet(
       tester,
@@ -117,7 +118,8 @@ void main() {
     await tester.tap(find.byKey(const Key('leave-care-from-safety')));
     await tester.pump();
     expect(left, 1);
-    expect(find.byKey(const Key('return-to-care-scene')), findsOneWidget);
+    expect(find.byTooltip('Close'), findsOneWidget);
+    expect(find.byKey(const Key('return-to-care-scene')), findsNothing);
   });
 
   testWidgets('safety contact buttons meet the 44-pixel target', (

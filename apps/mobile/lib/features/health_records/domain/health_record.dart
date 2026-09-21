@@ -1,6 +1,6 @@
 import '../../cycle/domain/local_date.dart';
 
-const healthRecordVocabularyVersion = 2;
+const healthRecordVocabularyVersion = 3;
 
 enum SymptomCategory { physical, mood, energy, sleep }
 
@@ -43,7 +43,13 @@ enum SymptomType {
   waterRetention('Water retention', SymptomCategory.physical),
   appetiteChange('Appetite change or cravings', SymptomCategory.physical),
   constipation('Constipation', SymptomCategory.physical),
+  diarrhea('Diarrhea', SymptomCategory.physical),
+  acne('Acne or skin changes', SymptomCategory.physical),
+  dizziness('Dizziness', SymptomCategory.physical),
+  migraine('Migraine', SymptomCategory.physical),
   hotFlashes('Hot flashes or sweating', SymptomCategory.physical),
+  overwhelm('Feeling overwhelmed', SymptomCategory.mood),
+  forgetfulness('Forgetfulness', SymptomCategory.energy),
   palpitations(
     'Heart palpitations',
     SymptomCategory.physical,
@@ -73,30 +79,16 @@ enum SafetySignal {
 }
 
 enum SymptomSeverity {
-  notAtAll('Not at all', 1),
-  minimal('Minimal', 2),
-  mild('Mild', 3),
-  moderate('Moderate', 4),
-  severe('Severe', 5),
-  extreme('Extreme', 6);
+  minimal('Minimal', 1),
+  mild('Mild', 2),
+  moderate('Moderate', 3),
+  severe('Severe', 4),
+  extreme('Extreme', 5);
 
   const SymptomSeverity(this.label, this.score);
 
   final String label;
   final int score;
-}
-
-enum PainLocation {
-  lowerAbdomen('Lower abdomen'),
-  lowerBack('Lower back'),
-  pelvis('Pelvis'),
-  head('Head'),
-  jointsOrMuscles('Joints or muscles'),
-  other('Other');
-
-  const PainLocation(this.label);
-
-  final String label;
 }
 
 enum FunctionalImpact {
@@ -127,15 +119,11 @@ final class HealthRecordDraft {
     required this.severity,
     required this.experiencedDate,
     required this.provenance,
-    this.painRating,
-    this.painLocations = const {},
     this.functionalImpacts = const {},
   });
 
   final SymptomType symptom;
   final SymptomSeverity severity;
-  final int? painRating;
-  final Set<PainLocation> painLocations;
   final Set<FunctionalImpact> functionalImpacts;
   final LocalDate experiencedDate;
   final HealthRecordProvenance provenance;
@@ -146,8 +134,6 @@ final class HealthRecord {
     required this.id,
     required this.symptom,
     required this.severity,
-    required this.painRating,
-    required this.painLocations,
     required this.functionalImpacts,
     required this.experiencedDate,
     required this.recordedAt,
@@ -160,8 +146,6 @@ final class HealthRecord {
   final String id;
   final SymptomType symptom;
   final SymptomSeverity severity;
-  final int? painRating;
-  final Set<PainLocation> painLocations;
   final Set<FunctionalImpact> functionalImpacts;
   final LocalDate experiencedDate;
   final DateTime recordedAt;
@@ -178,8 +162,6 @@ final class HealthRecord {
       id: id,
       symptom: draft.symptom,
       severity: draft.severity,
-      painRating: draft.painRating,
-      painLocations: Set.unmodifiable(draft.painLocations),
       functionalImpacts: Set.unmodifiable(draft.functionalImpacts),
       experiencedDate: draft.experiencedDate,
       recordedAt: recordedAt,
@@ -192,30 +174,16 @@ final class HealthRecord {
 }
 
 HealthRecordDraft validateHealthRecordDraft(HealthRecordDraft draft) {
-  if (draft.painRating != null &&
-      (draft.painRating! < 0 || draft.painRating! > 10)) {
-    throw const HealthRecordException(HealthRecordFailure.invalidPainRating);
-  }
-  if ((draft.painRating == null) != draft.painLocations.isEmpty) {
-    throw const HealthRecordException(HealthRecordFailure.incompletePainEntry);
-  }
   return HealthRecordDraft(
     symptom: draft.symptom,
     severity: draft.severity,
-    painRating: draft.painRating,
-    painLocations: Set.unmodifiable(draft.painLocations),
     functionalImpacts: Set.unmodifiable(draft.functionalImpacts),
     experiencedDate: draft.experiencedDate,
     provenance: draft.provenance,
   );
 }
 
-enum HealthRecordFailure {
-  invalidPainRating,
-  incompletePainEntry,
-  notFound,
-  storageUnavailable,
-}
+enum HealthRecordFailure { notFound, storageUnavailable }
 
 final class HealthRecordException implements Exception {
   const HealthRecordException(this.failure);
@@ -223,14 +191,10 @@ final class HealthRecordException implements Exception {
   final HealthRecordFailure failure;
 
   String get userMessage => switch (failure) {
-    HealthRecordFailure.invalidPainRating =>
-      'Pain must be a number from 0 to 10.',
-    HealthRecordFailure.incompletePainEntry =>
-      'Add a pain location and a 0-10 rating together.',
     HealthRecordFailure.notFound =>
       'This health record is no longer available. Refresh and try again.',
     HealthRecordFailure.storageUnavailable =>
-      'Letter could not update your private health record. Try again.',
+      'Letter Within could not update your private health record. Try again.',
   };
 
   @override

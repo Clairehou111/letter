@@ -12,10 +12,11 @@ void main() {
     LetterCapability.localDataDelete,
   ];
   const premiumCapabilities = [
-    LetterCapability.futureSelfNotes,
+    LetterCapability.futureSelfNoteResurfacing,
     LetterCapability.prepareSurface,
     LetterCapability.personalPatterns,
-    LetterCapability.lettersArchiveDetail,
+    LetterCapability.longitudinalComparisons,
+    LetterCapability.clinicianReports,
   ];
 
   group('capability map', () {
@@ -42,7 +43,7 @@ void main() {
       });
     }
 
-    test('premium requires intro or paid', () {
+    test('premium requires store-confirmed active access', () {
       for (final capability in premiumCapabilities) {
         expect(
           const EntitlementState(
@@ -53,6 +54,12 @@ void main() {
         expect(
           const EntitlementState(
             status: EntitlementStatus.activePaid,
+          ).canUse(capability),
+          isTrue,
+        );
+        expect(
+          const EntitlementState(
+            status: EntitlementStatus.gracePeriod,
           ).canUse(capability),
           isTrue,
         );

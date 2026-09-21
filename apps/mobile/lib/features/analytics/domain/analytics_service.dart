@@ -1,91 +1,177 @@
-/// Allowlisted operational analytics events (spec: 2026-07-28-privacy-safe-operational-analytics).
-///
-/// Every event is explicitly defined here. Free-form properties are forbidden.
-/// No health values, cycle dates, symptoms, Care labels, or inferred states may
-/// ever appear in an analytics event payload.
+/// Closed, privacy-safe operational analytics events.
 library;
 
-/// The set of operational events Letter is allowed to send.
-///
-/// Adding a new event requires updating this enum and the allowlist schema
-/// validator. Events must be versioned and reviewed for health-data leakage.
-enum AnalyticsEvent {
-  appOpened,
-  appCrashed,
-  routeLoadFailed,
-  purchaseFlowStarted,
-  purchaseFlowCompleted,
-  purchaseFlowFailed,
-  purchaseRestored,
-  onboardingCompleted,
-  exportStarted,
-  exportCompleted,
-  importStarted,
-  importCompleted,
-  diaryEnrollmentStarted,
-  diaryEntrySaved,
+enum AnalyticsPlatform { android, ios, web }
+
+enum StartupResult { completed, failed }
+
+enum AnalyticsRoute { archive, cycle, home, settings }
+
+enum RouteFailureCode { networkUnavailable, unexpectedResponse, timeout }
+
+enum PurchaseOffer { annual, monthly, lifetime }
+
+enum PurchaseOutcome { cancelled, completed, failed, pending }
+
+sealed class AnalyticsEvent {
+  const AnalyticsEvent();
+
+  String get name;
+
+  /// This is an internal serialization boundary. Callers cannot provide a
+  /// property map; each event exposes only its typed, reviewed fields.
+  Map<String, Object> toProperties();
 }
 
-/// Analytics payload: only pre-approved properties, no free-form data.
-final class AnalyticsPayload {
-  const AnalyticsPayload({
-    required this.event,
-    this.properties = const {},
-    required this.timestamp,
+final class AppStartupEvent extends AnalyticsEvent {
+  const AppStartupEvent({
+    required this.appVersion,
+    required this.platform,
+    required this.result,
   });
 
-  final AnalyticsEvent event;
-  final Map<String, Object?> properties;
-  final DateTime timestamp;
+  final String appVersion;
+  final AnalyticsPlatform platform;
+  final StartupResult result;
 
-  /// Validates that no health-related keys appear in properties.
-  /// Returns null if valid, or a list of violating keys.
-  List<String>? validate() {
-    const forbiddenKeys = {
-      'cycleDate',
-      'cycleDay',
-      'periodStart',
-      'periodEnd',
-      'symptom',
-      'severity',
-      'painRating',
-      'painLocation',
-      'mood',
-      'energy',
-      'careMode',
-      'careAction',
-      'careOutcome',
-      'note',
-      'transcript',
-      'draft',
-      'report',
-      'prediction',
-      'healthRecord',
-      'reflection',
-      'futureSelfNote',
-    };
-    final violations = properties.keys
-        .where((key) => forbiddenKeys.contains(key))
-        .toList();
-    return violations.isEmpty ? null : violations;
-  }
+  @override
+  String get name => 'app_startup';
+
+  @override
+  Map<String, Object> toProperties() => {
+    'app_version': appVersion,
+    'platform': platform.name,
+    'startup_result': result.name,
+  };
 }
 
-/// Analytics service contract. Implementations must enforce the allowlist
-/// and never send health data.
+final class RouteLoadFailureEvent extends AnalyticsEvent {
+  const RouteLoadFailureEvent({
+    required this.appVersion,
+    required this.platform,
+    required this.route,
+    required this.failureCode,
+  });
+
+  final String appVersion;
+  final AnalyticsPlatform platform;
+  final AnalyticsRoute route;
+  final RouteFailureCode failureCode;
+
+  @override
+  String get name => 'route_load_failed';
+
+  @override
+  Map<String, Object> toProperties() => {
+    'app_version': appVersion,
+    'platform': platform.name,
+    'route_id': route.name,
+    'failure_code': _routeFailureCodeName(failureCode),
+  };
+}
+
+final class OnboardingCompletedEvent extends AnalyticsEvent {
+  const OnboardingCompletedEvent();
+
+  @override
+  String get name => 'onboarding_completed';
+
+  @override
+  Map<String, Object> toProperties() => const {};
+}
+
+final class ExportCompletedEvent extends AnalyticsEvent {
+  const ExportCompletedEvent();
+
+  @override
+  String get name => 'export_completed';
+
+  @override
+  Map<String, Object> toProperties() => const {};
+}
+
+final class ImportCompletedEvent extends AnalyticsEvent {
+  const ImportCompletedEvent();
+
+  @override
+  String get name => 'import_completed';
+
+  @override
+  Map<String, Object> toProperties() => const {};
+}
+
+final class PurchaseFlowOutcomeEvent extends AnalyticsEvent {
+  const PurchaseFlowOutcomeEvent({
+    required this.appVersion,
+    required this.platform,
+    required this.offer,
+    required this.outcome,
+  });
+
+  final String appVersion;
+  final AnalyticsPlatform platform;
+  final PurchaseOffer offer;
+  final PurchaseOutcome outcome;
+
+  @override
+  String get name => 'purchase_flow_outcome';
+
+  @override
+  Map<String, Object> toProperties() => {
+    'app_version': appVersion,
+    'platform': platform.name,
+    'purchase_offer': _purchaseOfferName(offer),
+    'purchase_outcome': outcome.name,
+  };
+}
+
+String _routeFailureCodeName(RouteFailureCode value) {
+  return switch (value) {
+    RouteFailureCode.networkUnavailable => 'network_unavailable',
+    RouteFailureCode.unexpectedResponse => 'unexpected_response',
+    RouteFailureCode.timeout => 'timeout',
+  };
+}
+
+String _purchaseOfferName(PurchaseOffer value) {
+  return switch (value) {
+    PurchaseOffer.annual => 'annual',
+    PurchaseOffer.monthly => 'monthly',
+    PurchaseOffer.lifetime => 'lifetime',
+  };
+}
+
+final class AnalyticsPayload {
+  const AnalyticsPayload({required this.event, required this.timestamp});
+
+  final AnalyticsEvent event;
+  final DateTime timestamp;
+
+  int get schemaVersion => 1;
+
+  Map<String, Object> toRecord() => {
+    'event_name': event.name,
+    'schema_version': schemaVersion,
+    ...event.toProperties(),
+  };
+}
+
 abstract interface class AnalyticsService {
-  /// Sends an allowlisted event. The implementation validates the payload
-  /// and rejects any event with forbidden keys.
   Future<void> track(AnalyticsPayload payload);
 
-  /// Whether analytics is enabled. Disabled until user opts in.
   bool get isEnabled;
 
-  /// Enable analytics after user consent. No events are sent retroactively.
   Future<void> enable();
 
-  /// Disable analytics and purge any buffered events.
   Future<void> disable();
+
+  /// Identifies only with an authenticated Supabase UUID. No person
+  /// properties are accepted by this boundary.
+  Future<void> identifyAuthenticatedUser(String supabaseUserId);
+
+  /// Forgets the current analytics identity without changing the user's
+  /// consent preference.
+  Future<void> clearAuthenticatedUser();
 
   Future<void> dispose();
 }

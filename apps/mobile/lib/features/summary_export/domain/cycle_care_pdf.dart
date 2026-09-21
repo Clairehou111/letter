@@ -3,6 +3,7 @@ import 'package:pdf/widgets.dart' as pw;
 import 'package:flutter/services.dart';
 
 import '../../clinical/presentation/twin_matrix_view_model.dart';
+import '../../cycle/domain/local_date.dart';
 import 'cycle_care_summary.dart';
 import 'local_file_share_adapter.dart';
 
@@ -49,8 +50,18 @@ Future<LocalPdfFile> buildCycleAndCarePdf({
         pw.Text('Cycle and Care Summary', style: headingStyle),
         pw.SizedBox(height: 4),
         pw.Text(
-          '${summary.range.label} - ${matrix.totalObservations} confirmed ratings',
+          '${summary.range.label} - ${matrix.mappedObservations} of '
+          '${matrix.totalObservations} confirmed ratings mapped - '
+          '${matrix.cyclesCovered} cycles with mapped symptom ratings',
           style: bodyStyle,
+        ),
+        pw.SizedBox(height: 2),
+        pw.Text(
+          '${matrix.observedRelativeDays} of 28 relative days observed - '
+          '${matrix.blankRelativeDays} blank - '
+          '${matrix.sameDayObservations} same-day - '
+          '${matrix.laterRecallObservations} later recall',
+          style: mutedStyle,
         ),
         pw.SizedBox(height: 10),
         _notice(CycleAndCareSummary.nonDiagnosticDisclosure),
@@ -62,11 +73,35 @@ Future<LocalPdfFile> buildCycleAndCarePdf({
         _matrixTable(matrix),
         pw.SizedBox(height: 5),
         pw.Text(
-          'Blank cells mean no observation. Explicit zero ratings remain zero. '
+          'Blank cells mean no observation. Ratings use the recorded 1-5 scale. '
           'Populated cells average observations within each cycle first, then '
           'average across cycles. The optional CSV contains source records only; derived matrix cells appear only in this PDF.',
           style: mutedStyle,
         ),
+        if (matrix.qualitativeCheckIns.isNotEmpty) ...[
+          pw.SizedBox(height: 10),
+          pw.Text('Difficult Today check-ins', style: headingStyle),
+          pw.SizedBox(height: 5),
+          _checkInTable(matrix, bodyStyle),
+          pw.SizedBox(height: 4),
+          pw.Text(
+            'These are qualitative check-ins. They share the timing context, '
+            'but do not change 1-5 symptom ratings or matrix averages.',
+            style: mutedStyle,
+          ),
+        ],
+        if (matrix.careOutcomes.isNotEmpty) ...[
+          pw.SizedBox(height: 10),
+          pw.Text('Saved Care check-backs', style: headingStyle),
+          pw.SizedBox(height: 5),
+          _careTable(summary, bodyStyle),
+          pw.SizedBox(height: 4),
+          pw.Text(
+            'Care outcomes share the timing context but do not change 1-5 '
+            'symptom ratings or matrix averages.',
+            style: mutedStyle,
+          ),
+        ],
         pw.SizedBox(height: 14),
         pw.Text('Observed period and predictions', style: headingStyle),
         pw.SizedBox(height: 5),
@@ -76,12 +111,9 @@ Future<LocalPdfFile> buildCycleAndCarePdf({
         pw.SizedBox(height: 5),
         _healthTable(summary, bodyStyle),
         pw.SizedBox(height: 14),
-        pw.Text('Care events and selected notes', style: headingStyle),
-        pw.SizedBox(height: 5),
-        _careTable(summary, bodyStyle),
+        pw.Text('Selected notes', style: headingStyle),
         if (summary.notes.isNotEmpty) ...[
           pw.SizedBox(height: 7),
-          pw.Text('Selected notes', style: pw.TextStyle(fontSize: 9)),
           for (final note in summary.notes)
             pw.Padding(
               padding: const pw.EdgeInsets.only(top: 3),
@@ -138,7 +170,10 @@ pw.Widget _matrixTable(TwinMatrixViewModel matrix) {
       [
         cluster.label,
         ...[
-          for (final cell in [...cluster.lutealCells, ...cluster.cycleCells])
+          for (final cell in [
+            ...cluster.beforePeriodCells,
+            ...cluster.cycleCells,
+          ])
             _cellText(cell),
         ],
       ],
@@ -193,7 +228,7 @@ pw.Widget _healthTable(CycleAndCareSummary summary, pw.TextStyle style) {
       [
         summaryDateLabel(row.date),
         row.symptom.label,
-        '${row.severity.score}/6',
+        '${row.severity.score}/5',
         row.cycleDay?.toString() ?? '-',
         _beforePeriodLabel(row.daysBeforeMenses),
         row.provenance.label,
@@ -220,6 +255,36 @@ pw.Widget _healthTable(CycleAndCareSummary summary, pw.TextStyle style) {
   );
 }
 
+pw.Widget _checkInTable(TwinMatrixViewModel matrix, pw.TextStyle style) {
+  final rows = [
+    for (final marker in matrix.qualitativeCheckIns)
+      [
+        summaryDateLabel(LocalDate.fromDateTime(marker.recordedAt.toLocal())),
+        marker.occurrenceCount > 1
+            ? '${marker.state.label} x${marker.occurrenceCount}'
+            : marker.state.label,
+        marker.cycleDay?.toString() ?? '-',
+        _beforePeriodLabel(marker.daysBeforeMenses),
+        marker.occurrenceCount > 1
+            ? 'Same-day entries grouped'
+            : summaryDateTimeLabel(marker.recordedAt),
+      ],
+  ];
+  return pw.TableHelper.fromTextArray(
+    headers: const [
+      'Date',
+      'Today check-in',
+      'Cycle day',
+      'Before next period',
+      'Recorded',
+    ],
+    data: rows,
+    headerStyle: pw.TextStyle(fontSize: 7, fontWeight: pw.FontWeight.bold),
+    cellStyle: style,
+    headerDecoration: const pw.BoxDecoration(color: PdfColors.grey200),
+  );
+}
+
 String _beforePeriodLabel(int? days) {
   if (days == null) return '-';
   final count = days.abs();
@@ -233,13 +298,21 @@ pw.Widget _careTable(CycleAndCareSummary summary, pw.TextStyle style) {
         summaryDateLabel(row.date),
         row.actionLabel,
         row.cycleDay?.toString() ?? '-',
+        _beforePeriodLabel(row.daysBeforeMenses),
         row.outcome.name,
         row.provenance.label,
       ],
   ];
-  if (rows.isEmpty) rows.add(['None recorded', '', '', '', '']);
+  if (rows.isEmpty) rows.add(['None recorded', '', '', '', '', '']);
   return pw.TableHelper.fromTextArray(
-    headers: const ['Date', 'Action', 'Cycle day', 'Outcome', 'Source'],
+    headers: const [
+      'Date',
+      'Action',
+      'Cycle day',
+      'Before next period',
+      'Outcome',
+      'Source',
+    ],
     data: rows,
     headerStyle: pw.TextStyle(fontSize: 8, fontWeight: pw.FontWeight.bold),
     cellStyle: style,

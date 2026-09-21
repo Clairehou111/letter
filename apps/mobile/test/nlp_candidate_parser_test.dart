@@ -33,7 +33,6 @@ void main() {
     expect(candidate.symptom, SymptomType.cramps);
     expect(candidate.isPresent, isTrue);
     expect(candidate.severity, SymptomSeverity.severe);
-    expect(candidate.painLocations, {PainLocation.lowerAbdomen});
     expect(candidate.experiencedDate, const LocalDate(2026, 7, 27));
     expect(candidate.evidence.excerpt, contains('severe cramps'));
     expect(candidate.evidence.sourceReference, 'capture-1');

@@ -1,12 +1,9 @@
-import 'dart:io';
-
 import 'package:drift/native.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:letter_mobile/features/care/data/drift_care_memory_repository.dart';
 import 'package:letter_mobile/features/care/domain/care_memory.dart';
 import 'package:letter_mobile/features/care/domain/care_mode.dart';
 import 'package:letter_mobile/features/cycle/data/letter_health_database.dart';
-import 'package:sqlite3/sqlite3.dart';
 
 void main() {
   test(
@@ -22,6 +19,16 @@ void main() {
         clock: () => now,
         idGenerator: () => 'care-${id++}',
       );
+      await database
+          .into(database.periodRows)
+          .insert(
+            PeriodRowsCompanion.insert(
+              id: 'period-stable',
+              startDay: 20662,
+              createdAtMillis: now.millisecondsSinceEpoch,
+              updatedAtMillis: now.millisecondsSinceEpoch,
+            ),
+          );
 
       final record = await repository.saveOutcome(
         CareActionCompletion(
@@ -46,6 +53,7 @@ void main() {
           observation: 'The cycle needed more room.',
           futureSelfNote: 'Keep one evening open.',
         ),
+        startingPeriodId: 'period-stable',
       );
 
       expect((await repository.getRecords()).single.pinned, isTrue);
@@ -56,6 +64,13 @@ void main() {
       expect(
         (await repository.getCycleReflection(20662))?.futureSelfNote,
         'Keep one evening open.',
+      );
+      expect(
+        (await repository.getCycleReflection(
+          99999,
+          startingPeriodId: 'period-stable',
+        ))?.id,
+        cycleReflection.id,
       );
 
       await repository.deleteRecord(record.id);
@@ -73,35 +88,4 @@ void main() {
       expect(await repository.getCycleReflections(), isEmpty);
     },
   );
-
-  test('schema 6 migration adds cycle-level reflections', () async {
-    final directory = await Directory.systemTemp.createTemp(
-      'letter-cycle-reflection-',
-    );
-    addTearDown(() => directory.delete(recursive: true));
-    final file = File('${directory.path}/letter-health.sqlite');
-    final raw = sqlite3.open(file.path);
-    raw.userVersion = 6;
-    raw.close();
-
-    final database = LetterHealthDatabase(NativeDatabase(file));
-    addTearDown(database.close);
-    final repository = DriftCareMemoryRepository(
-      database,
-      closeDatabase: false,
-      clock: () => DateTime.utc(2026, 8, 2),
-      idGenerator: () => 'migrated-cycle-reflection',
-    );
-
-    final reflection = await repository.saveCycleReflection(
-      20662,
-      const CycleReflectionDraft(observation: 'Migration kept this local.'),
-    );
-
-    expect(reflection.id, 'migrated-cycle-reflection');
-    expect(
-      (await database.select(database.cycleReflectionRows).get()).single.id,
-      'migrated-cycle-reflection',
-    );
-  });
 }

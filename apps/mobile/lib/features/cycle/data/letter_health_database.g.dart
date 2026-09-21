@@ -375,31 +375,52 @@ class PeriodRowsCompanion extends UpdateCompanion<PeriodRow> {
   }
 }
 
-class $ImpulseDraftRowsTable extends ImpulseDraftRows
-    with TableInfo<$ImpulseDraftRowsTable, ImpulseDraftRow> {
+class $PeriodFlowRowsTable extends PeriodFlowRows
+    with TableInfo<$PeriodFlowRowsTable, PeriodFlowRow> {
   @override
   final GeneratedDatabase attachedDatabase;
   final String? _alias;
-  $ImpulseDraftRowsTable(this.attachedDatabase, [this._alias]);
-  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  $PeriodFlowRowsTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _periodIdMeta = const VerificationMeta(
+    'periodId',
+  );
   @override
-  late final GeneratedColumn<String> id = GeneratedColumn<String>(
-    'id',
+  late final GeneratedColumn<String> periodId = GeneratedColumn<String>(
+    'period_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'REFERENCES period_rows (id) ON DELETE CASCADE',
+    ),
+  );
+  static const VerificationMeta _dayMeta = const VerificationMeta('day');
+  @override
+  late final GeneratedColumn<int> day = GeneratedColumn<int>(
+    'day',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _flowMeta = const VerificationMeta('flow');
+  @override
+  late final GeneratedColumn<String> flow = GeneratedColumn<String>(
+    'flow',
     aliasedName,
     false,
     type: DriftSqlType.string,
     requiredDuringInsert: true,
   );
-  static const VerificationMeta _contentMeta = const VerificationMeta(
-    'content',
-  );
+  static const VerificationMeta _colorMeta = const VerificationMeta('color');
   @override
-  late final GeneratedColumn<String> content = GeneratedColumn<String>(
-    'content',
+  late final GeneratedColumn<String> color = GeneratedColumn<String>(
+    'color',
     aliasedName,
-    false,
+    true,
     type: DriftSqlType.string,
-    requiredDuringInsert: true,
+    requiredDuringInsert: false,
   );
   static const VerificationMeta _createdAtMillisMeta = const VerificationMeta(
     'createdAtMillis',
@@ -423,61 +444,56 @@ class $ImpulseDraftRowsTable extends ImpulseDraftRows
     type: DriftSqlType.int,
     requiredDuringInsert: true,
   );
-  static const VerificationMeta _sealedAtMillisMeta = const VerificationMeta(
-    'sealedAtMillis',
-  );
-  @override
-  late final GeneratedColumn<int> sealedAtMillis = GeneratedColumn<int>(
-    'sealed_at_millis',
-    aliasedName,
-    true,
-    type: DriftSqlType.int,
-    requiredDuringInsert: false,
-  );
-  static const VerificationMeta _unlockAtMillisMeta = const VerificationMeta(
-    'unlockAtMillis',
-  );
-  @override
-  late final GeneratedColumn<int> unlockAtMillis = GeneratedColumn<int>(
-    'unlock_at_millis',
-    aliasedName,
-    true,
-    type: DriftSqlType.int,
-    requiredDuringInsert: false,
-  );
   @override
   List<GeneratedColumn> get $columns => [
-    id,
-    content,
+    periodId,
+    day,
+    flow,
+    color,
     createdAtMillis,
     updatedAtMillis,
-    sealedAtMillis,
-    unlockAtMillis,
   ];
   @override
   String get aliasedName => _alias ?? actualTableName;
   @override
   String get actualTableName => $name;
-  static const String $name = 'impulse_draft_rows';
+  static const String $name = 'period_flow_rows';
   @override
   VerificationContext validateIntegrity(
-    Insertable<ImpulseDraftRow> instance, {
+    Insertable<PeriodFlowRow> instance, {
     bool isInserting = false,
   }) {
     final context = VerificationContext();
     final data = instance.toColumns(true);
-    if (data.containsKey('id')) {
-      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
-    } else if (isInserting) {
-      context.missing(_idMeta);
-    }
-    if (data.containsKey('content')) {
+    if (data.containsKey('period_id')) {
       context.handle(
-        _contentMeta,
-        content.isAcceptableOrUnknown(data['content']!, _contentMeta),
+        _periodIdMeta,
+        periodId.isAcceptableOrUnknown(data['period_id']!, _periodIdMeta),
       );
     } else if (isInserting) {
-      context.missing(_contentMeta);
+      context.missing(_periodIdMeta);
+    }
+    if (data.containsKey('day')) {
+      context.handle(
+        _dayMeta,
+        day.isAcceptableOrUnknown(data['day']!, _dayMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_dayMeta);
+    }
+    if (data.containsKey('flow')) {
+      context.handle(
+        _flowMeta,
+        flow.isAcceptableOrUnknown(data['flow']!, _flowMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_flowMeta);
+    }
+    if (data.containsKey('color')) {
+      context.handle(
+        _colorMeta,
+        color.isAcceptableOrUnknown(data['color']!, _colorMeta),
+      );
     }
     if (data.containsKey('created_at_millis')) {
       context.handle(
@@ -501,41 +517,31 @@ class $ImpulseDraftRowsTable extends ImpulseDraftRows
     } else if (isInserting) {
       context.missing(_updatedAtMillisMeta);
     }
-    if (data.containsKey('sealed_at_millis')) {
-      context.handle(
-        _sealedAtMillisMeta,
-        sealedAtMillis.isAcceptableOrUnknown(
-          data['sealed_at_millis']!,
-          _sealedAtMillisMeta,
-        ),
-      );
-    }
-    if (data.containsKey('unlock_at_millis')) {
-      context.handle(
-        _unlockAtMillisMeta,
-        unlockAtMillis.isAcceptableOrUnknown(
-          data['unlock_at_millis']!,
-          _unlockAtMillisMeta,
-        ),
-      );
-    }
     return context;
   }
 
   @override
-  Set<GeneratedColumn> get $primaryKey => {id};
+  Set<GeneratedColumn> get $primaryKey => {periodId, day};
   @override
-  ImpulseDraftRow map(Map<String, dynamic> data, {String? tablePrefix}) {
+  PeriodFlowRow map(Map<String, dynamic> data, {String? tablePrefix}) {
     final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
-    return ImpulseDraftRow(
-      id: attachedDatabase.typeMapping.read(
+    return PeriodFlowRow(
+      periodId: attachedDatabase.typeMapping.read(
         DriftSqlType.string,
-        data['${effectivePrefix}id'],
+        data['${effectivePrefix}period_id'],
       )!,
-      content: attachedDatabase.typeMapping.read(
+      day: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}day'],
+      )!,
+      flow: attachedDatabase.typeMapping.read(
         DriftSqlType.string,
-        data['${effectivePrefix}content'],
+        data['${effectivePrefix}flow'],
       )!,
+      color: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}color'],
+      ),
       createdAtMillis: attachedDatabase.typeMapping.read(
         DriftSqlType.int,
         data['${effectivePrefix}created_at_millis'],
@@ -544,233 +550,208 @@ class $ImpulseDraftRowsTable extends ImpulseDraftRows
         DriftSqlType.int,
         data['${effectivePrefix}updated_at_millis'],
       )!,
-      sealedAtMillis: attachedDatabase.typeMapping.read(
-        DriftSqlType.int,
-        data['${effectivePrefix}sealed_at_millis'],
-      ),
-      unlockAtMillis: attachedDatabase.typeMapping.read(
-        DriftSqlType.int,
-        data['${effectivePrefix}unlock_at_millis'],
-      ),
     );
   }
 
   @override
-  $ImpulseDraftRowsTable createAlias(String alias) {
-    return $ImpulseDraftRowsTable(attachedDatabase, alias);
+  $PeriodFlowRowsTable createAlias(String alias) {
+    return $PeriodFlowRowsTable(attachedDatabase, alias);
   }
 }
 
-class ImpulseDraftRow extends DataClass implements Insertable<ImpulseDraftRow> {
-  final String id;
-  final String content;
+class PeriodFlowRow extends DataClass implements Insertable<PeriodFlowRow> {
+  final String periodId;
+  final int day;
+  final String flow;
+  final String? color;
   final int createdAtMillis;
   final int updatedAtMillis;
-  final int? sealedAtMillis;
-  final int? unlockAtMillis;
-  const ImpulseDraftRow({
-    required this.id,
-    required this.content,
+  const PeriodFlowRow({
+    required this.periodId,
+    required this.day,
+    required this.flow,
+    this.color,
     required this.createdAtMillis,
     required this.updatedAtMillis,
-    this.sealedAtMillis,
-    this.unlockAtMillis,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
     final map = <String, Expression>{};
-    map['id'] = Variable<String>(id);
-    map['content'] = Variable<String>(content);
+    map['period_id'] = Variable<String>(periodId);
+    map['day'] = Variable<int>(day);
+    map['flow'] = Variable<String>(flow);
+    if (!nullToAbsent || color != null) {
+      map['color'] = Variable<String>(color);
+    }
     map['created_at_millis'] = Variable<int>(createdAtMillis);
     map['updated_at_millis'] = Variable<int>(updatedAtMillis);
-    if (!nullToAbsent || sealedAtMillis != null) {
-      map['sealed_at_millis'] = Variable<int>(sealedAtMillis);
-    }
-    if (!nullToAbsent || unlockAtMillis != null) {
-      map['unlock_at_millis'] = Variable<int>(unlockAtMillis);
-    }
     return map;
   }
 
-  ImpulseDraftRowsCompanion toCompanion(bool nullToAbsent) {
-    return ImpulseDraftRowsCompanion(
-      id: Value(id),
-      content: Value(content),
+  PeriodFlowRowsCompanion toCompanion(bool nullToAbsent) {
+    return PeriodFlowRowsCompanion(
+      periodId: Value(periodId),
+      day: Value(day),
+      flow: Value(flow),
+      color: color == null && nullToAbsent
+          ? const Value.absent()
+          : Value(color),
       createdAtMillis: Value(createdAtMillis),
       updatedAtMillis: Value(updatedAtMillis),
-      sealedAtMillis: sealedAtMillis == null && nullToAbsent
-          ? const Value.absent()
-          : Value(sealedAtMillis),
-      unlockAtMillis: unlockAtMillis == null && nullToAbsent
-          ? const Value.absent()
-          : Value(unlockAtMillis),
     );
   }
 
-  factory ImpulseDraftRow.fromJson(
+  factory PeriodFlowRow.fromJson(
     Map<String, dynamic> json, {
     ValueSerializer? serializer,
   }) {
     serializer ??= driftRuntimeOptions.defaultSerializer;
-    return ImpulseDraftRow(
-      id: serializer.fromJson<String>(json['id']),
-      content: serializer.fromJson<String>(json['content']),
+    return PeriodFlowRow(
+      periodId: serializer.fromJson<String>(json['periodId']),
+      day: serializer.fromJson<int>(json['day']),
+      flow: serializer.fromJson<String>(json['flow']),
+      color: serializer.fromJson<String?>(json['color']),
       createdAtMillis: serializer.fromJson<int>(json['createdAtMillis']),
       updatedAtMillis: serializer.fromJson<int>(json['updatedAtMillis']),
-      sealedAtMillis: serializer.fromJson<int?>(json['sealedAtMillis']),
-      unlockAtMillis: serializer.fromJson<int?>(json['unlockAtMillis']),
     );
   }
   @override
   Map<String, dynamic> toJson({ValueSerializer? serializer}) {
     serializer ??= driftRuntimeOptions.defaultSerializer;
     return <String, dynamic>{
-      'id': serializer.toJson<String>(id),
-      'content': serializer.toJson<String>(content),
+      'periodId': serializer.toJson<String>(periodId),
+      'day': serializer.toJson<int>(day),
+      'flow': serializer.toJson<String>(flow),
+      'color': serializer.toJson<String?>(color),
       'createdAtMillis': serializer.toJson<int>(createdAtMillis),
       'updatedAtMillis': serializer.toJson<int>(updatedAtMillis),
-      'sealedAtMillis': serializer.toJson<int?>(sealedAtMillis),
-      'unlockAtMillis': serializer.toJson<int?>(unlockAtMillis),
     };
   }
 
-  ImpulseDraftRow copyWith({
-    String? id,
-    String? content,
+  PeriodFlowRow copyWith({
+    String? periodId,
+    int? day,
+    String? flow,
+    Value<String?> color = const Value.absent(),
     int? createdAtMillis,
     int? updatedAtMillis,
-    Value<int?> sealedAtMillis = const Value.absent(),
-    Value<int?> unlockAtMillis = const Value.absent(),
-  }) => ImpulseDraftRow(
-    id: id ?? this.id,
-    content: content ?? this.content,
+  }) => PeriodFlowRow(
+    periodId: periodId ?? this.periodId,
+    day: day ?? this.day,
+    flow: flow ?? this.flow,
+    color: color.present ? color.value : this.color,
     createdAtMillis: createdAtMillis ?? this.createdAtMillis,
     updatedAtMillis: updatedAtMillis ?? this.updatedAtMillis,
-    sealedAtMillis: sealedAtMillis.present
-        ? sealedAtMillis.value
-        : this.sealedAtMillis,
-    unlockAtMillis: unlockAtMillis.present
-        ? unlockAtMillis.value
-        : this.unlockAtMillis,
   );
-  ImpulseDraftRow copyWithCompanion(ImpulseDraftRowsCompanion data) {
-    return ImpulseDraftRow(
-      id: data.id.present ? data.id.value : this.id,
-      content: data.content.present ? data.content.value : this.content,
+  PeriodFlowRow copyWithCompanion(PeriodFlowRowsCompanion data) {
+    return PeriodFlowRow(
+      periodId: data.periodId.present ? data.periodId.value : this.periodId,
+      day: data.day.present ? data.day.value : this.day,
+      flow: data.flow.present ? data.flow.value : this.flow,
+      color: data.color.present ? data.color.value : this.color,
       createdAtMillis: data.createdAtMillis.present
           ? data.createdAtMillis.value
           : this.createdAtMillis,
       updatedAtMillis: data.updatedAtMillis.present
           ? data.updatedAtMillis.value
           : this.updatedAtMillis,
-      sealedAtMillis: data.sealedAtMillis.present
-          ? data.sealedAtMillis.value
-          : this.sealedAtMillis,
-      unlockAtMillis: data.unlockAtMillis.present
-          ? data.unlockAtMillis.value
-          : this.unlockAtMillis,
     );
   }
 
   @override
   String toString() {
-    return (StringBuffer('ImpulseDraftRow(')
-          ..write('id: $id, ')
-          ..write('content: $content, ')
+    return (StringBuffer('PeriodFlowRow(')
+          ..write('periodId: $periodId, ')
+          ..write('day: $day, ')
+          ..write('flow: $flow, ')
+          ..write('color: $color, ')
           ..write('createdAtMillis: $createdAtMillis, ')
-          ..write('updatedAtMillis: $updatedAtMillis, ')
-          ..write('sealedAtMillis: $sealedAtMillis, ')
-          ..write('unlockAtMillis: $unlockAtMillis')
+          ..write('updatedAtMillis: $updatedAtMillis')
           ..write(')'))
         .toString();
   }
 
   @override
-  int get hashCode => Object.hash(
-    id,
-    content,
-    createdAtMillis,
-    updatedAtMillis,
-    sealedAtMillis,
-    unlockAtMillis,
-  );
+  int get hashCode =>
+      Object.hash(periodId, day, flow, color, createdAtMillis, updatedAtMillis);
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
-      (other is ImpulseDraftRow &&
-          other.id == this.id &&
-          other.content == this.content &&
+      (other is PeriodFlowRow &&
+          other.periodId == this.periodId &&
+          other.day == this.day &&
+          other.flow == this.flow &&
+          other.color == this.color &&
           other.createdAtMillis == this.createdAtMillis &&
-          other.updatedAtMillis == this.updatedAtMillis &&
-          other.sealedAtMillis == this.sealedAtMillis &&
-          other.unlockAtMillis == this.unlockAtMillis);
+          other.updatedAtMillis == this.updatedAtMillis);
 }
 
-class ImpulseDraftRowsCompanion extends UpdateCompanion<ImpulseDraftRow> {
-  final Value<String> id;
-  final Value<String> content;
+class PeriodFlowRowsCompanion extends UpdateCompanion<PeriodFlowRow> {
+  final Value<String> periodId;
+  final Value<int> day;
+  final Value<String> flow;
+  final Value<String?> color;
   final Value<int> createdAtMillis;
   final Value<int> updatedAtMillis;
-  final Value<int?> sealedAtMillis;
-  final Value<int?> unlockAtMillis;
   final Value<int> rowid;
-  const ImpulseDraftRowsCompanion({
-    this.id = const Value.absent(),
-    this.content = const Value.absent(),
+  const PeriodFlowRowsCompanion({
+    this.periodId = const Value.absent(),
+    this.day = const Value.absent(),
+    this.flow = const Value.absent(),
+    this.color = const Value.absent(),
     this.createdAtMillis = const Value.absent(),
     this.updatedAtMillis = const Value.absent(),
-    this.sealedAtMillis = const Value.absent(),
-    this.unlockAtMillis = const Value.absent(),
     this.rowid = const Value.absent(),
   });
-  ImpulseDraftRowsCompanion.insert({
-    required String id,
-    required String content,
+  PeriodFlowRowsCompanion.insert({
+    required String periodId,
+    required int day,
+    required String flow,
+    this.color = const Value.absent(),
     required int createdAtMillis,
     required int updatedAtMillis,
-    this.sealedAtMillis = const Value.absent(),
-    this.unlockAtMillis = const Value.absent(),
     this.rowid = const Value.absent(),
-  }) : id = Value(id),
-       content = Value(content),
+  }) : periodId = Value(periodId),
+       day = Value(day),
+       flow = Value(flow),
        createdAtMillis = Value(createdAtMillis),
        updatedAtMillis = Value(updatedAtMillis);
-  static Insertable<ImpulseDraftRow> custom({
-    Expression<String>? id,
-    Expression<String>? content,
+  static Insertable<PeriodFlowRow> custom({
+    Expression<String>? periodId,
+    Expression<int>? day,
+    Expression<String>? flow,
+    Expression<String>? color,
     Expression<int>? createdAtMillis,
     Expression<int>? updatedAtMillis,
-    Expression<int>? sealedAtMillis,
-    Expression<int>? unlockAtMillis,
     Expression<int>? rowid,
   }) {
     return RawValuesInsertable({
-      if (id != null) 'id': id,
-      if (content != null) 'content': content,
+      if (periodId != null) 'period_id': periodId,
+      if (day != null) 'day': day,
+      if (flow != null) 'flow': flow,
+      if (color != null) 'color': color,
       if (createdAtMillis != null) 'created_at_millis': createdAtMillis,
       if (updatedAtMillis != null) 'updated_at_millis': updatedAtMillis,
-      if (sealedAtMillis != null) 'sealed_at_millis': sealedAtMillis,
-      if (unlockAtMillis != null) 'unlock_at_millis': unlockAtMillis,
       if (rowid != null) 'rowid': rowid,
     });
   }
 
-  ImpulseDraftRowsCompanion copyWith({
-    Value<String>? id,
-    Value<String>? content,
+  PeriodFlowRowsCompanion copyWith({
+    Value<String>? periodId,
+    Value<int>? day,
+    Value<String>? flow,
+    Value<String?>? color,
     Value<int>? createdAtMillis,
     Value<int>? updatedAtMillis,
-    Value<int?>? sealedAtMillis,
-    Value<int?>? unlockAtMillis,
     Value<int>? rowid,
   }) {
-    return ImpulseDraftRowsCompanion(
-      id: id ?? this.id,
-      content: content ?? this.content,
+    return PeriodFlowRowsCompanion(
+      periodId: periodId ?? this.periodId,
+      day: day ?? this.day,
+      flow: flow ?? this.flow,
+      color: color ?? this.color,
       createdAtMillis: createdAtMillis ?? this.createdAtMillis,
       updatedAtMillis: updatedAtMillis ?? this.updatedAtMillis,
-      sealedAtMillis: sealedAtMillis ?? this.sealedAtMillis,
-      unlockAtMillis: unlockAtMillis ?? this.unlockAtMillis,
       rowid: rowid ?? this.rowid,
     );
   }
@@ -778,23 +759,23 @@ class ImpulseDraftRowsCompanion extends UpdateCompanion<ImpulseDraftRow> {
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
     final map = <String, Expression>{};
-    if (id.present) {
-      map['id'] = Variable<String>(id.value);
+    if (periodId.present) {
+      map['period_id'] = Variable<String>(periodId.value);
     }
-    if (content.present) {
-      map['content'] = Variable<String>(content.value);
+    if (day.present) {
+      map['day'] = Variable<int>(day.value);
+    }
+    if (flow.present) {
+      map['flow'] = Variable<String>(flow.value);
+    }
+    if (color.present) {
+      map['color'] = Variable<String>(color.value);
     }
     if (createdAtMillis.present) {
       map['created_at_millis'] = Variable<int>(createdAtMillis.value);
     }
     if (updatedAtMillis.present) {
       map['updated_at_millis'] = Variable<int>(updatedAtMillis.value);
-    }
-    if (sealedAtMillis.present) {
-      map['sealed_at_millis'] = Variable<int>(sealedAtMillis.value);
-    }
-    if (unlockAtMillis.present) {
-      map['unlock_at_millis'] = Variable<int>(unlockAtMillis.value);
     }
     if (rowid.present) {
       map['rowid'] = Variable<int>(rowid.value);
@@ -804,13 +785,13 @@ class ImpulseDraftRowsCompanion extends UpdateCompanion<ImpulseDraftRow> {
 
   @override
   String toString() {
-    return (StringBuffer('ImpulseDraftRowsCompanion(')
-          ..write('id: $id, ')
-          ..write('content: $content, ')
+    return (StringBuffer('PeriodFlowRowsCompanion(')
+          ..write('periodId: $periodId, ')
+          ..write('day: $day, ')
+          ..write('flow: $flow, ')
+          ..write('color: $color, ')
           ..write('createdAtMillis: $createdAtMillis, ')
           ..write('updatedAtMillis: $updatedAtMillis, ')
-          ..write('sealedAtMillis: $sealedAtMillis, ')
-          ..write('unlockAtMillis: $unlockAtMillis, ')
           ..write('rowid: $rowid')
           ..write(')'))
         .toString();
@@ -1419,7 +1400,9 @@ class $CareReflectionRowsTable extends CareReflectionRows
     false,
     type: DriftSqlType.string,
     requiredDuringInsert: true,
-    defaultConstraints: GeneratedColumn.constraintIsAlways('UNIQUE'),
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'UNIQUE REFERENCES care_record_rows (id) ON DELETE CASCADE',
+    ),
   );
   static const VerificationMeta _modeMeta = const VerificationMeta('mode');
   @override
@@ -1998,6 +1981,20 @@ class $CycleReflectionRowsTable extends CycleReflectionRows
     type: DriftSqlType.string,
     requiredDuringInsert: true,
   );
+  static const VerificationMeta _startingPeriodIdMeta = const VerificationMeta(
+    'startingPeriodId',
+  );
+  @override
+  late final GeneratedColumn<String> startingPeriodId = GeneratedColumn<String>(
+    'starting_period_id',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'REFERENCES period_rows (id) ON DELETE SET NULL',
+    ),
+  );
   static const VerificationMeta _cycleStartDayMeta = const VerificationMeta(
     'cycleStartDay',
   );
@@ -2077,6 +2074,7 @@ class $CycleReflectionRowsTable extends CycleReflectionRows
   @override
   List<GeneratedColumn> get $columns => [
     id,
+    startingPeriodId,
     cycleStartDay,
     observation,
     need,
@@ -2101,6 +2099,15 @@ class $CycleReflectionRowsTable extends CycleReflectionRows
       context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
     } else if (isInserting) {
       context.missing(_idMeta);
+    }
+    if (data.containsKey('starting_period_id')) {
+      context.handle(
+        _startingPeriodIdMeta,
+        startingPeriodId.isAcceptableOrUnknown(
+          data['starting_period_id']!,
+          _startingPeriodIdMeta,
+        ),
+      );
     }
     if (data.containsKey('cycle_start_day')) {
       context.handle(
@@ -2178,6 +2185,10 @@ class $CycleReflectionRowsTable extends CycleReflectionRows
         DriftSqlType.string,
         data['${effectivePrefix}id'],
       )!,
+      startingPeriodId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}starting_period_id'],
+      ),
       cycleStartDay: attachedDatabase.typeMapping.read(
         DriftSqlType.int,
         data['${effectivePrefix}cycle_start_day'],
@@ -2218,6 +2229,7 @@ class $CycleReflectionRowsTable extends CycleReflectionRows
 class CycleReflectionRow extends DataClass
     implements Insertable<CycleReflectionRow> {
   final String id;
+  final String? startingPeriodId;
   final int cycleStartDay;
   final String? observation;
   final String? need;
@@ -2227,6 +2239,7 @@ class CycleReflectionRow extends DataClass
   final int updatedAtMillis;
   const CycleReflectionRow({
     required this.id,
+    this.startingPeriodId,
     required this.cycleStartDay,
     this.observation,
     this.need,
@@ -2239,6 +2252,9 @@ class CycleReflectionRow extends DataClass
   Map<String, Expression> toColumns(bool nullToAbsent) {
     final map = <String, Expression>{};
     map['id'] = Variable<String>(id);
+    if (!nullToAbsent || startingPeriodId != null) {
+      map['starting_period_id'] = Variable<String>(startingPeriodId);
+    }
     map['cycle_start_day'] = Variable<int>(cycleStartDay);
     if (!nullToAbsent || observation != null) {
       map['observation'] = Variable<String>(observation);
@@ -2260,6 +2276,9 @@ class CycleReflectionRow extends DataClass
   CycleReflectionRowsCompanion toCompanion(bool nullToAbsent) {
     return CycleReflectionRowsCompanion(
       id: Value(id),
+      startingPeriodId: startingPeriodId == null && nullToAbsent
+          ? const Value.absent()
+          : Value(startingPeriodId),
       cycleStartDay: Value(cycleStartDay),
       observation: observation == null && nullToAbsent
           ? const Value.absent()
@@ -2283,6 +2302,7 @@ class CycleReflectionRow extends DataClass
     serializer ??= driftRuntimeOptions.defaultSerializer;
     return CycleReflectionRow(
       id: serializer.fromJson<String>(json['id']),
+      startingPeriodId: serializer.fromJson<String?>(json['startingPeriodId']),
       cycleStartDay: serializer.fromJson<int>(json['cycleStartDay']),
       observation: serializer.fromJson<String?>(json['observation']),
       need: serializer.fromJson<String?>(json['need']),
@@ -2297,6 +2317,7 @@ class CycleReflectionRow extends DataClass
     serializer ??= driftRuntimeOptions.defaultSerializer;
     return <String, dynamic>{
       'id': serializer.toJson<String>(id),
+      'startingPeriodId': serializer.toJson<String?>(startingPeriodId),
       'cycleStartDay': serializer.toJson<int>(cycleStartDay),
       'observation': serializer.toJson<String?>(observation),
       'need': serializer.toJson<String?>(need),
@@ -2309,6 +2330,7 @@ class CycleReflectionRow extends DataClass
 
   CycleReflectionRow copyWith({
     String? id,
+    Value<String?> startingPeriodId = const Value.absent(),
     int? cycleStartDay,
     Value<String?> observation = const Value.absent(),
     Value<String?> need = const Value.absent(),
@@ -2318,6 +2340,9 @@ class CycleReflectionRow extends DataClass
     int? updatedAtMillis,
   }) => CycleReflectionRow(
     id: id ?? this.id,
+    startingPeriodId: startingPeriodId.present
+        ? startingPeriodId.value
+        : this.startingPeriodId,
     cycleStartDay: cycleStartDay ?? this.cycleStartDay,
     observation: observation.present ? observation.value : this.observation,
     need: need.present ? need.value : this.need,
@@ -2331,6 +2356,9 @@ class CycleReflectionRow extends DataClass
   CycleReflectionRow copyWithCompanion(CycleReflectionRowsCompanion data) {
     return CycleReflectionRow(
       id: data.id.present ? data.id.value : this.id,
+      startingPeriodId: data.startingPeriodId.present
+          ? data.startingPeriodId.value
+          : this.startingPeriodId,
       cycleStartDay: data.cycleStartDay.present
           ? data.cycleStartDay.value
           : this.cycleStartDay,
@@ -2357,6 +2385,7 @@ class CycleReflectionRow extends DataClass
   String toString() {
     return (StringBuffer('CycleReflectionRow(')
           ..write('id: $id, ')
+          ..write('startingPeriodId: $startingPeriodId, ')
           ..write('cycleStartDay: $cycleStartDay, ')
           ..write('observation: $observation, ')
           ..write('need: $need, ')
@@ -2371,6 +2400,7 @@ class CycleReflectionRow extends DataClass
   @override
   int get hashCode => Object.hash(
     id,
+    startingPeriodId,
     cycleStartDay,
     observation,
     need,
@@ -2384,6 +2414,7 @@ class CycleReflectionRow extends DataClass
       identical(this, other) ||
       (other is CycleReflectionRow &&
           other.id == this.id &&
+          other.startingPeriodId == this.startingPeriodId &&
           other.cycleStartDay == this.cycleStartDay &&
           other.observation == this.observation &&
           other.need == this.need &&
@@ -2395,6 +2426,7 @@ class CycleReflectionRow extends DataClass
 
 class CycleReflectionRowsCompanion extends UpdateCompanion<CycleReflectionRow> {
   final Value<String> id;
+  final Value<String?> startingPeriodId;
   final Value<int> cycleStartDay;
   final Value<String?> observation;
   final Value<String?> need;
@@ -2405,6 +2437,7 @@ class CycleReflectionRowsCompanion extends UpdateCompanion<CycleReflectionRow> {
   final Value<int> rowid;
   const CycleReflectionRowsCompanion({
     this.id = const Value.absent(),
+    this.startingPeriodId = const Value.absent(),
     this.cycleStartDay = const Value.absent(),
     this.observation = const Value.absent(),
     this.need = const Value.absent(),
@@ -2416,6 +2449,7 @@ class CycleReflectionRowsCompanion extends UpdateCompanion<CycleReflectionRow> {
   });
   CycleReflectionRowsCompanion.insert({
     required String id,
+    this.startingPeriodId = const Value.absent(),
     required int cycleStartDay,
     this.observation = const Value.absent(),
     this.need = const Value.absent(),
@@ -2430,6 +2464,7 @@ class CycleReflectionRowsCompanion extends UpdateCompanion<CycleReflectionRow> {
        updatedAtMillis = Value(updatedAtMillis);
   static Insertable<CycleReflectionRow> custom({
     Expression<String>? id,
+    Expression<String>? startingPeriodId,
     Expression<int>? cycleStartDay,
     Expression<String>? observation,
     Expression<String>? need,
@@ -2441,6 +2476,7 @@ class CycleReflectionRowsCompanion extends UpdateCompanion<CycleReflectionRow> {
   }) {
     return RawValuesInsertable({
       if (id != null) 'id': id,
+      if (startingPeriodId != null) 'starting_period_id': startingPeriodId,
       if (cycleStartDay != null) 'cycle_start_day': cycleStartDay,
       if (observation != null) 'observation': observation,
       if (need != null) 'need': need,
@@ -2454,6 +2490,7 @@ class CycleReflectionRowsCompanion extends UpdateCompanion<CycleReflectionRow> {
 
   CycleReflectionRowsCompanion copyWith({
     Value<String>? id,
+    Value<String?>? startingPeriodId,
     Value<int>? cycleStartDay,
     Value<String?>? observation,
     Value<String?>? need,
@@ -2465,6 +2502,7 @@ class CycleReflectionRowsCompanion extends UpdateCompanion<CycleReflectionRow> {
   }) {
     return CycleReflectionRowsCompanion(
       id: id ?? this.id,
+      startingPeriodId: startingPeriodId ?? this.startingPeriodId,
       cycleStartDay: cycleStartDay ?? this.cycleStartDay,
       observation: observation ?? this.observation,
       need: need ?? this.need,
@@ -2481,6 +2519,9 @@ class CycleReflectionRowsCompanion extends UpdateCompanion<CycleReflectionRow> {
     final map = <String, Expression>{};
     if (id.present) {
       map['id'] = Variable<String>(id.value);
+    }
+    if (startingPeriodId.present) {
+      map['starting_period_id'] = Variable<String>(startingPeriodId.value);
     }
     if (cycleStartDay.present) {
       map['cycle_start_day'] = Variable<int>(cycleStartDay.value);
@@ -2513,6 +2554,7 @@ class CycleReflectionRowsCompanion extends UpdateCompanion<CycleReflectionRow> {
   String toString() {
     return (StringBuffer('CycleReflectionRowsCompanion(')
           ..write('id: $id, ')
+          ..write('startingPeriodId: $startingPeriodId, ')
           ..write('cycleStartDay: $cycleStartDay, ')
           ..write('observation: $observation, ')
           ..write('need: $need, ')
@@ -2563,29 +2605,6 @@ class $HealthRecordRowsTable extends HealthRecordRows
     type: DriftSqlType.int,
     requiredDuringInsert: true,
   );
-  static const VerificationMeta _painRatingMeta = const VerificationMeta(
-    'painRating',
-  );
-  @override
-  late final GeneratedColumn<int> painRating = GeneratedColumn<int>(
-    'pain_rating',
-    aliasedName,
-    true,
-    type: DriftSqlType.int,
-    requiredDuringInsert: false,
-  );
-  static const VerificationMeta _painLocationsJsonMeta = const VerificationMeta(
-    'painLocationsJson',
-  );
-  @override
-  late final GeneratedColumn<String> painLocationsJson =
-      GeneratedColumn<String>(
-        'pain_locations_json',
-        aliasedName,
-        false,
-        type: DriftSqlType.string,
-        requiredDuringInsert: true,
-      );
   static const VerificationMeta _functionalImpactsJsonMeta =
       const VerificationMeta('functionalImpactsJson');
   @override
@@ -2671,8 +2690,6 @@ class $HealthRecordRowsTable extends HealthRecordRows
     id,
     symptom,
     severity,
-    painRating,
-    painLocationsJson,
     functionalImpactsJson,
     experiencedDay,
     recordedAtMillis,
@@ -2713,23 +2730,6 @@ class $HealthRecordRowsTable extends HealthRecordRows
       );
     } else if (isInserting) {
       context.missing(_severityMeta);
-    }
-    if (data.containsKey('pain_rating')) {
-      context.handle(
-        _painRatingMeta,
-        painRating.isAcceptableOrUnknown(data['pain_rating']!, _painRatingMeta),
-      );
-    }
-    if (data.containsKey('pain_locations_json')) {
-      context.handle(
-        _painLocationsJsonMeta,
-        painLocationsJson.isAcceptableOrUnknown(
-          data['pain_locations_json']!,
-          _painLocationsJsonMeta,
-        ),
-      );
-    } else if (isInserting) {
-      context.missing(_painLocationsJsonMeta);
     }
     if (data.containsKey('functional_impacts_json')) {
       context.handle(
@@ -2811,6 +2811,10 @@ class $HealthRecordRowsTable extends HealthRecordRows
   @override
   Set<GeneratedColumn> get $primaryKey => {id};
   @override
+  List<Set<GeneratedColumn>> get uniqueKeys => [
+    {symptom, experiencedDay},
+  ];
+  @override
   HealthRecordRow map(Map<String, dynamic> data, {String? tablePrefix}) {
     final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
     return HealthRecordRow(
@@ -2825,14 +2829,6 @@ class $HealthRecordRowsTable extends HealthRecordRows
       severity: attachedDatabase.typeMapping.read(
         DriftSqlType.int,
         data['${effectivePrefix}severity'],
-      )!,
-      painRating: attachedDatabase.typeMapping.read(
-        DriftSqlType.int,
-        data['${effectivePrefix}pain_rating'],
-      ),
-      painLocationsJson: attachedDatabase.typeMapping.read(
-        DriftSqlType.string,
-        data['${effectivePrefix}pain_locations_json'],
       )!,
       functionalImpactsJson: attachedDatabase.typeMapping.read(
         DriftSqlType.string,
@@ -2875,8 +2871,6 @@ class HealthRecordRow extends DataClass implements Insertable<HealthRecordRow> {
   final String id;
   final String symptom;
   final int severity;
-  final int? painRating;
-  final String painLocationsJson;
   final String functionalImpactsJson;
   final int experiencedDay;
   final int recordedAtMillis;
@@ -2888,8 +2882,6 @@ class HealthRecordRow extends DataClass implements Insertable<HealthRecordRow> {
     required this.id,
     required this.symptom,
     required this.severity,
-    this.painRating,
-    required this.painLocationsJson,
     required this.functionalImpactsJson,
     required this.experiencedDay,
     required this.recordedAtMillis,
@@ -2904,10 +2896,6 @@ class HealthRecordRow extends DataClass implements Insertable<HealthRecordRow> {
     map['id'] = Variable<String>(id);
     map['symptom'] = Variable<String>(symptom);
     map['severity'] = Variable<int>(severity);
-    if (!nullToAbsent || painRating != null) {
-      map['pain_rating'] = Variable<int>(painRating);
-    }
-    map['pain_locations_json'] = Variable<String>(painLocationsJson);
     map['functional_impacts_json'] = Variable<String>(functionalImpactsJson);
     map['experienced_day'] = Variable<int>(experiencedDay);
     map['recorded_at_millis'] = Variable<int>(recordedAtMillis);
@@ -2923,10 +2911,6 @@ class HealthRecordRow extends DataClass implements Insertable<HealthRecordRow> {
       id: Value(id),
       symptom: Value(symptom),
       severity: Value(severity),
-      painRating: painRating == null && nullToAbsent
-          ? const Value.absent()
-          : Value(painRating),
-      painLocationsJson: Value(painLocationsJson),
       functionalImpactsJson: Value(functionalImpactsJson),
       experiencedDay: Value(experiencedDay),
       recordedAtMillis: Value(recordedAtMillis),
@@ -2946,8 +2930,6 @@ class HealthRecordRow extends DataClass implements Insertable<HealthRecordRow> {
       id: serializer.fromJson<String>(json['id']),
       symptom: serializer.fromJson<String>(json['symptom']),
       severity: serializer.fromJson<int>(json['severity']),
-      painRating: serializer.fromJson<int?>(json['painRating']),
-      painLocationsJson: serializer.fromJson<String>(json['painLocationsJson']),
       functionalImpactsJson: serializer.fromJson<String>(
         json['functionalImpactsJson'],
       ),
@@ -2966,8 +2948,6 @@ class HealthRecordRow extends DataClass implements Insertable<HealthRecordRow> {
       'id': serializer.toJson<String>(id),
       'symptom': serializer.toJson<String>(symptom),
       'severity': serializer.toJson<int>(severity),
-      'painRating': serializer.toJson<int?>(painRating),
-      'painLocationsJson': serializer.toJson<String>(painLocationsJson),
       'functionalImpactsJson': serializer.toJson<String>(functionalImpactsJson),
       'experiencedDay': serializer.toJson<int>(experiencedDay),
       'recordedAtMillis': serializer.toJson<int>(recordedAtMillis),
@@ -2982,8 +2962,6 @@ class HealthRecordRow extends DataClass implements Insertable<HealthRecordRow> {
     String? id,
     String? symptom,
     int? severity,
-    Value<int?> painRating = const Value.absent(),
-    String? painLocationsJson,
     String? functionalImpactsJson,
     int? experiencedDay,
     int? recordedAtMillis,
@@ -2995,8 +2973,6 @@ class HealthRecordRow extends DataClass implements Insertable<HealthRecordRow> {
     id: id ?? this.id,
     symptom: symptom ?? this.symptom,
     severity: severity ?? this.severity,
-    painRating: painRating.present ? painRating.value : this.painRating,
-    painLocationsJson: painLocationsJson ?? this.painLocationsJson,
     functionalImpactsJson: functionalImpactsJson ?? this.functionalImpactsJson,
     experiencedDay: experiencedDay ?? this.experiencedDay,
     recordedAtMillis: recordedAtMillis ?? this.recordedAtMillis,
@@ -3010,12 +2986,6 @@ class HealthRecordRow extends DataClass implements Insertable<HealthRecordRow> {
       id: data.id.present ? data.id.value : this.id,
       symptom: data.symptom.present ? data.symptom.value : this.symptom,
       severity: data.severity.present ? data.severity.value : this.severity,
-      painRating: data.painRating.present
-          ? data.painRating.value
-          : this.painRating,
-      painLocationsJson: data.painLocationsJson.present
-          ? data.painLocationsJson.value
-          : this.painLocationsJson,
       functionalImpactsJson: data.functionalImpactsJson.present
           ? data.functionalImpactsJson.value
           : this.functionalImpactsJson,
@@ -3046,8 +3016,6 @@ class HealthRecordRow extends DataClass implements Insertable<HealthRecordRow> {
           ..write('id: $id, ')
           ..write('symptom: $symptom, ')
           ..write('severity: $severity, ')
-          ..write('painRating: $painRating, ')
-          ..write('painLocationsJson: $painLocationsJson, ')
           ..write('functionalImpactsJson: $functionalImpactsJson, ')
           ..write('experiencedDay: $experiencedDay, ')
           ..write('recordedAtMillis: $recordedAtMillis, ')
@@ -3064,8 +3032,6 @@ class HealthRecordRow extends DataClass implements Insertable<HealthRecordRow> {
     id,
     symptom,
     severity,
-    painRating,
-    painLocationsJson,
     functionalImpactsJson,
     experiencedDay,
     recordedAtMillis,
@@ -3081,8 +3047,6 @@ class HealthRecordRow extends DataClass implements Insertable<HealthRecordRow> {
           other.id == this.id &&
           other.symptom == this.symptom &&
           other.severity == this.severity &&
-          other.painRating == this.painRating &&
-          other.painLocationsJson == this.painLocationsJson &&
           other.functionalImpactsJson == this.functionalImpactsJson &&
           other.experiencedDay == this.experiencedDay &&
           other.recordedAtMillis == this.recordedAtMillis &&
@@ -3096,8 +3060,6 @@ class HealthRecordRowsCompanion extends UpdateCompanion<HealthRecordRow> {
   final Value<String> id;
   final Value<String> symptom;
   final Value<int> severity;
-  final Value<int?> painRating;
-  final Value<String> painLocationsJson;
   final Value<String> functionalImpactsJson;
   final Value<int> experiencedDay;
   final Value<int> recordedAtMillis;
@@ -3110,8 +3072,6 @@ class HealthRecordRowsCompanion extends UpdateCompanion<HealthRecordRow> {
     this.id = const Value.absent(),
     this.symptom = const Value.absent(),
     this.severity = const Value.absent(),
-    this.painRating = const Value.absent(),
-    this.painLocationsJson = const Value.absent(),
     this.functionalImpactsJson = const Value.absent(),
     this.experiencedDay = const Value.absent(),
     this.recordedAtMillis = const Value.absent(),
@@ -3125,8 +3085,6 @@ class HealthRecordRowsCompanion extends UpdateCompanion<HealthRecordRow> {
     required String id,
     required String symptom,
     required int severity,
-    this.painRating = const Value.absent(),
-    required String painLocationsJson,
     required String functionalImpactsJson,
     required int experiencedDay,
     required int recordedAtMillis,
@@ -3138,7 +3096,6 @@ class HealthRecordRowsCompanion extends UpdateCompanion<HealthRecordRow> {
   }) : id = Value(id),
        symptom = Value(symptom),
        severity = Value(severity),
-       painLocationsJson = Value(painLocationsJson),
        functionalImpactsJson = Value(functionalImpactsJson),
        experiencedDay = Value(experiencedDay),
        recordedAtMillis = Value(recordedAtMillis),
@@ -3150,8 +3107,6 @@ class HealthRecordRowsCompanion extends UpdateCompanion<HealthRecordRow> {
     Expression<String>? id,
     Expression<String>? symptom,
     Expression<int>? severity,
-    Expression<int>? painRating,
-    Expression<String>? painLocationsJson,
     Expression<String>? functionalImpactsJson,
     Expression<int>? experiencedDay,
     Expression<int>? recordedAtMillis,
@@ -3165,8 +3120,6 @@ class HealthRecordRowsCompanion extends UpdateCompanion<HealthRecordRow> {
       if (id != null) 'id': id,
       if (symptom != null) 'symptom': symptom,
       if (severity != null) 'severity': severity,
-      if (painRating != null) 'pain_rating': painRating,
-      if (painLocationsJson != null) 'pain_locations_json': painLocationsJson,
       if (functionalImpactsJson != null)
         'functional_impacts_json': functionalImpactsJson,
       if (experiencedDay != null) 'experienced_day': experiencedDay,
@@ -3183,8 +3136,6 @@ class HealthRecordRowsCompanion extends UpdateCompanion<HealthRecordRow> {
     Value<String>? id,
     Value<String>? symptom,
     Value<int>? severity,
-    Value<int?>? painRating,
-    Value<String>? painLocationsJson,
     Value<String>? functionalImpactsJson,
     Value<int>? experiencedDay,
     Value<int>? recordedAtMillis,
@@ -3198,8 +3149,6 @@ class HealthRecordRowsCompanion extends UpdateCompanion<HealthRecordRow> {
       id: id ?? this.id,
       symptom: symptom ?? this.symptom,
       severity: severity ?? this.severity,
-      painRating: painRating ?? this.painRating,
-      painLocationsJson: painLocationsJson ?? this.painLocationsJson,
       functionalImpactsJson:
           functionalImpactsJson ?? this.functionalImpactsJson,
       experiencedDay: experiencedDay ?? this.experiencedDay,
@@ -3223,12 +3172,6 @@ class HealthRecordRowsCompanion extends UpdateCompanion<HealthRecordRow> {
     }
     if (severity.present) {
       map['severity'] = Variable<int>(severity.value);
-    }
-    if (painRating.present) {
-      map['pain_rating'] = Variable<int>(painRating.value);
-    }
-    if (painLocationsJson.present) {
-      map['pain_locations_json'] = Variable<String>(painLocationsJson.value);
     }
     if (functionalImpactsJson.present) {
       map['functional_impacts_json'] = Variable<String>(
@@ -3265,8 +3208,6 @@ class HealthRecordRowsCompanion extends UpdateCompanion<HealthRecordRow> {
           ..write('id: $id, ')
           ..write('symptom: $symptom, ')
           ..write('severity: $severity, ')
-          ..write('painRating: $painRating, ')
-          ..write('painLocationsJson: $painLocationsJson, ')
           ..write('functionalImpactsJson: $functionalImpactsJson, ')
           ..write('experiencedDay: $experiencedDay, ')
           ..write('recordedAtMillis: $recordedAtMillis, ')
@@ -3917,14 +3858,1214 @@ class MomentCheckInRowsCompanion extends UpdateCompanion<MomentCheckInRow> {
   }
 }
 
+class $PreparationPlanRowsTable extends PreparationPlanRows
+    with TableInfo<$PreparationPlanRowsTable, PreparationPlanRow> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $PreparationPlanRowsTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<String> id = GeneratedColumn<String>(
+    'id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _statusMeta = const VerificationMeta('status');
+  @override
+  late final GeneratedColumn<String> status = GeneratedColumn<String>(
+    'status',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _evidenceFingerprintMeta =
+      const VerificationMeta('evidenceFingerprint');
+  @override
+  late final GeneratedColumn<String> evidenceFingerprint =
+      GeneratedColumn<String>(
+        'evidence_fingerprint',
+        aliasedName,
+        false,
+        type: DriftSqlType.string,
+        requiredDuringInsert: true,
+      );
+  static const VerificationMeta _sourceRecordIdsJsonMeta =
+      const VerificationMeta('sourceRecordIdsJson');
+  @override
+  late final GeneratedColumn<String> sourceRecordIdsJson =
+      GeneratedColumn<String>(
+        'source_record_ids_json',
+        aliasedName,
+        false,
+        type: DriftSqlType.string,
+        requiredDuringInsert: true,
+      );
+  static const VerificationMeta _includeCareMeta = const VerificationMeta(
+    'includeCare',
+  );
+  @override
+  late final GeneratedColumn<bool> includeCare = GeneratedColumn<bool>(
+    'include_care',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: true,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("include_care" IN (0, 1))',
+    ),
+  );
+  static const VerificationMeta _careActionIdMeta = const VerificationMeta(
+    'careActionId',
+  );
+  @override
+  late final GeneratedColumn<String> careActionId = GeneratedColumn<String>(
+    'care_action_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _careActionLabelMeta = const VerificationMeta(
+    'careActionLabel',
+  );
+  @override
+  late final GeneratedColumn<String> careActionLabel = GeneratedColumn<String>(
+    'care_action_label',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _careModeMeta = const VerificationMeta(
+    'careMode',
+  );
+  @override
+  late final GeneratedColumn<String> careMode = GeneratedColumn<String>(
+    'care_mode',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _betterCountMeta = const VerificationMeta(
+    'betterCount',
+  );
+  @override
+  late final GeneratedColumn<int> betterCount = GeneratedColumn<int>(
+    'better_count',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _sameCountMeta = const VerificationMeta(
+    'sameCount',
+  );
+  @override
+  late final GeneratedColumn<int> sameCount = GeneratedColumn<int>(
+    'same_count',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _worseCountMeta = const VerificationMeta(
+    'worseCount',
+  );
+  @override
+  late final GeneratedColumn<int> worseCount = GeneratedColumn<int>(
+    'worse_count',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _noteTextMeta = const VerificationMeta(
+    'noteText',
+  );
+  @override
+  late final GeneratedColumn<String> noteText = GeneratedColumn<String>(
+    'note_text',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _personalTextMeta = const VerificationMeta(
+    'personalText',
+  );
+  @override
+  late final GeneratedColumn<String> personalText = GeneratedColumn<String>(
+    'personal_text',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _createdAtMillisMeta = const VerificationMeta(
+    'createdAtMillis',
+  );
+  @override
+  late final GeneratedColumn<int> createdAtMillis = GeneratedColumn<int>(
+    'created_at_millis',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _updatedAtMillisMeta = const VerificationMeta(
+    'updatedAtMillis',
+  );
+  @override
+  late final GeneratedColumn<int> updatedAtMillis = GeneratedColumn<int>(
+    'updated_at_millis',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    id,
+    status,
+    evidenceFingerprint,
+    sourceRecordIdsJson,
+    includeCare,
+    careActionId,
+    careActionLabel,
+    careMode,
+    betterCount,
+    sameCount,
+    worseCount,
+    noteText,
+    personalText,
+    createdAtMillis,
+    updatedAtMillis,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'preparation_plan_rows';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<PreparationPlanRow> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    } else if (isInserting) {
+      context.missing(_idMeta);
+    }
+    if (data.containsKey('status')) {
+      context.handle(
+        _statusMeta,
+        status.isAcceptableOrUnknown(data['status']!, _statusMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_statusMeta);
+    }
+    if (data.containsKey('evidence_fingerprint')) {
+      context.handle(
+        _evidenceFingerprintMeta,
+        evidenceFingerprint.isAcceptableOrUnknown(
+          data['evidence_fingerprint']!,
+          _evidenceFingerprintMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_evidenceFingerprintMeta);
+    }
+    if (data.containsKey('source_record_ids_json')) {
+      context.handle(
+        _sourceRecordIdsJsonMeta,
+        sourceRecordIdsJson.isAcceptableOrUnknown(
+          data['source_record_ids_json']!,
+          _sourceRecordIdsJsonMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_sourceRecordIdsJsonMeta);
+    }
+    if (data.containsKey('include_care')) {
+      context.handle(
+        _includeCareMeta,
+        includeCare.isAcceptableOrUnknown(
+          data['include_care']!,
+          _includeCareMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_includeCareMeta);
+    }
+    if (data.containsKey('care_action_id')) {
+      context.handle(
+        _careActionIdMeta,
+        careActionId.isAcceptableOrUnknown(
+          data['care_action_id']!,
+          _careActionIdMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_careActionIdMeta);
+    }
+    if (data.containsKey('care_action_label')) {
+      context.handle(
+        _careActionLabelMeta,
+        careActionLabel.isAcceptableOrUnknown(
+          data['care_action_label']!,
+          _careActionLabelMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_careActionLabelMeta);
+    }
+    if (data.containsKey('care_mode')) {
+      context.handle(
+        _careModeMeta,
+        careMode.isAcceptableOrUnknown(data['care_mode']!, _careModeMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_careModeMeta);
+    }
+    if (data.containsKey('better_count')) {
+      context.handle(
+        _betterCountMeta,
+        betterCount.isAcceptableOrUnknown(
+          data['better_count']!,
+          _betterCountMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_betterCountMeta);
+    }
+    if (data.containsKey('same_count')) {
+      context.handle(
+        _sameCountMeta,
+        sameCount.isAcceptableOrUnknown(data['same_count']!, _sameCountMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_sameCountMeta);
+    }
+    if (data.containsKey('worse_count')) {
+      context.handle(
+        _worseCountMeta,
+        worseCount.isAcceptableOrUnknown(data['worse_count']!, _worseCountMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_worseCountMeta);
+    }
+    if (data.containsKey('note_text')) {
+      context.handle(
+        _noteTextMeta,
+        noteText.isAcceptableOrUnknown(data['note_text']!, _noteTextMeta),
+      );
+    }
+    if (data.containsKey('personal_text')) {
+      context.handle(
+        _personalTextMeta,
+        personalText.isAcceptableOrUnknown(
+          data['personal_text']!,
+          _personalTextMeta,
+        ),
+      );
+    }
+    if (data.containsKey('created_at_millis')) {
+      context.handle(
+        _createdAtMillisMeta,
+        createdAtMillis.isAcceptableOrUnknown(
+          data['created_at_millis']!,
+          _createdAtMillisMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_createdAtMillisMeta);
+    }
+    if (data.containsKey('updated_at_millis')) {
+      context.handle(
+        _updatedAtMillisMeta,
+        updatedAtMillis.isAcceptableOrUnknown(
+          data['updated_at_millis']!,
+          _updatedAtMillisMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_updatedAtMillisMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  PreparationPlanRow map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return PreparationPlanRow(
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}id'],
+      )!,
+      status: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}status'],
+      )!,
+      evidenceFingerprint: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}evidence_fingerprint'],
+      )!,
+      sourceRecordIdsJson: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}source_record_ids_json'],
+      )!,
+      includeCare: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}include_care'],
+      )!,
+      careActionId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}care_action_id'],
+      )!,
+      careActionLabel: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}care_action_label'],
+      )!,
+      careMode: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}care_mode'],
+      )!,
+      betterCount: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}better_count'],
+      )!,
+      sameCount: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}same_count'],
+      )!,
+      worseCount: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}worse_count'],
+      )!,
+      noteText: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}note_text'],
+      ),
+      personalText: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}personal_text'],
+      ),
+      createdAtMillis: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}created_at_millis'],
+      )!,
+      updatedAtMillis: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}updated_at_millis'],
+      )!,
+    );
+  }
+
+  @override
+  $PreparationPlanRowsTable createAlias(String alias) {
+    return $PreparationPlanRowsTable(attachedDatabase, alias);
+  }
+}
+
+class PreparationPlanRow extends DataClass
+    implements Insertable<PreparationPlanRow> {
+  final String id;
+  final String status;
+  final String evidenceFingerprint;
+  final String sourceRecordIdsJson;
+  final bool includeCare;
+  final String careActionId;
+  final String careActionLabel;
+  final String careMode;
+  final int betterCount;
+  final int sameCount;
+  final int worseCount;
+  final String? noteText;
+  final String? personalText;
+  final int createdAtMillis;
+  final int updatedAtMillis;
+  const PreparationPlanRow({
+    required this.id,
+    required this.status,
+    required this.evidenceFingerprint,
+    required this.sourceRecordIdsJson,
+    required this.includeCare,
+    required this.careActionId,
+    required this.careActionLabel,
+    required this.careMode,
+    required this.betterCount,
+    required this.sameCount,
+    required this.worseCount,
+    this.noteText,
+    this.personalText,
+    required this.createdAtMillis,
+    required this.updatedAtMillis,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<String>(id);
+    map['status'] = Variable<String>(status);
+    map['evidence_fingerprint'] = Variable<String>(evidenceFingerprint);
+    map['source_record_ids_json'] = Variable<String>(sourceRecordIdsJson);
+    map['include_care'] = Variable<bool>(includeCare);
+    map['care_action_id'] = Variable<String>(careActionId);
+    map['care_action_label'] = Variable<String>(careActionLabel);
+    map['care_mode'] = Variable<String>(careMode);
+    map['better_count'] = Variable<int>(betterCount);
+    map['same_count'] = Variable<int>(sameCount);
+    map['worse_count'] = Variable<int>(worseCount);
+    if (!nullToAbsent || noteText != null) {
+      map['note_text'] = Variable<String>(noteText);
+    }
+    if (!nullToAbsent || personalText != null) {
+      map['personal_text'] = Variable<String>(personalText);
+    }
+    map['created_at_millis'] = Variable<int>(createdAtMillis);
+    map['updated_at_millis'] = Variable<int>(updatedAtMillis);
+    return map;
+  }
+
+  PreparationPlanRowsCompanion toCompanion(bool nullToAbsent) {
+    return PreparationPlanRowsCompanion(
+      id: Value(id),
+      status: Value(status),
+      evidenceFingerprint: Value(evidenceFingerprint),
+      sourceRecordIdsJson: Value(sourceRecordIdsJson),
+      includeCare: Value(includeCare),
+      careActionId: Value(careActionId),
+      careActionLabel: Value(careActionLabel),
+      careMode: Value(careMode),
+      betterCount: Value(betterCount),
+      sameCount: Value(sameCount),
+      worseCount: Value(worseCount),
+      noteText: noteText == null && nullToAbsent
+          ? const Value.absent()
+          : Value(noteText),
+      personalText: personalText == null && nullToAbsent
+          ? const Value.absent()
+          : Value(personalText),
+      createdAtMillis: Value(createdAtMillis),
+      updatedAtMillis: Value(updatedAtMillis),
+    );
+  }
+
+  factory PreparationPlanRow.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return PreparationPlanRow(
+      id: serializer.fromJson<String>(json['id']),
+      status: serializer.fromJson<String>(json['status']),
+      evidenceFingerprint: serializer.fromJson<String>(
+        json['evidenceFingerprint'],
+      ),
+      sourceRecordIdsJson: serializer.fromJson<String>(
+        json['sourceRecordIdsJson'],
+      ),
+      includeCare: serializer.fromJson<bool>(json['includeCare']),
+      careActionId: serializer.fromJson<String>(json['careActionId']),
+      careActionLabel: serializer.fromJson<String>(json['careActionLabel']),
+      careMode: serializer.fromJson<String>(json['careMode']),
+      betterCount: serializer.fromJson<int>(json['betterCount']),
+      sameCount: serializer.fromJson<int>(json['sameCount']),
+      worseCount: serializer.fromJson<int>(json['worseCount']),
+      noteText: serializer.fromJson<String?>(json['noteText']),
+      personalText: serializer.fromJson<String?>(json['personalText']),
+      createdAtMillis: serializer.fromJson<int>(json['createdAtMillis']),
+      updatedAtMillis: serializer.fromJson<int>(json['updatedAtMillis']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<String>(id),
+      'status': serializer.toJson<String>(status),
+      'evidenceFingerprint': serializer.toJson<String>(evidenceFingerprint),
+      'sourceRecordIdsJson': serializer.toJson<String>(sourceRecordIdsJson),
+      'includeCare': serializer.toJson<bool>(includeCare),
+      'careActionId': serializer.toJson<String>(careActionId),
+      'careActionLabel': serializer.toJson<String>(careActionLabel),
+      'careMode': serializer.toJson<String>(careMode),
+      'betterCount': serializer.toJson<int>(betterCount),
+      'sameCount': serializer.toJson<int>(sameCount),
+      'worseCount': serializer.toJson<int>(worseCount),
+      'noteText': serializer.toJson<String?>(noteText),
+      'personalText': serializer.toJson<String?>(personalText),
+      'createdAtMillis': serializer.toJson<int>(createdAtMillis),
+      'updatedAtMillis': serializer.toJson<int>(updatedAtMillis),
+    };
+  }
+
+  PreparationPlanRow copyWith({
+    String? id,
+    String? status,
+    String? evidenceFingerprint,
+    String? sourceRecordIdsJson,
+    bool? includeCare,
+    String? careActionId,
+    String? careActionLabel,
+    String? careMode,
+    int? betterCount,
+    int? sameCount,
+    int? worseCount,
+    Value<String?> noteText = const Value.absent(),
+    Value<String?> personalText = const Value.absent(),
+    int? createdAtMillis,
+    int? updatedAtMillis,
+  }) => PreparationPlanRow(
+    id: id ?? this.id,
+    status: status ?? this.status,
+    evidenceFingerprint: evidenceFingerprint ?? this.evidenceFingerprint,
+    sourceRecordIdsJson: sourceRecordIdsJson ?? this.sourceRecordIdsJson,
+    includeCare: includeCare ?? this.includeCare,
+    careActionId: careActionId ?? this.careActionId,
+    careActionLabel: careActionLabel ?? this.careActionLabel,
+    careMode: careMode ?? this.careMode,
+    betterCount: betterCount ?? this.betterCount,
+    sameCount: sameCount ?? this.sameCount,
+    worseCount: worseCount ?? this.worseCount,
+    noteText: noteText.present ? noteText.value : this.noteText,
+    personalText: personalText.present ? personalText.value : this.personalText,
+    createdAtMillis: createdAtMillis ?? this.createdAtMillis,
+    updatedAtMillis: updatedAtMillis ?? this.updatedAtMillis,
+  );
+  PreparationPlanRow copyWithCompanion(PreparationPlanRowsCompanion data) {
+    return PreparationPlanRow(
+      id: data.id.present ? data.id.value : this.id,
+      status: data.status.present ? data.status.value : this.status,
+      evidenceFingerprint: data.evidenceFingerprint.present
+          ? data.evidenceFingerprint.value
+          : this.evidenceFingerprint,
+      sourceRecordIdsJson: data.sourceRecordIdsJson.present
+          ? data.sourceRecordIdsJson.value
+          : this.sourceRecordIdsJson,
+      includeCare: data.includeCare.present
+          ? data.includeCare.value
+          : this.includeCare,
+      careActionId: data.careActionId.present
+          ? data.careActionId.value
+          : this.careActionId,
+      careActionLabel: data.careActionLabel.present
+          ? data.careActionLabel.value
+          : this.careActionLabel,
+      careMode: data.careMode.present ? data.careMode.value : this.careMode,
+      betterCount: data.betterCount.present
+          ? data.betterCount.value
+          : this.betterCount,
+      sameCount: data.sameCount.present ? data.sameCount.value : this.sameCount,
+      worseCount: data.worseCount.present
+          ? data.worseCount.value
+          : this.worseCount,
+      noteText: data.noteText.present ? data.noteText.value : this.noteText,
+      personalText: data.personalText.present
+          ? data.personalText.value
+          : this.personalText,
+      createdAtMillis: data.createdAtMillis.present
+          ? data.createdAtMillis.value
+          : this.createdAtMillis,
+      updatedAtMillis: data.updatedAtMillis.present
+          ? data.updatedAtMillis.value
+          : this.updatedAtMillis,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('PreparationPlanRow(')
+          ..write('id: $id, ')
+          ..write('status: $status, ')
+          ..write('evidenceFingerprint: $evidenceFingerprint, ')
+          ..write('sourceRecordIdsJson: $sourceRecordIdsJson, ')
+          ..write('includeCare: $includeCare, ')
+          ..write('careActionId: $careActionId, ')
+          ..write('careActionLabel: $careActionLabel, ')
+          ..write('careMode: $careMode, ')
+          ..write('betterCount: $betterCount, ')
+          ..write('sameCount: $sameCount, ')
+          ..write('worseCount: $worseCount, ')
+          ..write('noteText: $noteText, ')
+          ..write('personalText: $personalText, ')
+          ..write('createdAtMillis: $createdAtMillis, ')
+          ..write('updatedAtMillis: $updatedAtMillis')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(
+    id,
+    status,
+    evidenceFingerprint,
+    sourceRecordIdsJson,
+    includeCare,
+    careActionId,
+    careActionLabel,
+    careMode,
+    betterCount,
+    sameCount,
+    worseCount,
+    noteText,
+    personalText,
+    createdAtMillis,
+    updatedAtMillis,
+  );
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is PreparationPlanRow &&
+          other.id == this.id &&
+          other.status == this.status &&
+          other.evidenceFingerprint == this.evidenceFingerprint &&
+          other.sourceRecordIdsJson == this.sourceRecordIdsJson &&
+          other.includeCare == this.includeCare &&
+          other.careActionId == this.careActionId &&
+          other.careActionLabel == this.careActionLabel &&
+          other.careMode == this.careMode &&
+          other.betterCount == this.betterCount &&
+          other.sameCount == this.sameCount &&
+          other.worseCount == this.worseCount &&
+          other.noteText == this.noteText &&
+          other.personalText == this.personalText &&
+          other.createdAtMillis == this.createdAtMillis &&
+          other.updatedAtMillis == this.updatedAtMillis);
+}
+
+class PreparationPlanRowsCompanion extends UpdateCompanion<PreparationPlanRow> {
+  final Value<String> id;
+  final Value<String> status;
+  final Value<String> evidenceFingerprint;
+  final Value<String> sourceRecordIdsJson;
+  final Value<bool> includeCare;
+  final Value<String> careActionId;
+  final Value<String> careActionLabel;
+  final Value<String> careMode;
+  final Value<int> betterCount;
+  final Value<int> sameCount;
+  final Value<int> worseCount;
+  final Value<String?> noteText;
+  final Value<String?> personalText;
+  final Value<int> createdAtMillis;
+  final Value<int> updatedAtMillis;
+  final Value<int> rowid;
+  const PreparationPlanRowsCompanion({
+    this.id = const Value.absent(),
+    this.status = const Value.absent(),
+    this.evidenceFingerprint = const Value.absent(),
+    this.sourceRecordIdsJson = const Value.absent(),
+    this.includeCare = const Value.absent(),
+    this.careActionId = const Value.absent(),
+    this.careActionLabel = const Value.absent(),
+    this.careMode = const Value.absent(),
+    this.betterCount = const Value.absent(),
+    this.sameCount = const Value.absent(),
+    this.worseCount = const Value.absent(),
+    this.noteText = const Value.absent(),
+    this.personalText = const Value.absent(),
+    this.createdAtMillis = const Value.absent(),
+    this.updatedAtMillis = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  PreparationPlanRowsCompanion.insert({
+    required String id,
+    required String status,
+    required String evidenceFingerprint,
+    required String sourceRecordIdsJson,
+    required bool includeCare,
+    required String careActionId,
+    required String careActionLabel,
+    required String careMode,
+    required int betterCount,
+    required int sameCount,
+    required int worseCount,
+    this.noteText = const Value.absent(),
+    this.personalText = const Value.absent(),
+    required int createdAtMillis,
+    required int updatedAtMillis,
+    this.rowid = const Value.absent(),
+  }) : id = Value(id),
+       status = Value(status),
+       evidenceFingerprint = Value(evidenceFingerprint),
+       sourceRecordIdsJson = Value(sourceRecordIdsJson),
+       includeCare = Value(includeCare),
+       careActionId = Value(careActionId),
+       careActionLabel = Value(careActionLabel),
+       careMode = Value(careMode),
+       betterCount = Value(betterCount),
+       sameCount = Value(sameCount),
+       worseCount = Value(worseCount),
+       createdAtMillis = Value(createdAtMillis),
+       updatedAtMillis = Value(updatedAtMillis);
+  static Insertable<PreparationPlanRow> custom({
+    Expression<String>? id,
+    Expression<String>? status,
+    Expression<String>? evidenceFingerprint,
+    Expression<String>? sourceRecordIdsJson,
+    Expression<bool>? includeCare,
+    Expression<String>? careActionId,
+    Expression<String>? careActionLabel,
+    Expression<String>? careMode,
+    Expression<int>? betterCount,
+    Expression<int>? sameCount,
+    Expression<int>? worseCount,
+    Expression<String>? noteText,
+    Expression<String>? personalText,
+    Expression<int>? createdAtMillis,
+    Expression<int>? updatedAtMillis,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (status != null) 'status': status,
+      if (evidenceFingerprint != null)
+        'evidence_fingerprint': evidenceFingerprint,
+      if (sourceRecordIdsJson != null)
+        'source_record_ids_json': sourceRecordIdsJson,
+      if (includeCare != null) 'include_care': includeCare,
+      if (careActionId != null) 'care_action_id': careActionId,
+      if (careActionLabel != null) 'care_action_label': careActionLabel,
+      if (careMode != null) 'care_mode': careMode,
+      if (betterCount != null) 'better_count': betterCount,
+      if (sameCount != null) 'same_count': sameCount,
+      if (worseCount != null) 'worse_count': worseCount,
+      if (noteText != null) 'note_text': noteText,
+      if (personalText != null) 'personal_text': personalText,
+      if (createdAtMillis != null) 'created_at_millis': createdAtMillis,
+      if (updatedAtMillis != null) 'updated_at_millis': updatedAtMillis,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  PreparationPlanRowsCompanion copyWith({
+    Value<String>? id,
+    Value<String>? status,
+    Value<String>? evidenceFingerprint,
+    Value<String>? sourceRecordIdsJson,
+    Value<bool>? includeCare,
+    Value<String>? careActionId,
+    Value<String>? careActionLabel,
+    Value<String>? careMode,
+    Value<int>? betterCount,
+    Value<int>? sameCount,
+    Value<int>? worseCount,
+    Value<String?>? noteText,
+    Value<String?>? personalText,
+    Value<int>? createdAtMillis,
+    Value<int>? updatedAtMillis,
+    Value<int>? rowid,
+  }) {
+    return PreparationPlanRowsCompanion(
+      id: id ?? this.id,
+      status: status ?? this.status,
+      evidenceFingerprint: evidenceFingerprint ?? this.evidenceFingerprint,
+      sourceRecordIdsJson: sourceRecordIdsJson ?? this.sourceRecordIdsJson,
+      includeCare: includeCare ?? this.includeCare,
+      careActionId: careActionId ?? this.careActionId,
+      careActionLabel: careActionLabel ?? this.careActionLabel,
+      careMode: careMode ?? this.careMode,
+      betterCount: betterCount ?? this.betterCount,
+      sameCount: sameCount ?? this.sameCount,
+      worseCount: worseCount ?? this.worseCount,
+      noteText: noteText ?? this.noteText,
+      personalText: personalText ?? this.personalText,
+      createdAtMillis: createdAtMillis ?? this.createdAtMillis,
+      updatedAtMillis: updatedAtMillis ?? this.updatedAtMillis,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<String>(id.value);
+    }
+    if (status.present) {
+      map['status'] = Variable<String>(status.value);
+    }
+    if (evidenceFingerprint.present) {
+      map['evidence_fingerprint'] = Variable<String>(evidenceFingerprint.value);
+    }
+    if (sourceRecordIdsJson.present) {
+      map['source_record_ids_json'] = Variable<String>(
+        sourceRecordIdsJson.value,
+      );
+    }
+    if (includeCare.present) {
+      map['include_care'] = Variable<bool>(includeCare.value);
+    }
+    if (careActionId.present) {
+      map['care_action_id'] = Variable<String>(careActionId.value);
+    }
+    if (careActionLabel.present) {
+      map['care_action_label'] = Variable<String>(careActionLabel.value);
+    }
+    if (careMode.present) {
+      map['care_mode'] = Variable<String>(careMode.value);
+    }
+    if (betterCount.present) {
+      map['better_count'] = Variable<int>(betterCount.value);
+    }
+    if (sameCount.present) {
+      map['same_count'] = Variable<int>(sameCount.value);
+    }
+    if (worseCount.present) {
+      map['worse_count'] = Variable<int>(worseCount.value);
+    }
+    if (noteText.present) {
+      map['note_text'] = Variable<String>(noteText.value);
+    }
+    if (personalText.present) {
+      map['personal_text'] = Variable<String>(personalText.value);
+    }
+    if (createdAtMillis.present) {
+      map['created_at_millis'] = Variable<int>(createdAtMillis.value);
+    }
+    if (updatedAtMillis.present) {
+      map['updated_at_millis'] = Variable<int>(updatedAtMillis.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('PreparationPlanRowsCompanion(')
+          ..write('id: $id, ')
+          ..write('status: $status, ')
+          ..write('evidenceFingerprint: $evidenceFingerprint, ')
+          ..write('sourceRecordIdsJson: $sourceRecordIdsJson, ')
+          ..write('includeCare: $includeCare, ')
+          ..write('careActionId: $careActionId, ')
+          ..write('careActionLabel: $careActionLabel, ')
+          ..write('careMode: $careMode, ')
+          ..write('betterCount: $betterCount, ')
+          ..write('sameCount: $sameCount, ')
+          ..write('worseCount: $worseCount, ')
+          ..write('noteText: $noteText, ')
+          ..write('personalText: $personalText, ')
+          ..write('createdAtMillis: $createdAtMillis, ')
+          ..write('updatedAtMillis: $updatedAtMillis, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
+class $PreparationDismissalRowsTable extends PreparationDismissalRows
+    with TableInfo<$PreparationDismissalRowsTable, PreparationDismissalRow> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $PreparationDismissalRowsTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _fingerprintMeta = const VerificationMeta(
+    'fingerprint',
+  );
+  @override
+  late final GeneratedColumn<String> fingerprint = GeneratedColumn<String>(
+    'fingerprint',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _evidenceLineMeta = const VerificationMeta(
+    'evidenceLine',
+  );
+  @override
+  late final GeneratedColumn<String> evidenceLine = GeneratedColumn<String>(
+    'evidence_line',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _dismissedAtMillisMeta = const VerificationMeta(
+    'dismissedAtMillis',
+  );
+  @override
+  late final GeneratedColumn<int> dismissedAtMillis = GeneratedColumn<int>(
+    'dismissed_at_millis',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    fingerprint,
+    evidenceLine,
+    dismissedAtMillis,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'preparation_dismissal_rows';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<PreparationDismissalRow> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('fingerprint')) {
+      context.handle(
+        _fingerprintMeta,
+        fingerprint.isAcceptableOrUnknown(
+          data['fingerprint']!,
+          _fingerprintMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_fingerprintMeta);
+    }
+    if (data.containsKey('evidence_line')) {
+      context.handle(
+        _evidenceLineMeta,
+        evidenceLine.isAcceptableOrUnknown(
+          data['evidence_line']!,
+          _evidenceLineMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_evidenceLineMeta);
+    }
+    if (data.containsKey('dismissed_at_millis')) {
+      context.handle(
+        _dismissedAtMillisMeta,
+        dismissedAtMillis.isAcceptableOrUnknown(
+          data['dismissed_at_millis']!,
+          _dismissedAtMillisMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_dismissedAtMillisMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {fingerprint};
+  @override
+  PreparationDismissalRow map(
+    Map<String, dynamic> data, {
+    String? tablePrefix,
+  }) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return PreparationDismissalRow(
+      fingerprint: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}fingerprint'],
+      )!,
+      evidenceLine: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}evidence_line'],
+      )!,
+      dismissedAtMillis: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}dismissed_at_millis'],
+      )!,
+    );
+  }
+
+  @override
+  $PreparationDismissalRowsTable createAlias(String alias) {
+    return $PreparationDismissalRowsTable(attachedDatabase, alias);
+  }
+}
+
+class PreparationDismissalRow extends DataClass
+    implements Insertable<PreparationDismissalRow> {
+  final String fingerprint;
+  final String evidenceLine;
+  final int dismissedAtMillis;
+  const PreparationDismissalRow({
+    required this.fingerprint,
+    required this.evidenceLine,
+    required this.dismissedAtMillis,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['fingerprint'] = Variable<String>(fingerprint);
+    map['evidence_line'] = Variable<String>(evidenceLine);
+    map['dismissed_at_millis'] = Variable<int>(dismissedAtMillis);
+    return map;
+  }
+
+  PreparationDismissalRowsCompanion toCompanion(bool nullToAbsent) {
+    return PreparationDismissalRowsCompanion(
+      fingerprint: Value(fingerprint),
+      evidenceLine: Value(evidenceLine),
+      dismissedAtMillis: Value(dismissedAtMillis),
+    );
+  }
+
+  factory PreparationDismissalRow.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return PreparationDismissalRow(
+      fingerprint: serializer.fromJson<String>(json['fingerprint']),
+      evidenceLine: serializer.fromJson<String>(json['evidenceLine']),
+      dismissedAtMillis: serializer.fromJson<int>(json['dismissedAtMillis']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'fingerprint': serializer.toJson<String>(fingerprint),
+      'evidenceLine': serializer.toJson<String>(evidenceLine),
+      'dismissedAtMillis': serializer.toJson<int>(dismissedAtMillis),
+    };
+  }
+
+  PreparationDismissalRow copyWith({
+    String? fingerprint,
+    String? evidenceLine,
+    int? dismissedAtMillis,
+  }) => PreparationDismissalRow(
+    fingerprint: fingerprint ?? this.fingerprint,
+    evidenceLine: evidenceLine ?? this.evidenceLine,
+    dismissedAtMillis: dismissedAtMillis ?? this.dismissedAtMillis,
+  );
+  PreparationDismissalRow copyWithCompanion(
+    PreparationDismissalRowsCompanion data,
+  ) {
+    return PreparationDismissalRow(
+      fingerprint: data.fingerprint.present
+          ? data.fingerprint.value
+          : this.fingerprint,
+      evidenceLine: data.evidenceLine.present
+          ? data.evidenceLine.value
+          : this.evidenceLine,
+      dismissedAtMillis: data.dismissedAtMillis.present
+          ? data.dismissedAtMillis.value
+          : this.dismissedAtMillis,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('PreparationDismissalRow(')
+          ..write('fingerprint: $fingerprint, ')
+          ..write('evidenceLine: $evidenceLine, ')
+          ..write('dismissedAtMillis: $dismissedAtMillis')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(fingerprint, evidenceLine, dismissedAtMillis);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is PreparationDismissalRow &&
+          other.fingerprint == this.fingerprint &&
+          other.evidenceLine == this.evidenceLine &&
+          other.dismissedAtMillis == this.dismissedAtMillis);
+}
+
+class PreparationDismissalRowsCompanion
+    extends UpdateCompanion<PreparationDismissalRow> {
+  final Value<String> fingerprint;
+  final Value<String> evidenceLine;
+  final Value<int> dismissedAtMillis;
+  final Value<int> rowid;
+  const PreparationDismissalRowsCompanion({
+    this.fingerprint = const Value.absent(),
+    this.evidenceLine = const Value.absent(),
+    this.dismissedAtMillis = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  PreparationDismissalRowsCompanion.insert({
+    required String fingerprint,
+    required String evidenceLine,
+    required int dismissedAtMillis,
+    this.rowid = const Value.absent(),
+  }) : fingerprint = Value(fingerprint),
+       evidenceLine = Value(evidenceLine),
+       dismissedAtMillis = Value(dismissedAtMillis);
+  static Insertable<PreparationDismissalRow> custom({
+    Expression<String>? fingerprint,
+    Expression<String>? evidenceLine,
+    Expression<int>? dismissedAtMillis,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (fingerprint != null) 'fingerprint': fingerprint,
+      if (evidenceLine != null) 'evidence_line': evidenceLine,
+      if (dismissedAtMillis != null) 'dismissed_at_millis': dismissedAtMillis,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  PreparationDismissalRowsCompanion copyWith({
+    Value<String>? fingerprint,
+    Value<String>? evidenceLine,
+    Value<int>? dismissedAtMillis,
+    Value<int>? rowid,
+  }) {
+    return PreparationDismissalRowsCompanion(
+      fingerprint: fingerprint ?? this.fingerprint,
+      evidenceLine: evidenceLine ?? this.evidenceLine,
+      dismissedAtMillis: dismissedAtMillis ?? this.dismissedAtMillis,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (fingerprint.present) {
+      map['fingerprint'] = Variable<String>(fingerprint.value);
+    }
+    if (evidenceLine.present) {
+      map['evidence_line'] = Variable<String>(evidenceLine.value);
+    }
+    if (dismissedAtMillis.present) {
+      map['dismissed_at_millis'] = Variable<int>(dismissedAtMillis.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('PreparationDismissalRowsCompanion(')
+          ..write('fingerprint: $fingerprint, ')
+          ..write('evidenceLine: $evidenceLine, ')
+          ..write('dismissedAtMillis: $dismissedAtMillis, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
 abstract class _$LetterHealthDatabase extends GeneratedDatabase {
   _$LetterHealthDatabase(QueryExecutor e) : super(e);
   $LetterHealthDatabaseManager get managers =>
       $LetterHealthDatabaseManager(this);
   late final $PeriodRowsTable periodRows = $PeriodRowsTable(this);
-  late final $ImpulseDraftRowsTable impulseDraftRows = $ImpulseDraftRowsTable(
-    this,
-  );
+  late final $PeriodFlowRowsTable periodFlowRows = $PeriodFlowRowsTable(this);
   late final $CareRecordRowsTable careRecordRows = $CareRecordRowsTable(this);
   late final $CareReflectionRowsTable careReflectionRows =
       $CareReflectionRowsTable(this);
@@ -3938,20 +5079,50 @@ abstract class _$LetterHealthDatabase extends GeneratedDatabase {
   );
   late final $MomentCheckInRowsTable momentCheckInRows =
       $MomentCheckInRowsTable(this);
+  late final $PreparationPlanRowsTable preparationPlanRows =
+      $PreparationPlanRowsTable(this);
+  late final $PreparationDismissalRowsTable preparationDismissalRows =
+      $PreparationDismissalRowsTable(this);
   @override
   Iterable<TableInfo<Table, Object?>> get allTables =>
       allSchemaEntities.whereType<TableInfo<Table, Object?>>();
   @override
   List<DatabaseSchemaEntity> get allSchemaEntities => [
     periodRows,
-    impulseDraftRows,
+    periodFlowRows,
     careRecordRows,
     careReflectionRows,
     cycleReflectionRows,
     healthRecordRows,
     captureNoteRows,
     momentCheckInRows,
+    preparationPlanRows,
+    preparationDismissalRows,
   ];
+  @override
+  StreamQueryUpdateRules get streamUpdateRules => const StreamQueryUpdateRules([
+    WritePropagation(
+      on: TableUpdateQuery.onTableName(
+        'period_rows',
+        limitUpdateKind: UpdateKind.delete,
+      ),
+      result: [TableUpdate('period_flow_rows', kind: UpdateKind.delete)],
+    ),
+    WritePropagation(
+      on: TableUpdateQuery.onTableName(
+        'care_record_rows',
+        limitUpdateKind: UpdateKind.delete,
+      ),
+      result: [TableUpdate('care_reflection_rows', kind: UpdateKind.delete)],
+    ),
+    WritePropagation(
+      on: TableUpdateQuery.onTableName(
+        'period_rows',
+        limitUpdateKind: UpdateKind.delete,
+      ),
+      result: [TableUpdate('cycle_reflection_rows', kind: UpdateKind.update)],
+    ),
+  ]);
 }
 
 typedef $$PeriodRowsTableCreateCompanionBuilder =
@@ -3972,6 +5143,58 @@ typedef $$PeriodRowsTableUpdateCompanionBuilder =
       Value<int> updatedAtMillis,
       Value<int> rowid,
     });
+
+final class $$PeriodRowsTableReferences
+    extends
+        BaseReferences<_$LetterHealthDatabase, $PeriodRowsTable, PeriodRow> {
+  $$PeriodRowsTableReferences(super.$_db, super.$_table, super.$_typedResult);
+
+  static MultiTypedResultKey<$PeriodFlowRowsTable, List<PeriodFlowRow>>
+  _periodFlowRowsRefsTable(_$LetterHealthDatabase db) =>
+      MultiTypedResultKey.fromTable(
+        db.periodFlowRows,
+        aliasName: 'period_rows__id__period_flow_rows__period_id',
+      );
+
+  $$PeriodFlowRowsTableProcessedTableManager get periodFlowRowsRefs {
+    final manager = $$PeriodFlowRowsTableTableManager(
+      $_db,
+      $_db.periodFlowRows,
+    ).filter((f) => f.periodId.id.sqlEquals($_itemColumn<String>('id')!));
+
+    final cache = $_typedResult.readTableOrNull(_periodFlowRowsRefsTable($_db));
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: cache),
+    );
+  }
+
+  static MultiTypedResultKey<
+    $CycleReflectionRowsTable,
+    List<CycleReflectionRow>
+  >
+  _cycleReflectionRowsRefsTable(_$LetterHealthDatabase db) =>
+      MultiTypedResultKey.fromTable(
+        db.cycleReflectionRows,
+        aliasName: 'period_rows__id__cycle_reflection_rows__starting_period_id',
+      );
+
+  $$CycleReflectionRowsTableProcessedTableManager get cycleReflectionRowsRefs {
+    final manager =
+        $$CycleReflectionRowsTableTableManager(
+          $_db,
+          $_db.cycleReflectionRows,
+        ).filter(
+          (f) => f.startingPeriodId.id.sqlEquals($_itemColumn<String>('id')!),
+        );
+
+    final cache = $_typedResult.readTableOrNull(
+      _cycleReflectionRowsRefsTable($_db),
+    );
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: cache),
+    );
+  }
+}
 
 class $$PeriodRowsTableFilterComposer
     extends Composer<_$LetterHealthDatabase, $PeriodRowsTable> {
@@ -4006,6 +5229,56 @@ class $$PeriodRowsTableFilterComposer
     column: $table.updatedAtMillis,
     builder: (column) => ColumnFilters(column),
   );
+
+  Expression<bool> periodFlowRowsRefs(
+    Expression<bool> Function($$PeriodFlowRowsTableFilterComposer f) f,
+  ) {
+    final $$PeriodFlowRowsTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.id,
+      referencedTable: $db.periodFlowRows,
+      getReferencedColumn: (t) => t.periodId,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$PeriodFlowRowsTableFilterComposer(
+            $db: $db,
+            $table: $db.periodFlowRows,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return f(composer);
+  }
+
+  Expression<bool> cycleReflectionRowsRefs(
+    Expression<bool> Function($$CycleReflectionRowsTableFilterComposer f) f,
+  ) {
+    final $$CycleReflectionRowsTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.id,
+      referencedTable: $db.cycleReflectionRows,
+      getReferencedColumn: (t) => t.startingPeriodId,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$CycleReflectionRowsTableFilterComposer(
+            $db: $db,
+            $table: $db.cycleReflectionRows,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return f(composer);
+  }
 }
 
 class $$PeriodRowsTableOrderingComposer
@@ -4070,6 +5343,57 @@ class $$PeriodRowsTableAnnotationComposer
     column: $table.updatedAtMillis,
     builder: (column) => column,
   );
+
+  Expression<T> periodFlowRowsRefs<T extends Object>(
+    Expression<T> Function($$PeriodFlowRowsTableAnnotationComposer a) f,
+  ) {
+    final $$PeriodFlowRowsTableAnnotationComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.id,
+      referencedTable: $db.periodFlowRows,
+      getReferencedColumn: (t) => t.periodId,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$PeriodFlowRowsTableAnnotationComposer(
+            $db: $db,
+            $table: $db.periodFlowRows,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return f(composer);
+  }
+
+  Expression<T> cycleReflectionRowsRefs<T extends Object>(
+    Expression<T> Function($$CycleReflectionRowsTableAnnotationComposer a) f,
+  ) {
+    final $$CycleReflectionRowsTableAnnotationComposer composer =
+        $composerBuilder(
+          composer: this,
+          getCurrentColumn: (t) => t.id,
+          referencedTable: $db.cycleReflectionRows,
+          getReferencedColumn: (t) => t.startingPeriodId,
+          builder:
+              (
+                joinBuilder, {
+                $addJoinBuilderToRootComposer,
+                $removeJoinBuilderFromRootComposer,
+              }) => $$CycleReflectionRowsTableAnnotationComposer(
+                $db: $db,
+                $table: $db.cycleReflectionRows,
+                $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+                joinBuilder: joinBuilder,
+                $removeJoinBuilderFromRootComposer:
+                    $removeJoinBuilderFromRootComposer,
+              ),
+        );
+    return f(composer);
+  }
 }
 
 class $$PeriodRowsTableTableManager
@@ -4083,12 +5407,12 @@ class $$PeriodRowsTableTableManager
           $$PeriodRowsTableAnnotationComposer,
           $$PeriodRowsTableCreateCompanionBuilder,
           $$PeriodRowsTableUpdateCompanionBuilder,
-          (
-            PeriodRow,
-            BaseReferences<_$LetterHealthDatabase, $PeriodRowsTable, PeriodRow>,
-          ),
+          (PeriodRow, $$PeriodRowsTableReferences),
           PeriodRow,
-          PrefetchHooks Function()
+          PrefetchHooks Function({
+            bool periodFlowRowsRefs,
+            bool cycleReflectionRowsRefs,
+          })
         > {
   $$PeriodRowsTableTableManager(
     _$LetterHealthDatabase db,
@@ -4136,9 +5460,70 @@ class $$PeriodRowsTableTableManager
                 rowid: rowid,
               ),
           withReferenceMapper: (p0) => p0
-              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .map(
+                (e) => (
+                  e.readTable(table),
+                  $$PeriodRowsTableReferences(db, table, e),
+                ),
+              )
               .toList(),
-          prefetchHooksCallback: null,
+          prefetchHooksCallback:
+              ({periodFlowRowsRefs = false, cycleReflectionRowsRefs = false}) {
+                return PrefetchHooks(
+                  db: db,
+                  explicitlyWatchedTables: [
+                    if (periodFlowRowsRefs) db.periodFlowRows,
+                    if (cycleReflectionRowsRefs) db.cycleReflectionRows,
+                  ],
+                  addJoins: null,
+                  getPrefetchedDataCallback: (items) async {
+                    return [
+                      if (periodFlowRowsRefs)
+                        await $_getPrefetchedData<
+                          PeriodRow,
+                          $PeriodRowsTable,
+                          PeriodFlowRow
+                        >(
+                          currentTable: table,
+                          referencedTable: $$PeriodRowsTableReferences
+                              ._periodFlowRowsRefsTable(db),
+                          managerFromTypedResult: (p0) =>
+                              $$PeriodRowsTableReferences(
+                                db,
+                                table,
+                                p0,
+                              ).periodFlowRowsRefs,
+                          referencedItemsForCurrentItem:
+                              (item, referencedItems) => referencedItems.where(
+                                (e) => e.periodId == item.id,
+                              ),
+                          typedResults: items,
+                        ),
+                      if (cycleReflectionRowsRefs)
+                        await $_getPrefetchedData<
+                          PeriodRow,
+                          $PeriodRowsTable,
+                          CycleReflectionRow
+                        >(
+                          currentTable: table,
+                          referencedTable: $$PeriodRowsTableReferences
+                              ._cycleReflectionRowsRefsTable(db),
+                          managerFromTypedResult: (p0) =>
+                              $$PeriodRowsTableReferences(
+                                db,
+                                table,
+                                p0,
+                              ).cycleReflectionRowsRefs,
+                          referencedItemsForCurrentItem:
+                              (item, referencedItems) => referencedItems.where(
+                                (e) => e.startingPeriodId == item.id,
+                              ),
+                          typedResults: items,
+                        ),
+                    ];
+                  },
+                );
+              },
         ),
       );
 }
@@ -4153,50 +5538,86 @@ typedef $$PeriodRowsTableProcessedTableManager =
       $$PeriodRowsTableAnnotationComposer,
       $$PeriodRowsTableCreateCompanionBuilder,
       $$PeriodRowsTableUpdateCompanionBuilder,
-      (
-        PeriodRow,
-        BaseReferences<_$LetterHealthDatabase, $PeriodRowsTable, PeriodRow>,
-      ),
+      (PeriodRow, $$PeriodRowsTableReferences),
       PeriodRow,
-      PrefetchHooks Function()
+      PrefetchHooks Function({
+        bool periodFlowRowsRefs,
+        bool cycleReflectionRowsRefs,
+      })
     >;
-typedef $$ImpulseDraftRowsTableCreateCompanionBuilder =
-    ImpulseDraftRowsCompanion Function({
-      required String id,
-      required String content,
+typedef $$PeriodFlowRowsTableCreateCompanionBuilder =
+    PeriodFlowRowsCompanion Function({
+      required String periodId,
+      required int day,
+      required String flow,
+      Value<String?> color,
       required int createdAtMillis,
       required int updatedAtMillis,
-      Value<int?> sealedAtMillis,
-      Value<int?> unlockAtMillis,
       Value<int> rowid,
     });
-typedef $$ImpulseDraftRowsTableUpdateCompanionBuilder =
-    ImpulseDraftRowsCompanion Function({
-      Value<String> id,
-      Value<String> content,
+typedef $$PeriodFlowRowsTableUpdateCompanionBuilder =
+    PeriodFlowRowsCompanion Function({
+      Value<String> periodId,
+      Value<int> day,
+      Value<String> flow,
+      Value<String?> color,
       Value<int> createdAtMillis,
       Value<int> updatedAtMillis,
-      Value<int?> sealedAtMillis,
-      Value<int?> unlockAtMillis,
       Value<int> rowid,
     });
 
-class $$ImpulseDraftRowsTableFilterComposer
-    extends Composer<_$LetterHealthDatabase, $ImpulseDraftRowsTable> {
-  $$ImpulseDraftRowsTableFilterComposer({
+final class $$PeriodFlowRowsTableReferences
+    extends
+        BaseReferences<
+          _$LetterHealthDatabase,
+          $PeriodFlowRowsTable,
+          PeriodFlowRow
+        > {
+  $$PeriodFlowRowsTableReferences(
+    super.$_db,
+    super.$_table,
+    super.$_typedResult,
+  );
+
+  static $PeriodRowsTable _periodIdTable(_$LetterHealthDatabase db) =>
+      db.periodRows.createAlias('period_flow_rows__period_id__period_rows__id');
+
+  $$PeriodRowsTableProcessedTableManager get periodId {
+    final $_column = $_itemColumn<String>('period_id')!;
+
+    final manager = $$PeriodRowsTableTableManager(
+      $_db,
+      $_db.periodRows,
+    ).filter((f) => f.id.sqlEquals($_column));
+    final item = $_typedResult.readTableOrNull(_periodIdTable($_db));
+    if (item == null) return manager;
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: [item]),
+    );
+  }
+}
+
+class $$PeriodFlowRowsTableFilterComposer
+    extends Composer<_$LetterHealthDatabase, $PeriodFlowRowsTable> {
+  $$PeriodFlowRowsTableFilterComposer({
     required super.$db,
     required super.$table,
     super.joinBuilder,
     super.$addJoinBuilderToRootComposer,
     super.$removeJoinBuilderFromRootComposer,
   });
-  ColumnFilters<String> get id => $composableBuilder(
-    column: $table.id,
+  ColumnFilters<int> get day => $composableBuilder(
+    column: $table.day,
     builder: (column) => ColumnFilters(column),
   );
 
-  ColumnFilters<String> get content => $composableBuilder(
-    column: $table.content,
+  ColumnFilters<String> get flow => $composableBuilder(
+    column: $table.flow,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get color => $composableBuilder(
+    column: $table.color,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -4210,33 +5631,51 @@ class $$ImpulseDraftRowsTableFilterComposer
     builder: (column) => ColumnFilters(column),
   );
 
-  ColumnFilters<int> get sealedAtMillis => $composableBuilder(
-    column: $table.sealedAtMillis,
-    builder: (column) => ColumnFilters(column),
-  );
-
-  ColumnFilters<int> get unlockAtMillis => $composableBuilder(
-    column: $table.unlockAtMillis,
-    builder: (column) => ColumnFilters(column),
-  );
+  $$PeriodRowsTableFilterComposer get periodId {
+    final $$PeriodRowsTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.periodId,
+      referencedTable: $db.periodRows,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$PeriodRowsTableFilterComposer(
+            $db: $db,
+            $table: $db.periodRows,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
 }
 
-class $$ImpulseDraftRowsTableOrderingComposer
-    extends Composer<_$LetterHealthDatabase, $ImpulseDraftRowsTable> {
-  $$ImpulseDraftRowsTableOrderingComposer({
+class $$PeriodFlowRowsTableOrderingComposer
+    extends Composer<_$LetterHealthDatabase, $PeriodFlowRowsTable> {
+  $$PeriodFlowRowsTableOrderingComposer({
     required super.$db,
     required super.$table,
     super.joinBuilder,
     super.$addJoinBuilderToRootComposer,
     super.$removeJoinBuilderFromRootComposer,
   });
-  ColumnOrderings<String> get id => $composableBuilder(
-    column: $table.id,
+  ColumnOrderings<int> get day => $composableBuilder(
+    column: $table.day,
     builder: (column) => ColumnOrderings(column),
   );
 
-  ColumnOrderings<String> get content => $composableBuilder(
-    column: $table.content,
+  ColumnOrderings<String> get flow => $composableBuilder(
+    column: $table.flow,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get color => $composableBuilder(
+    column: $table.color,
     builder: (column) => ColumnOrderings(column),
   );
 
@@ -4250,31 +5689,47 @@ class $$ImpulseDraftRowsTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
-  ColumnOrderings<int> get sealedAtMillis => $composableBuilder(
-    column: $table.sealedAtMillis,
-    builder: (column) => ColumnOrderings(column),
-  );
-
-  ColumnOrderings<int> get unlockAtMillis => $composableBuilder(
-    column: $table.unlockAtMillis,
-    builder: (column) => ColumnOrderings(column),
-  );
+  $$PeriodRowsTableOrderingComposer get periodId {
+    final $$PeriodRowsTableOrderingComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.periodId,
+      referencedTable: $db.periodRows,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$PeriodRowsTableOrderingComposer(
+            $db: $db,
+            $table: $db.periodRows,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
 }
 
-class $$ImpulseDraftRowsTableAnnotationComposer
-    extends Composer<_$LetterHealthDatabase, $ImpulseDraftRowsTable> {
-  $$ImpulseDraftRowsTableAnnotationComposer({
+class $$PeriodFlowRowsTableAnnotationComposer
+    extends Composer<_$LetterHealthDatabase, $PeriodFlowRowsTable> {
+  $$PeriodFlowRowsTableAnnotationComposer({
     required super.$db,
     required super.$table,
     super.joinBuilder,
     super.$addJoinBuilderToRootComposer,
     super.$removeJoinBuilderFromRootComposer,
   });
-  GeneratedColumn<String> get id =>
-      $composableBuilder(column: $table.id, builder: (column) => column);
+  GeneratedColumn<int> get day =>
+      $composableBuilder(column: $table.day, builder: (column) => column);
 
-  GeneratedColumn<String> get content =>
-      $composableBuilder(column: $table.content, builder: (column) => column);
+  GeneratedColumn<String> get flow =>
+      $composableBuilder(column: $table.flow, builder: (column) => column);
+
+  GeneratedColumn<String> get color =>
+      $composableBuilder(column: $table.color, builder: (column) => column);
 
   GeneratedColumn<int> get createdAtMillis => $composableBuilder(
     column: $table.createdAtMillis,
@@ -4286,116 +5741,161 @@ class $$ImpulseDraftRowsTableAnnotationComposer
     builder: (column) => column,
   );
 
-  GeneratedColumn<int> get sealedAtMillis => $composableBuilder(
-    column: $table.sealedAtMillis,
-    builder: (column) => column,
-  );
-
-  GeneratedColumn<int> get unlockAtMillis => $composableBuilder(
-    column: $table.unlockAtMillis,
-    builder: (column) => column,
-  );
+  $$PeriodRowsTableAnnotationComposer get periodId {
+    final $$PeriodRowsTableAnnotationComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.periodId,
+      referencedTable: $db.periodRows,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$PeriodRowsTableAnnotationComposer(
+            $db: $db,
+            $table: $db.periodRows,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
 }
 
-class $$ImpulseDraftRowsTableTableManager
+class $$PeriodFlowRowsTableTableManager
     extends
         RootTableManager<
           _$LetterHealthDatabase,
-          $ImpulseDraftRowsTable,
-          ImpulseDraftRow,
-          $$ImpulseDraftRowsTableFilterComposer,
-          $$ImpulseDraftRowsTableOrderingComposer,
-          $$ImpulseDraftRowsTableAnnotationComposer,
-          $$ImpulseDraftRowsTableCreateCompanionBuilder,
-          $$ImpulseDraftRowsTableUpdateCompanionBuilder,
-          (
-            ImpulseDraftRow,
-            BaseReferences<
-              _$LetterHealthDatabase,
-              $ImpulseDraftRowsTable,
-              ImpulseDraftRow
-            >,
-          ),
-          ImpulseDraftRow,
-          PrefetchHooks Function()
+          $PeriodFlowRowsTable,
+          PeriodFlowRow,
+          $$PeriodFlowRowsTableFilterComposer,
+          $$PeriodFlowRowsTableOrderingComposer,
+          $$PeriodFlowRowsTableAnnotationComposer,
+          $$PeriodFlowRowsTableCreateCompanionBuilder,
+          $$PeriodFlowRowsTableUpdateCompanionBuilder,
+          (PeriodFlowRow, $$PeriodFlowRowsTableReferences),
+          PeriodFlowRow,
+          PrefetchHooks Function({bool periodId})
         > {
-  $$ImpulseDraftRowsTableTableManager(
+  $$PeriodFlowRowsTableTableManager(
     _$LetterHealthDatabase db,
-    $ImpulseDraftRowsTable table,
+    $PeriodFlowRowsTable table,
   ) : super(
         TableManagerState(
           db: db,
           table: table,
           createFilteringComposer: () =>
-              $$ImpulseDraftRowsTableFilterComposer($db: db, $table: table),
+              $$PeriodFlowRowsTableFilterComposer($db: db, $table: table),
           createOrderingComposer: () =>
-              $$ImpulseDraftRowsTableOrderingComposer($db: db, $table: table),
+              $$PeriodFlowRowsTableOrderingComposer($db: db, $table: table),
           createComputedFieldComposer: () =>
-              $$ImpulseDraftRowsTableAnnotationComposer($db: db, $table: table),
+              $$PeriodFlowRowsTableAnnotationComposer($db: db, $table: table),
           updateCompanionCallback:
               ({
-                Value<String> id = const Value.absent(),
-                Value<String> content = const Value.absent(),
+                Value<String> periodId = const Value.absent(),
+                Value<int> day = const Value.absent(),
+                Value<String> flow = const Value.absent(),
+                Value<String?> color = const Value.absent(),
                 Value<int> createdAtMillis = const Value.absent(),
                 Value<int> updatedAtMillis = const Value.absent(),
-                Value<int?> sealedAtMillis = const Value.absent(),
-                Value<int?> unlockAtMillis = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
-              }) => ImpulseDraftRowsCompanion(
-                id: id,
-                content: content,
+              }) => PeriodFlowRowsCompanion(
+                periodId: periodId,
+                day: day,
+                flow: flow,
+                color: color,
                 createdAtMillis: createdAtMillis,
                 updatedAtMillis: updatedAtMillis,
-                sealedAtMillis: sealedAtMillis,
-                unlockAtMillis: unlockAtMillis,
                 rowid: rowid,
               ),
           createCompanionCallback:
               ({
-                required String id,
-                required String content,
+                required String periodId,
+                required int day,
+                required String flow,
+                Value<String?> color = const Value.absent(),
                 required int createdAtMillis,
                 required int updatedAtMillis,
-                Value<int?> sealedAtMillis = const Value.absent(),
-                Value<int?> unlockAtMillis = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
-              }) => ImpulseDraftRowsCompanion.insert(
-                id: id,
-                content: content,
+              }) => PeriodFlowRowsCompanion.insert(
+                periodId: periodId,
+                day: day,
+                flow: flow,
+                color: color,
                 createdAtMillis: createdAtMillis,
                 updatedAtMillis: updatedAtMillis,
-                sealedAtMillis: sealedAtMillis,
-                unlockAtMillis: unlockAtMillis,
                 rowid: rowid,
               ),
           withReferenceMapper: (p0) => p0
-              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .map(
+                (e) => (
+                  e.readTable(table),
+                  $$PeriodFlowRowsTableReferences(db, table, e),
+                ),
+              )
               .toList(),
-          prefetchHooksCallback: null,
+          prefetchHooksCallback: ({periodId = false}) {
+            return PrefetchHooks(
+              db: db,
+              explicitlyWatchedTables: [],
+              addJoins:
+                  <
+                    T extends TableManagerState<
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic
+                    >
+                  >(state) {
+                    if (periodId) {
+                      state =
+                          state.withJoin(
+                                currentTable: table,
+                                currentColumn: table.periodId,
+                                referencedTable: $$PeriodFlowRowsTableReferences
+                                    ._periodIdTable(db),
+                                referencedColumn:
+                                    $$PeriodFlowRowsTableReferences
+                                        ._periodIdTable(db)
+                                        .id,
+                              )
+                              as T;
+                    }
+
+                    return state;
+                  },
+              getPrefetchedDataCallback: (items) async {
+                return [];
+              },
+            );
+          },
         ),
       );
 }
 
-typedef $$ImpulseDraftRowsTableProcessedTableManager =
+typedef $$PeriodFlowRowsTableProcessedTableManager =
     ProcessedTableManager<
       _$LetterHealthDatabase,
-      $ImpulseDraftRowsTable,
-      ImpulseDraftRow,
-      $$ImpulseDraftRowsTableFilterComposer,
-      $$ImpulseDraftRowsTableOrderingComposer,
-      $$ImpulseDraftRowsTableAnnotationComposer,
-      $$ImpulseDraftRowsTableCreateCompanionBuilder,
-      $$ImpulseDraftRowsTableUpdateCompanionBuilder,
-      (
-        ImpulseDraftRow,
-        BaseReferences<
-          _$LetterHealthDatabase,
-          $ImpulseDraftRowsTable,
-          ImpulseDraftRow
-        >,
-      ),
-      ImpulseDraftRow,
-      PrefetchHooks Function()
+      $PeriodFlowRowsTable,
+      PeriodFlowRow,
+      $$PeriodFlowRowsTableFilterComposer,
+      $$PeriodFlowRowsTableOrderingComposer,
+      $$PeriodFlowRowsTableAnnotationComposer,
+      $$PeriodFlowRowsTableCreateCompanionBuilder,
+      $$PeriodFlowRowsTableUpdateCompanionBuilder,
+      (PeriodFlowRow, $$PeriodFlowRowsTableReferences),
+      PeriodFlowRow,
+      PrefetchHooks Function({bool periodId})
     >;
 typedef $$CareRecordRowsTableCreateCompanionBuilder =
     CareRecordRowsCompanion Function({
@@ -4423,6 +5923,41 @@ typedef $$CareRecordRowsTableUpdateCompanionBuilder =
       Value<bool> pinned,
       Value<int> rowid,
     });
+
+final class $$CareRecordRowsTableReferences
+    extends
+        BaseReferences<
+          _$LetterHealthDatabase,
+          $CareRecordRowsTable,
+          CareRecordRow
+        > {
+  $$CareRecordRowsTableReferences(
+    super.$_db,
+    super.$_table,
+    super.$_typedResult,
+  );
+
+  static MultiTypedResultKey<$CareReflectionRowsTable, List<CareReflectionRow>>
+  _careReflectionRowsRefsTable(_$LetterHealthDatabase db) =>
+      MultiTypedResultKey.fromTable(
+        db.careReflectionRows,
+        aliasName: 'care_record_rows__id__care_reflection_rows__care_record_id',
+      );
+
+  $$CareReflectionRowsTableProcessedTableManager get careReflectionRowsRefs {
+    final manager = $$CareReflectionRowsTableTableManager(
+      $_db,
+      $_db.careReflectionRows,
+    ).filter((f) => f.careRecordId.id.sqlEquals($_itemColumn<String>('id')!));
+
+    final cache = $_typedResult.readTableOrNull(
+      _careReflectionRowsRefsTable($_db),
+    );
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: cache),
+    );
+  }
+}
 
 class $$CareRecordRowsTableFilterComposer
     extends Composer<_$LetterHealthDatabase, $CareRecordRowsTable> {
@@ -4477,6 +6012,31 @@ class $$CareRecordRowsTableFilterComposer
     column: $table.pinned,
     builder: (column) => ColumnFilters(column),
   );
+
+  Expression<bool> careReflectionRowsRefs(
+    Expression<bool> Function($$CareReflectionRowsTableFilterComposer f) f,
+  ) {
+    final $$CareReflectionRowsTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.id,
+      referencedTable: $db.careReflectionRows,
+      getReferencedColumn: (t) => t.careRecordId,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$CareReflectionRowsTableFilterComposer(
+            $db: $db,
+            $table: $db.careReflectionRows,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return f(composer);
+  }
 }
 
 class $$CareRecordRowsTableOrderingComposer
@@ -4577,6 +6137,32 @@ class $$CareRecordRowsTableAnnotationComposer
 
   GeneratedColumn<bool> get pinned =>
       $composableBuilder(column: $table.pinned, builder: (column) => column);
+
+  Expression<T> careReflectionRowsRefs<T extends Object>(
+    Expression<T> Function($$CareReflectionRowsTableAnnotationComposer a) f,
+  ) {
+    final $$CareReflectionRowsTableAnnotationComposer composer =
+        $composerBuilder(
+          composer: this,
+          getCurrentColumn: (t) => t.id,
+          referencedTable: $db.careReflectionRows,
+          getReferencedColumn: (t) => t.careRecordId,
+          builder:
+              (
+                joinBuilder, {
+                $addJoinBuilderToRootComposer,
+                $removeJoinBuilderFromRootComposer,
+              }) => $$CareReflectionRowsTableAnnotationComposer(
+                $db: $db,
+                $table: $db.careReflectionRows,
+                $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+                joinBuilder: joinBuilder,
+                $removeJoinBuilderFromRootComposer:
+                    $removeJoinBuilderFromRootComposer,
+              ),
+        );
+    return f(composer);
+  }
 }
 
 class $$CareRecordRowsTableTableManager
@@ -4590,16 +6176,9 @@ class $$CareRecordRowsTableTableManager
           $$CareRecordRowsTableAnnotationComposer,
           $$CareRecordRowsTableCreateCompanionBuilder,
           $$CareRecordRowsTableUpdateCompanionBuilder,
-          (
-            CareRecordRow,
-            BaseReferences<
-              _$LetterHealthDatabase,
-              $CareRecordRowsTable,
-              CareRecordRow
-            >,
-          ),
+          (CareRecordRow, $$CareRecordRowsTableReferences),
           CareRecordRow,
-          PrefetchHooks Function()
+          PrefetchHooks Function({bool careReflectionRowsRefs})
         > {
   $$CareRecordRowsTableTableManager(
     _$LetterHealthDatabase db,
@@ -4663,9 +6242,47 @@ class $$CareRecordRowsTableTableManager
                 rowid: rowid,
               ),
           withReferenceMapper: (p0) => p0
-              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .map(
+                (e) => (
+                  e.readTable(table),
+                  $$CareRecordRowsTableReferences(db, table, e),
+                ),
+              )
               .toList(),
-          prefetchHooksCallback: null,
+          prefetchHooksCallback: ({careReflectionRowsRefs = false}) {
+            return PrefetchHooks(
+              db: db,
+              explicitlyWatchedTables: [
+                if (careReflectionRowsRefs) db.careReflectionRows,
+              ],
+              addJoins: null,
+              getPrefetchedDataCallback: (items) async {
+                return [
+                  if (careReflectionRowsRefs)
+                    await $_getPrefetchedData<
+                      CareRecordRow,
+                      $CareRecordRowsTable,
+                      CareReflectionRow
+                    >(
+                      currentTable: table,
+                      referencedTable: $$CareRecordRowsTableReferences
+                          ._careReflectionRowsRefsTable(db),
+                      managerFromTypedResult: (p0) =>
+                          $$CareRecordRowsTableReferences(
+                            db,
+                            table,
+                            p0,
+                          ).careReflectionRowsRefs,
+                      referencedItemsForCurrentItem: (item, referencedItems) =>
+                          referencedItems.where(
+                            (e) => e.careRecordId == item.id,
+                          ),
+                      typedResults: items,
+                    ),
+                ];
+              },
+            );
+          },
         ),
       );
 }
@@ -4680,16 +6297,9 @@ typedef $$CareRecordRowsTableProcessedTableManager =
       $$CareRecordRowsTableAnnotationComposer,
       $$CareRecordRowsTableCreateCompanionBuilder,
       $$CareRecordRowsTableUpdateCompanionBuilder,
-      (
-        CareRecordRow,
-        BaseReferences<
-          _$LetterHealthDatabase,
-          $CareRecordRowsTable,
-          CareRecordRow
-        >,
-      ),
+      (CareRecordRow, $$CareRecordRowsTableReferences),
       CareRecordRow,
-      PrefetchHooks Function()
+      PrefetchHooks Function({bool careReflectionRowsRefs})
     >;
 typedef $$CareReflectionRowsTableCreateCompanionBuilder =
     CareReflectionRowsCompanion Function({
@@ -4718,6 +6328,39 @@ typedef $$CareReflectionRowsTableUpdateCompanionBuilder =
       Value<int> rowid,
     });
 
+final class $$CareReflectionRowsTableReferences
+    extends
+        BaseReferences<
+          _$LetterHealthDatabase,
+          $CareReflectionRowsTable,
+          CareReflectionRow
+        > {
+  $$CareReflectionRowsTableReferences(
+    super.$_db,
+    super.$_table,
+    super.$_typedResult,
+  );
+
+  static $CareRecordRowsTable _careRecordIdTable(_$LetterHealthDatabase db) =>
+      db.careRecordRows.createAlias(
+        'care_reflection_rows__care_record_id__care_record_rows__id',
+      );
+
+  $$CareRecordRowsTableProcessedTableManager get careRecordId {
+    final $_column = $_itemColumn<String>('care_record_id')!;
+
+    final manager = $$CareRecordRowsTableTableManager(
+      $_db,
+      $_db.careRecordRows,
+    ).filter((f) => f.id.sqlEquals($_column));
+    final item = $_typedResult.readTableOrNull(_careRecordIdTable($_db));
+    if (item == null) return manager;
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: [item]),
+    );
+  }
+}
+
 class $$CareReflectionRowsTableFilterComposer
     extends Composer<_$LetterHealthDatabase, $CareReflectionRowsTable> {
   $$CareReflectionRowsTableFilterComposer({
@@ -4729,11 +6372,6 @@ class $$CareReflectionRowsTableFilterComposer
   });
   ColumnFilters<String> get id => $composableBuilder(
     column: $table.id,
-    builder: (column) => ColumnFilters(column),
-  );
-
-  ColumnFilters<String> get careRecordId => $composableBuilder(
-    column: $table.careRecordId,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -4771,6 +6409,29 @@ class $$CareReflectionRowsTableFilterComposer
     column: $table.updatedAtMillis,
     builder: (column) => ColumnFilters(column),
   );
+
+  $$CareRecordRowsTableFilterComposer get careRecordId {
+    final $$CareRecordRowsTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.careRecordId,
+      referencedTable: $db.careRecordRows,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$CareRecordRowsTableFilterComposer(
+            $db: $db,
+            $table: $db.careRecordRows,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
 }
 
 class $$CareReflectionRowsTableOrderingComposer
@@ -4784,11 +6445,6 @@ class $$CareReflectionRowsTableOrderingComposer
   });
   ColumnOrderings<String> get id => $composableBuilder(
     column: $table.id,
-    builder: (column) => ColumnOrderings(column),
-  );
-
-  ColumnOrderings<String> get careRecordId => $composableBuilder(
-    column: $table.careRecordId,
     builder: (column) => ColumnOrderings(column),
   );
 
@@ -4826,6 +6482,29 @@ class $$CareReflectionRowsTableOrderingComposer
     column: $table.updatedAtMillis,
     builder: (column) => ColumnOrderings(column),
   );
+
+  $$CareRecordRowsTableOrderingComposer get careRecordId {
+    final $$CareRecordRowsTableOrderingComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.careRecordId,
+      referencedTable: $db.careRecordRows,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$CareRecordRowsTableOrderingComposer(
+            $db: $db,
+            $table: $db.careRecordRows,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
 }
 
 class $$CareReflectionRowsTableAnnotationComposer
@@ -4839,11 +6518,6 @@ class $$CareReflectionRowsTableAnnotationComposer
   });
   GeneratedColumn<String> get id =>
       $composableBuilder(column: $table.id, builder: (column) => column);
-
-  GeneratedColumn<String> get careRecordId => $composableBuilder(
-    column: $table.careRecordId,
-    builder: (column) => column,
-  );
 
   GeneratedColumn<String> get mode =>
       $composableBuilder(column: $table.mode, builder: (column) => column);
@@ -4875,6 +6549,29 @@ class $$CareReflectionRowsTableAnnotationComposer
     column: $table.updatedAtMillis,
     builder: (column) => column,
   );
+
+  $$CareRecordRowsTableAnnotationComposer get careRecordId {
+    final $$CareRecordRowsTableAnnotationComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.careRecordId,
+      referencedTable: $db.careRecordRows,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$CareRecordRowsTableAnnotationComposer(
+            $db: $db,
+            $table: $db.careRecordRows,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
 }
 
 class $$CareReflectionRowsTableTableManager
@@ -4888,16 +6585,9 @@ class $$CareReflectionRowsTableTableManager
           $$CareReflectionRowsTableAnnotationComposer,
           $$CareReflectionRowsTableCreateCompanionBuilder,
           $$CareReflectionRowsTableUpdateCompanionBuilder,
-          (
-            CareReflectionRow,
-            BaseReferences<
-              _$LetterHealthDatabase,
-              $CareReflectionRowsTable,
-              CareReflectionRow
-            >,
-          ),
+          (CareReflectionRow, $$CareReflectionRowsTableReferences),
           CareReflectionRow,
-          PrefetchHooks Function()
+          PrefetchHooks Function({bool careRecordId})
         > {
   $$CareReflectionRowsTableTableManager(
     _$LetterHealthDatabase db,
@@ -4964,9 +6654,56 @@ class $$CareReflectionRowsTableTableManager
                 rowid: rowid,
               ),
           withReferenceMapper: (p0) => p0
-              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .map(
+                (e) => (
+                  e.readTable(table),
+                  $$CareReflectionRowsTableReferences(db, table, e),
+                ),
+              )
               .toList(),
-          prefetchHooksCallback: null,
+          prefetchHooksCallback: ({careRecordId = false}) {
+            return PrefetchHooks(
+              db: db,
+              explicitlyWatchedTables: [],
+              addJoins:
+                  <
+                    T extends TableManagerState<
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic
+                    >
+                  >(state) {
+                    if (careRecordId) {
+                      state =
+                          state.withJoin(
+                                currentTable: table,
+                                currentColumn: table.careRecordId,
+                                referencedTable:
+                                    $$CareReflectionRowsTableReferences
+                                        ._careRecordIdTable(db),
+                                referencedColumn:
+                                    $$CareReflectionRowsTableReferences
+                                        ._careRecordIdTable(db)
+                                        .id,
+                              )
+                              as T;
+                    }
+
+                    return state;
+                  },
+              getPrefetchedDataCallback: (items) async {
+                return [];
+              },
+            );
+          },
         ),
       );
 }
@@ -4981,20 +6718,14 @@ typedef $$CareReflectionRowsTableProcessedTableManager =
       $$CareReflectionRowsTableAnnotationComposer,
       $$CareReflectionRowsTableCreateCompanionBuilder,
       $$CareReflectionRowsTableUpdateCompanionBuilder,
-      (
-        CareReflectionRow,
-        BaseReferences<
-          _$LetterHealthDatabase,
-          $CareReflectionRowsTable,
-          CareReflectionRow
-        >,
-      ),
+      (CareReflectionRow, $$CareReflectionRowsTableReferences),
       CareReflectionRow,
-      PrefetchHooks Function()
+      PrefetchHooks Function({bool careRecordId})
     >;
 typedef $$CycleReflectionRowsTableCreateCompanionBuilder =
     CycleReflectionRowsCompanion Function({
       required String id,
+      Value<String?> startingPeriodId,
       required int cycleStartDay,
       Value<String?> observation,
       Value<String?> need,
@@ -5007,6 +6738,7 @@ typedef $$CycleReflectionRowsTableCreateCompanionBuilder =
 typedef $$CycleReflectionRowsTableUpdateCompanionBuilder =
     CycleReflectionRowsCompanion Function({
       Value<String> id,
+      Value<String?> startingPeriodId,
       Value<int> cycleStartDay,
       Value<String?> observation,
       Value<String?> need,
@@ -5016,6 +6748,39 @@ typedef $$CycleReflectionRowsTableUpdateCompanionBuilder =
       Value<int> updatedAtMillis,
       Value<int> rowid,
     });
+
+final class $$CycleReflectionRowsTableReferences
+    extends
+        BaseReferences<
+          _$LetterHealthDatabase,
+          $CycleReflectionRowsTable,
+          CycleReflectionRow
+        > {
+  $$CycleReflectionRowsTableReferences(
+    super.$_db,
+    super.$_table,
+    super.$_typedResult,
+  );
+
+  static $PeriodRowsTable _startingPeriodIdTable(_$LetterHealthDatabase db) =>
+      db.periodRows.createAlias(
+        'cycle_reflection_rows__starting_period_id__period_rows__id',
+      );
+
+  $$PeriodRowsTableProcessedTableManager? get startingPeriodId {
+    final $_column = $_itemColumn<String>('starting_period_id');
+    if ($_column == null) return null;
+    final manager = $$PeriodRowsTableTableManager(
+      $_db,
+      $_db.periodRows,
+    ).filter((f) => f.id.sqlEquals($_column));
+    final item = $_typedResult.readTableOrNull(_startingPeriodIdTable($_db));
+    if (item == null) return manager;
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: [item]),
+    );
+  }
+}
 
 class $$CycleReflectionRowsTableFilterComposer
     extends Composer<_$LetterHealthDatabase, $CycleReflectionRowsTable> {
@@ -5065,6 +6830,29 @@ class $$CycleReflectionRowsTableFilterComposer
     column: $table.updatedAtMillis,
     builder: (column) => ColumnFilters(column),
   );
+
+  $$PeriodRowsTableFilterComposer get startingPeriodId {
+    final $$PeriodRowsTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.startingPeriodId,
+      referencedTable: $db.periodRows,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$PeriodRowsTableFilterComposer(
+            $db: $db,
+            $table: $db.periodRows,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
 }
 
 class $$CycleReflectionRowsTableOrderingComposer
@@ -5115,6 +6903,29 @@ class $$CycleReflectionRowsTableOrderingComposer
     column: $table.updatedAtMillis,
     builder: (column) => ColumnOrderings(column),
   );
+
+  $$PeriodRowsTableOrderingComposer get startingPeriodId {
+    final $$PeriodRowsTableOrderingComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.startingPeriodId,
+      referencedTable: $db.periodRows,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$PeriodRowsTableOrderingComposer(
+            $db: $db,
+            $table: $db.periodRows,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
 }
 
 class $$CycleReflectionRowsTableAnnotationComposer
@@ -5161,6 +6972,29 @@ class $$CycleReflectionRowsTableAnnotationComposer
     column: $table.updatedAtMillis,
     builder: (column) => column,
   );
+
+  $$PeriodRowsTableAnnotationComposer get startingPeriodId {
+    final $$PeriodRowsTableAnnotationComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.startingPeriodId,
+      referencedTable: $db.periodRows,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$PeriodRowsTableAnnotationComposer(
+            $db: $db,
+            $table: $db.periodRows,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
 }
 
 class $$CycleReflectionRowsTableTableManager
@@ -5174,16 +7008,9 @@ class $$CycleReflectionRowsTableTableManager
           $$CycleReflectionRowsTableAnnotationComposer,
           $$CycleReflectionRowsTableCreateCompanionBuilder,
           $$CycleReflectionRowsTableUpdateCompanionBuilder,
-          (
-            CycleReflectionRow,
-            BaseReferences<
-              _$LetterHealthDatabase,
-              $CycleReflectionRowsTable,
-              CycleReflectionRow
-            >,
-          ),
+          (CycleReflectionRow, $$CycleReflectionRowsTableReferences),
           CycleReflectionRow,
-          PrefetchHooks Function()
+          PrefetchHooks Function({bool startingPeriodId})
         > {
   $$CycleReflectionRowsTableTableManager(
     _$LetterHealthDatabase db,
@@ -5207,6 +7034,7 @@ class $$CycleReflectionRowsTableTableManager
           updateCompanionCallback:
               ({
                 Value<String> id = const Value.absent(),
+                Value<String?> startingPeriodId = const Value.absent(),
                 Value<int> cycleStartDay = const Value.absent(),
                 Value<String?> observation = const Value.absent(),
                 Value<String?> need = const Value.absent(),
@@ -5217,6 +7045,7 @@ class $$CycleReflectionRowsTableTableManager
                 Value<int> rowid = const Value.absent(),
               }) => CycleReflectionRowsCompanion(
                 id: id,
+                startingPeriodId: startingPeriodId,
                 cycleStartDay: cycleStartDay,
                 observation: observation,
                 need: need,
@@ -5229,6 +7058,7 @@ class $$CycleReflectionRowsTableTableManager
           createCompanionCallback:
               ({
                 required String id,
+                Value<String?> startingPeriodId = const Value.absent(),
                 required int cycleStartDay,
                 Value<String?> observation = const Value.absent(),
                 Value<String?> need = const Value.absent(),
@@ -5239,6 +7069,7 @@ class $$CycleReflectionRowsTableTableManager
                 Value<int> rowid = const Value.absent(),
               }) => CycleReflectionRowsCompanion.insert(
                 id: id,
+                startingPeriodId: startingPeriodId,
                 cycleStartDay: cycleStartDay,
                 observation: observation,
                 need: need,
@@ -5249,9 +7080,56 @@ class $$CycleReflectionRowsTableTableManager
                 rowid: rowid,
               ),
           withReferenceMapper: (p0) => p0
-              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .map(
+                (e) => (
+                  e.readTable(table),
+                  $$CycleReflectionRowsTableReferences(db, table, e),
+                ),
+              )
               .toList(),
-          prefetchHooksCallback: null,
+          prefetchHooksCallback: ({startingPeriodId = false}) {
+            return PrefetchHooks(
+              db: db,
+              explicitlyWatchedTables: [],
+              addJoins:
+                  <
+                    T extends TableManagerState<
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic
+                    >
+                  >(state) {
+                    if (startingPeriodId) {
+                      state =
+                          state.withJoin(
+                                currentTable: table,
+                                currentColumn: table.startingPeriodId,
+                                referencedTable:
+                                    $$CycleReflectionRowsTableReferences
+                                        ._startingPeriodIdTable(db),
+                                referencedColumn:
+                                    $$CycleReflectionRowsTableReferences
+                                        ._startingPeriodIdTable(db)
+                                        .id,
+                              )
+                              as T;
+                    }
+
+                    return state;
+                  },
+              getPrefetchedDataCallback: (items) async {
+                return [];
+              },
+            );
+          },
         ),
       );
 }
@@ -5266,24 +7144,15 @@ typedef $$CycleReflectionRowsTableProcessedTableManager =
       $$CycleReflectionRowsTableAnnotationComposer,
       $$CycleReflectionRowsTableCreateCompanionBuilder,
       $$CycleReflectionRowsTableUpdateCompanionBuilder,
-      (
-        CycleReflectionRow,
-        BaseReferences<
-          _$LetterHealthDatabase,
-          $CycleReflectionRowsTable,
-          CycleReflectionRow
-        >,
-      ),
+      (CycleReflectionRow, $$CycleReflectionRowsTableReferences),
       CycleReflectionRow,
-      PrefetchHooks Function()
+      PrefetchHooks Function({bool startingPeriodId})
     >;
 typedef $$HealthRecordRowsTableCreateCompanionBuilder =
     HealthRecordRowsCompanion Function({
       required String id,
       required String symptom,
       required int severity,
-      Value<int?> painRating,
-      required String painLocationsJson,
       required String functionalImpactsJson,
       required int experiencedDay,
       required int recordedAtMillis,
@@ -5298,8 +7167,6 @@ typedef $$HealthRecordRowsTableUpdateCompanionBuilder =
       Value<String> id,
       Value<String> symptom,
       Value<int> severity,
-      Value<int?> painRating,
-      Value<String> painLocationsJson,
       Value<String> functionalImpactsJson,
       Value<int> experiencedDay,
       Value<int> recordedAtMillis,
@@ -5331,16 +7198,6 @@ class $$HealthRecordRowsTableFilterComposer
 
   ColumnFilters<int> get severity => $composableBuilder(
     column: $table.severity,
-    builder: (column) => ColumnFilters(column),
-  );
-
-  ColumnFilters<int> get painRating => $composableBuilder(
-    column: $table.painRating,
-    builder: (column) => ColumnFilters(column),
-  );
-
-  ColumnFilters<String> get painLocationsJson => $composableBuilder(
-    column: $table.painLocationsJson,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -5404,16 +7261,6 @@ class $$HealthRecordRowsTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
-  ColumnOrderings<int> get painRating => $composableBuilder(
-    column: $table.painRating,
-    builder: (column) => ColumnOrderings(column),
-  );
-
-  ColumnOrderings<String> get painLocationsJson => $composableBuilder(
-    column: $table.painLocationsJson,
-    builder: (column) => ColumnOrderings(column),
-  );
-
   ColumnOrderings<String> get functionalImpactsJson => $composableBuilder(
     column: $table.functionalImpactsJson,
     builder: (column) => ColumnOrderings(column),
@@ -5467,16 +7314,6 @@ class $$HealthRecordRowsTableAnnotationComposer
 
   GeneratedColumn<int> get severity =>
       $composableBuilder(column: $table.severity, builder: (column) => column);
-
-  GeneratedColumn<int> get painRating => $composableBuilder(
-    column: $table.painRating,
-    builder: (column) => column,
-  );
-
-  GeneratedColumn<String> get painLocationsJson => $composableBuilder(
-    column: $table.painLocationsJson,
-    builder: (column) => column,
-  );
 
   GeneratedColumn<String> get functionalImpactsJson => $composableBuilder(
     column: $table.functionalImpactsJson,
@@ -5554,8 +7391,6 @@ class $$HealthRecordRowsTableTableManager
                 Value<String> id = const Value.absent(),
                 Value<String> symptom = const Value.absent(),
                 Value<int> severity = const Value.absent(),
-                Value<int?> painRating = const Value.absent(),
-                Value<String> painLocationsJson = const Value.absent(),
                 Value<String> functionalImpactsJson = const Value.absent(),
                 Value<int> experiencedDay = const Value.absent(),
                 Value<int> recordedAtMillis = const Value.absent(),
@@ -5568,8 +7403,6 @@ class $$HealthRecordRowsTableTableManager
                 id: id,
                 symptom: symptom,
                 severity: severity,
-                painRating: painRating,
-                painLocationsJson: painLocationsJson,
                 functionalImpactsJson: functionalImpactsJson,
                 experiencedDay: experiencedDay,
                 recordedAtMillis: recordedAtMillis,
@@ -5584,8 +7417,6 @@ class $$HealthRecordRowsTableTableManager
                 required String id,
                 required String symptom,
                 required int severity,
-                Value<int?> painRating = const Value.absent(),
-                required String painLocationsJson,
                 required String functionalImpactsJson,
                 required int experiencedDay,
                 required int recordedAtMillis,
@@ -5598,8 +7429,6 @@ class $$HealthRecordRowsTableTableManager
                 id: id,
                 symptom: symptom,
                 severity: severity,
-                painRating: painRating,
-                painLocationsJson: painLocationsJson,
                 functionalImpactsJson: functionalImpactsJson,
                 experiencedDay: experiencedDay,
                 recordedAtMillis: recordedAtMillis,
@@ -6029,14 +7858,627 @@ typedef $$MomentCheckInRowsTableProcessedTableManager =
       MomentCheckInRow,
       PrefetchHooks Function()
     >;
+typedef $$PreparationPlanRowsTableCreateCompanionBuilder =
+    PreparationPlanRowsCompanion Function({
+      required String id,
+      required String status,
+      required String evidenceFingerprint,
+      required String sourceRecordIdsJson,
+      required bool includeCare,
+      required String careActionId,
+      required String careActionLabel,
+      required String careMode,
+      required int betterCount,
+      required int sameCount,
+      required int worseCount,
+      Value<String?> noteText,
+      Value<String?> personalText,
+      required int createdAtMillis,
+      required int updatedAtMillis,
+      Value<int> rowid,
+    });
+typedef $$PreparationPlanRowsTableUpdateCompanionBuilder =
+    PreparationPlanRowsCompanion Function({
+      Value<String> id,
+      Value<String> status,
+      Value<String> evidenceFingerprint,
+      Value<String> sourceRecordIdsJson,
+      Value<bool> includeCare,
+      Value<String> careActionId,
+      Value<String> careActionLabel,
+      Value<String> careMode,
+      Value<int> betterCount,
+      Value<int> sameCount,
+      Value<int> worseCount,
+      Value<String?> noteText,
+      Value<String?> personalText,
+      Value<int> createdAtMillis,
+      Value<int> updatedAtMillis,
+      Value<int> rowid,
+    });
+
+class $$PreparationPlanRowsTableFilterComposer
+    extends Composer<_$LetterHealthDatabase, $PreparationPlanRowsTable> {
+  $$PreparationPlanRowsTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get status => $composableBuilder(
+    column: $table.status,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get evidenceFingerprint => $composableBuilder(
+    column: $table.evidenceFingerprint,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get sourceRecordIdsJson => $composableBuilder(
+    column: $table.sourceRecordIdsJson,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get includeCare => $composableBuilder(
+    column: $table.includeCare,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get careActionId => $composableBuilder(
+    column: $table.careActionId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get careActionLabel => $composableBuilder(
+    column: $table.careActionLabel,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get careMode => $composableBuilder(
+    column: $table.careMode,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get betterCount => $composableBuilder(
+    column: $table.betterCount,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get sameCount => $composableBuilder(
+    column: $table.sameCount,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get worseCount => $composableBuilder(
+    column: $table.worseCount,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get noteText => $composableBuilder(
+    column: $table.noteText,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get personalText => $composableBuilder(
+    column: $table.personalText,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get createdAtMillis => $composableBuilder(
+    column: $table.createdAtMillis,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get updatedAtMillis => $composableBuilder(
+    column: $table.updatedAtMillis,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$PreparationPlanRowsTableOrderingComposer
+    extends Composer<_$LetterHealthDatabase, $PreparationPlanRowsTable> {
+  $$PreparationPlanRowsTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get status => $composableBuilder(
+    column: $table.status,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get evidenceFingerprint => $composableBuilder(
+    column: $table.evidenceFingerprint,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get sourceRecordIdsJson => $composableBuilder(
+    column: $table.sourceRecordIdsJson,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<bool> get includeCare => $composableBuilder(
+    column: $table.includeCare,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get careActionId => $composableBuilder(
+    column: $table.careActionId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get careActionLabel => $composableBuilder(
+    column: $table.careActionLabel,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get careMode => $composableBuilder(
+    column: $table.careMode,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get betterCount => $composableBuilder(
+    column: $table.betterCount,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get sameCount => $composableBuilder(
+    column: $table.sameCount,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get worseCount => $composableBuilder(
+    column: $table.worseCount,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get noteText => $composableBuilder(
+    column: $table.noteText,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get personalText => $composableBuilder(
+    column: $table.personalText,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get createdAtMillis => $composableBuilder(
+    column: $table.createdAtMillis,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get updatedAtMillis => $composableBuilder(
+    column: $table.updatedAtMillis,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$PreparationPlanRowsTableAnnotationComposer
+    extends Composer<_$LetterHealthDatabase, $PreparationPlanRowsTable> {
+  $$PreparationPlanRowsTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<String> get status =>
+      $composableBuilder(column: $table.status, builder: (column) => column);
+
+  GeneratedColumn<String> get evidenceFingerprint => $composableBuilder(
+    column: $table.evidenceFingerprint,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get sourceRecordIdsJson => $composableBuilder(
+    column: $table.sourceRecordIdsJson,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<bool> get includeCare => $composableBuilder(
+    column: $table.includeCare,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get careActionId => $composableBuilder(
+    column: $table.careActionId,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get careActionLabel => $composableBuilder(
+    column: $table.careActionLabel,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get careMode =>
+      $composableBuilder(column: $table.careMode, builder: (column) => column);
+
+  GeneratedColumn<int> get betterCount => $composableBuilder(
+    column: $table.betterCount,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get sameCount =>
+      $composableBuilder(column: $table.sameCount, builder: (column) => column);
+
+  GeneratedColumn<int> get worseCount => $composableBuilder(
+    column: $table.worseCount,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get noteText =>
+      $composableBuilder(column: $table.noteText, builder: (column) => column);
+
+  GeneratedColumn<String> get personalText => $composableBuilder(
+    column: $table.personalText,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get createdAtMillis => $composableBuilder(
+    column: $table.createdAtMillis,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get updatedAtMillis => $composableBuilder(
+    column: $table.updatedAtMillis,
+    builder: (column) => column,
+  );
+}
+
+class $$PreparationPlanRowsTableTableManager
+    extends
+        RootTableManager<
+          _$LetterHealthDatabase,
+          $PreparationPlanRowsTable,
+          PreparationPlanRow,
+          $$PreparationPlanRowsTableFilterComposer,
+          $$PreparationPlanRowsTableOrderingComposer,
+          $$PreparationPlanRowsTableAnnotationComposer,
+          $$PreparationPlanRowsTableCreateCompanionBuilder,
+          $$PreparationPlanRowsTableUpdateCompanionBuilder,
+          (
+            PreparationPlanRow,
+            BaseReferences<
+              _$LetterHealthDatabase,
+              $PreparationPlanRowsTable,
+              PreparationPlanRow
+            >,
+          ),
+          PreparationPlanRow,
+          PrefetchHooks Function()
+        > {
+  $$PreparationPlanRowsTableTableManager(
+    _$LetterHealthDatabase db,
+    $PreparationPlanRowsTable table,
+  ) : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$PreparationPlanRowsTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$PreparationPlanRowsTableOrderingComposer(
+                $db: db,
+                $table: table,
+              ),
+          createComputedFieldComposer: () =>
+              $$PreparationPlanRowsTableAnnotationComposer(
+                $db: db,
+                $table: table,
+              ),
+          updateCompanionCallback:
+              ({
+                Value<String> id = const Value.absent(),
+                Value<String> status = const Value.absent(),
+                Value<String> evidenceFingerprint = const Value.absent(),
+                Value<String> sourceRecordIdsJson = const Value.absent(),
+                Value<bool> includeCare = const Value.absent(),
+                Value<String> careActionId = const Value.absent(),
+                Value<String> careActionLabel = const Value.absent(),
+                Value<String> careMode = const Value.absent(),
+                Value<int> betterCount = const Value.absent(),
+                Value<int> sameCount = const Value.absent(),
+                Value<int> worseCount = const Value.absent(),
+                Value<String?> noteText = const Value.absent(),
+                Value<String?> personalText = const Value.absent(),
+                Value<int> createdAtMillis = const Value.absent(),
+                Value<int> updatedAtMillis = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => PreparationPlanRowsCompanion(
+                id: id,
+                status: status,
+                evidenceFingerprint: evidenceFingerprint,
+                sourceRecordIdsJson: sourceRecordIdsJson,
+                includeCare: includeCare,
+                careActionId: careActionId,
+                careActionLabel: careActionLabel,
+                careMode: careMode,
+                betterCount: betterCount,
+                sameCount: sameCount,
+                worseCount: worseCount,
+                noteText: noteText,
+                personalText: personalText,
+                createdAtMillis: createdAtMillis,
+                updatedAtMillis: updatedAtMillis,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required String id,
+                required String status,
+                required String evidenceFingerprint,
+                required String sourceRecordIdsJson,
+                required bool includeCare,
+                required String careActionId,
+                required String careActionLabel,
+                required String careMode,
+                required int betterCount,
+                required int sameCount,
+                required int worseCount,
+                Value<String?> noteText = const Value.absent(),
+                Value<String?> personalText = const Value.absent(),
+                required int createdAtMillis,
+                required int updatedAtMillis,
+                Value<int> rowid = const Value.absent(),
+              }) => PreparationPlanRowsCompanion.insert(
+                id: id,
+                status: status,
+                evidenceFingerprint: evidenceFingerprint,
+                sourceRecordIdsJson: sourceRecordIdsJson,
+                includeCare: includeCare,
+                careActionId: careActionId,
+                careActionLabel: careActionLabel,
+                careMode: careMode,
+                betterCount: betterCount,
+                sameCount: sameCount,
+                worseCount: worseCount,
+                noteText: noteText,
+                personalText: personalText,
+                createdAtMillis: createdAtMillis,
+                updatedAtMillis: updatedAtMillis,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$PreparationPlanRowsTableProcessedTableManager =
+    ProcessedTableManager<
+      _$LetterHealthDatabase,
+      $PreparationPlanRowsTable,
+      PreparationPlanRow,
+      $$PreparationPlanRowsTableFilterComposer,
+      $$PreparationPlanRowsTableOrderingComposer,
+      $$PreparationPlanRowsTableAnnotationComposer,
+      $$PreparationPlanRowsTableCreateCompanionBuilder,
+      $$PreparationPlanRowsTableUpdateCompanionBuilder,
+      (
+        PreparationPlanRow,
+        BaseReferences<
+          _$LetterHealthDatabase,
+          $PreparationPlanRowsTable,
+          PreparationPlanRow
+        >,
+      ),
+      PreparationPlanRow,
+      PrefetchHooks Function()
+    >;
+typedef $$PreparationDismissalRowsTableCreateCompanionBuilder =
+    PreparationDismissalRowsCompanion Function({
+      required String fingerprint,
+      required String evidenceLine,
+      required int dismissedAtMillis,
+      Value<int> rowid,
+    });
+typedef $$PreparationDismissalRowsTableUpdateCompanionBuilder =
+    PreparationDismissalRowsCompanion Function({
+      Value<String> fingerprint,
+      Value<String> evidenceLine,
+      Value<int> dismissedAtMillis,
+      Value<int> rowid,
+    });
+
+class $$PreparationDismissalRowsTableFilterComposer
+    extends Composer<_$LetterHealthDatabase, $PreparationDismissalRowsTable> {
+  $$PreparationDismissalRowsTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get fingerprint => $composableBuilder(
+    column: $table.fingerprint,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get evidenceLine => $composableBuilder(
+    column: $table.evidenceLine,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get dismissedAtMillis => $composableBuilder(
+    column: $table.dismissedAtMillis,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$PreparationDismissalRowsTableOrderingComposer
+    extends Composer<_$LetterHealthDatabase, $PreparationDismissalRowsTable> {
+  $$PreparationDismissalRowsTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get fingerprint => $composableBuilder(
+    column: $table.fingerprint,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get evidenceLine => $composableBuilder(
+    column: $table.evidenceLine,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get dismissedAtMillis => $composableBuilder(
+    column: $table.dismissedAtMillis,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$PreparationDismissalRowsTableAnnotationComposer
+    extends Composer<_$LetterHealthDatabase, $PreparationDismissalRowsTable> {
+  $$PreparationDismissalRowsTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get fingerprint => $composableBuilder(
+    column: $table.fingerprint,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get evidenceLine => $composableBuilder(
+    column: $table.evidenceLine,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get dismissedAtMillis => $composableBuilder(
+    column: $table.dismissedAtMillis,
+    builder: (column) => column,
+  );
+}
+
+class $$PreparationDismissalRowsTableTableManager
+    extends
+        RootTableManager<
+          _$LetterHealthDatabase,
+          $PreparationDismissalRowsTable,
+          PreparationDismissalRow,
+          $$PreparationDismissalRowsTableFilterComposer,
+          $$PreparationDismissalRowsTableOrderingComposer,
+          $$PreparationDismissalRowsTableAnnotationComposer,
+          $$PreparationDismissalRowsTableCreateCompanionBuilder,
+          $$PreparationDismissalRowsTableUpdateCompanionBuilder,
+          (
+            PreparationDismissalRow,
+            BaseReferences<
+              _$LetterHealthDatabase,
+              $PreparationDismissalRowsTable,
+              PreparationDismissalRow
+            >,
+          ),
+          PreparationDismissalRow,
+          PrefetchHooks Function()
+        > {
+  $$PreparationDismissalRowsTableTableManager(
+    _$LetterHealthDatabase db,
+    $PreparationDismissalRowsTable table,
+  ) : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$PreparationDismissalRowsTableFilterComposer(
+                $db: db,
+                $table: table,
+              ),
+          createOrderingComposer: () =>
+              $$PreparationDismissalRowsTableOrderingComposer(
+                $db: db,
+                $table: table,
+              ),
+          createComputedFieldComposer: () =>
+              $$PreparationDismissalRowsTableAnnotationComposer(
+                $db: db,
+                $table: table,
+              ),
+          updateCompanionCallback:
+              ({
+                Value<String> fingerprint = const Value.absent(),
+                Value<String> evidenceLine = const Value.absent(),
+                Value<int> dismissedAtMillis = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => PreparationDismissalRowsCompanion(
+                fingerprint: fingerprint,
+                evidenceLine: evidenceLine,
+                dismissedAtMillis: dismissedAtMillis,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required String fingerprint,
+                required String evidenceLine,
+                required int dismissedAtMillis,
+                Value<int> rowid = const Value.absent(),
+              }) => PreparationDismissalRowsCompanion.insert(
+                fingerprint: fingerprint,
+                evidenceLine: evidenceLine,
+                dismissedAtMillis: dismissedAtMillis,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$PreparationDismissalRowsTableProcessedTableManager =
+    ProcessedTableManager<
+      _$LetterHealthDatabase,
+      $PreparationDismissalRowsTable,
+      PreparationDismissalRow,
+      $$PreparationDismissalRowsTableFilterComposer,
+      $$PreparationDismissalRowsTableOrderingComposer,
+      $$PreparationDismissalRowsTableAnnotationComposer,
+      $$PreparationDismissalRowsTableCreateCompanionBuilder,
+      $$PreparationDismissalRowsTableUpdateCompanionBuilder,
+      (
+        PreparationDismissalRow,
+        BaseReferences<
+          _$LetterHealthDatabase,
+          $PreparationDismissalRowsTable,
+          PreparationDismissalRow
+        >,
+      ),
+      PreparationDismissalRow,
+      PrefetchHooks Function()
+    >;
 
 class $LetterHealthDatabaseManager {
   final _$LetterHealthDatabase _db;
   $LetterHealthDatabaseManager(this._db);
   $$PeriodRowsTableTableManager get periodRows =>
       $$PeriodRowsTableTableManager(_db, _db.periodRows);
-  $$ImpulseDraftRowsTableTableManager get impulseDraftRows =>
-      $$ImpulseDraftRowsTableTableManager(_db, _db.impulseDraftRows);
+  $$PeriodFlowRowsTableTableManager get periodFlowRows =>
+      $$PeriodFlowRowsTableTableManager(_db, _db.periodFlowRows);
   $$CareRecordRowsTableTableManager get careRecordRows =>
       $$CareRecordRowsTableTableManager(_db, _db.careRecordRows);
   $$CareReflectionRowsTableTableManager get careReflectionRows =>
@@ -6049,4 +8491,11 @@ class $LetterHealthDatabaseManager {
       $$CaptureNoteRowsTableTableManager(_db, _db.captureNoteRows);
   $$MomentCheckInRowsTableTableManager get momentCheckInRows =>
       $$MomentCheckInRowsTableTableManager(_db, _db.momentCheckInRows);
+  $$PreparationPlanRowsTableTableManager get preparationPlanRows =>
+      $$PreparationPlanRowsTableTableManager(_db, _db.preparationPlanRows);
+  $$PreparationDismissalRowsTableTableManager get preparationDismissalRows =>
+      $$PreparationDismissalRowsTableTableManager(
+        _db,
+        _db.preparationDismissalRows,
+      );
 }

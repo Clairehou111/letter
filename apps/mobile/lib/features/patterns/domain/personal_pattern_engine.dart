@@ -56,7 +56,6 @@ final class PersonalPatternEngine {
       final dates = records.map((record) => record.experiencedDate).toSet();
       final sortedDates = dates.toList()..sort();
       final severityCounts = <SymptomSeverity, int>{};
-      final painLocationCounts = <PainLocation, int>{};
       final functionalImpactCounts = <FunctionalImpact, int>{};
       for (final record in records) {
         severityCounts.update(
@@ -64,13 +63,6 @@ final class PersonalPatternEngine {
           (count) => count + 1,
           ifAbsent: () => 1,
         );
-        for (final location in record.painLocations) {
-          painLocationCounts.update(
-            location,
-            (count) => count + 1,
-            ifAbsent: () => 1,
-          );
-        }
         for (final impact in record.functionalImpacts) {
           functionalImpactCounts.update(
             impact,
@@ -93,7 +85,6 @@ final class PersonalPatternEngine {
           lastDate: sortedDates.last,
           coveredDates: List.unmodifiable(sortedDates),
           severityCounts: Map.unmodifiable(severityCounts),
-          painLocationCounts: Map.unmodifiable(painLocationCounts),
           functionalImpactCounts: Map.unmodifiable(functionalImpactCounts),
           sources: List.unmodifiable(
             records.map(

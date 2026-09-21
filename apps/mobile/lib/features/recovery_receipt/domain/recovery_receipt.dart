@@ -28,7 +28,6 @@ enum RecoveryReceiptFailure {
   signalRequired,
   severityRequired,
   invalidAdditionalSignal,
-  incompletePainEntry,
   storageUnavailable,
 }
 
@@ -46,10 +45,8 @@ final class RecoveryReceiptException implements Exception {
       'Choose the intensity that feels true to you.',
     RecoveryReceiptFailure.invalidAdditionalSignal =>
       'Choose only physical signals for the optional physical step.',
-    RecoveryReceiptFailure.incompletePainEntry =>
-      'Add a pain location and a 0-10 rating together.',
     RecoveryReceiptFailure.storageUnavailable =>
-      'Letter could not save this private receipt. Try again.',
+      'Letter Within could not save this private receipt. Try again.',
   };
 
   @override
@@ -63,8 +60,6 @@ final class RecoveryReceiptDraft {
     required this.severity,
     this.functionalImpacts = const {},
     this.additionalPhysicalSignals = const {},
-    this.painRating,
-    this.painLocations = const {},
   });
 
   final String careRecordId;
@@ -72,8 +67,6 @@ final class RecoveryReceiptDraft {
   final SymptomSeverity severity;
   final Set<FunctionalImpact> functionalImpacts;
   final Set<SymptomType> additionalPhysicalSignals;
-  final int? painRating;
-  final Set<PainLocation> painLocations;
 }
 
 final class RecoveryReceiptResult {
@@ -116,17 +109,6 @@ RecoveryReceiptDraft validateRecoveryReceiptDraft(RecoveryReceiptDraft draft) {
       RecoveryReceiptFailure.careRecordNotFound,
     );
   }
-  if (draft.painRating != null &&
-      (draft.painRating! < 0 || draft.painRating! > 10)) {
-    throw const RecoveryReceiptException(
-      RecoveryReceiptFailure.incompletePainEntry,
-    );
-  }
-  if ((draft.painRating == null) != draft.painLocations.isEmpty) {
-    throw const RecoveryReceiptException(
-      RecoveryReceiptFailure.incompletePainEntry,
-    );
-  }
   if (draft.additionalPhysicalSignals.any(
     (signal) => signal.category != SymptomCategory.physical,
   )) {
@@ -147,7 +129,5 @@ RecoveryReceiptDraft validateRecoveryReceiptDraft(RecoveryReceiptDraft draft) {
     additionalPhysicalSignals: Set.unmodifiable(
       draft.additionalPhysicalSignals,
     ),
-    painRating: draft.painRating,
-    painLocations: Set.unmodifiable(draft.painLocations),
   );
 }

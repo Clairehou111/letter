@@ -187,7 +187,7 @@ final class TextVoiceCaptureController extends ChangeNotifier {
       _setState(
         _state.copyWith(
           status: CaptureStatus.saveFailed,
-          errorMessage: 'Letter could not save these words. Try again.',
+          errorMessage: 'Letter Within could not save these words. Try again.',
         ),
       );
     }
@@ -221,7 +221,8 @@ final class TextVoiceCaptureController extends ChangeNotifier {
       _setState(
         _state.copyWith(
           status: CaptureStatus.deleteFailed,
-          errorMessage: 'Letter could not delete these words. Try again.',
+          errorMessage:
+              'Letter Within could not delete these words. Try again.',
         ),
       );
     }

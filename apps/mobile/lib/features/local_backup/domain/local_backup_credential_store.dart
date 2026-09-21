@@ -1,7 +1,7 @@
 /// Stores and retrieves the user's backup passphrase on-device so they
 /// don't need to re-enter it on every backup operation.
 ///
-/// The passphrase itself is never sent to Letter servers. It is stored in the
+/// The passphrase itself is never sent to Letter Within servers. It is stored in the
 /// platform secure enclave (iOS Keychain / Android EncryptedSharedPreferences)
 /// and only used locally for encrypting/decrypting backup packages.
 abstract interface class LocalBackupCredentialStore {

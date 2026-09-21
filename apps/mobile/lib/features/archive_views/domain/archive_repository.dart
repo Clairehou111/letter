@@ -13,11 +13,9 @@ final class ArchiveCycleInput {
     required this.endDate,
     required this.periodDates,
     required this.isComplete,
-    this.number,
   });
 
   final String id;
-  final int? number;
   final LocalDate startDate;
   final LocalDate? endDate;
   final List<LocalDate> periodDates;

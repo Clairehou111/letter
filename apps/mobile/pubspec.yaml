@@ -16,7 +16,7 @@ publish_to: 'none' # Remove this line if you wish to publish to pub.dev
 # https://developer.apple.com/library/archive/documentation/General/Reference/InfoPlistKeyReference/Articles/CoreFoundationKeys.html
 # In Windows, build-name is used as the major, minor, and patch parts
 # of the product and file versions while build-number is used as the build suffix.
-version: 1.0.0+7
+version: 1.0.0+8
 
 environment:
   sdk: ^3.12.2
@@ -36,22 +36,30 @@ dependencies:
   flutter:
     sdk: flutter
 
-  cupertino_icons: ^1.0.8
   flutter_secure_storage: ^10.3.1
-  http: ^1.5.0
+  flutter_local_notifications: ^22.2.0
+  flutter_timezone: ^5.1.0
+  local_auth: ^3.0.2
+  timezone: ^0.11.1
+  http: ^1.6.0
+  supabase_flutter: ^2.17.1
+  purchases_flutter: ^10.8.0
+  posthog_flutter: ^5.36.0
   drift: 2.34.2
   sqlite3: ^3.4.0
   path: ^1.9.1
   path_provider: ^2.1.6
   cryptography: ^2.7.0
-  file_picker: ^8.1.6
-  share_plus: ^10.1.4
+  file_selector: ^1.1.0
+  share_plus: ^13.3.0
   url_launcher: ^6.3.1
   pdf: ^3.11.3
   flutter_soloud: ^4.1.6
 
 dev_dependencies:
   flutter_test:
+    sdk: flutter
+  integration_test:
     sdk: flutter
 
   # The "flutter_lints" package below contains a set of recommended lints to
@@ -75,7 +83,19 @@ flutter:
   uses-material-design: true
 
   assets:
-    - assets/audio/care/prototype/
+    - assets/audio/care/prototype/breath.mp3
+    - assets/audio/care/prototype/explode.mp3
+    - assets/audio/care/prototype/heavy.mp3
+    - assets/audio/care/prototype/hum-in.mp3
+    - assets/audio/care/prototype/hum-out.mp3
+    - assets/audio/care/prototype/physical.mp3
+    - assets/audio/care/prototype/racing.mp3
+    - assets/audio/care/prototype/space.mp3
+    - assets/audio/care/prototype/voice-hold.mp3
+    - assets/audio/care/prototype/voice-in.mp3
+    - assets/audio/care/prototype/voice-out.mp3
+    - assets/audio/care/prototype/voice-settle.mp3
+    - assets/images/letter-within-app-icon.png
 
   fonts:
     - family: Newsreader

@@ -6,342 +6,258 @@ import 'package:letter_mobile/features/cycle/domain/period_record.dart';
 import 'package:letter_mobile/features/insights/presentation/gravity_horizon.dart';
 import 'package:letter_mobile/features/insights/presentation/gravity_horizon_view_model.dart';
 
-/// Helper: build a CyclePrediction from epoch-day offsets relative to a base.
-/// Offsets are: last-start, then intervals for each prior start.
-CyclePrediction _prediction({
-  required int lastStartOffset,
-  required List<int> intervals,
-  required int todayOffset,
-}) {
-  final base = const LocalDate(2026, 1, 1);
-  final starts = <LocalDate>[base.addDays(lastStartOffset)];
-  for (final iv in intervals.reversed) {
-    starts.add(starts.last.addDays(-iv));
-  }
-  final sorted = starts.reversed.toList();
-  // Run through the real engine to get correct luteal windows etc.
-  final records = sorted.map<PeriodRecord>((s) => PeriodRecord(
-    id: 'p${s.epochDay}',
-    startDate: s,
-    endDate: s.addDays(4),
+PeriodRecord _period(String id, LocalDate start, {LocalDate? end}) {
+  return PeriodRecord(
+    id: id,
+    startDate: start,
+    endDate: end,
     createdAt: DateTime.utc(2026),
     updatedAt: DateTime.utc(2026),
-  ));
-  return CyclePredictionEngine.calculate(records)!;
+  );
 }
 
-/// Build a view model for a given scenario.
 GravityHorizonViewModel _viewModel({
-  required int lastStartOffset,
-  required List<int> intervals,
-  required int todayOffset,
-  int? cycleDay,
+  required LocalDate today,
+  required Iterable<PeriodRecord> records,
 }) {
-  final pred = _prediction(
-    lastStartOffset: lastStartOffset,
-    intervals: intervals,
-    todayOffset: todayOffset,
-  );
-  final today = const LocalDate(2026, 1, 1).addDays(todayOffset);
-  return GravityHorizonViewModel.fromPrediction(
-    prediction: pred,
-    today: today,
-    cycleDay: cycleDay,
-    availableWidth: 390,
-    availableHeight: 190,
+  return GravityHorizonViewModel.fromRecords(records: records, today: today);
+}
+
+final _may22 = LocalDate(2026, 5, 22);
+final _jun20 = LocalDate(2026, 6, 20);
+final _jul19 = LocalDate(2026, 7, 19);
+
+List<PeriodRecord> _predictionHistory() => [
+  _period('may-22', _may22, end: _may22.addDays(4)),
+  _period('jun-20', _jun20, end: _jun20.addDays(4)),
+  _period('jul-19', _jul19, end: _jul19.addDays(4)),
+];
+
+Widget _harness(
+  GravityHorizonViewModel viewModel, {
+  VoidCallback? onOpenCycle,
+  double width = 390,
+  double textScale = 1,
+}) {
+  return MediaQuery(
+    data: MediaQueryData(textScaler: TextScaler.linear(textScale)),
+    child: MaterialApp(
+      home: Scaffold(
+        body: SingleChildScrollView(
+          child: SizedBox(
+            width: width,
+            child: GravityHorizonView(
+              viewModel: viewModel,
+              onOpenCycle: onOpenCycle ?? () {},
+            ),
+          ),
+        ),
+      ),
+    ),
   );
 }
 
 void main() {
-  // ═══════════════════════════════════════════════════════════
-  // SCENARIO 1: Regular 28-day cycle — day 5 (follicular)
-  // ═══════════════════════════════════════════════════════════
-  group('Regular 28-day cycle, day 5 (follicular)', () {
-    late GravityHorizonViewModel vm;
-    setUp(() {
-      vm = _viewModel(
-        lastStartOffset: 0,   // period started Jan 1
-        intervals: [28, 28, 28, 28],
-        todayOffset: 5,       // Jan 6 = day 5
-        cycleDay: 5,
+  group('Gravity Horizon production adapter states', () {
+    test('no history on 2026-08-05', () {
+      final vm = _viewModel(today: LocalDate(2026, 8, 5), records: const []);
+
+      expect(vm.stateId, HorizonStateId.noHistory);
+      expect(vm.hasHistory, isFalse);
+      expect(vm.prediction, isNull);
+      expect(vm.cycleDay, isNull);
+      expect(vm.lastObservedDate, isNull);
+    });
+
+    test('one Jul19-23 record is insufficient and today is cycle day 18', () {
+      final vm = _viewModel(
+        today: LocalDate(2026, 8, 5),
+        records: [_period('jul-19', _jul19, end: _jul19.addDays(4))],
       );
+
+      expect(vm.stateId, HorizonStateId.insufficientHistory);
+      expect(vm.prediction, isNull);
+      expect(vm.cycleDay, 18);
+      expect(vm.lastObservedDate, LocalDate(2026, 7, 23));
     });
 
-    test('dot is on the flat follicular plateau', () {
-      expect(vm.todayPosition, lessThan(vm.lutealDipStartFraction));
-      expect(vm.isInLutealValley, isFalse);
-    });
-
-    test('subtitle is the follicular horizon-clear message', () {
-      expect(vm.subtitle, contains('horizon clear'));
-      expect(vm.subtitle, contains('light and calm'));
-    });
-
-    test('luteal start label is present (approaching window)', () {
-      expect(vm.lutealStartLabel, isNotNull);
-    });
-
-    test('luteal dip starts around day 12 (28 - 16)', () {
-      // With median=28, luteal onset = day 28-16+1 = day 13
-      // The fraction should place it around 13/38 ≈ 0.34
-      expect(vm.lutealDipStartFraction, greaterThan(0.25));
-      expect(vm.lutealDipStartFraction, lessThan(0.45));
-    });
-  });
-
-  // ═══════════════════════════════════════════════════════════
-  // SCENARIO 2: Regular 28-day cycle — day 19 (mid-luteal)
-  // ═══════════════════════════════════════════════════════════
-  group('Regular 28-day cycle, day 19 (mid-luteal)', () {
-    late GravityHorizonViewModel vm;
-    setUp(() {
-      vm = _viewModel(
-        lastStartOffset: 0,
-        intervals: [28, 28, 28, 28],
-        todayOffset: 19,
-        cycleDay: 19,
+    test('May22, Jun20, Jul19 predicts Aug13-21 with low confidence', () {
+      final vm = _viewModel(
+        today: LocalDate(2026, 8, 5),
+        records: _predictionHistory(),
       );
+      final prediction = vm.prediction;
+
+      expect(vm.stateId, HorizonStateId.predictionAvailable);
+      expect(prediction, isNotNull);
+      expect(prediction!.predictedMensesStart, LocalDate(2026, 8, 13));
+      expect(prediction.predictedMensesEnd, LocalDate(2026, 8, 21));
+      expect(prediction.midpoint, LocalDate(2026, 8, 17));
+      expect(prediction.confidence, PredictionConfidence.low);
+      expect(prediction.intervalCount, 2);
+      expect(vm.estimatedRangeWidthDays, 9);
+      expect(vm.cycleDay, 18);
     });
 
-    test('dot is past the cliff edge (in the valley)', () {
-      expect(vm.todayPosition, greaterThan(vm.lutealDipStartFraction));
-      expect(vm.isInLutealValley, isTrue);
-    });
-
-    test('subtitle is the luteal gravity message', () {
-      expect(vm.subtitle, contains('premenstrual window'));
-      expect(vm.subtitle, contains('gravity feels heavier'));
-      expect(vm.subtitle, contains('safe to slow down'));
-    });
-
-    test('luteal start label is hidden (already inside window)', () {
-      expect(vm.lutealStartLabel, isNull);
-    });
-  });
-
-  // ═══════════════════════════════════════════════════════════
-  // SCENARIO 3: Short 22-day cycle — day 18 (late luteal)
-  // ═══════════════════════════════════════════════════════════
-  group('Short 22-day cycle, day 18 (late luteal)', () {
-    late GravityHorizonViewModel vm;
-    setUp(() {
-      vm = _viewModel(
-        lastStartOffset: 0,
-        intervals: [22, 22, 22, 22],
-        todayOffset: 18,
-        cycleDay: 18,
+    test('open Aug16 record on Aug18 is an active period, day 3', () {
+      final start = LocalDate(2026, 8, 16);
+      final vm = _viewModel(
+        today: LocalDate(2026, 8, 18),
+        records: [_period('aug-16-open', start)],
       );
+
+      expect(vm.stateId, HorizonStateId.periodInProgress);
+      expect(vm.openPeriod?.id, 'aug-16-open');
+      expect(vm.recordedPeriodDay, 3);
+      expect(vm.cycleDay, 3);
+      expect(vm.prediction, isNull);
     });
 
-    test('dot is deep in the valley (nearly at menses)', () {
-      expect(vm.todayPosition, greaterThan(vm.lutealDipStartFraction));
-      expect(vm.isInLutealValley, isTrue);
-    });
-
-    test('luteal dip starts very early (day 22-16+1 = day 7)', () {
-      // For a 22-day cycle, luteal onset is around day 7.
-      // With totalDays = 22+10 = 32, fraction ≈ 7/32 ≈ 0.22.
-      expect(vm.lutealDipStartFraction, lessThan(0.30));
-    });
-  });
-
-  // ═══════════════════════════════════════════════════════════
-  // SCENARIO 4: Long 35-day cycle — day 19 (just entering luteal)
-  // ═══════════════════════════════════════════════════════════
-  group('Long 35-day cycle, day 19 (entering luteal)', () {
-    late GravityHorizonViewModel vm;
-    setUp(() {
-      vm = _viewModel(
-        lastStartOffset: 0,
-        intervals: [35, 35, 35, 35],
-        todayOffset: 19,
-        cycleDay: 19,
+    test('Aug23 is two days past the Aug13-21 estimated range', () {
+      final vm = _viewModel(
+        today: LocalDate(2026, 8, 23),
+        records: _predictionHistory(),
       );
-    });
+      final prediction = vm.prediction!;
 
-    test('dot is AT the cliff edge (luteal just beginning)', () {
-      // For a 35-day cycle, luteal onset = day 20 (35-16+1=20 with
-      // todayOffset=19 meaning Jan 20 = day 20 of the cycle).
-      // Day 19 lands exactly on the luteal window boundary.
-      expect(vm.todayPosition, lessThanOrEqualTo(vm.lutealDipStartFraction));
-      // On the boundary, isInLutealValley may be true (inclusive check).
-      expect(vm.subtitle, contains('premenstrual window'));
-    });
-
-    test('luteal dip starts later (day ~20)', () {
-      expect(vm.lutealDipStartFraction, greaterThan(0.35));
-    });
-  });
-
-  // ═══════════════════════════════════════════════════════════
-  // SCENARIO 5: Irregular cycles — wide prediction window
-  // ═══════════════════════════════════════════════════════════
-  group('Irregular cycles (24-34 spread), day 15', () {
-    late GravityHorizonViewModel vm;
-    setUp(() {
-      vm = _viewModel(
-        lastStartOffset: 0,
-        intervals: [24, 30, 34],
-        todayOffset: 15,
-        cycleDay: 15,
+      expect(vm.stateId, HorizonStateId.pastEstimatedRange);
+      expect(
+        prediction.timingFor(vm.today),
+        PredictionTiming.laterThanEstimate,
       );
-    });
-
-    test('view model still produces valid data', () {
-      expect(vm.curvePoints, isNotEmpty);
-      expect(vm.lutealDipStartFraction, greaterThan(0.0));
-      expect(vm.lutealDipStartFraction, lessThan(1.0));
-    });
-
-    test('today position is within valid range', () {
-      expect(vm.todayPosition, greaterThan(0.0));
-      expect(vm.todayPosition, lessThan(1.0));
+      expect(vm.today.epochDay - prediction.predictedMensesEnd.epochDay, 2);
     });
   });
 
-  // ═══════════════════════════════════════════════════════════
-  // SCENARIO 6: No prediction — empty state
-  // ═══════════════════════════════════════════════════════════
-  group('No prediction (insufficient data)', () {
-    late GravityHorizonViewModel vm;
-    setUp(() {
-      vm = const GravityHorizonViewModel(
-        curvePoints: [],
-        todayPosition: 0.5,
-        todayLabel: 'no prediction yet',
-        subtitle: 'your cycle record is still taking shape.',
-        isInLutealValley: false,
-        backgroundColor: Color(0xFF0B0C10),
+  group('Gravity Horizon factual presentation', () {
+    testWidgets('renders state status and evidence copy', (tester) async {
+      final vm = _viewModel(
+        today: LocalDate(2026, 8, 23),
+        records: _predictionHistory(),
       );
-    });
+      await tester.pumpWidget(_harness(vm));
 
-    test('curve points are empty', () {
-      expect(vm.curvePoints, isEmpty);
-    });
-
-    test('has sensible defaults', () {
-      expect(vm.todayPosition, 0.5);
-      expect(vm.isInLutealValley, isFalse);
-    });
-  });
-
-  // ═══════════════════════════════════════════════════════════
-  // BEZIER MATH: _bezierY correctness
-  // ═══════════════════════════════════════════════════════════
-  group('Bezier math: _bezierY', () {
-    test('at cliff top (x = cliffX) → Y = baseline', () {
-      // Directly test the static method on the painter.
-      // We can access it via a widget test that creates a painter.
-    });
-
-    test('at cliff bottom (x = floorX) → Y = valley', () {
-      // Valley floor reached at the end of the drop zone.
-    });
-
-    test('mid-cliff produces Y between baseline and valley', () {
-      // Should be monotonically decreasing through the cliff zone.
-    });
-  });
-
-  // ═══════════════════════════════════════════════════════════
-  // WIDGET TEST: renders without overflow at standard size
-  // ═══════════════════════════════════════════════════════════
-  testWidgets('renders horizon curve at 390×200 without overflow', (
-    tester,
-  ) async {
-    final vm = _viewModel(
-      lastStartOffset: 0,
-      intervals: [28, 28, 28, 28],
-      todayOffset: 14,
-      cycleDay: 14,
-    );
-    await tester.pumpWidget(
-      MaterialApp(
-        home: Scaffold(
-          body: SizedBox(
-            width: 390,
-            height: 200,
-            child: GravityHorizonView(viewModel: vm),
-          ),
+      expect(find.text('GRAVITY HORIZON · ESTIMATED'), findsOneWidget);
+      expect(
+        find.textContaining('2 days later than the estimated range.'),
+        findsOneWidget,
+      );
+      expect(
+        find.textContaining(
+          'This is a date comparison, not a health conclusion.',
         ),
-      ),
+        findsOneWidget,
+      );
+      expect(find.textContaining('Low confidence'), findsOneWidget);
+      expect(find.textContaining('Estimated range width'), findsNothing);
+      expect(find.textContaining('Recorded cycle lengths'), findsNothing);
+      expect(find.text(GravityHorizonView.disclosure), findsOneWidget);
+      expect(find.textContaining('cosmic'), findsNothing);
+      expect(find.textContaining('estimated cycle gravity'), findsWidgets);
+      expect(find.textContaining('hormone'), findsNothing);
+    });
+
+    testWidgets('open period uses active factual status and evidence', (
+      tester,
+    ) async {
+      final start = LocalDate(2026, 8, 16);
+      final vm = _viewModel(
+        today: LocalDate(2026, 8, 18),
+        records: [_period('aug-16-open', start)],
+      );
+      await tester.pumpWidget(_harness(vm));
+
+      expect(
+        find.textContaining('Period day 3 · 3 bleeding days recorded'),
+        findsOneWidget,
+      );
+      expect(find.textContaining('Started Aug 16'), findsOneWidget);
+      expect(find.textContaining('Confidence:'), findsNothing);
+      expect(
+        find.text('Not enough recorded periods to estimate a range yet.'),
+        findsNothing,
+      );
+    });
+
+    testWidgets('shows cycle day inside the estimated premenstrual window', (
+      tester,
+    ) async {
+      final vm = _viewModel(
+        today: LocalDate(2026, 8, 5),
+        records: _predictionHistory(),
+      );
+      await tester.pumpWidget(_harness(vm));
+
+      expect(
+        find.text('Cycle day 18 · in the estimated premenstrual window.'),
+        findsOneWidget,
+      );
+      expect(find.text('Estimated next period: Aug 13–21.'), findsOneWidget);
+    });
+
+    testWidgets('distinguishes the estimated period range from the window', (
+      tester,
+    ) async {
+      final vm = _viewModel(
+        today: LocalDate(2026, 8, 15),
+        records: _predictionHistory(),
+      );
+      await tester.pumpWidget(_harness(vm));
+
+      expect(
+        find.text('Cycle day 28 · inside the estimated period range.'),
+        findsOneWidget,
+      );
+      expect(
+        find.text('Aug 13–21 was calculated from your recorded period starts.'),
+        findsOneWidget,
+      );
+    });
+
+    testWidgets('chart and Open Cycle both invoke the navigation callback', (
+      tester,
+    ) async {
+      var taps = 0;
+      final vm = _viewModel(
+        today: LocalDate(2026, 8, 5),
+        records: _predictionHistory(),
+      );
+      await tester.pumpWidget(_harness(vm, onOpenCycle: () => taps++));
+
+      await tester.tap(find.byKey(const Key('today-gravity-horizon')));
+      await tester.ensureVisible(find.byKey(const Key('today-open-cycle')));
+      await tester.tap(find.byKey(const Key('today-open-cycle')));
+
+      expect(taps, 2);
+    });
+
+    testWidgets('chart exposes an accessible factual summary', (tester) async {
+      final vm = _viewModel(
+        today: LocalDate(2026, 8, 5),
+        records: _predictionHistory(),
+      );
+      await tester.pumpWidget(_harness(vm));
+
+      final semantics = tester.getSemantics(
+        find.byKey(const Key('today-gravity-horizon')),
+      );
+      expect(semantics.label, contains('Gravity Horizon chart'));
+      expect(semantics.label, contains('Estimated range'));
+      expect(semantics.label, contains('lighter estimated cycle gravity'));
+      expect(semantics.label, contains('heavier estimated cycle gravity'));
+      expect(semantics.label, contains('Double tap to open Cycle'));
+    });
+  });
+
+  testWidgets('320px wide at 200% text has no overflow', (tester) async {
+    final vm = _viewModel(
+      today: LocalDate(2026, 8, 5),
+      records: _predictionHistory(),
     );
+    await tester.pumpWidget(_harness(vm, width: 320, textScale: 2));
     await tester.pumpAndSettle();
-    // Should not throw overflow errors.
+
     expect(tester.takeException(), isNull);
-  });
-
-  testWidgets('renders empty state without overflow', (tester) async {
-    const vm = GravityHorizonViewModel(
-      curvePoints: [],
-      todayPosition: 0.5,
-      todayLabel: 'no prediction yet',
-      subtitle: 'your cycle record is still taking shape.',
-      isInLutealValley: false,
-      backgroundColor: Color(0xFF0B0C10),
-    );
-    await tester.pumpWidget(
-      MaterialApp(
-        home: Scaffold(
-          body: SizedBox(
-            width: 390,
-            height: 200,
-            child: GravityHorizonView(viewModel: vm),
-          ),
-        ),
-      ),
-    );
-    await tester.pumpAndSettle();
-    expect(tester.takeException(), isNull);
-    expect(find.text('your cycle record is still taking shape.'), findsOneWidget);
-  });
-
-  testWidgets('luteal valley shows golden label when inside window', (
-    tester,
-  ) async {
-    final vm = _viewModel(
-      lastStartOffset: 0,
-      intervals: [28, 28, 28, 28],
-      todayOffset: 22,  // well into luteal
-      cycleDay: 22,
-    );
-    await tester.pumpWidget(
-      MaterialApp(
-        home: Scaffold(
-          body: SizedBox(
-            width: 390,
-            height: 200,
-            child: GravityHorizonView(viewModel: vm),
-          ),
-        ),
-      ),
-    );
-    await tester.pumpAndSettle();
-    expect(find.textContaining('premenstrual window'), findsOneWidget);
-    expect(find.textContaining('from'), findsNothing); // no luteal start label
-  });
-
-  testWidgets('pre-luteal shows onset date label when approaching', (
-    tester,
-  ) async {
-    final vm = _viewModel(
-      lastStartOffset: 0,
-      intervals: [28, 28, 28, 28],
-      todayOffset: 8,  // follicular, approaching luteal
-      cycleDay: 8,
-    );
-    await tester.pumpWidget(
-      MaterialApp(
-        home: Scaffold(
-          body: SizedBox(
-            width: 390,
-            height: 200,
-            child: GravityHorizonView(viewModel: vm),
-          ),
-        ),
-      ),
-    );
-    await tester.pumpAndSettle();
-    expect(find.textContaining('Premenstrual window from'), findsOneWidget);
+    expect(find.byKey(const Key('today-open-cycle')), findsOneWidget);
   });
 }

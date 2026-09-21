@@ -1,194 +1,186 @@
-import 'dart:math' as math;
-
-import 'package:flutter/material.dart';
-
 import '../../cycle/domain/cycle_prediction.dart';
 import '../../cycle/domain/local_date.dart';
+import '../../cycle/domain/period_record.dart';
 
-/// View-state for the Gravity Horizon curve on the Today screen.
+enum HorizonStateId {
+  noHistory,
+  insufficientHistory,
+  predictionAvailable,
+  periodInProgress,
+  pastEstimatedRange,
+}
+
+/// Presentation adapter for Lovable's Gravity Horizon.
 ///
-/// Exposes the cycle energy topography as a set of Bezier control points
-/// and a single "today" indicator position. The UI (CustomPainter) reads
-/// this and renders a glowing Bezier curve with a dot.
-///
-/// Design spec: core_ui.md — Component 1.
+/// The production domain remains authoritative: recorded bands come from
+/// [PeriodRecord] and every estimate comes from [CyclePredictionEngine].
+/// This class contains no persistence and performs no health inference.
 final class GravityHorizonViewModel {
-  const GravityHorizonViewModel({
-    required this.curvePoints,
-    required this.todayPosition,
-    required this.todayLabel,
-    required this.subtitle,
-    required this.isInLutealValley,
-    required this.backgroundColor,
-    this.lutealStartLabel,
-    this.lutealDipStartFraction = 0.70,
-    this.lutealDipEndFraction = 0.95,
+  GravityHorizonViewModel._({
+    required this.today,
+    required this.records,
+    required this.prediction,
   });
 
-  /// Ordered control points for the Bezier curve (x: day offset, y: energy).
-  final List<Offset> curvePoints;
-
-  /// Where on the curve today sits (fraction 0.0–1.0 along the x axis).
-  final double todayPosition;
-
-  /// Short lowercase label, e.g. "day 18".
-  final String todayLabel;
-
-  /// Plain subtitle that distinguishes estimated timing from lived experience.
-  final String subtitle;
-
-  /// Whether today is inside the predicted luteal window.
-  final bool isInLutealValley;
-
-  /// Canvas background: deep charcoal obsidian (#0B0C10).
-  final Color backgroundColor;
-
-  /// Human-readable luteal onset date for pre-window display, e.g. "from Jul 27".
-  final String? lutealStartLabel;
-
-  /// Depth of the luteal valley as a fraction of available height.
-  /// Positive = downward (toward canvas bottom) to represent the "gravity"
-  /// of the premenstrual window. At peak intensity the curve sinks to
-  /// 0.5 + 0.45 = 0.95 (near bottom edge).
-  static const _lutealValleyDepth = 0.45;
-
-  /// Where the luteal descent begins along the cycle width, as a fraction
-  /// 0.0–1.0. The painter uses this to position the cubic bezier control
-  /// points so the valley aligns with the user's actual predicted window.
-  final double lutealDipStartFraction;
-
-  /// Where the luteal window ends (menses start), as a fraction 0.0–1.0.
-  final double lutealDipEndFraction;
-
-  /// Builds the view-state from a cycle prediction and today's date.
-  /// Days before luteal onset that trigger the "approaching" subtitle.
-  /// 3 days = the last ~3 days of the follicular plateau before the cliff.
-  static const _preLutealDays = 3;
-
-  factory GravityHorizonViewModel.fromPrediction({
-    required CyclePrediction? prediction,
+  factory GravityHorizonViewModel.fromRecords({
+    required Iterable<PeriodRecord> records,
     required LocalDate today,
-    required int? cycleDay,
-    required double availableWidth,
-    required double availableHeight,
-    bool isPeriodInProgress = false,
   }) {
-    if (prediction == null) {
-      return const GravityHorizonViewModel(
-        curvePoints: [],
-        todayPosition: 0.5,
-        todayLabel: 'no prediction yet',
-        subtitle: 'your cycle record is still taking shape.',
-        isInLutealValley: false,
-        backgroundColor: Color(0xFF0B0C10),
-      );
-    }
-
-    final day = cycleDay ?? 1;
-    final totalDays = prediction.maximumCycleDays + 10;
-    final points = <Offset>[];
-    for (var i = 0; i <= totalDays; i++) {
-      final x = i / totalDays;
-      final isLuteal = _isInLutealWindow(i, prediction, today);
-      final y = isLuteal
-          ? 0.5 + _lutealValleyDepth * _lutealIntensity(i, prediction)
-          : 0.5;
-      points.add(Offset(x * availableWidth, y * availableHeight));
-    }
-
-    final todayX = (day / totalDays).clamp(0.0, 1.0);
-    final inLuteal = prediction.lutealWindow.contains(today);
-    final lutealStartLabel = _formatLutealLabel(prediction.predictedMensesStart);
-
-    // Compute luteal dip fractions from the prediction data.
-    final cycleStartEpoch = prediction.predictedMensesStart
-        .addDays(-prediction.medianCycleDays)
-        .epochDay;
-    final lutealStartEpoch = prediction.predictedLutealStart.epochDay;
-    final lutealEndEpoch = prediction.predictedLutealEnd.epochDay;
-    final dipStartFraction = ((lutealStartEpoch - cycleStartEpoch) / totalDays)
-        .clamp(0.0, 1.0);
-    final dipEndFraction = ((lutealEndEpoch - cycleStartEpoch) / totalDays)
-        .clamp(0.0, 1.0);
-
-    // ── 4-stage subtitle mapped to curve geography ────────
-    final daysToLuteal = lutealStartEpoch - today.epochDay;
-    final approaching = daysToLuteal > 0 && daysToLuteal <= _preLutealDays;
-
-    final subtitle = isPeriodInProgress
-        ? 'the tide is flowing. the heavy weight is clearing out line by line.'
-        : inLuteal
-        ? 'estimated premenstrual window. gravity feels heavier today. '
-            'you are safe to slow down.'
-        : approaching
-        ? 'the plateau before the wave. checking in to track the gentle shifts.'
-        : 'horizon clear. your cosmic tide is light and calm. enjoy the space.';
-
-    return GravityHorizonViewModel(
-      curvePoints: points,
-      todayPosition: todayX,
-      todayLabel: 'day $day',
-      subtitle: subtitle,
-      isInLutealValley: inLuteal,
-      backgroundColor: const Color(0xFF0B0C10),
-      lutealStartLabel: inLuteal ? null : lutealStartLabel,
-      lutealDipStartFraction: dipStartFraction,
-      lutealDipEndFraction: dipEndFraction,
+    final ordered = CyclePredictionEngine.recordsThrough(records, today);
+    return GravityHorizonViewModel._(
+      today: today,
+      records: List.unmodifiable(ordered),
+      prediction: CyclePredictionEngine.calculate(ordered),
     );
   }
 
-  /// Frontend UI policy: use 16-day countback (maximum inclusivity).
-  /// The earliest possible luteal onset (14+2 days before menses) ensures
-  /// the emotional-safety window opens before the first hormone drop,
-  /// catching PMDD/PMS flare-ups that often begin at day -15/-16.
+  final LocalDate today;
+  final List<PeriodRecord> records;
+  final CyclePrediction? prediction;
+
+  /// Prediction rendered by the compact Today chart.
   ///
-  /// Clinical reports (Twin Matrix) use the standard 14-day matrix; this
-  /// label is only for the GravityHorizon user-facing display.
-  static const _uiLutealCountbackDays = 16;
+  /// An open period is observed information and takes precedence over a
+  /// future estimate on Today. The underlying [prediction] remains available
+  /// to detailed Cycle views.
+  CyclePrediction? get chartPrediction =>
+      openPeriod == null ? prediction : null;
 
-  static String _formatLutealLabel(LocalDate mensesStart) {
-    final onset = mensesStart.addDays(-_uiLutealCountbackDays);
-    final m = _monthAbbrev(onset.month);
-    final d = onset.day;
-    return '$m $d';
+  bool get hasHistory => records.isNotEmpty;
+
+  PeriodRecord? get openPeriod {
+    for (final record in records) {
+      if (record.isOpen) return record;
+    }
+    return null;
   }
 
-  static String _monthAbbrev(int month) => switch (month) {
-    1 => 'Jan', 2 => 'Feb', 3 => 'Mar', 4 => 'Apr',
-    5 => 'May', 6 => 'Jun', 7 => 'Jul', 8 => 'Aug',
-    9 => 'Sep', 10 => 'Oct', 11 => 'Nov', 12 => 'Dec',
-    _ => '',
-  };
+  PeriodRecord? get latestRecord => records.isEmpty ? null : records.first;
 
-  static bool _isInLutealWindow(
-    int day,
-    CyclePrediction prediction,
-    LocalDate today,
-  ) {
-    final startDay = prediction.predictedLutealStart.epochDay;
-    final endDay = prediction.predictedLutealEnd.epochDay;
-    final cycleStart = prediction.predictedMensesStart
-        .addDays(-prediction.medianCycleDays)
-        .epochDay;
-    final normalizedDay = cycleStart + day - 1;
-    return normalizedDay >= startDay && normalizedDay <= endDay;
+  LocalDate? get lastPeriodStart => latestRecord?.startDate;
+
+  int? get cycleDay {
+    final start = lastPeriodStart;
+    if (start == null) return null;
+    final value = today.epochDay - start.epochDay + 1;
+    return value < 1 ? null : value;
   }
 
-  static double _lutealIntensity(int day, CyclePrediction prediction) {
-    // Gentle bell-shaped intensity curve peaking at luteal midpoint.
-    // Uses cosine easing for a smooth, organic valley rather than a
-    // harsh V-shape. Intensity = 1.0 at midpoint, ~0.0 at edges.
-    final startDay = prediction.predictedLutealStart.epochDay;
-    final endDay = prediction.predictedLutealEnd.epochDay;
-    final mid = (startDay + endDay) / 2.0;
-    final cycleStart = prediction.predictedMensesStart
-        .addDays(-prediction.medianCycleDays)
-        .epochDay;
-    final normalizedDay = (cycleStart + day - 1).toDouble();
-    final halfRange = (endDay - startDay) / 2.0;
-    if (halfRange <= 0) return 0.0;
-    final t = ((normalizedDay - mid) / halfRange).clamp(-1.0, 1.0);
-    // Cosine ease: cos(π·t) goes from 1 (at t=0) to 0 (at t=±1).
-    return (math.cos(math.pi * t) + 1.0) / 2.0;
+  int? get recordedPeriodDay {
+    final record = openPeriod;
+    if (record == null) return null;
+    final value = today.epochDay - record.startDate.epochDay + 1;
+    return value < 1 ? null : value;
+  }
+
+  LocalDate? get lastObservedDate {
+    final latest = latestRecord;
+    return latest?.endDate ?? latest?.startDate;
+  }
+
+  HorizonStateId get stateId {
+    if (!hasHistory) return HorizonStateId.noHistory;
+    if (openPeriod != null) return HorizonStateId.periodInProgress;
+    final value = prediction;
+    if (value == null) return HorizonStateId.insufficientHistory;
+    if (value.timingFor(today) == PredictionTiming.laterThanEstimate) {
+      return HorizonStateId.pastEstimatedRange;
+    }
+    return HorizonStateId.predictionAvailable;
+  }
+
+  int get estimatedRangeWidthDays {
+    final value = prediction;
+    if (value == null) return 0;
+    return value.predictedMensesEnd.epochDay -
+        value.predictedMensesStart.epochDay +
+        1;
+  }
+
+  bool get isTodayInEstimatedPremenstrualWindow {
+    final value = chartPrediction;
+    return value != null && value.lutealWindow.contains(today);
+  }
+
+  /// Calendar-date position in the visible chart window.
+  double dateFraction(LocalDate date) {
+    final window = chartWindow;
+    final span = window.end.epochDay - window.start.epochDay;
+    if (span <= 0) return 0;
+    return ((date.epochDay - window.start.epochDay) / span).clamp(0.0, 1.0);
+  }
+
+  /// Ordinal estimated cycle-gravity curve driven by cycle dates. One is the
+  /// lighter guide and zero is the heavier guide.
+  ///
+  /// The curve recovers after the recorded period start, stays light through
+  /// the middle of the cycle, descends from the central estimated pre-period
+  /// start
+  /// to the earliest estimated period start, then holds near the heavier guide
+  /// through the full estimated range. It is a visual timing metaphor, never a
+  /// mood or energy measurement.
+  double? estimatedGravityLevel(LocalDate date) {
+    final value = chartPrediction;
+    final anchor = lastPeriodStart;
+    if (value == null || anchor == null) return null;
+
+    if (date.isBefore(anchor)) {
+      final leadStart = anchor.addDays(-4);
+      if (date.isBefore(leadStart)) return 0.1;
+      final progress = (date.epochDay - leadStart.epochDay) / 4;
+      return 0.1 + 0.32 * _smoothStep(progress);
+    }
+
+    final recoveryCandidate = anchor.addDays(
+      (value.medianCycleDays * 0.18).round().clamp(1, 7),
+    );
+    final estimatedStart = value.estimatedPremenstrualStart;
+    final recoveryEnd = recoveryCandidate.isAfter(estimatedStart)
+        ? estimatedStart
+        : recoveryCandidate;
+    if (!date.isAfter(recoveryEnd)) {
+      final span = recoveryEnd.epochDay - anchor.epochDay;
+      if (span <= 0) return 1;
+      final progress = (date.epochDay - anchor.epochDay) / span;
+      return 0.42 + 0.58 * _smoothStep(progress);
+    }
+    if (date.isBefore(estimatedStart)) return 1;
+    if (date.isBefore(value.predictedMensesStart)) {
+      final span =
+          value.predictedMensesStart.epochDay - estimatedStart.epochDay;
+      if (span <= 0) return 0.1;
+      final progress = (date.epochDay - estimatedStart.epochDay) / span;
+      return 1 - 0.9 * _smoothStep(progress);
+    }
+    return 0.1;
+  }
+
+  ({LocalDate start, LocalDate end}) get chartWindow {
+    final latest = latestRecord;
+    if (latest == null) {
+      return (start: today.addDays(-7), end: today.addDays(7));
+    }
+    final value = chartPrediction;
+    var first = latest.startDate;
+    final premenstrualStart = value?.predictedLutealStart;
+    if (premenstrualStart != null && premenstrualStart.isBefore(first)) {
+      first = premenstrualStart;
+    }
+    if (today.isBefore(first)) first = today;
+    var last = today;
+    final predictedEnd = value?.predictedMensesEnd;
+    if (predictedEnd != null && predictedEnd.isAfter(last)) {
+      last = predictedEnd;
+    }
+    final observedEnd = latest.endDate ?? latest.startDate;
+    if (observedEnd.isAfter(last)) {
+      last = observedEnd;
+    }
+    return (start: first.addDays(-4), end: last.addDays(4));
+  }
+
+  static double _smoothStep(double value) {
+    final t = value.clamp(0.0, 1.0);
+    return t * t * (3 - 2 * t);
   }
 }

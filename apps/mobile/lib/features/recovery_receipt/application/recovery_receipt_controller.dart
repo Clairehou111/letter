@@ -67,8 +67,6 @@ final class RecoveryReceiptController {
           HealthRecordDraft(
             symptom: valid.symptom,
             severity: valid.severity,
-            painRating: valid.painRating,
-            painLocations: valid.painLocations,
             functionalImpacts: valid.functionalImpacts,
             experiencedDate: experiencedDate,
             provenance: provenance,

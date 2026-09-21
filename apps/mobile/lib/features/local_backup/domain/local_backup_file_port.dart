@@ -1,11 +1,11 @@
-import 'dart:io';
 import 'dart:typed_data';
 
-import 'package:file_picker/file_picker.dart';
-import 'package:path_provider/path_provider.dart';
+import 'package:file_selector/file_selector.dart';
 import 'package:share_plus/share_plus.dart';
 
-const localBackupExportFolderName = 'letter';
+import '../../local_export/domain/letter_local_export_store.dart';
+
+const localBackupExportFolderName = letterLocalExportFolderName;
 
 String localBackupExportFileName(DateTime value) {
   String two(int number) => number.toString().padLeft(2, '0');
@@ -34,64 +34,69 @@ abstract interface class LocalBackupFilePort {
 /// Native operating-system hand-off for already encrypted package bytes.
 /// The filename and share metadata intentionally contain no health information.
 final class SystemLocalBackupFilePort implements LocalBackupFilePort {
-  SystemLocalBackupFilePort({DateTime Function()? clock})
-    : _clock = clock ?? DateTime.now;
+  SystemLocalBackupFilePort({
+    DateTime Function()? clock,
+    this.localStore = const LetterLocalExportStore(),
+  }) : _clock = clock ?? DateTime.now;
 
   final DateTime Function() _clock;
+  final LetterLocalExportStore localStore;
   String? _pendingExportFileName;
+  String? _pendingExportPath;
 
   @override
   Future<String> shareEncryptedBackup(Uint8List bytes) async {
     final fileName = _pendingExportFileName ??= localBackupExportFileName(
       _clock(),
     );
-    await Share.shareXFiles([
-      XFile.fromData(
-        bytes,
-        name: fileName,
-        mimeType: 'application/octet-stream',
-      ),
-    ]);
-    _pendingExportFileName = null;
-    return fileName;
+    try {
+      final savedPath = _pendingExportPath;
+      await SharePlus.instance.share(
+        ShareParams(
+          files: [
+            if (savedPath != null)
+              XFile(savedPath, mimeType: 'application/octet-stream')
+            else
+              XFile.fromData(
+                bytes,
+                name: fileName,
+                mimeType: 'application/octet-stream',
+              ),
+          ],
+        ),
+      );
+      return fileName;
+    } finally {
+      _pendingExportFileName = null;
+      _pendingExportPath = null;
+    }
   }
 
   @override
   Future<String> saveEncryptedBackupLocally(Uint8List bytes) async {
-    final dir = await getApplicationDocumentsDirectory();
     final fileName = localBackupExportFileName(_clock());
     _pendingExportFileName = fileName;
-    final exportDirectory = Directory(
-      '${dir.path}/$localBackupExportFolderName',
-    );
-    await exportDirectory.create(recursive: true);
-    final file = File('${exportDirectory.path}/$fileName');
-    await file.writeAsBytes(bytes, flush: true);
-    return file.path;
+    final savedPath = await localStore.save(fileName: fileName, bytes: bytes);
+    _pendingExportPath = savedPath;
+    return savedPath;
   }
 
   @override
   Future<Uint8List?> pickEncryptedBackup() async {
-    final selection = await FilePicker.platform.pickFiles(
-      type: FileType.custom,
-      allowedExtensions: const ['letter'],
-      withData: true,
+    final selection = await openFile(
+      acceptedTypeGroups: const [
+        XTypeGroup(
+          label: 'Letter Within encrypted backup',
+          extensions: ['letter'],
+          mimeTypes: ['application/octet-stream'],
+        ),
+      ],
     );
-    if (selection == null || selection.files.length != 1) {
-      return null;
-    }
-    return selection.files.single.bytes;
+    return selection?.readAsBytes();
   }
 
   @override
-  String get exportLocationDescription {
-    if (Platform.isIOS) {
-      return 'After tapping "Create encrypted backup", use the share sheet to '
-          'save the file to Files, AirDrop it, or send it to another app. '
-          'Letter also saves a timestamped copy in the letter folder.';
-    }
-    return 'After tapping "Create encrypted backup", use the share sheet to '
-        'save the file to your device, share it, or upload it to cloud '
-        'storage. Letter also saves a timestamped copy in the letter folder.';
-  }
+  String get exportLocationDescription =>
+      'Letter Within saves a timestamped copy in its dedicated letter '
+      'folder, then opens the system destination sheet.';
 }

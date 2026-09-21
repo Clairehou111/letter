@@ -306,10 +306,13 @@ ArchiveCycleSummaryViewModel _buildCycleViewModel({
     (reflection) => careIds.contains(reflection.careRecordId),
   );
   final range = _dateRange(cycle.startDate, end);
-  final periodDates = cycle.periodDates.map(_formatDate).join(', ');
+  final periodDates = _bleedingSummary(cycle.periodDates);
   final cycleReflection = cycleReflections
       .where(
-        (reflection) => reflection.cycleStartDay == cycle.startDate.epochDay,
+        (reflection) =>
+            reflection.startingPeriodId == cycle.id ||
+            (reflection.startingPeriodId == null &&
+                reflection.cycleStartDay == cycle.startDate.epochDay),
       )
       .firstOrNull;
   final story = _buildStory(
@@ -331,12 +334,10 @@ ArchiveCycleSummaryViewModel _buildCycleViewModel({
       ? 'Current cycle is still open; coverage is not a complete cycle.'
       : observedDays == 0
       ? 'No confirmed symptom records in this cycle.'
-      : observedDays < cycleDays
-      ? 'Only $observedDays of $cycleDays cycle days have confirmed symptom records.'
       : null;
   final coverage = cycleDays == null
-      ? '$observedDays observed days'
-      : '$observedDays/$cycleDays days with confirmed records';
+      ? 'Confirmed symptoms: $observedDays recorded ${observedDays == 1 ? 'day' : 'days'}'
+      : 'Confirmed symptoms: $observedDays of $cycleDays days';
   final searchable = [
     cycle.id,
     range,
@@ -350,13 +351,11 @@ ArchiveCycleSummaryViewModel _buildCycleViewModel({
   return ArchiveCycleSummaryViewModel(
     id: cycle.id,
     startDate: cycle.startDate,
-    title: cycle.isComplete
-        ? 'Letter No. ${cycle.number ?? '—'}'
-        : 'Current cycle',
+    title: cycle.isComplete ? range : 'Current cycle',
     dateRange: range,
     periodDatesLabel: periodDates.isEmpty
-        ? 'No period dates recorded'
-        : 'Period days: $periodDates',
+        ? 'Bleeding: not recorded'
+        : periodDates,
     coverageLabel: coverage,
     missingLabel: missing,
     isComplete: cycle.isComplete,
@@ -643,6 +642,53 @@ String _dateRange(LocalDate start, LocalDate? end) {
 
 String _formatDate(LocalDate value) =>
     '${value.month}/${value.day}/${value.year}';
+
+const _monthLabels = [
+  'Jan',
+  'Feb',
+  'Mar',
+  'Apr',
+  'May',
+  'Jun',
+  'Jul',
+  'Aug',
+  'Sep',
+  'Oct',
+  'Nov',
+  'Dec',
+];
+
+String _bleedingSummary(Iterable<LocalDate> values) {
+  final dates = values.toSet().toList()..sort();
+  if (dates.isEmpty) return '';
+  final groups = <(LocalDate, LocalDate)>[];
+  var start = dates.first;
+  var end = dates.first;
+  for (final date in dates.skip(1)) {
+    if (date.epochDay == end.epochDay + 1) {
+      end = date;
+    } else {
+      groups.add((start, end));
+      start = date;
+      end = date;
+    }
+  }
+  groups.add((start, end));
+  final ranges = groups.map((group) => _compactRange(group.$1, group.$2));
+  final count = dates.length;
+  return 'Bleeding: ${ranges.join(', ')} · $count ${count == 1 ? 'day' : 'days'}';
+}
+
+String _compactRange(LocalDate start, LocalDate end) {
+  final startLabel = '${_monthLabels[start.month - 1]} ${start.day}';
+  if (start == end) return startLabel;
+  if (start.year == end.year && start.month == end.month) {
+    return '$startLabel–${end.day}';
+  }
+  final endLabel = '${_monthLabels[end.month - 1]} ${end.day}';
+  if (start.year == end.year) return '$startLabel–$endLabel';
+  return '$startLabel, ${start.year}–$endLabel, ${end.year}';
+}
 
 String _formatDateTime(DateTime value) {
   final local = value.toLocal();

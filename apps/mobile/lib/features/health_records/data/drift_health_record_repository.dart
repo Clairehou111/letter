@@ -131,11 +131,6 @@ final class DriftHealthRecordRepository implements HealthRecordRepository {
         id: row.id,
         symptom: SymptomType.values.byName(row.symptom),
         severity: SymptomSeverity.values[row.severity - 1],
-        painRating: row.painRating,
-        painLocations: _decodeSet<PainLocation>(
-          row.painLocationsJson,
-          PainLocation.values.byName,
-        ),
         functionalImpacts: _decodeSet<FunctionalImpact>(
           row.functionalImpactsJson,
           FunctionalImpact.values.byName,
@@ -162,8 +157,6 @@ final class DriftHealthRecordRepository implements HealthRecordRepository {
       id: id,
       symptom: draft.symptom,
       severity: draft.severity,
-      painRating: draft.painRating,
-      painLocations: Set.unmodifiable(draft.painLocations),
       functionalImpacts: Set.unmodifiable(draft.functionalImpacts),
       experiencedDate: draft.experiencedDate,
       recordedAt: recordedAt,
@@ -179,10 +172,6 @@ final class DriftHealthRecordRepository implements HealthRecordRepository {
       id: record.id,
       symptom: record.symptom.name,
       severity: record.severity.score,
-      painRating: Value(record.painRating),
-      painLocationsJson: jsonEncode(
-        record.painLocations.map((location) => location.name).toList(),
-      ),
       functionalImpactsJson: jsonEncode(
         record.functionalImpacts.map((impact) => impact.name).toList(),
       ),
@@ -199,12 +188,6 @@ final class DriftHealthRecordRepository implements HealthRecordRepository {
     return HealthRecordRowsCompanion(
       symptom: Value(record.symptom.name),
       severity: Value(record.severity.score),
-      painRating: Value(record.painRating),
-      painLocationsJson: Value(
-        jsonEncode(
-          record.painLocations.map((location) => location.name).toList(),
-        ),
-      ),
       functionalImpactsJson: Value(
         jsonEncode(
           record.functionalImpacts.map((impact) => impact.name).toList(),

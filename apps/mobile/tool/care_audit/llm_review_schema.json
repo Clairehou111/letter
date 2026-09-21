@@ -1,0 +1,137 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Care LLM experience review",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "review_version",
+    "subject_id",
+    "subject_kind",
+    "intent_summary",
+    "intent_achieved",
+    "overall_experience",
+    "observations",
+    "recommendations",
+    "agency_review",
+    "clinical_claim_warning",
+    "human_review_questions",
+    "limitations"
+  ],
+  "properties": {
+    "review_version": {
+      "type": "string"
+    },
+    "subject_id": {
+      "type": "string"
+    },
+    "subject_kind": {
+      "type": "string",
+      "enum": ["animation_audio_pair", "audio_asset"]
+    },
+    "intent_summary": {
+      "type": "string"
+    },
+    "intent_achieved": {
+      "type": "string",
+      "enum": ["yes", "partly", "no", "uncertain"]
+    },
+    "overall_experience": {
+      "type": "string",
+      "enum": ["strong", "promising", "needs_revision", "uncertain"]
+    },
+    "observations": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "timestamp_seconds",
+          "evidence_type",
+          "observation",
+          "potential_experience_risk",
+          "confidence"
+        ],
+        "properties": {
+          "timestamp_seconds": {
+            "type": ["number", "null"]
+          },
+          "evidence_type": {
+            "type": "string",
+            "enum": ["IMAGE", "METRIC", "CONTEXT", "INFERENCE"]
+          },
+          "observation": {
+            "type": "string"
+          },
+          "potential_experience_risk": {
+            "type": "string"
+          },
+          "confidence": {
+            "type": "string",
+            "enum": ["high", "medium", "low"]
+          }
+        }
+      }
+    },
+    "recommendations": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "priority",
+          "parameter",
+          "proposed_change",
+          "rationale",
+          "acceptance_check"
+        ],
+        "properties": {
+          "priority": {
+            "type": "string",
+            "enum": ["P0", "P1", "P2", "P3"]
+          },
+          "parameter": {
+            "type": "string"
+          },
+          "proposed_change": {
+            "type": "string"
+          },
+          "rationale": {
+            "type": "string"
+          },
+          "acceptance_check": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "agency_review": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["status", "reason"],
+      "properties": {
+        "status": {
+          "type": "string",
+          "enum": ["preserved", "at_risk", "not_visible", "not_applicable"]
+        },
+        "reason": {
+          "type": "string"
+        }
+      }
+    },
+    "clinical_claim_warning": {
+      "type": "boolean"
+    },
+    "human_review_questions": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "limitations": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    }
+  }
+}

@@ -30,6 +30,7 @@ import '../features/onboarding/data/onboarding_repository_factory.dart';
 import '../features/onboarding/domain/onboarding_profile.dart';
 import '../features/onboarding/presentation/onboarding_flow.dart';
 import '../features/privacy/data/local_device_authenticator.dart';
+import '../features/privacy/data/native_privacy_bridge.dart';
 import '../features/privacy/data/privacy_preferences_repository_factory.dart';
 import '../features/privacy/domain/device_authenticator.dart';
 import '../features/privacy/domain/privacy_preferences.dart';
@@ -242,7 +243,19 @@ class _LetterAppState extends State<LetterApp> with WidgetsBindingObserver {
       ]);
       final authState = results[0] as AuthState;
       final profile = results[1] as OnboardingProfile?;
-      final privacyPreferences = results[2] as PrivacyPreferences;
+      final loadedPrivacyPreferences = results[2] as PrivacyPreferences;
+      // App Lock and product analytics are not part of this release. Clear
+      // any pre-release toggles so a hidden control cannot remain active.
+      final privacyPreferences = loadedPrivacyPreferences.copyWith(
+        appLockEnabled: false,
+        analyticsConsent: AnalyticsConsent.optedOut,
+      );
+      if (privacyPreferences != loadedPrivacyPreferences) {
+        await _privacyPreferencesRepository.save(privacyPreferences);
+      }
+      await NativePrivacyBridge.setScreenCoverEnabled(
+        privacyPreferences.screenCoverEnabled,
+      );
       if (!mounted) {
         return;
       }
@@ -309,12 +322,19 @@ class _LetterAppState extends State<LetterApp> with WidgetsBindingObserver {
   }
 
   Future<void> _updatePrivacyPreferences(PrivacyPreferences preferences) async {
-    await _privacyPreferencesRepository.save(preferences);
+    final supportedPreferences = preferences.copyWith(
+      appLockEnabled: false,
+      analyticsConsent: AnalyticsConsent.optedOut,
+    );
+    await _privacyPreferencesRepository.save(supportedPreferences);
+    await NativePrivacyBridge.setScreenCoverEnabled(
+      supportedPreferences.screenCoverEnabled,
+    );
     if (!mounted) return;
-    setState(() => _privacyPreferences = preferences);
-    await _applyAnalyticsPreference(preferences);
+    setState(() => _privacyPreferences = supportedPreferences);
+    await _applyAnalyticsPreference(supportedPreferences);
     await _reconcileCycleCheckIn(
-      requestPermission: preferences.cycleCheckInEnabled,
+      requestPermission: supportedPreferences.cycleCheckInEnabled,
     );
   }
 

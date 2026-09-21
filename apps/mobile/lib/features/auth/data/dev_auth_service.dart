@@ -2,10 +2,10 @@ import 'dart:async';
 
 import '../domain/auth_service.dart';
 
-/// Dev adapter that keeps the user in anonymous state. All local features
-/// work; server capabilities show an honest "needs account" message.
+/// Deterministic account adapter for tests and local UI development.
 final class DevAuthService implements AuthService {
-  DevAuthService() : _state = const AuthState(status: AuthStatus.anonymous);
+  DevAuthService({AuthState? initialState})
+    : _state = initialState ?? const AuthState(status: AuthStatus.signedOut);
 
   AuthState _state;
   final _controller = StreamController<AuthState>.broadcast();
@@ -17,41 +17,44 @@ final class DevAuthService implements AuthService {
   Stream<AuthState> watch() => _controller.stream;
 
   @override
-  Future<AuthState> signIn({String? email, String? password}) async {
-    // Dev adapter: simulate authenticated state.
+  Future<AuthState> initialize() async => _state;
+
+  @override
+  Future<void> signInWithApple() async {
     _set(
-      AuthState(
-        status: AuthStatus.authenticated,
-        userId: 'dev-user-001',
-        email: email ?? 'dev@letter.app',
-      ),
+      const AuthState(status: AuthStatus.authenticated, userId: 'dev-user-001'),
     );
-    return _state;
   }
 
   @override
-  Future<AuthState> signUp({
-    required String email,
-    required String password,
-  }) async {
+  Future<void> sendMagicLink(String email) async {
     _set(
       AuthState(
         status: AuthStatus.authenticated,
         userId: 'dev-user-001',
-        email: email,
+        email: email.trim(),
       ),
     );
-    return _state;
   }
 
   @override
   Future<void> signOut() async {
-    _set(const AuthState(status: AuthStatus.anonymous));
+    _set(const AuthState(status: AuthStatus.signedOut));
   }
 
   @override
   Future<void> deleteAccount() async {
-    _set(const AuthState(status: AuthStatus.anonymous));
+    _set(const AuthState(status: AuthStatus.localOnlyAfterAccountDeletion));
+  }
+
+  void expireSession() {
+    _set(
+      AuthState(
+        status: AuthStatus.offlineOrExpired,
+        userId: _state.userId,
+        email: _state.email,
+      ),
+    );
   }
 
   void _set(AuthState next) {

@@ -13,16 +13,17 @@ class PeriodRows extends Table {
   Set<Column<Object>> get primaryKey => {id};
 }
 
-class ImpulseDraftRows extends Table {
-  TextColumn get id => text()();
-  TextColumn get content => text()();
+class PeriodFlowRows extends Table {
+  TextColumn get periodId =>
+      text().references(PeriodRows, #id, onDelete: KeyAction.cascade)();
+  IntColumn get day => integer()();
+  TextColumn get flow => text()();
+  TextColumn get color => text().nullable()();
   IntColumn get createdAtMillis => integer()();
   IntColumn get updatedAtMillis => integer()();
-  IntColumn get sealedAtMillis => integer().nullable()();
-  IntColumn get unlockAtMillis => integer().nullable()();
 
   @override
-  Set<Column<Object>> get primaryKey => {id};
+  Set<Column<Object>> get primaryKey => {periodId, day};
 }
 
 class CareRecordRows extends Table {
@@ -42,7 +43,11 @@ class CareRecordRows extends Table {
 
 class CareReflectionRows extends Table {
   TextColumn get id => text()();
-  TextColumn get careRecordId => text().unique()();
+  TextColumn get careRecordId => text().unique().references(
+    CareRecordRows,
+    #id,
+    onDelete: KeyAction.cascade,
+  )();
   TextColumn get mode => text()();
   TextColumn get observation => text().nullable()();
   TextColumn get need => text().nullable()();
@@ -57,6 +62,11 @@ class CareReflectionRows extends Table {
 
 class CycleReflectionRows extends Table {
   TextColumn get id => text()();
+  TextColumn get startingPeriodId => text().nullable().references(
+    PeriodRows,
+    #id,
+    onDelete: KeyAction.setNull,
+  )();
   IntColumn get cycleStartDay => integer().unique()();
   TextColumn get observation => text().nullable()();
   TextColumn get need => text().nullable()();
@@ -73,8 +83,6 @@ class HealthRecordRows extends Table {
   TextColumn get id => text()();
   TextColumn get symptom => text()();
   IntColumn get severity => integer()();
-  IntColumn get painRating => integer().nullable()();
-  TextColumn get painLocationsJson => text()();
   TextColumn get functionalImpactsJson => text()();
   IntColumn get experiencedDay => integer()();
   IntColumn get recordedAtMillis => integer()();
@@ -85,6 +93,11 @@ class HealthRecordRows extends Table {
 
   @override
   Set<Column<Object>> get primaryKey => {id};
+
+  @override
+  List<Set<Column<Object>>> get uniqueKeys => [
+    {symptom, experiencedDay},
+  ];
 }
 
 /// Private, user-authored note text only. There is deliberately no audio,
@@ -99,8 +112,9 @@ class CaptureNoteRows extends Table {
   Set<Column<Object>> get primaryKey => {id};
 }
 
-/// Timestamped, non-clinical current-state check-ins. These rows are never
-/// eligible for symptom severity, personal patterns, or clinical reports.
+/// Timestamped, non-clinical current-state check-ins. They can contribute to
+/// personal Patterns as an explicitly saved feeling, but never acquire a
+/// symptom severity or become a clinical symptom record.
 class MomentCheckInRows extends Table {
   TextColumn get id => text()();
   TextColumn get state => text()();
@@ -111,46 +125,88 @@ class MomentCheckInRows extends Table {
   Set<Column<Object>> get primaryKey => {id};
 }
 
+/// One explicit, user-confirmed preparation memory. Timing is deliberately
+/// absent: Gravity Horizon remains the sole owner of cycle estimates.
+class PreparationPlanRows extends Table {
+  TextColumn get id => text()();
+  TextColumn get status => text()();
+  TextColumn get evidenceFingerprint => text()();
+  TextColumn get sourceRecordIdsJson => text()();
+  BoolColumn get includeCare => boolean()();
+  TextColumn get careActionId => text()();
+  TextColumn get careActionLabel => text()();
+  TextColumn get careMode => text()();
+  IntColumn get betterCount => integer()();
+  IntColumn get sameCount => integer()();
+  IntColumn get worseCount => integer()();
+  TextColumn get noteText => text().nullable()();
+  TextColumn get personalText => text().nullable()();
+  IntColumn get createdAtMillis => integer()();
+  IntColumn get updatedAtMillis => integer()();
+
+  @override
+  Set<Column<Object>> get primaryKey => {id};
+}
+
+/// Dismissal is scoped to an exact evidence fingerprint. New or corrected
+/// evidence therefore produces a new proposal without erasing this history.
+class PreparationDismissalRows extends Table {
+  TextColumn get fingerprint => text()();
+  TextColumn get evidenceLine => text()();
+  IntColumn get dismissedAtMillis => integer()();
+
+  @override
+  Set<Column<Object>> get primaryKey => {fingerprint};
+}
+
 @DriftDatabase(
   tables: [
     PeriodRows,
-    ImpulseDraftRows,
+    PeriodFlowRows,
     CareRecordRows,
     CareReflectionRows,
     CycleReflectionRows,
     HealthRecordRows,
     CaptureNoteRows,
     MomentCheckInRows,
+    PreparationPlanRows,
+    PreparationDismissalRows,
   ],
 )
 class LetterHealthDatabase extends _$LetterHealthDatabase {
   LetterHealthDatabase(super.executor);
 
   @override
-  int get schemaVersion => 7;
+  int get schemaVersion => 5;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
+    onCreate: (migrator) async {
+      await migrator.createAll();
+      await customStatement('''
+        CREATE UNIQUE INDEX cycle_reflection_starting_period_id
+        ON cycle_reflection_rows (starting_period_id)
+      ''');
+    },
     onUpgrade: (migrator, from, to) async {
       if (from < 2) {
-        await migrator.createTable(impulseDraftRows);
+        await migrator.addColumn(periodFlowRows, periodFlowRows.color);
       }
       if (from < 3) {
-        await migrator.createTable(careRecordRows);
-        await migrator.createTable(careReflectionRows);
-      }
-      if (from < 4) {
+        // This is a pre-release schema reset. The removed 0-10 pain scale and
+        // separate pain locations duplicated the five-level symptom record.
+        await migrator.deleteTable('health_record_rows');
         await migrator.createTable(healthRecordRows);
       }
       if (from < 5) {
-        await migrator.createTable(captureNoteRows);
+        // Pre-release cleanup: mood, flow, colour, and notes each have a
+        // dedicated source of truth. Old aggregate rows are intentionally
+        // discarded instead of being migrated into those newer records.
+        await customStatement('DROP TABLE IF EXISTS daily_record_rows');
       }
-      if (from < 6) {
-        await migrator.createTable(momentCheckInRows);
-      }
-      if (from < 7) {
-        await migrator.createTable(cycleReflectionRows);
-      }
+    },
+    beforeOpen: (_) async {
+      await customStatement('PRAGMA foreign_keys = ON');
     },
   );
 }

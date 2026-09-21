@@ -62,10 +62,7 @@ abstract interface class DiaryEntryRepository {
 
   /// Returns all entries within a date range across all enrollments, for
   /// coverage views and reports.
-  Future<List<DiaryEntry>> getEntriesInRange(
-    LocalDate start,
-    LocalDate end,
-  );
+  Future<List<DiaryEntry>> getEntriesInRange(LocalDate start, LocalDate end);
 
   Future<void> close();
 }
@@ -111,7 +108,7 @@ final class DiaryException implements Exception {
     DiaryFailure.invalidRating => 'Each rating must be 0–5.',
     DiaryFailure.entryNotFound => 'This diary entry is no longer available.',
     DiaryFailure.storageUnavailable =>
-      'Letter could not update your private diary. Try again.',
+      'Letter Within could not update your private diary. Try again.',
   };
 
   @override

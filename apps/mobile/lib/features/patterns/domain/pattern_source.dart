@@ -1,4 +1,6 @@
 import '../../care/domain/care_memory.dart';
+import '../../check_in/domain/moment_check_in.dart';
+import '../../cycle/domain/bleeding_flow.dart';
 import '../../cycle/domain/period_record.dart';
 import '../../health_records/domain/health_record.dart';
 
@@ -8,12 +10,16 @@ final class PatternSourceSnapshot {
     this.careRecords = const [],
     this.careReflections = const [],
     this.periods = const [],
+    this.flowDays = const [],
+    this.momentCheckIns = const [],
   });
 
   final List<HealthRecord> healthRecords;
   final List<CareRecord> careRecords;
   final List<CareReflection> careReflections;
   final List<PeriodRecord> periods;
+  final List<BleedingDayRecord> flowDays;
+  final List<MomentCheckIn> momentCheckIns;
 }
 
 abstract interface class PatternSourceReader {

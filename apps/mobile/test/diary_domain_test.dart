@@ -83,9 +83,7 @@ void main() {
       final first = await repo.create(const DiaryEnrollmentDraft());
       await repo.update(
         first.id,
-        const DiaryEnrollmentUpdate(
-          status: DiaryEnrollmentStatus.stopped,
-        ),
+        const DiaryEnrollmentUpdate(status: DiaryEnrollmentStatus.stopped),
       );
 
       final second = await repo.create(
@@ -278,7 +276,12 @@ void main() {
 
       final all = await repo.getEntries(enrollmentId);
       expect(all.length, 2);
-      expect(all.any((entry) => entry.experiencedDate == const LocalDate(2026, 7, 29)), isFalse);
+      expect(
+        all.any(
+          (entry) => entry.experiencedDate == const LocalDate(2026, 7, 29),
+        ),
+        isFalse,
+      );
     });
   });
 

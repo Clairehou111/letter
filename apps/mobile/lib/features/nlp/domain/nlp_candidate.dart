@@ -68,7 +68,6 @@ final class NlpCandidate {
     required this.symptom,
     required this.isPresent,
     required this.severity,
-    required this.painLocations,
     required this.experiencedDate,
     required this.source,
     required this.evidence,
@@ -87,7 +86,6 @@ final class NlpCandidate {
   /// This is only populated by an explicit phrase or a user's edit. The
   /// parser never derives it from emotion, length, prosody, or interaction.
   final SymptomSeverity? severity;
-  final Set<PainLocation> painLocations;
   final LocalDate? experiencedDate;
   final NlpCandidateSource source;
   final NlpEvidence evidence;
@@ -100,7 +98,6 @@ final class NlpCandidate {
     bool? isPresent,
     SymptomSeverity? severity,
     bool clearSeverity = false,
-    Set<PainLocation>? painLocations,
     LocalDate? experiencedDate,
     bool clearExperiencedDate = false,
     NlpCandidateSource? source,
@@ -111,7 +108,6 @@ final class NlpCandidate {
       symptom: symptom ?? this.symptom,
       isPresent: isPresent ?? this.isPresent,
       severity: clearSeverity ? null : severity ?? this.severity,
-      painLocations: Set.unmodifiable(painLocations ?? this.painLocations),
       experiencedDate: clearExperiencedDate
           ? null
           : experiencedDate ?? this.experiencedDate,
@@ -125,17 +121,11 @@ final class NlpCandidate {
 
   /// Converts only an accepted or edited, present candidate after the user
   /// has supplied every field required by the health-record contract.
-  HealthRecordDraft? toHealthRecordDraft({
-    required LocalDate fallbackDate,
-    int? painRating,
-  }) {
+  HealthRecordDraft? toHealthRecordDraft({required LocalDate fallbackDate}) {
     if ((status != NlpCandidateStatus.accepted &&
             status != NlpCandidateStatus.edited) ||
         !isPresent ||
-        severity == null ||
-        (painLocations.isNotEmpty && painRating == null) ||
-        (painLocations.isEmpty && painRating != null) ||
-        (painRating != null && (painRating < 0 || painRating > 10))) {
+        severity == null) {
       return null;
     }
     final date = experiencedDate ?? fallbackDate;
@@ -143,8 +133,6 @@ final class NlpCandidate {
       HealthRecordDraft(
         symptom: symptom,
         severity: severity!,
-        painRating: painRating,
-        painLocations: painLocations,
         functionalImpacts: const {},
         experiencedDate: date,
         provenance: date == fallbackDate

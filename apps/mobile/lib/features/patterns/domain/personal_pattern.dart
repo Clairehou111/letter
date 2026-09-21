@@ -47,7 +47,6 @@ final class ObservedSymptomPattern {
     required this.lastDate,
     required this.coveredDates,
     required this.severityCounts,
-    required this.painLocationCounts,
     required this.functionalImpactCounts,
     required this.sources,
     required this.cycleDayObservations,
@@ -62,7 +61,6 @@ final class ObservedSymptomPattern {
   final LocalDate lastDate;
   final List<LocalDate> coveredDates;
   final Map<SymptomSeverity, int> severityCounts;
-  final Map<PainLocation, int> painLocationCounts;
   final Map<FunctionalImpact, int> functionalImpactCounts;
   final List<PatternSourceReference> sources;
   final List<PatternCycleDayObservation> cycleDayObservations;

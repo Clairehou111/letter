@@ -7,6 +7,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_soloud/flutter_soloud.dart';
 
 import '../../../design_system/letter_theme.dart';
+import 'care_audio_runtime.dart';
 
 /// A breathing activity inside "My body needs care".
 ///
@@ -33,6 +34,16 @@ import '../../../design_system/letter_theme.dart';
 enum BreathPattern { coherent, longExhale, box }
 
 enum BreathSound { off, voice, wordless }
+
+typedef BreathAudioStarter =
+    Future<BreathAudio> Function(String asset, {double gain, double rate});
+
+abstract interface class BreathAudio {
+  void setLevel(double value);
+  Future<void> cue(String asset, {double gain});
+  void setSwell(double value, {double seconds});
+  Future<void> stop();
+}
 
 class BreathPhase {
   const BreathPhase(this.word, this.seconds, this.kind);
@@ -81,15 +92,18 @@ BreathPatternInfo breathPatternInfo(BreathPattern p) =>
     breathPatterns.firstWhere((b) => b.id == p);
 
 class BreathFlow extends StatefulWidget {
-  const BreathFlow({super.key, required this.onClose});
+  const BreathFlow({super.key, required this.onClose, this.audioStarter});
 
   final VoidCallback onClose;
+  @visibleForTesting
+  final BreathAudioStarter? audioStarter;
 
   @override
   State<BreathFlow> createState() => _BreathFlowState();
 }
 
-class _BreathFlowState extends State<BreathFlow> with SingleTickerProviderStateMixin {
+class _BreathFlowState extends State<BreathFlow>
+    with SingleTickerProviderStateMixin {
   late final Ticker _ticker;
   Duration _elapsed = Duration.zero;
 
@@ -100,9 +114,10 @@ class _BreathFlowState extends State<BreathFlow> with SingleTickerProviderStateM
   bool _settled = false;
 
   late BreathSound _sound;
-  _BreathAudio? _audio;
+  BreathAudio? _audio;
+  int _audioGeneration = 0;
 
-  // ── Letter palette & assets ─────────────────────────────────────
+  // ── Letter Within palette & assets ─────────────────────────────────────
   static const _bg = LetterColors.night;
   static const _ink = LetterColors.canvas;
   static const _glow = LetterColors.moonMetal;
@@ -112,39 +127,81 @@ class _BreathFlowState extends State<BreathFlow> with SingleTickerProviderStateM
   void initState() {
     super.initState();
     _sound = BreathSound.off;
-    
+
     if (_sound != BreathSound.off) _openAudio();
     _ticker = createTicker((d) {
       setState(() => _elapsed = d);
       _onFrame(d.inMicroseconds / 1e6);
-    })
-      ..start();
+    })..start();
   }
 
   /// The bed sits far back on purpose: it is there so the gaps between cues
   /// aren't dead air, never something you'd notice on its own.
   Future<void> _openAudio() async {
     if (_audio != null) return;
-    final a = await _BreathAudio.start(_bedAsset, gain: 0.3, rate: 0.97);
-    if (!mounted || _sound == BreathSound.off) {
-      await a.stop();
-      return;
+    final generation = ++_audioGeneration;
+    BreathAudio? a;
+    try {
+      a = await (widget.audioStarter ?? _BreathAudio.start)(
+        _bedAsset,
+        gain: 0.3,
+        rate: 0.97,
+      );
+      if (!mounted ||
+          _sound == BreathSound.off ||
+          generation != _audioGeneration) {
+        await a.stop();
+        return;
+      }
+      _audio = a;
+
+      a.setLevel(0.5);
+      // The ticker can enter the first phase before the bed has loaded. Emit
+      // the cue for the phase currently on screen once the player is ready;
+      // otherwise the first voice cue is silently lost until the next turn.
+      final now = _at(_elapsed.inMicroseconds / 1e6);
+      _speak(now.phase);
+      _phaseIndex = now.index;
+      a.setSwell(
+        _swellFor(now.phase, now.index),
+        seconds: max(1.2, now.phase.seconds * 0.8),
+      );
+    } catch (_) {
+      if (identical(_audio, a)) _audio = null;
+      if (a != null) {
+        try {
+          await a.stop();
+        } catch (_) {}
+      }
+      if (mounted &&
+          generation == _audioGeneration &&
+          _sound != BreathSound.off) {
+        setState(() => _sound = BreathSound.off);
+      }
     }
-    _audio = a;
-    
-    a.setLevel(0.5);
   }
 
   @override
   void dispose() {
     _ticker.dispose();
+    _audioGeneration++;
     _audio?.stop();
-    
+
     super.dispose();
   }
 
   List<BreathPhase> get _phases => breathPatternInfo(_pattern).phases;
   double get _cycleSeconds => _phases.fold(0.0, (a, p) => a + p.seconds);
+
+  bool _holdFollowsExhale(int index) =>
+      index > 0 && _phases[index - 1].kind == 2;
+
+  double _swellFor(BreathPhase phase, int index) {
+    if (phase.kind == 2 || (phase.kind == 1 && _holdFollowsExhale(index))) {
+      return 0.78;
+    }
+    return 1.14;
+  }
 
   /// Position inside the current cycle, and which phase that lands in.
   ({BreathPhase phase, int index, double t}) _at(double seconds) {
@@ -164,16 +221,18 @@ class _BreathFlowState extends State<BreathFlow> with SingleTickerProviderStateM
     if (a == null) return;
     if (_sound == BreathSound.voice) {
       final asset = switch (phase.kind) {
-        0 => 'assets/ambience/voice-in.mp3',
-        1 => 'assets/ambience/voice-hold.mp3',
-        _ => 'assets/ambience/voice-out.mp3',
+        0 => 'assets/audio/care/prototype/voice-in.mp3',
+        1 => 'assets/audio/care/prototype/voice-hold.mp3',
+        _ => 'assets/audio/care/prototype/voice-out.mp3',
       };
       a.cue(asset, gain: 0.9);
     } else if (_sound == BreathSound.wordless) {
       // no hum on a hold — a hold should feel like nothing happening
       if (phase.kind == 1) return;
       a.cue(
-        phase.kind == 0 ? 'assets/ambience/hum-in.mp3' : 'assets/ambience/hum-out.mp3',
+        phase.kind == 0
+            ? 'assets/audio/care/prototype/hum-in.mp3'
+            : 'assets/audio/care/prototype/hum-out.mp3',
         gain: 0.8,
       );
     }
@@ -186,7 +245,8 @@ class _BreathFlowState extends State<BreathFlow> with SingleTickerProviderStateM
       BreathSound.wordless => BreathSound.off,
     };
     setState(() => _sound = next);
-        if (next == BreathSound.off) {
+    if (next == BreathSound.off) {
+      _audioGeneration++;
       final a = _audio;
       _audio = null;
       await a?.stop();
@@ -211,34 +271,39 @@ class _BreathFlowState extends State<BreathFlow> with SingleTickerProviderStateM
     }
     _speak(now.phase);
     // the bed leans with the breath too, so the pace survives closed eyes
-    _audio?.setSwell(now.phase.kind == 2 ? 0.78 : 1.14,
-        seconds: max(1.2, now.phase.seconds * 0.8));
+    _audio?.setSwell(
+      _swellFor(now.phase, now.index),
+      seconds: max(1.2, now.phase.seconds * 0.8),
+    );
     if (_minutePassed && !_settled && now.phase.kind == 0) {
       _settled = true;
       if (_sound == BreathSound.voice) {
-        _audio?.cue('assets/ambience/voice-settle.mp3', gain: 0.75);
+        _audio?.cue('assets/audio/care/prototype/voice-settle.mp3', gain: 0.75);
       }
     }
   }
 
   String get _soundLabel => switch (_sound) {
-        BreathSound.off => 'sound off',
-        BreathSound.voice => 'a voice',
-        BreathSound.wordless => 'wordless',
-      };
+    BreathSound.off => 'sound off',
+    BreathSound.voice => 'a voice',
+    BreathSound.wordless => 'wordless',
+  };
 
   @override
   Widget build(BuildContext context) {
-    
+    final reduceMotion = MediaQuery.disableAnimationsOf(context);
     final seconds = _elapsed.inMicroseconds / 1e6;
     final now = _at(seconds);
 
-    // radius eases with the breath: fuller on the in-breath, held flat on holds
-    final eased = switch (now.phase.kind) {
-      0 => Curves.easeInOut.transform(now.t),
-      1 => 1.0,
-      _ => 1 - Curves.easeInOut.transform(now.t),
-    };
+    // Radius eases with the breath. The first box hold follows an inhale and
+    // stays full; the second follows an exhale and stays small.
+    final eased = reduceMotion
+        ? 0.5
+        : switch (now.phase.kind) {
+            0 => Curves.easeInOut.transform(now.t),
+            1 => _holdFollowsExhale(now.index) ? 0.0 : 1.0,
+            _ => 1 - Curves.easeInOut.transform(now.t),
+          };
     final hold = now.phase.kind == 1;
 
     return Scaffold(
@@ -246,38 +311,45 @@ class _BreathFlowState extends State<BreathFlow> with SingleTickerProviderStateM
       body: Stack(
         children: [
           Positioned.fill(
-            child: CustomPaint(
-              painter: _BreathPainter(
-                expand: eased,
-                seconds: seconds,
-                ink: _ink,
-                glow: _glow,
-                bg: _bg,
+            child: RepaintBoundary(
+              key: const Key('breath-animation-surface'),
+              child: CustomPaint(
+                painter: _BreathPainter(
+                  expand: eased,
+                  seconds: seconds,
+                  ink: _ink,
+                  glow: _glow,
+                  bg: _bg,
+                ),
               ),
             ),
           ),
-          // the word, low in the frame — no counter, no progress bar. It
-          // cross-fades rather than snapping, so nothing arrives abruptly.
-          Positioned(
-            left: 0,
-            right: 0,
-            bottom: 148,
-            child: Center(
-              child: AnimatedOpacity(
-                opacity: hold ? 0.5 : 0.85,
-                duration: const Duration(milliseconds: 400),
-                child: AnimatedSwitcher(
-                  duration: const Duration(milliseconds: 900),
-                  switchInCurve: Curves.easeOut,
-                  switchOutCurve: Curves.easeIn,
-                  child: Text(
-                    now.phase.word,
-                    key: ValueKey('${now.phase.word}-${now.index}'),
-                    style: TextStyle(
-                      fontFamily: 'Newsreader',
-                      fontSize: 30,
-                      letterSpacing: 1,
-                      color: _glow.withValues(alpha: 0.9),
+          // The word sits inside the ring so the voice, label, and motion
+          // point to the same thing. It cross-fades rather than snapping.
+          Positioned.fill(
+            child: Align(
+              alignment: const Alignment(0, -0.12),
+              child: IgnorePointer(
+                child: AnimatedOpacity(
+                  opacity: hold ? 0.5 : 0.85,
+                  duration: reduceMotion
+                      ? Duration.zero
+                      : const Duration(milliseconds: 400),
+                  child: AnimatedSwitcher(
+                    duration: reduceMotion
+                        ? Duration.zero
+                        : const Duration(milliseconds: 900),
+                    switchInCurve: Curves.easeOut,
+                    switchOutCurve: Curves.easeIn,
+                    child: Text(
+                      now.phase.word,
+                      key: ValueKey('${now.phase.word}-${now.index}'),
+                      style: TextStyle(
+                        fontFamily: 'Newsreader',
+                        fontSize: 30,
+                        letterSpacing: 1,
+                        color: _glow.withValues(alpha: 0.9),
+                      ),
                     ),
                   ),
                 ),
@@ -293,7 +365,10 @@ class _BreathFlowState extends State<BreathFlow> with SingleTickerProviderStateM
                 child: Text(
                   "that's a minute. stay as long as you like.",
                   textAlign: TextAlign.center,
-                  style: TextStyle(fontSize: 11.5, color: _glow.withValues(alpha: 0.4)),
+                  style: TextStyle(
+                    fontSize: 11.5,
+                    color: _glow.withValues(alpha: 0.4),
+                  ),
                 ),
               ),
             ),
@@ -356,23 +431,64 @@ class _BreathFlowState extends State<BreathFlow> with SingleTickerProviderStateM
               ),
             ),
           SafeArea(
-            child: Align(
-              alignment: Alignment.bottomCenter,
-              child: Padding(
-                padding: const EdgeInsets.only(bottom: 28, left: 20, right: 20),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    _Ghost(label: 'Back', glow: _glow, onTap: widget.onClose),
-                    _Ghost(
-                      label: '${breathPatternInfo(_pattern).label.toLowerCase()} · $_soundLabel',
-                      glow: _glow,
-                      onTap: () => setState(() => _picking = !_picking),
+            child: Stack(
+              children: [
+                Positioned(
+                  top: 8,
+                  left: 12,
+                  child: IconButton(
+                    key: const Key('breath-back'),
+                    onPressed: widget.onClose,
+                    tooltip: 'Back to Care',
+                    style: IconButton.styleFrom(
+                      minimumSize: const Size(48, 48),
+                      foregroundColor: _glow.withValues(alpha: 0.82),
+                      backgroundColor: _bg.withValues(alpha: 0.7),
+                      side: BorderSide(color: _glow.withValues(alpha: 0.18)),
+                      shape: const CircleBorder(),
                     ),
-                    _Ghost(label: "that's enough", glow: _glow, onTap: widget.onClose),
-                  ],
+                    icon: const Icon(Icons.arrow_back_rounded, size: 21),
+                  ),
                 ),
-              ),
+                Align(
+                  alignment: Alignment.bottomCenter,
+                  child: Container(
+                    margin: const EdgeInsets.fromLTRB(16, 0, 16, 20),
+                    padding: const EdgeInsets.all(10),
+                    decoration: BoxDecoration(
+                      color: _bg.withValues(alpha: 0.86),
+                      borderRadius: BorderRadius.circular(24),
+                      border: Border.all(color: _glow.withValues(alpha: 0.16)),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withValues(alpha: 0.2),
+                          blurRadius: 24,
+                          offset: const Offset(0, 10),
+                        ),
+                      ],
+                    ),
+                    child: OutlinedButton.icon(
+                      key: const Key('breath-options'),
+                      onPressed: () => setState(() => _picking = !_picking),
+                      style: OutlinedButton.styleFrom(
+                        minimumSize: const Size.fromHeight(48),
+                        foregroundColor: _glow.withValues(alpha: 0.82),
+                        side: BorderSide(color: _glow.withValues(alpha: 0.2)),
+                        shape: const StadiumBorder(),
+                        padding: const EdgeInsets.symmetric(horizontal: 14),
+                      ),
+                      icon: const Icon(Icons.tune_rounded, size: 18),
+                      label: Text(
+                        '${breathPatternInfo(_pattern).label} · $_soundLabel',
+                        textScaler: TextScaler.noScaling,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(fontSize: 11.5),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
             ),
           ),
         ],
@@ -409,37 +525,27 @@ class _PatternChoice extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(info.label,
-                    style: TextStyle(fontSize: 14, color: glow.withValues(alpha: 0.9))),
+                Text(
+                  info.label,
+                  style: TextStyle(
+                    fontSize: 14,
+                    color: glow.withValues(alpha: 0.9),
+                  ),
+                ),
                 const SizedBox(height: 3),
-                Text(info.note,
-                    style: TextStyle(
-                        fontSize: 11.5, height: 1.5, color: glow.withValues(alpha: 0.5))),
+                Text(
+                  info.note,
+                  style: TextStyle(
+                    fontSize: 11.5,
+                    height: 1.5,
+                    color: glow.withValues(alpha: 0.5),
+                  ),
+                ),
               ],
             ),
           ),
         ),
       ),
-    );
-  }
-}
-
-class _Ghost extends StatelessWidget {
-  const _Ghost({required this.label, required this.glow, required this.onTap});
-  final String label;
-  final Color glow;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return TextButton(
-      onPressed: onTap,
-      style: TextButton.styleFrom(
-        foregroundColor: glow.withValues(alpha: 0.65),
-        textStyle: const TextStyle(fontSize: 11.5, letterSpacing: 0.6),
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-      ),
-      child: Text(label),
     );
   }
 }
@@ -453,7 +559,7 @@ class _BreathPainter extends CustomPainter {
     required this.ink,
     required this.glow,
     required this.bg,
-    });
+  });
 
   final double expand;
   final double seconds;
@@ -472,10 +578,16 @@ class _BreathPainter extends CustomPainter {
     canvas.drawRect(
       Offset.zero & size,
       Paint()
-        ..shader = RadialGradient(
-          colors: [glow.withValues(alpha: 0.10 + 0.10 * expand), bg],
-          stops: const [0, 1],
-        ).createShader(Rect.fromCircle(center: center, radius: size.height * 0.8)),
+        ..shader =
+            RadialGradient(
+              colors: [
+                glow.withValues(alpha: 0.10 + 0.10 * expand),
+                bg,
+              ],
+              stops: const [0, 1],
+            ).createShader(
+              Rect.fromCircle(center: center, radius: size.height * 0.8),
+            ),
     );
 
     // trailing halos
@@ -531,12 +643,15 @@ class _BreathPainter extends CustomPainter {
 // start() loads and loops a bed, cue() plays a one-shot on top,
 // setSwell() ramps bed volume, stop() tears everything down.
 
-class _BreathAudio {
-  _BreathAudio._(this._soloud, this._bedHandle);
+class _BreathAudio implements BreathAudio {
+  _BreathAudio._(this._soloud, this._bedSource, this._bedHandle);
 
   final SoLoud _soloud;
+  final AudioSource _bedSource;
   final SoundHandle _bedHandle;
-  final _cues = <String, SoundHandle>{};
+  final _cueSources = <String, AudioSource>{};
+  SoundHandle? _activeCue;
+  int _cueGeneration = 0;
   bool _stopped = false;
 
   static Future<_BreathAudio> start(
@@ -544,50 +659,87 @@ class _BreathAudio {
     double gain = 0.3,
     double rate = 0.97,
   }) async {
-    final soloud = SoLoud.instance;
-    await soloud.init();
-    final src = await soloud.loadAsset(asset);
-    final handle = soloud.play(src, volume: gain, looping: true);
-    return _BreathAudio._(soloud, handle);
+    final soloud = await CareAudioRuntime.ensureInitialized();
+    AudioSource? source;
+    try {
+      source = await soloud.loadAsset(asset);
+      final handle = soloud.play(source, volume: gain, looping: true);
+      return _BreathAudio._(soloud, source, handle);
+    } catch (_) {
+      if (source != null) {
+        try {
+          await soloud.disposeSource(source);
+        } catch (_) {}
+      }
+      rethrow;
+    }
   }
 
+  @override
   void setLevel(double v) {
     if (_stopped) return;
-    try { _soloud.setVolume(_bedHandle, v.clamp(0.0, 1.0)); } catch (_) {}
-  }
-
-  Future<void> cue(String asset, {double gain = 0.8}) async {
-    if (_stopped) return;
     try {
-      // Reuse cached handle, or load once.
-      SoundHandle? h = _cues[asset];
-      if (h == null) {
-        final src = await _soloud.loadAsset(asset);
-        h = _soloud.play(src, volume: gain);
-        _cues[asset] = h;
-      } else {
-        _soloud.setVolume(h, gain);
-        // Seek to start by stopping and replaying
-        _soloud.stop(h);
-        final src = await _soloud.loadAsset(asset);
-        final nh = _soloud.play(src, volume: gain);
-        _cues[asset] = nh;
-      }
+      _soloud.setVolume(_bedHandle, v.clamp(0.0, 1.0));
     } catch (_) {}
   }
 
-  void setSwell(double v, {double seconds = 1.6}) {
+  @override
+  Future<void> cue(String asset, {double gain = 0.8}) async {
     if (_stopped) return;
-    try { _soloud.setVolume(_bedHandle, (v * 0.5).clamp(0.0, 0.5)); } catch (_) {}
+    final generation = ++_cueGeneration;
+    final previous = _activeCue;
+    _activeCue = null;
+    if (previous != null) {
+      try {
+        await _soloud.stop(previous);
+      } catch (_) {}
+    }
+
+    try {
+      // Cache decoded sources, but never cache playing handles: only one
+      // voice cue should be audible at a time.
+      var src = _cueSources[asset];
+      if (src == null) {
+        src = await _soloud.loadAsset(asset);
+        _cueSources[asset] = src;
+      }
+      // A later phase may have requested another cue while this asset was
+      // loading. Do not let the stale request start late and overlap it.
+      if (_stopped || generation != _cueGeneration) return;
+      _activeCue = _soloud.play(src, volume: gain);
+    } catch (_) {}
   }
 
+  @override
+  void setSwell(double v, {double seconds = 1.6}) {
+    if (_stopped) return;
+    try {
+      _soloud.setVolume(_bedHandle, (v * 0.5).clamp(0.0, 0.5));
+    } catch (_) {}
+  }
+
+  @override
   Future<void> stop() async {
     _stopped = true;
-    try { _soloud.stop(_bedHandle); } catch (_) {}
-    for (final h in _cues.values) {
-      try { _soloud.stop(h); } catch (_) {}
+    _cueGeneration++;
+    try {
+      await _soloud.stop(_bedHandle);
+    } catch (_) {}
+    final activeCue = _activeCue;
+    _activeCue = null;
+    if (activeCue != null) {
+      try {
+        await _soloud.stop(activeCue);
+      } catch (_) {}
     }
-    _cues.clear();
-    _soloud.deinit();
+    for (final source in _cueSources.values) {
+      try {
+        await _soloud.disposeSource(source);
+      } catch (_) {}
+    }
+    _cueSources.clear();
+    try {
+      await _soloud.disposeSource(_bedSource);
+    } catch (_) {}
   }
 }

@@ -32,7 +32,10 @@ migrate_working_dir/
 .pub/
 /build/
 /coverage/
+/config/*.local.json
 /test/failures/
+**/failures/
+/product/
 
 # Symbolication related
 app.*.symbols
@@ -44,3 +47,4 @@ app.*.map.json
 /android/app/debug
 /android/app/profile
 /android/app/release
+/android/build/

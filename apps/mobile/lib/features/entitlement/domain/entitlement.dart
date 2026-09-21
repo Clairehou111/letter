@@ -5,14 +5,23 @@
 library;
 
 enum EntitlementStatus {
-  /// Inside the paid `$0.99` first month.
+  /// Inside a store-confirmed introductory billing period.
   activeIntro,
 
-  /// Paying subscriber (monthly, six-month, or yearly).
+  /// Paying subscriber or lifetime purchaser.
   activePaid,
+
+  /// Store-confirmed access continues while a billing issue is being resolved.
+  gracePeriod,
+
+  /// A store request is in progress or a purchase is awaiting confirmation.
+  pending,
 
   /// Had a subscription that expired or was cancelled.
   lapsed,
+
+  /// The last store check could not be verified while offline.
+  offlineUnknown,
 
   /// Never subscribed, or store state unavailable offline. Treated like
   /// lapsed for capability checks but copy must not claim a past purchase.
@@ -29,10 +38,11 @@ enum LetterCapability {
   localDataDelete,
 
   // Premium (REQ-002).
-  futureSelfNotes,
+  futureSelfNoteResurfacing,
   prepareSurface,
   personalPatterns,
-  lettersArchiveDetail,
+  longitudinalComparisons,
+  clinicianReports,
 }
 
 bool isPremiumCapability(LetterCapability capability) {
@@ -43,15 +53,16 @@ bool isPremiumCapability(LetterCapability capability) {
     LetterCapability.cyclePrediction ||
     LetterCapability.localBackupExport ||
     LetterCapability.localDataDelete => false,
-    LetterCapability.futureSelfNotes ||
+    LetterCapability.futureSelfNoteResurfacing ||
     LetterCapability.prepareSurface ||
     LetterCapability.personalPatterns ||
-    LetterCapability.lettersArchiveDetail => true,
+    LetterCapability.longitudinalComparisons ||
+    LetterCapability.clinicianReports => true,
   };
 }
 
 class EntitlementState {
-  const EntitlementState({required this.status, this.planId});
+  const EntitlementState({required this.status, this.planId, this.message});
 
   final EntitlementStatus status;
 
@@ -59,9 +70,13 @@ class EntitlementState {
   /// contains health or personal data.
   final String? planId;
 
+  /// Safe, non-health explanation for an unavailable or failed store state.
+  final String? message;
+
   bool get hasPremiumAccess =>
       status == EntitlementStatus.activeIntro ||
-      status == EntitlementStatus.activePaid;
+      status == EntitlementStatus.activePaid ||
+      status == EntitlementStatus.gracePeriod;
 
   /// Losing entitlement never removes local data access; premium memory
   /// pauses but is never deleted (REQ-003).
@@ -79,6 +94,8 @@ class LetterPlan {
     required this.title,
     required this.priceLabel,
     required this.effectiveMonthlyLabel,
+    required this.referencePriceLabel,
+    this.available = true,
     this.highlight,
   });
 
@@ -86,33 +103,39 @@ class LetterPlan {
   final String title;
   final String priceLabel;
   final String effectiveMonthlyLabel;
+  final String referencePriceLabel;
+  final bool available;
   final String? highlight;
 }
 
 const letterPlans = [
   LetterPlan(
-    id: 'letter_monthly',
-    title: 'Monthly',
-    priceLabel: '\$8.99 / month',
-    effectiveMonthlyLabel: '\$8.99 / mo',
-  ),
-  LetterPlan(
-    id: 'letter_six_months',
-    title: '6 months',
-    priceLabel: '\$49.99 / 6 months',
-    effectiveMonthlyLabel: '\$8.33 / mo',
-  ),
-  LetterPlan(
     id: 'letter_yearly',
     title: 'Yearly',
-    priceLabel: '\$50.99 / year',
-    effectiveMonthlyLabel: '\$4.25 / mo',
+    priceLabel: '\$29.99 / year',
+    effectiveMonthlyLabel: '\$2.50 / mo',
+    referencePriceLabel: '\$29.99 / year',
     highlight: 'Best for learning your pattern',
+  ),
+  LetterPlan(
+    id: 'letter_monthly',
+    title: 'Monthly',
+    priceLabel: '\$6.99 / month',
+    effectiveMonthlyLabel: '\$6.99 / mo',
+    referencePriceLabel: '\$6.99 / month',
+  ),
+  LetterPlan(
+    id: 'letter_lifetime',
+    title: 'Lifetime',
+    priceLabel: '\$79.99 once',
+    effectiveMonthlyLabel: 'One payment',
+    referencePriceLabel: '\$79.99 once',
+    highlight: 'One payment, keeps working offline',
   ),
 ];
 
-const introOfferLabel = '\$0.99 first month';
+const introOfferLabel = 'Letter Within Plus';
 const introRenewalNote =
-    'Then renews at the plan you choose. Cancel anytime. '
-    'The first month is paid, not a free trial.';
-const yearlyVsSixMonthsNote = 'Yearly costs only \$1 more than 6 months.';
+    'Store pricing and renewal terms are shown before purchase.';
+const yearlyVsLifetimeNote =
+    'Prices are localized by the App Store or Google Play.';
