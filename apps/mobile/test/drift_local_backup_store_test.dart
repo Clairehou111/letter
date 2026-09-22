@@ -93,11 +93,11 @@ void main() {
             id: 'health-source',
             symptom: 'cramps',
             severity: 3,
-            functionalImpactsJson: '["neededRest"]',
+            functionalImpactsJson: '["homeResponsibilities"]',
             experiencedDay: 20400,
             recordedAtMillis: 700,
             updatedAtMillis: 800,
-            provenance: 'manual',
+            provenance: 'same_day',
             userConfirmed: true,
             vocabularyVersion: 1,
           ),
@@ -452,6 +452,36 @@ void main() {
       );
     },
   );
+
+  test('rejects health rows that domain repositories cannot decode', () async {
+    final database = LetterHealthDatabase(NativeDatabase.memory());
+    addTearDown(database.close);
+
+    await expectLater(
+      DriftLocalBackupStore(database).stage(
+        _plan(
+          _snapshot(
+            collections: [
+              _collection('health_records', [
+                _record('invalid-health', {
+                  'symptom': 'cramps',
+                  'severity': 9,
+                  'functionalImpactsJson': '["notARealImpact"]',
+                  'experiencedDay': 20400,
+                  'recordedAtMillis': 1,
+                  'updatedAtMillis': 2,
+                  'provenance': 'invented',
+                  'userConfirmed': true,
+                  'vocabularyVersion': 1,
+                }),
+              ], 2),
+            ],
+          ),
+        ),
+      ),
+      throwsA(_malformedPayload),
+    );
+  });
 }
 
 Matcher get _malformedPayload => isA<LocalBackupException>().having(

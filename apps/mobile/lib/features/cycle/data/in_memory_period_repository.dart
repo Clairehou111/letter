@@ -33,7 +33,22 @@ final class InMemoryPeriodRepository implements PeriodRepository {
     required LocalDate today,
   }) async {
     validatePeriodDraft(draft: draft, today: today, existing: _records);
+    final adjacent = adjacentPeriodsForDraft(
+      draft: draft,
+      today: today,
+      existing: _records,
+    );
     final now = _clock().toUtc();
+    if (adjacent.isNotEmpty) {
+      final mergedDraft = mergeAdjacentPeriodDraft(draft, adjacent);
+      final survivor = _earliestPeriod(adjacent);
+      return _replaceMergedPeriod(
+        survivor: survivor,
+        absorbed: adjacent.where((record) => record.id != survivor.id),
+        draft: mergedDraft,
+        updatedAt: now,
+      );
+    }
     final record = PeriodRecord(
       id: _idGenerator(),
       startDate: draft.startDate,
@@ -61,7 +76,24 @@ final class InMemoryPeriodRepository implements PeriodRepository {
       existing: _records,
       editingId: id,
     );
+    final adjacent = adjacentPeriodsForDraft(
+      draft: draft,
+      today: today,
+      existing: _records,
+      editingId: id,
+    );
     final previous = _records[index];
+    if (adjacent.isNotEmpty) {
+      final mergedDraft = mergeAdjacentPeriodDraft(draft, adjacent);
+      final candidates = <PeriodRecord>[previous, ...adjacent];
+      final survivor = _earliestPeriod(candidates, editedId: id, draft: draft);
+      return _replaceMergedPeriod(
+        survivor: survivor,
+        absorbed: candidates.where((record) => record.id != survivor.id),
+        draft: mergedDraft,
+        updatedAt: _clock().toUtc(),
+      );
+    }
     final updated = PeriodRecord(
       id: previous.id,
       startDate: draft.startDate,
@@ -78,6 +110,60 @@ final class InMemoryPeriodRepository implements PeriodRepository {
               flow.date.isAfter(upperBound)),
     );
     return updated;
+  }
+
+  PeriodRecord _replaceMergedPeriod({
+    required PeriodRecord survivor,
+    required Iterable<PeriodRecord> absorbed,
+    required PeriodDraft draft,
+    required DateTime updatedAt,
+  }) {
+    final absorbedIds = absorbed.map((record) => record.id).toSet();
+    final merged = PeriodRecord(
+      id: survivor.id,
+      startDate: draft.startDate,
+      endDate: draft.endDate,
+      createdAt: survivor.createdAt,
+      updatedAt: updatedAt,
+    );
+    _records.removeWhere(
+      (record) => record.id == survivor.id || absorbedIds.contains(record.id),
+    );
+    _records.add(merged);
+    for (var index = 0; index < _flowDays.length; index += 1) {
+      final flow = _flowDays[index];
+      if (!absorbedIds.contains(flow.periodId)) continue;
+      _flowDays[index] = BleedingDayRecord(
+        periodId: survivor.id,
+        date: flow.date,
+        flow: flow.flow,
+        color: flow.color,
+        createdAt: flow.createdAt,
+        updatedAt: flow.updatedAt,
+      );
+    }
+    return merged;
+  }
+
+  PeriodRecord _earliestPeriod(
+    Iterable<PeriodRecord> records, {
+    String? editedId,
+    PeriodDraft? draft,
+  }) {
+    final sorted = records.toList()
+      ..sort((left, right) {
+        final leftStart = left.id == editedId
+            ? draft!.startDate
+            : left.startDate;
+        final rightStart = right.id == editedId
+            ? draft!.startDate
+            : right.startDate;
+        final byStart = leftStart.compareTo(rightStart);
+        if (byStart != 0) return byStart;
+        final byUpdated = right.updatedAt.compareTo(left.updatedAt);
+        return byUpdated != 0 ? byUpdated : left.id.compareTo(right.id);
+      });
+    return sorted.first;
   }
 
   @override

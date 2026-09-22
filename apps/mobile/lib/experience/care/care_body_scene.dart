@@ -174,13 +174,13 @@ abstract final class CareBodyScene {
         'your body deserves medical care — calmly, and without waiting.',
       )
       ..writeln()
-      ..writeln('Seek urgent care now for:');
+      ..writeln('Get urgent medical care now if you notice:');
     for (final item in medicalBoundaryContent.urgent) {
       buffer.writeln('• $item');
     }
     buffer
       ..writeln()
-      ..writeln('Book a medical assessment for:');
+      ..writeln('Book a medical assessment if you notice:');
     for (final item in medicalBoundaryContent.nonUrgent) {
       buffer.writeln('• $item');
     }

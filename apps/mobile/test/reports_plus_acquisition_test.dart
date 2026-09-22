@@ -43,7 +43,7 @@ void main() {
       findsOneWidget,
     );
     expect(find.text('Cyclical symptom matrix'), findsNothing);
-    expect(find.text('Export this report.'), findsNothing);
+    expect(find.text('Export this report — included with Plus'), findsNothing);
   });
 
   testWidgets('report readiness counts period days, not unrelated check-ins', (
@@ -84,7 +84,10 @@ void main() {
         findsOneWidget,
       );
       expect(find.text('Cyclical symptom matrix'), findsNothing);
-      expect(find.text('Export this report.'), findsNothing);
+      expect(
+        find.text('Export this report — included with Plus'),
+        findsNothing,
+      );
     },
   );
 
@@ -109,7 +112,7 @@ void main() {
       findsOneWidget,
     );
     expect(find.text('Cyclical symptom matrix'), findsNothing);
-    expect(find.text('Export this report.'), findsNothing);
+    expect(find.text('Export this report — included with Plus'), findsNothing);
   });
 
   testWidgets('three completed cycles show real matrix and boundary', (
@@ -118,13 +121,16 @@ void main() {
     await pumpReport(tester, _input(4), onOpenPlus: (_) async => null);
     await _reveal(tester, find.text('Cyclical symptom matrix'));
     expect(find.text('Cyclical symptom matrix'), findsOneWidget);
-    await _reveal(tester, find.text('Export this report.'));
+    await _reveal(tester, find.text('Export this report — included with Plus'));
     expect(
       find.text('Showing Last 3 months · 3 completed cycles in range'),
       findsOneWidget,
     );
     expect(find.text('Compare all 3 completed cycles'), findsOneWidget);
-    expect(find.text('Export this report.'), findsOneWidget);
+    expect(
+      find.text('Export this report — included with Plus'),
+      findsOneWidget,
+    );
   });
 
   testWidgets('artifact tier uses completed cycles inside selected range', (
@@ -139,7 +145,7 @@ void main() {
     await _reveal(tester, find.text('Two completed cycles in this range'));
     expect(find.text('Two completed cycles in this range'), findsOneWidget);
     expect(find.text('Cyclical symptom matrix'), findsNothing);
-    expect(find.text('Export this report.'), findsNothing);
+    expect(find.text('Export this report — included with Plus'), findsNothing);
   });
 
   testWidgets('locked range keeps free range and round-trips exact intent', (
@@ -187,7 +193,7 @@ void main() {
         return const PlusCommitResult.dismissed();
       },
     );
-    expect(find.text('Export this report.'), findsNothing);
+    expect(find.text('Export this report — included with Plus'), findsNothing);
     await tester.tap(find.text('Last 6 months'));
     await tester.pumpAndSettle();
     expect(opened, isFalse);

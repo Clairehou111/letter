@@ -121,10 +121,9 @@ class CareReleaseScene extends StatelessWidget {
         id: 'press-release',
         title: 'Give it somewhere to go.',
         text:
-            'Press your palms together hard in front of you and count '
-            'slowly to five — then let your hands drop and feel the release. '
-            'Do it again if your body asks. This is the explosion, made safe '
-            'and small.',
+            'Press your palms together only as firmly as feels comfortable, '
+            'or squeeze a soft object, and count slowly to five. Then let go '
+            'and notice the release. Stop if anything hurts.',
         primaryActionLabel: 'I pressed and released',
         semanticsLabel:
             'Give it somewhere to go. Press your palms together '

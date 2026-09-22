@@ -22,12 +22,13 @@ PeriodRecord _period(String id, LocalDate start) {
 
 void main() {
   test(
-    'reads explicit bleeding flow and colour with the other Pattern facts',
+    'reads explicit bleeding flow and color with the other Pattern facts',
     () async {
       final periods = InMemoryPeriodRepository(
         seed: [
           _period('july', const LocalDate(2026, 7, 1)),
           _period('august', const LocalDate(2026, 7, 29)),
+          _period('future', const LocalDate(2026, 10, 1)),
         ],
       );
       await periods.setFlow(
@@ -49,6 +50,12 @@ void main() {
             occurredAt: DateTime.utc(2026, 7, 4, 12),
             createdAt: DateTime.utc(2026, 7, 4, 12),
           ),
+          MomentCheckIn(
+            id: 'future',
+            state: MomentCheckInState.low,
+            occurredAt: DateTime.utc(2026, 10, 4, 12),
+            createdAt: DateTime.utc(2026, 10, 4, 12),
+          ),
         ],
       );
       final source = RepositoryPatternSource(
@@ -56,6 +63,7 @@ void main() {
         careMemory: InMemoryCareMemoryRepository(),
         periods: periods,
         momentCheckIns: checkIns,
+        now: () => DateTime(2026, 8, 16, 12),
       );
 
       final snapshot = await source.read();

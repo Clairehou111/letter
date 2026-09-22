@@ -16,6 +16,7 @@ import '../../cycle/data/letter_health_database.dart';
 import '../../health_records/data/drift_health_record_repository.dart';
 import '../../local_backup/data/drift_local_backup_store.dart';
 import '../../preparation/data/drift_preparation_repository.dart';
+import '../domain/local_health_read_transaction.dart';
 import 'local_health_store.dart';
 
 const _databaseKeyName = 'letter.health_database.key.v1';
@@ -85,9 +86,20 @@ LocalHealthStore _buildLocalHealthStore(QueryExecutor executor) {
       closeDatabase: false,
     ),
     preparationRepository: DriftPreparationRepository(database),
+    readTransaction: _DriftLocalHealthReadTransaction(database),
     localBackupStore: DriftLocalBackupStore(database),
     closeStore: database.close,
   );
+}
+
+final class _DriftLocalHealthReadTransaction
+    implements LocalHealthReadTransaction {
+  const _DriftLocalHealthReadTransaction(this.database);
+
+  final LetterHealthDatabase database;
+
+  @override
+  Future<T> run<T>(Future<T> Function() read) => database.transaction(read);
 }
 
 Future<String> _loadOrCreateKey(Directory directory) async {

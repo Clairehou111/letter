@@ -27,7 +27,7 @@ class CycleActionPanel extends StatelessWidget {
   final String startedLabel;
   final String primaryLabel;
 
-  /// Opens existing day-level flow, colour, pain, and observation editing.
+  /// Opens existing day-level flow, color, pain, and observation editing.
   final VoidCallback onOpenDetails;
 
   /// Ends bleeding when it is still open; otherwise opens existing Fill in

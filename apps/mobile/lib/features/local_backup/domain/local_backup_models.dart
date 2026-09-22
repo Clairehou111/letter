@@ -8,6 +8,7 @@ const localBackupMaximumPayloadBytes = 5 * 1024 * 1024;
 
 enum LocalBackupFailure {
   emptyPassphrase,
+  weakPassphrase,
   invalidPackage,
   unsupportedFormat,
   incompatibleCrypto,
@@ -25,6 +26,8 @@ final class LocalBackupException implements Exception {
   String get userMessage => switch (failure) {
     LocalBackupFailure.emptyPassphrase =>
       'Use a non-empty password to protect this backup.',
+    LocalBackupFailure.weakPassphrase =>
+      'Use at least 8 characters to protect this backup.',
     LocalBackupFailure.invalidPackage =>
       'This backup package could not be read.',
     LocalBackupFailure.unsupportedFormat =>

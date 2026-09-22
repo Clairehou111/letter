@@ -2,7 +2,12 @@ import 'dart:convert';
 
 import 'package:drift/drift.dart';
 
+import '../../care/domain/care_memory.dart';
+import '../../care/domain/care_mode.dart';
+import '../../capture/domain/capture_models.dart';
+import '../../check_in/domain/moment_check_in.dart';
 import '../../cycle/data/letter_health_database.dart';
+import '../../health_records/domain/health_record.dart';
 import '../domain/local_backup_import.dart';
 import '../domain/local_backup_models.dart';
 
@@ -20,185 +25,187 @@ final class DriftLocalBackupStore implements LocalBackupStore {
   @override
   Future<LocalBackupSnapshot> captureSnapshot() async {
     try {
-      final periods = await _database.select(_database.periodRows).get();
-      final periodFlows = await _database
-          .select(_database.periodFlowRows)
-          .get();
-      final careRecords = await _database
-          .select(_database.careRecordRows)
-          .get();
-      final careReflections = await _database
-          .select(_database.careReflectionRows)
-          .get();
-      final cycleReflections = await _database
-          .select(_database.cycleReflectionRows)
-          .get();
-      final healthRecords = await _database
-          .select(_database.healthRecordRows)
-          .get();
-      final captureNotes = await _database
-          .select(_database.captureNoteRows)
-          .get();
-      final momentCheckIns = await _database
-          .select(_database.momentCheckInRows)
-          .get();
-      final preparationPlans = await _database
-          .select(_database.preparationPlanRows)
-          .get();
-      final preparationDismissals = await _database
-          .select(_database.preparationDismissalRows)
-          .get();
-      return LocalBackupSnapshot(
-        createdAt: _clock().toUtc(),
-        collections: [
-          LocalBackupCollection(
-            name: _periods,
-            schemaVersion: 1,
-            records: periods.map(
-              (row) => _record(row.id, row.updatedAtMillis, {
-                'startDay': row.startDay,
-                'endDay': row.endDay,
-                'createdAtMillis': row.createdAtMillis,
-                'updatedAtMillis': row.updatedAtMillis,
-              }),
+      return await _database.transaction(() async {
+        final periods = await _database.select(_database.periodRows).get();
+        final periodFlows = await _database
+            .select(_database.periodFlowRows)
+            .get();
+        final careRecords = await _database
+            .select(_database.careRecordRows)
+            .get();
+        final careReflections = await _database
+            .select(_database.careReflectionRows)
+            .get();
+        final cycleReflections = await _database
+            .select(_database.cycleReflectionRows)
+            .get();
+        final healthRecords = await _database
+            .select(_database.healthRecordRows)
+            .get();
+        final captureNotes = await _database
+            .select(_database.captureNoteRows)
+            .get();
+        final momentCheckIns = await _database
+            .select(_database.momentCheckInRows)
+            .get();
+        final preparationPlans = await _database
+            .select(_database.preparationPlanRows)
+            .get();
+        final preparationDismissals = await _database
+            .select(_database.preparationDismissalRows)
+            .get();
+        return LocalBackupSnapshot(
+          createdAt: _clock().toUtc(),
+          collections: [
+            LocalBackupCollection(
+              name: _periods,
+              schemaVersion: 1,
+              records: periods.map(
+                (row) => _record(row.id, row.updatedAtMillis, {
+                  'startDay': row.startDay,
+                  'endDay': row.endDay,
+                  'createdAtMillis': row.createdAtMillis,
+                  'updatedAtMillis': row.updatedAtMillis,
+                }),
+              ),
             ),
-          ),
-          LocalBackupCollection(
-            name: _periodFlows,
-            schemaVersion: 2,
-            records: periodFlows.map(
-              (row) =>
-                  _record('${row.periodId}:${row.day}', row.updatedAtMillis, {
-                    'periodId': row.periodId,
-                    'day': row.day,
-                    'flow': row.flow,
-                    'color': row.color,
-                    'createdAtMillis': row.createdAtMillis,
-                    'updatedAtMillis': row.updatedAtMillis,
-                  }),
+            LocalBackupCollection(
+              name: _periodFlows,
+              schemaVersion: 2,
+              records: periodFlows.map(
+                (row) =>
+                    _record('${row.periodId}:${row.day}', row.updatedAtMillis, {
+                      'periodId': row.periodId,
+                      'day': row.day,
+                      'flow': row.flow,
+                      'color': row.color,
+                      'createdAtMillis': row.createdAtMillis,
+                      'updatedAtMillis': row.updatedAtMillis,
+                    }),
+              ),
             ),
-          ),
-          LocalBackupCollection(
-            name: _careRecords,
-            schemaVersion: 1,
-            records: careRecords.map(
-              (row) => _record(row.id, row.updatedAtMillis, {
-                'mode': row.mode,
-                'actionId': row.actionId,
-                'actionLabel': row.actionLabel,
-                'outcome': row.outcome,
-                'occurredAtMillis': row.occurredAtMillis,
-                'createdAtMillis': row.createdAtMillis,
-                'updatedAtMillis': row.updatedAtMillis,
-                'pinned': row.pinned,
-              }),
+            LocalBackupCollection(
+              name: _careRecords,
+              schemaVersion: 1,
+              records: careRecords.map(
+                (row) => _record(row.id, row.updatedAtMillis, {
+                  'mode': row.mode,
+                  'actionId': row.actionId,
+                  'actionLabel': row.actionLabel,
+                  'outcome': row.outcome,
+                  'occurredAtMillis': row.occurredAtMillis,
+                  'createdAtMillis': row.createdAtMillis,
+                  'updatedAtMillis': row.updatedAtMillis,
+                  'pinned': row.pinned,
+                }),
+              ),
             ),
-          ),
-          LocalBackupCollection(
-            name: _careReflections,
-            schemaVersion: 1,
-            records: careReflections.map(
-              (row) => _record(row.id, row.updatedAtMillis, {
-                'careRecordId': row.careRecordId,
-                'mode': row.mode,
-                'observation': row.observation,
-                'need': row.need,
-                'whatHelped': row.whatHelped,
-                'futureSelfNote': row.futureSelfNote,
-                'createdAtMillis': row.createdAtMillis,
-                'updatedAtMillis': row.updatedAtMillis,
-              }),
+            LocalBackupCollection(
+              name: _careReflections,
+              schemaVersion: 1,
+              records: careReflections.map(
+                (row) => _record(row.id, row.updatedAtMillis, {
+                  'careRecordId': row.careRecordId,
+                  'mode': row.mode,
+                  'observation': row.observation,
+                  'need': row.need,
+                  'whatHelped': row.whatHelped,
+                  'futureSelfNote': row.futureSelfNote,
+                  'createdAtMillis': row.createdAtMillis,
+                  'updatedAtMillis': row.updatedAtMillis,
+                }),
+              ),
             ),
-          ),
-          LocalBackupCollection(
-            name: _cycleReflections,
-            schemaVersion: 2,
-            records: cycleReflections.map(
-              (row) => _record(row.id, row.updatedAtMillis, {
-                'cycleStartDay': row.cycleStartDay,
-                'startingPeriodId': row.startingPeriodId,
-                'observation': row.observation,
-                'need': row.need,
-                'whatHelped': row.whatHelped,
-                'futureSelfNote': row.futureSelfNote,
-                'createdAtMillis': row.createdAtMillis,
-                'updatedAtMillis': row.updatedAtMillis,
-              }),
+            LocalBackupCollection(
+              name: _cycleReflections,
+              schemaVersion: 2,
+              records: cycleReflections.map(
+                (row) => _record(row.id, row.updatedAtMillis, {
+                  'cycleStartDay': row.cycleStartDay,
+                  'startingPeriodId': row.startingPeriodId,
+                  'observation': row.observation,
+                  'need': row.need,
+                  'whatHelped': row.whatHelped,
+                  'futureSelfNote': row.futureSelfNote,
+                  'createdAtMillis': row.createdAtMillis,
+                  'updatedAtMillis': row.updatedAtMillis,
+                }),
+              ),
             ),
-          ),
-          LocalBackupCollection(
-            name: _healthRecords,
-            schemaVersion: 2,
-            records: healthRecords.map(
-              (row) => _record(row.id, row.updatedAtMillis, {
-                'symptom': row.symptom,
-                'severity': row.severity,
-                'functionalImpactsJson': row.functionalImpactsJson,
-                'experiencedDay': row.experiencedDay,
-                'recordedAtMillis': row.recordedAtMillis,
-                'updatedAtMillis': row.updatedAtMillis,
-                'provenance': row.provenance,
-                'userConfirmed': row.userConfirmed,
-                'vocabularyVersion': row.vocabularyVersion,
-              }),
+            LocalBackupCollection(
+              name: _healthRecords,
+              schemaVersion: 2,
+              records: healthRecords.map(
+                (row) => _record(row.id, row.updatedAtMillis, {
+                  'symptom': row.symptom,
+                  'severity': row.severity,
+                  'functionalImpactsJson': row.functionalImpactsJson,
+                  'experiencedDay': row.experiencedDay,
+                  'recordedAtMillis': row.recordedAtMillis,
+                  'updatedAtMillis': row.updatedAtMillis,
+                  'provenance': row.provenance,
+                  'userConfirmed': row.userConfirmed,
+                  'vocabularyVersion': row.vocabularyVersion,
+                }),
+              ),
             ),
-          ),
-          LocalBackupCollection(
-            name: _captureNotes,
-            schemaVersion: 1,
-            records: captureNotes.map(
-              (row) => _record(row.id, row.createdAtMillis, {
-                'content': row.content,
-                'source': row.source,
-                'createdAtMillis': row.createdAtMillis,
-              }),
+            LocalBackupCollection(
+              name: _captureNotes,
+              schemaVersion: 1,
+              records: captureNotes.map(
+                (row) => _record(row.id, row.createdAtMillis, {
+                  'content': row.content,
+                  'source': row.source,
+                  'createdAtMillis': row.createdAtMillis,
+                }),
+              ),
             ),
-          ),
-          LocalBackupCollection(
-            name: _momentCheckIns,
-            schemaVersion: 1,
-            records: momentCheckIns.map(
-              (row) => _record(row.id, row.createdAtMillis, {
-                'state': row.state,
-                'occurredAtMillis': row.occurredAtMillis,
-                'createdAtMillis': row.createdAtMillis,
-              }),
+            LocalBackupCollection(
+              name: _momentCheckIns,
+              schemaVersion: 1,
+              records: momentCheckIns.map(
+                (row) => _record(row.id, row.createdAtMillis, {
+                  'state': row.state,
+                  'occurredAtMillis': row.occurredAtMillis,
+                  'createdAtMillis': row.createdAtMillis,
+                }),
+              ),
             ),
-          ),
-          LocalBackupCollection(
-            name: _preparationPlans,
-            schemaVersion: 2,
-            records: preparationPlans.map(
-              (row) => _record(row.id, row.updatedAtMillis, {
-                'status': row.status,
-                'evidenceFingerprint': row.evidenceFingerprint,
-                'sourceRecordIdsJson': row.sourceRecordIdsJson,
-                'includeCare': row.includeCare,
-                'careActionId': row.careActionId,
-                'careActionLabel': row.careActionLabel,
-                'careMode': row.careMode,
-                'betterCount': row.betterCount,
-                'sameCount': row.sameCount,
-                'worseCount': row.worseCount,
-                'noteText': row.noteText,
-                'personalText': row.personalText,
-                'createdAtMillis': row.createdAtMillis,
-                'updatedAtMillis': row.updatedAtMillis,
-              }),
+            LocalBackupCollection(
+              name: _preparationPlans,
+              schemaVersion: 2,
+              records: preparationPlans.map(
+                (row) => _record(row.id, row.updatedAtMillis, {
+                  'status': row.status,
+                  'evidenceFingerprint': row.evidenceFingerprint,
+                  'sourceRecordIdsJson': row.sourceRecordIdsJson,
+                  'includeCare': row.includeCare,
+                  'careActionId': row.careActionId,
+                  'careActionLabel': row.careActionLabel,
+                  'careMode': row.careMode,
+                  'betterCount': row.betterCount,
+                  'sameCount': row.sameCount,
+                  'worseCount': row.worseCount,
+                  'noteText': row.noteText,
+                  'personalText': row.personalText,
+                  'createdAtMillis': row.createdAtMillis,
+                  'updatedAtMillis': row.updatedAtMillis,
+                }),
+              ),
             ),
-          ),
-          LocalBackupCollection(
-            name: _preparationDismissals,
-            schemaVersion: 1,
-            records: preparationDismissals.map(
-              (row) => _record(row.fingerprint, row.dismissedAtMillis, {
-                'evidenceLine': row.evidenceLine,
-                'dismissedAtMillis': row.dismissedAtMillis,
-              }),
+            LocalBackupCollection(
+              name: _preparationDismissals,
+              schemaVersion: 1,
+              records: preparationDismissals.map(
+                (row) => _record(row.fingerprint, row.dismissedAtMillis, {
+                  'evidenceLine': row.evidenceLine,
+                  'dismissedAtMillis': row.dismissedAtMillis,
+                }),
+              ),
             ),
-          ),
-        ],
-      );
+          ],
+        );
+      });
     } on LocalBackupException {
       rethrow;
     } on Object {
@@ -295,6 +302,7 @@ final class _ParsedSnapshot {
         byName.values.any((collection) => !_supportsSchema(collection))) {
       throw const LocalBackupException(LocalBackupFailure.unsupportedFormat);
     }
+    _validatePeriodFlowContainment(byName);
     return _ParsedSnapshot(
       periods: byName[_periods]!.records.map(_period).toList(growable: false),
       periodFlows:
@@ -404,6 +412,7 @@ final class _DriftStagedLocalBackupImport implements StagedLocalBackupImport {
             parsed.preparationDismissals,
           );
         });
+        await database.normalizeContinuousPeriods();
       });
       _used = true;
     } on LocalBackupException {
@@ -419,6 +428,43 @@ final class _DriftStagedLocalBackupImport implements StagedLocalBackupImport {
   }
 }
 
+void _validatePeriodFlowContainment(
+  Map<String, LocalBackupCollection> collections,
+) {
+  final bounds = <String, ({int start, int? end})>{};
+  for (final record in collections[_periods]!.records) {
+    final data = _data(record, {
+      'startDay',
+      'endDay',
+      'createdAtMillis',
+      'updatedAtMillis',
+    });
+    bounds[record.id] = (
+      start: _int(data, 'startDay'),
+      end: _nullableInt(data, 'endDay'),
+    );
+  }
+  final flows = collections[_periodFlows];
+  if (flows == null) return;
+  for (final record in flows.records) {
+    final data = _data(record, {
+      'periodId',
+      'day',
+      'flow',
+      if (flows.schemaVersion >= 2) 'color',
+      'createdAtMillis',
+      'updatedAtMillis',
+    });
+    final period = bounds[_string(data, 'periodId')];
+    final day = _int(data, 'day');
+    if (period == null ||
+        day < period.start ||
+        (period.end != null && day > period.end!)) {
+      throw const LocalBackupException(LocalBackupFailure.malformedPayload);
+    }
+  }
+}
+
 PeriodRowsCompanion _period(LocalBackupRecord record) {
   final data = _data(record, {
     'startDay',
@@ -427,12 +473,20 @@ PeriodRowsCompanion _period(LocalBackupRecord record) {
     'updatedAtMillis',
   });
   final updated = _int(data, 'updatedAtMillis');
+  final start = _int(data, 'startDay');
+  final end = _nullableInt(data, 'endDay');
+  final created = _int(data, 'createdAtMillis');
   _matchesUpdatedAt(record, updated);
+  if (record.id.trim().isEmpty ||
+      (end != null && end < start) ||
+      created > updated) {
+    throw const LocalBackupException(LocalBackupFailure.malformedPayload);
+  }
   return PeriodRowsCompanion.insert(
     id: record.id,
-    startDay: _int(data, 'startDay'),
-    endDay: Value(_nullableInt(data, 'endDay')),
-    createdAtMillis: _int(data, 'createdAtMillis'),
+    startDay: start,
+    endDay: Value(end),
+    createdAtMillis: created,
     updatedAtMillis: updated,
   );
 }
@@ -452,6 +506,7 @@ PeriodFlowRowsCompanion _periodFlow(
   final periodId = _string(data, 'periodId');
   final day = _int(data, 'day');
   final updated = _int(data, 'updatedAtMillis');
+  final created = _int(data, 'createdAtMillis');
   _matchesUpdatedAt(record, updated);
   if (record.id != '$periodId:$day') {
     throw const LocalBackupException(LocalBackupFailure.malformedPayload);
@@ -465,12 +520,15 @@ PeriodFlowRowsCompanion _periodFlow(
       !const {'pink', 'brightRed', 'darkRed', 'brown'}.contains(color)) {
     throw const LocalBackupException(LocalBackupFailure.malformedPayload);
   }
+  if (created > updated) {
+    throw const LocalBackupException(LocalBackupFailure.malformedPayload);
+  }
   return PeriodFlowRowsCompanion.insert(
     periodId: periodId,
     day: day,
     flow: flow,
     color: Value(color),
-    createdAtMillis: _int(data, 'createdAtMillis'),
+    createdAtMillis: created,
     updatedAtMillis: updated,
   );
 }
@@ -487,15 +545,29 @@ CareRecordRowsCompanion _careRecord(LocalBackupRecord record) {
     'pinned',
   });
   final updated = _int(data, 'updatedAtMillis');
+  final mode = _string(data, 'mode');
+  final outcome = _string(data, 'outcome');
+  final actionId = _string(data, 'actionId');
+  final actionLabel = _string(data, 'actionLabel');
+  final occurred = _int(data, 'occurredAtMillis');
+  final created = _int(data, 'createdAtMillis');
   _matchesUpdatedAt(record, updated);
+  if (!CareMode.values.map((value) => value.name).contains(mode) ||
+      !CareOutcome.values.map((value) => value.name).contains(outcome) ||
+      actionId.trim().isEmpty ||
+      actionLabel.trim().isEmpty ||
+      occurred > created ||
+      created > updated) {
+    throw const LocalBackupException(LocalBackupFailure.malformedPayload);
+  }
   return CareRecordRowsCompanion.insert(
     id: record.id,
-    mode: _string(data, 'mode'),
-    actionId: _string(data, 'actionId'),
-    actionLabel: _string(data, 'actionLabel'),
-    outcome: _string(data, 'outcome'),
-    occurredAtMillis: _int(data, 'occurredAtMillis'),
-    createdAtMillis: _int(data, 'createdAtMillis'),
+    mode: mode,
+    actionId: actionId,
+    actionLabel: actionLabel,
+    outcome: outcome,
+    occurredAtMillis: occurred,
+    createdAtMillis: created,
     updatedAtMillis: updated,
     pinned: Value(_bool(data, 'pinned')),
   );
@@ -513,16 +585,25 @@ CareReflectionRowsCompanion _careReflection(LocalBackupRecord record) {
     'updatedAtMillis',
   });
   final updated = _int(data, 'updatedAtMillis');
+  final mode = _string(data, 'mode');
+  final need = _nullableString(data, 'need');
+  final created = _int(data, 'createdAtMillis');
   _matchesUpdatedAt(record, updated);
+  if (!CareMode.values.map((value) => value.name).contains(mode) ||
+      (need != null &&
+          !ReflectionNeed.values.map((value) => value.name).contains(need)) ||
+      created > updated) {
+    throw const LocalBackupException(LocalBackupFailure.malformedPayload);
+  }
   return CareReflectionRowsCompanion.insert(
     id: record.id,
     careRecordId: _string(data, 'careRecordId'),
-    mode: _string(data, 'mode'),
+    mode: mode,
     observation: Value(_nullableString(data, 'observation')),
-    need: Value(_nullableString(data, 'need')),
+    need: Value(need),
     whatHelped: Value(_nullableString(data, 'whatHelped')),
     futureSelfNote: Value(_nullableString(data, 'futureSelfNote')),
-    createdAtMillis: _int(data, 'createdAtMillis'),
+    createdAtMillis: created,
     updatedAtMillis: updated,
   );
 }
@@ -542,7 +623,14 @@ CycleReflectionRowsCompanion _cycleReflection(
     'updatedAtMillis',
   });
   final updated = _int(data, 'updatedAtMillis');
+  final need = _nullableString(data, 'need');
+  final created = _int(data, 'createdAtMillis');
   _matchesUpdatedAt(record, updated);
+  if ((need != null &&
+          !ReflectionNeed.values.map((value) => value.name).contains(need)) ||
+      created > updated) {
+    throw const LocalBackupException(LocalBackupFailure.malformedPayload);
+  }
   return CycleReflectionRowsCompanion.insert(
     id: record.id,
     startingPeriodId: Value(
@@ -550,10 +638,10 @@ CycleReflectionRowsCompanion _cycleReflection(
     ),
     cycleStartDay: _int(data, 'cycleStartDay'),
     observation: Value(_nullableString(data, 'observation')),
-    need: Value(_nullableString(data, 'need')),
+    need: Value(need),
     whatHelped: Value(_nullableString(data, 'whatHelped')),
     futureSelfNote: Value(_nullableString(data, 'futureSelfNote')),
-    createdAtMillis: _int(data, 'createdAtMillis'),
+    createdAtMillis: created,
     updatedAtMillis: updated,
   );
 }
@@ -571,29 +659,62 @@ HealthRecordRowsCompanion _healthRecord(LocalBackupRecord record) {
     'vocabularyVersion',
   });
   final updated = _int(data, 'updatedAtMillis');
+  final symptom = _string(data, 'symptom');
+  final severity = _int(data, 'severity');
+  final impactsJson = _string(data, 'functionalImpactsJson');
+  final recorded = _int(data, 'recordedAtMillis');
+  final provenance = _string(data, 'provenance');
+  final vocabularyVersion = _int(data, 'vocabularyVersion');
   _matchesUpdatedAt(record, updated);
+  try {
+    final impacts = jsonDecode(impactsJson);
+    if (!SymptomType.values.map((value) => value.name).contains(symptom) ||
+        severity < 1 ||
+        severity > SymptomSeverity.values.length ||
+        impacts is! List ||
+        impacts.any(
+          (value) =>
+              value is! String ||
+              !FunctionalImpact.values.map((item) => item.name).contains(value),
+        ) ||
+        !HealthRecordProvenance.values
+            .map((value) => value.storageKey)
+            .contains(provenance) ||
+        recorded > updated ||
+        vocabularyVersion < 1) {
+      throw const FormatException();
+    }
+  } on Object {
+    throw const LocalBackupException(LocalBackupFailure.malformedPayload);
+  }
   return HealthRecordRowsCompanion.insert(
     id: record.id,
-    symptom: _string(data, 'symptom'),
-    severity: _int(data, 'severity'),
-    functionalImpactsJson: _string(data, 'functionalImpactsJson'),
+    symptom: symptom,
+    severity: severity,
+    functionalImpactsJson: impactsJson,
     experiencedDay: _int(data, 'experiencedDay'),
-    recordedAtMillis: _int(data, 'recordedAtMillis'),
+    recordedAtMillis: recorded,
     updatedAtMillis: updated,
-    provenance: _string(data, 'provenance'),
+    provenance: provenance,
     userConfirmed: _bool(data, 'userConfirmed'),
-    vocabularyVersion: _int(data, 'vocabularyVersion'),
+    vocabularyVersion: vocabularyVersion,
   );
 }
 
 CaptureNoteRowsCompanion _captureNote(LocalBackupRecord record) {
   final data = _data(record, {'content', 'source', 'createdAtMillis'});
   final created = _int(data, 'createdAtMillis');
+  final content = _string(data, 'content');
+  final source = _string(data, 'source');
   _matchesUpdatedAt(record, created);
+  if (content.length > captureTextLimit ||
+      !CaptureSource.values.map((value) => value.name).contains(source)) {
+    throw const LocalBackupException(LocalBackupFailure.malformedPayload);
+  }
   return CaptureNoteRowsCompanion.insert(
     id: record.id,
-    content: _string(data, 'content'),
-    source: _string(data, 'source'),
+    content: content,
+    source: source,
     createdAtMillis: created,
   );
 }
@@ -601,11 +722,17 @@ CaptureNoteRowsCompanion _captureNote(LocalBackupRecord record) {
 MomentCheckInRowsCompanion _momentCheckIn(LocalBackupRecord record) {
   final data = _data(record, {'state', 'occurredAtMillis', 'createdAtMillis'});
   final created = _int(data, 'createdAtMillis');
+  final state = _string(data, 'state');
+  final occurred = _int(data, 'occurredAtMillis');
   _matchesUpdatedAt(record, created);
+  if (!MomentCheckInState.values.map((value) => value.name).contains(state) ||
+      occurred > created) {
+    throw const LocalBackupException(LocalBackupFailure.malformedPayload);
+  }
   return MomentCheckInRowsCompanion.insert(
     id: record.id,
-    state: _string(data, 'state'),
-    occurredAtMillis: _int(data, 'occurredAtMillis'),
+    state: state,
+    occurredAtMillis: occurred,
     createdAtMillis: created,
   );
 }

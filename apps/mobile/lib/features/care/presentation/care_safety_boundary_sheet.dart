@@ -244,7 +244,7 @@ class _MedicalBoundaryBody extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         Text(
-          'Seek urgent medical care now if you have:',
+          'Get urgent medical care now if you notice:',
           style: ExperienceType.label(ExperienceColors.ink),
         ),
         const SizedBox(height: ExperienceSpacing.xs),

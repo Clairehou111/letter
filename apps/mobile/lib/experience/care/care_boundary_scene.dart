@@ -187,8 +187,8 @@ class _CareBoundarySceneState extends State<CareBoundaryScene>
         id: 'landing',
         title: 'Soft landing',
         text:
-            'You made room for yourself, and nothing fell apart. If you like, '
-            'mark this moment complete — or simply leave. Both are enough.',
+            'You made room for yourself. If you like, mark this moment '
+            'complete — or simply leave. Both are enough.',
         primaryActionLabel: 'This moment is complete',
         advances: false,
         // The only recording path in the scene: a deliberate, unambiguous
@@ -196,8 +196,8 @@ class _CareBoundarySceneState extends State<CareBoundaryScene>
         // from it records nothing.
         onPrimaryAction: widget.onCompleted,
         semanticsLabel:
-            'Final step. Soft landing. You made room for yourself, and '
-            'nothing fell apart. Mark the moment complete, or simply leave.',
+            'Final step. Soft landing. You made room for yourself. Mark the '
+            'moment complete, or simply leave.',
       ),
     ];
   }

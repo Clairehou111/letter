@@ -5,12 +5,14 @@ import 'package:flutter/material.dart';
 import '../features/care/domain/care_memory_repository.dart';
 import '../features/capture/domain/capture_models.dart';
 import '../features/check_in/domain/moment_check_in_repository.dart';
+import '../features/cycle/domain/cycle_prediction.dart';
 import '../features/cycle/domain/local_date.dart';
 import '../features/cycle/domain/period_record.dart';
 import '../features/cycle/domain/period_repository.dart';
 import '../features/entitlement/domain/entitlement.dart';
 import '../features/entitlement/domain/entitlement_repository.dart';
 import '../features/health_records/domain/health_record_repository.dart';
+import '../features/health_data/domain/local_health_read_transaction.dart';
 import '../features/insights/presentation/gravity_horizon_view_model.dart';
 import '../features/insights/presentation/spectrum_log_view_model.dart';
 import '../features/local_backup/domain/local_backup_models.dart';
@@ -99,6 +101,7 @@ class LetterExperienceShell extends StatefulWidget {
     super.key,
     this.backupPort,
     this.now,
+    this.readTransaction = const PassthroughLocalHealthReadTransaction(),
   });
 
   final PeriodRepository periodRepository;
@@ -114,6 +117,7 @@ class LetterExperienceShell extends StatefulWidget {
 
   final Future<void> Function() onCycleDataChanged;
   final DateTime Function()? now;
+  final LocalHealthReadTransaction readTransaction;
 
   @override
   State<LetterExperienceShell> createState() => _LetterExperienceShellState();
@@ -240,8 +244,11 @@ class _LetterExperienceShellState extends State<LetterExperienceShell>
       }
     }
     try {
-      final today = LocalDate.fromDateTime(_now());
-      final records = await widget.periodRepository.getAll();
+      final today = LocalDate.fromDateTime(_now().toLocal());
+      final records = CyclePredictionEngine.recordsThrough(
+        await widget.periodRepository.getAll(),
+        today,
+      );
       final ordered = List<PeriodRecord>.of(records)
         ..sort((a, b) => b.startDate.compareTo(a.startDate));
 
@@ -267,7 +274,7 @@ class _LetterExperienceShellState extends State<LetterExperienceShell>
         careRecords: careRecords,
         careReflections: careReflections,
         periods: ordered,
-      );
+      ).through(today);
 
       PreparationLoopKind? loopKind;
       try {
@@ -665,7 +672,7 @@ class _LetterExperienceShellState extends State<LetterExperienceShell>
       checkInRepository: widget.momentCheckInRepository,
       healthRecordRepository: widget.healthRecordRepository,
       captureNoteStore: widget.captureNoteStore,
-      today: () => LocalDate.fromDateTime(_now()),
+      today: () => LocalDate.fromDateTime(_now().toLocal()),
       now: widget.now,
       loadSupportActionPatterns: () async => _analysis.supportActions,
       loadPreparationLoopKind: () async => _loopKind,
@@ -708,8 +715,8 @@ class _LetterExperienceShellState extends State<LetterExperienceShell>
       animationPort: const OriginalCareAnimationPort(),
       loopKind: _loopKind,
       memoryEvidence: _analysis.supportActions,
-      // No region is known at this boundary; the safety route renders its
-      // honest no-invented-number fallback.
+      // Let the safety route resolve US/Canada from the device locale and use
+      // its honest no-invented-number fallback for every other region.
       regionCode: null,
       entrySource: _careEntrySource,
       onLeaveCare: _leaveCareToToday,
@@ -733,6 +740,8 @@ class _LetterExperienceShellState extends State<LetterExperienceShell>
         careMemory: widget.careMemoryRepository,
         periods: widget.periodRepository,
         momentCheckIns: widget.momentCheckInRepository,
+        now: _now,
+        readTransaction: widget.readTransaction,
       ),
       preparationRepository: widget.preparationRepository,
       now: _now,

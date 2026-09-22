@@ -141,6 +141,28 @@ void main() {
       expect(notifications.scheduledAt, DateTime(2026, 4, 9, 10));
     });
 
+    test('future imported starts cannot change the reminder', () async {
+      final repository = InMemoryPeriodRepository(
+        seed: [
+          period('one', const LocalDate(2026, 1, 1)),
+          period('two', const LocalDate(2026, 1, 29)),
+          period('three', const LocalDate(2026, 2, 26)),
+          period('future', const LocalDate(2026, 10, 1), open: true),
+        ],
+      );
+      final notifications = FakeNotificationPort();
+      final scheduler = CycleCheckInScheduler(
+        repository,
+        InMemoryPrivacyPreferencesRepository(),
+        notifications,
+        now: () => DateTime(2026, 3, 1, 9),
+      );
+
+      await scheduler.reconcile();
+
+      expect(notifications.scheduledAt, DateTime(2026, 3, 31, 10));
+    });
+
     test('no prediction, an open period, or a past date cancels', () async {
       final notifications = FakeNotificationPort();
       final preferences = InMemoryPrivacyPreferencesRepository();

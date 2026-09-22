@@ -210,7 +210,7 @@ void main() {
     expect(data.care, isEmpty);
   });
 
-  test('keeps only explicit flow days and their optional colours', () {
+  test('keeps only explicit flow days and their optional colors', () {
     final data = _builder.build(
       PatternSourceSnapshot(
         periods: [
@@ -414,8 +414,8 @@ void main() {
           MomentCheckIn(
             id: 'latest',
             state: MomentCheckInState.calm,
-            occurredAt: DateTime.utc(2026, 7, 5, 20),
-            createdAt: DateTime.utc(2026, 7, 5, 20),
+            occurredAt: DateTime.utc(2026, 7, 5, 12),
+            createdAt: DateTime.utc(2026, 7, 5, 12),
           ),
         ],
       ),

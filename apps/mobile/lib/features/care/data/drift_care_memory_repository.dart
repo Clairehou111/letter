@@ -81,6 +81,11 @@ final class DriftCareMemoryRepository implements CareMemoryRepository {
   Future<void> deleteRecord(String recordId) {
     return _guardStorage(() {
       return _database.transaction(() async {
+        // Build 7 databases did not declare this foreign-key cascade. Delete
+        // explicitly so upgraded stores cannot retain an orphan reflection.
+        await (_database.delete(
+          _database.careReflectionRows,
+        )..where((row) => row.careRecordId.equals(recordId))).go();
         final deleted = await (_database.delete(
           _database.careRecordRows,
         )..where((row) => row.id.equals(recordId))).go();

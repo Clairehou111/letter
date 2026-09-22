@@ -38,6 +38,21 @@ final class DriftPeriodRepository implements PeriodRepository {
         final existing = await getAll();
         validatePeriodDraft(draft: draft, today: today, existing: existing);
         final now = _clock().toUtc();
+        final adjacent = adjacentPeriodsForDraft(
+          draft: draft,
+          today: today,
+          existing: existing,
+        );
+        if (adjacent.isNotEmpty) {
+          final mergedDraft = mergeAdjacentPeriodDraft(draft, adjacent);
+          final survivor = _earliestPeriod(adjacent);
+          return _persistMergedPeriod(
+            survivor: survivor,
+            absorbed: adjacent.where((record) => record.id != survivor.id),
+            draft: mergedDraft,
+            updatedAt: now,
+          );
+        }
         final record = PeriodRecord(
           id: _idGenerator(),
           startDate: draft.startDate,
@@ -72,6 +87,27 @@ final class DriftPeriodRepository implements PeriodRepository {
           existing: existing,
           editingId: id,
         );
+        final adjacent = adjacentPeriodsForDraft(
+          draft: draft,
+          today: today,
+          existing: existing,
+          editingId: id,
+        );
+        if (adjacent.isNotEmpty) {
+          final mergedDraft = mergeAdjacentPeriodDraft(draft, adjacent);
+          final candidates = <PeriodRecord>[previous, ...adjacent];
+          final survivor = _earliestPeriod(
+            candidates,
+            editedId: id,
+            draft: draft,
+          );
+          return _persistMergedPeriod(
+            survivor: survivor,
+            absorbed: candidates.where((record) => record.id != survivor.id),
+            draft: mergedDraft,
+            updatedAt: _clock().toUtc(),
+          );
+        }
         final updated = PeriodRecord(
           id: id,
           startDate: draft.startDate,
@@ -93,6 +129,65 @@ final class DriftPeriodRepository implements PeriodRepository {
         return updated;
       });
     });
+  }
+
+  Future<PeriodRecord> _persistMergedPeriod({
+    required PeriodRecord survivor,
+    required Iterable<PeriodRecord> absorbed,
+    required PeriodDraft draft,
+    required DateTime updatedAt,
+  }) async {
+    final merged = PeriodRecord(
+      id: survivor.id,
+      startDate: draft.startDate,
+      endDate: draft.endDate,
+      createdAt: survivor.createdAt,
+      updatedAt: updatedAt,
+    );
+    final absorbedIds = absorbed.map((record) => record.id).toList();
+
+    await (_database.update(
+      _database.periodRows,
+    )..where((row) => row.id.equals(survivor.id))).write(_toCompanion(merged));
+    await (_database.update(
+      _database.cycleReflectionRows,
+    )..where((row) => row.startingPeriodId.equals(survivor.id))).write(
+      CycleReflectionRowsCompanion(
+        cycleStartDay: Value(draft.startDate.epochDay),
+        updatedAtMillis: Value(updatedAt.millisecondsSinceEpoch),
+      ),
+    );
+    for (final absorbedId in absorbedIds) {
+      await _database.customStatement(
+        'UPDATE period_flow_rows SET period_id = ? WHERE period_id = ?',
+        [survivor.id, absorbedId],
+      );
+      await (_database.delete(
+        _database.periodRows,
+      )..where((row) => row.id.equals(absorbedId))).go();
+    }
+    return merged;
+  }
+
+  PeriodRecord _earliestPeriod(
+    Iterable<PeriodRecord> records, {
+    String? editedId,
+    PeriodDraft? draft,
+  }) {
+    final sorted = records.toList()
+      ..sort((left, right) {
+        final leftStart = left.id == editedId
+            ? draft!.startDate
+            : left.startDate;
+        final rightStart = right.id == editedId
+            ? draft!.startDate
+            : right.startDate;
+        final byStart = leftStart.compareTo(rightStart);
+        if (byStart != 0) return byStart;
+        final byUpdated = right.updatedAt.compareTo(left.updatedAt);
+        return byUpdated != 0 ? byUpdated : left.id.compareTo(right.id);
+      });
+    return sorted.first;
   }
 
   @override

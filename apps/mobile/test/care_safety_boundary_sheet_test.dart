@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:letter_mobile/experience/care/care_safety_route.dart';
 import 'package:letter_mobile/features/care/domain/care_mode.dart';
 import 'package:letter_mobile/features/care/domain/safety_dialer.dart';
 import 'package:letter_mobile/features/care/presentation/care_safety_boundary_sheet.dart';
@@ -41,6 +42,52 @@ Future<FakeSafetyDialer> pumpSheet(
 }
 
 void main() {
+  Future<void> pumpCareRouteForDeviceLocale(
+    WidgetTester tester,
+    Locale locale,
+  ) async {
+    tester.platformDispatcher.localeTestValue = locale;
+    addTearDown(tester.platformDispatcher.clearLocaleTestValue);
+    await tester.pumpWidget(
+      const MaterialApp(home: CareSafetyRoute(careWorld: false)),
+    );
+  }
+
+  testWidgets('Care safety route uses US resources for a US device', (
+    tester,
+  ) async {
+    await pumpCareRouteForDeviceLocale(tester, const Locale('en', 'US'));
+
+    expect(find.text('Call or text 988'), findsOneWidget);
+    expect(find.textContaining('(US)'), findsOneWidget);
+    expect(find.text('Call 911'), findsOneWidget);
+  });
+
+  testWidgets('Care safety route uses Canadian resources for a CA device', (
+    tester,
+  ) async {
+    await pumpCareRouteForDeviceLocale(tester, const Locale('en', 'CA'));
+
+    expect(find.text('Call or text 9-8-8'), findsOneWidget);
+    expect(find.textContaining('(Canada)'), findsOneWidget);
+    expect(find.text('Call 911'), findsOneWidget);
+  });
+
+  testWidgets('Care safety route keeps the fallback outside US and Canada', (
+    tester,
+  ) async {
+    await pumpCareRouteForDeviceLocale(tester, const Locale('en', 'GB'));
+
+    expect(
+      find.text(
+        'Contact your local emergency services or go to the nearest '
+        'emergency department now.',
+      ),
+      findsOneWidget,
+    );
+    expect(find.text('Call 911'), findsNothing);
+  });
+
   testWidgets('US crisis sheet shows tappable 988 and 911 with visible '
       'numbers', (tester) async {
     final dialer = await pumpSheet(tester, kind: CareSafetyKind.emotional);
@@ -97,7 +144,7 @@ void main() {
       find.text('This needs medical attention, not more interaction.'),
       findsOneWidget,
     );
-    expect(find.textContaining('Seek urgent medical care'), findsOneWidget);
+    expect(find.textContaining('Get urgent medical care'), findsOneWidget);
     expect(find.textContaining('Book a medical assessment'), findsOneWidget);
     expect(find.textContaining('Fainting'), findsOneWidget);
     expect(find.textContaining('palpitations'), findsOneWidget);
