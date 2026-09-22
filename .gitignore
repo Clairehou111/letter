@@ -4,6 +4,10 @@
 artifacts/
 coverage/
 .cache/
+
+# Local generated design and staging workspaces.
+apps/mobile/.ui-forge/
+apps/mobile/.tmp/
 .env
 .env.*
 !.env.example

@@ -34,18 +34,19 @@ def main() -> int:
     )
     ios_plist = require("apps/mobile/ios/Runner/Info.plist").read_text(encoding="utf-8")
 
-    assert 'applicationId = "com.letterhealth.letter"' in android_build
-    assert 'namespace = "com.letterhealth.letter"' in android_build
-    assert 'android:label="Letter"' in android_manifest
-    assert "com.letterhealth.letter;" in ios_project
-    assert "<string>Letter</string>" in ios_plist
+    assert 'applicationId = "app.letterwithin"' in android_build
+    assert 'namespace = "app.letterwithin"' in android_build
+    assert 'android:label="Letter Within"' in android_manifest
+    assert "app.letterwithin;" in ios_project
+    assert "<string>Letter Within</string>" in ios_plist
 
     combined = "\n".join((android_build, android_manifest, ios_project, ios_plist))
     for stale_value in (
         "com.example",
+        "com.letterhealth.letter;",
         "com.letterhealth.letter_mobile",
         "com.letterhealth.letterMobile",
-        "Letter Mobile",
+        "Letter Within Mobile",
     ):
         assert stale_value not in combined, f"Stale mobile metadata: {stale_value}"
 

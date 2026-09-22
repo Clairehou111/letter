@@ -55,7 +55,7 @@ final class LetterApiClient {
     final response = await _httpClient.get(baseUri.resolve('/v1/status'));
     if (response.statusCode != 200) {
       throw http.ClientException(
-        'Letter API status request failed with ${response.statusCode}.',
+        'Letter Within API status request failed with ${response.statusCode}.',
         response.request?.url,
       );
     }
