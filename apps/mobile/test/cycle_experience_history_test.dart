@@ -22,6 +22,35 @@ PeriodRecord _period(String id, int month, int day) {
 }
 
 void main() {
+  testWidgets('Cycle derives today from the local date of a UTC instant', (
+    tester,
+  ) async {
+    final instant = DateTime.utc(2026, 9, 21, 16, 30);
+    final localToday = LocalDate.fromDateTime(instant.toLocal());
+    final current = PeriodRecord(
+      id: 'local-day-period',
+      startDate: localToday,
+      endDate: null,
+      createdAt: instant,
+      updatedAt: instant,
+    );
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: CycleExperience(
+          periodRepository: InMemoryPeriodRepository(seed: [current]),
+          healthRecordRepository: InMemoryHealthRecordRepository(),
+          careMemoryRepository: InMemoryCareMemoryRepository(),
+          onCycleDataChanged: () {},
+          now: instant,
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('Current cycle'), findsOneWidget);
+  });
+
   testWidgets('current cycle card opens daily flow and symptom entry', (
     tester,
   ) async {
