@@ -534,7 +534,7 @@ class _PatternsExperienceScreenState extends State<PatternsExperienceScreen> {
                                 ),
                               ),
                             ),
-                          const Text('LETTER WITHIN', style: _S.eyebrow),
+                          const Text('PATTERNS', style: _S.eyebrow),
                           const SizedBox(height: 12),
                           Row(
                             crossAxisAlignment: CrossAxisAlignment.end,
@@ -1101,7 +1101,7 @@ Widget _bleedingDayEvidenceRow(
     trailing: f != null ? flowName(f.flow.name) : 'No flow recorded',
     color: f != null ? flowColor(f.flow.name) : T.inkSoft,
     meta: f != null
-        ? (f.color == null ? null : 'Colour saved: ${_cap(f.color!.name)}')
+        ? (f.color == null ? null : 'Color saved: ${_cap(f.color!.name)}')
         : 'A recorded period day — flow detail was not saved.',
     onTap: () => openDaySheet(context, data, date.epochDay, onEdit),
   );
@@ -1193,7 +1193,7 @@ void openFlowDaySheet(
             _Chip(flowName(day.flow.name), flowColor(day.flow.name)),
             if (day.color != null)
               _Chip(
-                'Colour: ${_cap(day.color!.name)}',
+                'Color: ${_cap(day.color!.name)}',
                 T.coralDeep,
                 filled: false,
               ),
@@ -1547,7 +1547,7 @@ void openDaySheet(
             color: flowColor(flow.flow.name),
             meta: flow.color == null
                 ? null
-                : 'Colour saved: ${_cap(flow.color!.name)}',
+                : 'Color saved: ${_cap(flow.color!.name)}',
           )
         else if (period)
           _EvidenceRow(

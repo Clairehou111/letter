@@ -450,8 +450,8 @@ class _PlusExperienceState extends State<PlusExperience> {
           if (!hasPremium) ...<Widget>[
             const SizedBox(height: ExperienceSpacing.sm),
             Text(
-              'Care, safety, tracking, prediction, and backup are free '
-              'forever — losing Plus never removes anything you recorded.',
+              'Care, safety, tracking, prediction, and backup are free. '
+              'Losing Plus never removes anything you recorded.',
               textAlign: TextAlign.center,
               style: ExperienceType.caption(ExperienceColors.inkSoft),
             ),
@@ -572,13 +572,11 @@ class _PlusExperienceState extends State<PlusExperience> {
         ? (_plansError! as EntitlementException).message
         : '';
     final unsupportedBuild = message.contains('unavailable on this build');
-    final setupIncomplete = message.contains(
-      'not configured for this TestFlight build',
-    );
+    final setupIncomplete = message.contains('not configured for this build');
     final title = unsupportedBuild
         ? 'Plans are available in the mobile app'
         : setupIncomplete
-        ? 'Plans are not ready in this TestFlight build'
+        ? 'Plans are not ready in this build'
         : 'Plans could not be loaded';
     final body = unsupportedBuild
         ? 'Purchases are not offered by this desktop build. Use Letter '

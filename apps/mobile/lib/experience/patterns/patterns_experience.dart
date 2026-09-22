@@ -18,7 +18,7 @@ import 'twin_chart.dart';
 ///
 /// Composition (design authority):
 ///  1. Today's plain-language line (serif, numeral-free).
-///  2. Gravity, expanded — free forever, the lead chart.
+///  2. Gravity, expanded — available on the free tier, the lead chart.
 ///  3. Spectrum and Twin as collapsed sections showing one-line readiness;
 ///     exactly one section is expanded at a time, and only the expanded
 ///     family's accent renders at full saturation.

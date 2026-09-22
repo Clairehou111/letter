@@ -93,7 +93,7 @@ class _AuthScreenState extends State<AuthScreen> {
                   const LetterBrandLockup(),
                   const SizedBox(height: ExperienceSpacing.xl),
                   Text(
-                    'A private place to feel held.',
+                    'A private space for what you’re going through.',
                     style: ExperienceType.display(ExperienceColors.ink),
                   ),
                   const SizedBox(height: ExperienceSpacing.sm),
@@ -124,8 +124,8 @@ class _AuthScreenState extends State<AuthScreen> {
                             const SizedBox(width: ExperienceSpacing.sm),
                             Expanded(
                               child: Text(
-                                'These on-device records belong to a different Letter Within account. '
-                                'Sign in with the account previously used on this device to open them.',
+                                'These on-device records were created while signed in to a different Letter Within account. '
+                                'Sign in with that account to open them.',
                                 key: const Key('auth-local-account-mismatch'),
                                 style: ExperienceType.bodySmall(
                                   ExperienceColors.error,
@@ -331,7 +331,10 @@ class _AuthScreenState extends State<AuthScreen> {
                         const SizedBox(width: ExperienceSpacing.sm),
                         Expanded(
                           child: Text(
-                            'Signing in does not upload your health history. Existing local records remain available if a returning account is temporarily offline.',
+                            'Signing in does not upload your health history. '
+                            'If another account previously created records on '
+                            'this device, those records stay closed—not '
+                            'deleted—until that account signs in again.',
                             style: ExperienceType.bodySmall(
                               ExperienceColors.ink,
                             ),

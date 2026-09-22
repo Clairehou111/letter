@@ -257,7 +257,7 @@ final class RevenueCatEntitlementRepository implements EntitlementRepository {
         return true;
       }());
       if (_isStoreConfigurationError(error)) {
-        const message = 'Plans are not configured for this TestFlight build.';
+        const message = 'Plans are not configured for this build.';
         _set(
           EntitlementState(
             status: EntitlementStatus.freeOrUnknown,

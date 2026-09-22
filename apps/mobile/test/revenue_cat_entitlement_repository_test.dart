@@ -351,7 +351,7 @@ void main() {
         isA<EntitlementException>().having(
           (error) => error.message,
           'message',
-          contains('not configured for this TestFlight build'),
+          contains('not configured for this build'),
         ),
       ),
     );

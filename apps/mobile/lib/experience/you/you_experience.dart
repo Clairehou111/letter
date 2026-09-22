@@ -135,8 +135,8 @@ class _YouExperienceState extends State<YouExperience> {
             _RouteRow(
               title: 'Letter Within Plus',
               body:
-                  'Care, safety, tracking, predictions, and backup stay '
-                  'free forever. Plus adds personal patterns, long-term '
+                  'Care, safety, tracking, predictions, and backup are free. '
+                  'Plus adds personal patterns, long-term '
                   'comparisons, and clinician reports.',
               onTap: widget.onOpenPlus!,
             ),
@@ -153,10 +153,7 @@ class _YouExperienceState extends State<YouExperience> {
       crossAxisAlignment: CrossAxisAlignment.center,
       children: <Widget>[
         Expanded(
-          child: Text(
-            'Letter Within',
-            style: ExperienceType.title(ExperienceColors.ink),
-          ),
+          child: Text('You', style: ExperienceType.title(ExperienceColors.ink)),
         ),
         Text(
           _formatDate(_today()),
@@ -283,8 +280,8 @@ class _AccountSectionState extends State<_AccountSection> {
         ),
         content: Text(
           'Your records on this device close until this account signs in '
-          'again. Nothing is deleted, and no other account can read what '
-          'is here.',
+          'again. Nothing is deleted, and Letter Within will not open them '
+          'for another account.',
           style: ExperienceType.body(ExperienceColors.ink),
         ),
         actions: <Widget>[
@@ -429,9 +426,9 @@ class _AccountSectionState extends State<_AccountSection> {
           ),
           const SizedBox(height: ExperienceSpacing.xs),
           Text(
-            'The records on this device belong to the account that created '
-            'them. They stay closed until that account signs in again — '
-            'nothing has been deleted.',
+            'The records on this device were created while signed in to '
+            'another account. They stay closed until that account signs in '
+            'again — nothing has been deleted.',
             style: ExperienceType.bodySmall(ExperienceColors.inkSoft),
           ),
         ];

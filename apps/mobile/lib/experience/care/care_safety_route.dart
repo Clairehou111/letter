@@ -20,8 +20,9 @@ import '../theme/experience_foundation.dart';
 class CareSafetyRoute extends StatelessWidget {
   const CareSafetyRoute({super.key, this.regionCode, this.careWorld = true});
 
-  /// Region/locale code (e.g. `US`, `CA`). Anything else — including null —
-  /// receives the honest fallback content and never an invented number.
+  /// Optional region/locale override (e.g. `US`, `CA`). When null, the route
+  /// uses the device locale's country code. Any unsupported or missing device
+  /// country receives the honest fallback and never an invented number.
   final String? regionCode;
 
   /// True inside the plum-dusk Care world; false when surfaced from the
@@ -115,7 +116,9 @@ class CareSafetySheetBody extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final crisis = crisisSafetyContentForCode(regionCode);
+    final resolvedRegionCode =
+        regionCode ?? View.of(context).platformDispatcher.locale.countryCode;
+    final crisis = crisisSafetyContentForCode(resolvedRegionCode);
     const boundary = medicalBoundaryContent;
 
     return SingleChildScrollView(
@@ -192,14 +195,14 @@ class CareSafetySheetBody extends StatelessWidget {
           ),
           const SizedBox(height: ExperienceSpacing.md),
           _BoundarySection(
-            title: 'Get urgent medical care now if you notice',
+            title: 'Get urgent medical care now if you notice:',
             items: boundary.urgent,
             careWorld: careWorld,
             urgent: true,
           ),
           const SizedBox(height: ExperienceSpacing.md),
           _BoundarySection(
-            title: 'Book a medical assessment if you notice',
+            title: 'Book a medical assessment if you notice:',
             items: boundary.nonUrgent,
             careWorld: careWorld,
             urgent: false,
