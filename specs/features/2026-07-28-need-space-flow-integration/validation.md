@@ -54,7 +54,7 @@ Status: validated
 - [x] one interaction creates visible protected isolation
 - [x] no optional text or copy step is required
 - [x] copied-text limitations are stated honestly
-- [x] all session-only text is forgotten by Letter
+- [x] all session-only text is forgotten by Letter Within
 - [x] safety and platform limitations are explicit
 - [x] no personal or clinical data is stored
 - [x] local changes are committed

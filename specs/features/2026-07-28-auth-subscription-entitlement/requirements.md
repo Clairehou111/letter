@@ -1,18 +1,20 @@
 # Authentication And Subscription Entitlement Requirements
 
-Status: proposed
+Status: implemented bounded mobile/auth-entitlement contract; provider and
+native release validation pending
 Dependencies: local-first health storage and RevenueCat configuration
 
 ## Goal
 
-Support account operations and paid entitlements without making an account or
-server copy a prerequisite for local period tracking and Care.
+Require one initial Supabase sign-in for a stable user identity, account
+operations, and paid entitlements while keeping readable health records local
+and keeping the signed-in app usable offline.
 
 ## Requirements
 
-REQ-001: A user can use local period, Care, and health-record features before
-sign-in. Authentication is required only for an explicitly selected server
-capability.
+REQ-001: A new user signs in before entering the full product. Sign in with
+Apple is the primary iOS path and email magic link is the fallback. Letter Within does
+not create a pre-registration anonymous Supabase account.
 
 REQ-002: The API stores only account or pseudonymous user ID, consent receipts,
 subscription entitlement, configuration versions, deletion requests, and
@@ -34,9 +36,17 @@ remains on the device. Local data requires a separate explicit deletion action.
 REQ-007: Billing and auth failures do not block local Care safety routes or
 period tracking.
 
+REQ-008: After the first successful sign-in, a missing network connection or
+expired server session does not block local period history, health records,
+Letters, or Care. Server operations can request re-authentication separately.
+
+REQ-009: Supabase user ID is the stable account key for approved operational
+analytics, consent receipts, and entitlement association. It must never be
+used as a reason to upload readable health records.
+
 ## Non-Goals
 
 - health-data cloud sync
 - contact access or direct messaging
-- mandatory account creation
+- anonymous-to-registered account conversion or identity merging
 - storing report content on the server

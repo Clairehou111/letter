@@ -8,7 +8,7 @@ Base branch: `feature/racing-thoughts-convergence-flow`
 
 `I need everyone away` currently opens the generic Care response shell. The
 user wants this mode to create an immediate sense of protected isolation.
-Letter must provide that emotional container without claiming that it silences
+Letter Within must provide that emotional container without claiming that it silences
 notifications, blocks callers, changes system Focus settings, controls another
 app, or prevents another person from reaching the user.
 
@@ -38,13 +38,13 @@ Nothing after that is mandatory.
 
 ## Product Decisions
 
-- Letter creates a symbolic private boundary inside the app, not actual phone
+- Letter Within creates a symbolic private boundary inside the app, not actual phone
   isolation.
 - Closing the curtain is the only required interaction before the protected
   state.
 - A tap control must provide the same result as the downward curtain gesture.
 - Preparing or copying boundary words is optional.
-- Letter does not read contacts, collect a recipient, send a message, or open a
+- Letter Within does not read contacts, collect a recipient, send a message, or open a
   system share or message composer.
 - P0 does not integrate with system Focus or Do Not Disturb settings.
 - P0 stores no Care event, duration, free text, copy event, symptom, severity,

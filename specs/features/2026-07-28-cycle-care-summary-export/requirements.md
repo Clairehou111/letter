@@ -10,7 +10,7 @@ compliant Twin Matrix preview and prohibits mirrored observations.
 
 ## Goal
 
-Give normal Letter users a truthful, clinician-readable summary of their local
+Give normal Letter Within users a truthful, clinician-readable summary of their local
 history without calling it a diagnosis or a validated clinical instrument.
 
 ## Requirements
@@ -29,10 +29,13 @@ REQ-004: Raw angry drafts, unsaved text, clipboard contents, unresolved NLP
  excluded by default and cannot be silently included.
 
 REQ-005: The user previews the complete report before creating a local PDF or
-CSV. Export is explicit and may use the operating system share surface.
+CSV. Export is explicit, saves the file in the dedicated `letter/` subfolder,
+and then opens the operating-system destination surface. Installed providers
+may include iCloud Drive, Google Drive, or Dropbox; choosing one or cancelling
+remains under user control.
 
 REQ-006: The report uses direct clinical headings, tables, legends, dates, and
-plain language. Letter styling may be restrained but cannot obscure evidence.
+plain language. Letter Within styling may be restrained but cannot obscure evidence.
 
 REQ-007: The report states that it is a user-recorded summary and does not
 diagnose PMS, PMDD, pain conditions, or another disorder.

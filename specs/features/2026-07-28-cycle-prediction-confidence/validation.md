@@ -32,7 +32,7 @@ Status: validated
 3. Confirm confidence never reads as certainty.
 4. Confirm broad history produces a visibly broad estimate.
 5. Confirm the evidence line explains interval count and cycle-length range.
-6. Confirm a late period does not cause Letter to invent an unrecorded cycle.
+6. Confirm a late period does not cause Letter Within to invent an unrecorded cycle.
 7. Edit and delete history and confirm the estimate changes immediately.
 8. Confirm no fertility or phase interpretation appears.
 

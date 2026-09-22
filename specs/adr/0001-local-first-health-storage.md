@@ -4,7 +4,7 @@ Status: accepted
 
 ## Context
 
-Letter needs several cycles of sensitive PMS/PMDD records to personalize
+Letter Within needs several cycles of sensitive PMS/PMDD records to personalize
 predictions, Care plans, and reports. Server-first storage improves recovery and
 multi-device access but increases privacy, breach, deletion, and operational
 risk.

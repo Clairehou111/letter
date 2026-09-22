@@ -1,4 +1,4 @@
-# Letter Care Loop Redesign Requirements
+# Letter Within Care Loop Redesign Requirements
 
 Status: approved
 Branch: `feature/letter-care-loop-redesign`
@@ -16,13 +16,13 @@ Care screens and persistence are delivered as subsequent roadmap features.
 
 ## Goal
 
-Define a coherent, safe Letter loop that is emotionally distinctive, remains a
+Define a coherent, safe Letter Within loop that is emotionally distinctive, remains a
 real period tracker, and becomes more personally useful across cycles.
 
 ## Requirements
 
 REQ-001: Keep cycle tracking and prediction as the foundation. The redesign
-must not turn Letter into a generic emotional-wellness app.
+must not turn Letter Within into a generic emotional-wellness app.
 
 REQ-002: Define the core loop as `Notice -> Contain -> Recover -> Reflect ->
 Prepare -> Remember`.
@@ -41,7 +41,7 @@ Do not require repeated aggressive impact. Provide a one-tap completion route,
 reduced motion, silence, and a stable urgent-safety route.
 
 REQ-006: Let users write a private no-recipient draft and explicitly seal it
-for a fixed 24-hour cooldown. During the cooldown Letter must prevent reading,
+for a fixed 24-hour cooldown. During the cooldown Letter Within must prevent reading,
 copying, sharing, and exporting inside the app, but allow deletion without
 opening. Afterward, restore full user access and offer keep, delete, rewrite, or
 future-self-note choices.
@@ -62,7 +62,7 @@ output are editable hypotheses, not psychological conclusions.
 REQ-011: Support private drafts, notes from clearer days, and editable cycle
 letters as distinct artifacts with distinct privacy behavior.
 
-REQ-012: Use Letter, archive, envelope, and moon imagery as restrained brand
+REQ-012: Use Letter Within, archive, envelope, and moon imagery as restrained brand
 language, never as medical causality or a claim about Chinese tradition,
 astrology, witchcraft, or youth preservation.
 
@@ -125,8 +125,10 @@ automatically use a dim, motionless physical-Care presentation.
 
 REQ-037: Optional Care sound is off by default and begins only after explicit
 opt-in. It must be local, abstract, low-volume, and nonessential. Do not use
-voices, heartbeats, reward jingles, notification-like tones, or user-derived
-audio.
+voices, reward jingles, notification-like tones, or user-derived audio.
+Non-headache Physical Care may use a clearly simulated soft heartbeat as an
+optional internal anchor. It must not be presented as the user's measured
+heart rate, and headache/migraine remains silent.
 
 REQ-038: If the user reports `More intense`, stop additional novelty and offer
 exit, safety, or a genuinely distinct practical protection. Do not tell the
@@ -143,7 +145,7 @@ frequency, pressure, duration, app absence, or Care-mode use directly to a
 clinical severity score.
 
 REQ-021: Offer an optional recovery receipt that lets the user confirm symptom,
-six-point severity, functional impact, and other signals after an acute event.
+five-level severity, functional impact, and other signals after an acute event.
 Mark ratings entered later as recall rather than prospective data.
 
 REQ-022: Provide two report tiers: a provenance-safe Cycle and Care Summary for
@@ -158,7 +160,7 @@ REQ-024: Every report value must identify whether it came from a prospective
 user rating, same-day user rating, later recall, or factual Care event. AI
 candidates cannot appear until confirmed.
 
-REQ-025: Apply the Letter metaphor in three layers: ritual for emotional
+REQ-025: Apply the Letter Within metaphor in three layers: ritual for emotional
 meaning, familiar utility controls for repeated tasks, and plain clinical
 presentation for doctor-facing evidence.
 
@@ -186,7 +188,7 @@ fulfillment, and product-liability review.
 - implementing all Care modes in one feature
 - claiming the Shatter ritual reduces anger through catharsis
 - claiming the 24-hour cooldown is cryptographically unbreakable or prevents
-  action outside Letter
+  action outside Letter Within
 - hiding or deleting a sealed draft without the user's explicit action
 - automatically controlling device focus mode or other apps
 - a universal painkiller countdown
@@ -199,7 +201,7 @@ fulfillment, and product-liability review.
 
 Before UI implementation begins, the redesign must answer:
 
-- what Letter does in the first ten seconds of a hard moment
+- what Letter Within does in the first ten seconds of a hard moment
 - what is stored during Care and when it can reappear
 - what the user, deterministic rules, and optional AI each decide
 - how the product handles anger without escalating arousal

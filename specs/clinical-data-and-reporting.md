@@ -1,17 +1,17 @@
-# Letter Clinical Data And Reporting
+# Letter Within Clinical Data And Reporting
 
 Status: approved product direction; clinical review pending
 Date: 2026-07-28
 
 ## Goal
 
-Letter should make difficult moments easy to express and still produce a report
+Letter Within should make difficult moments easy to express and still produce a report
 that a clinician can understand. It must do this without turning interaction
 behavior into invented symptom severity.
 
 The product has two reporting promises:
 
-1. `Cycle & Care Summary` organizes normal Letter use with transparent data
+1. `Cycle & Care Summary` organizes normal Letter Within use with transparent data
    provenance.
 2. `Prospective Clinical Diary` organizes user-completed daily ratings for
    users actively preparing for a clinical conversation.
@@ -19,7 +19,7 @@ The product has two reporting promises:
 Only the second can claim alignment with a validated daily symptom instrument,
 and only after wording, scoring, licensing, and implementation are reviewed.
 
-Medication history is outside Letter's product scope. Neither report includes
+Medication history is outside Letter Within's product scope. Neither report includes
 medication events or turns medication mentions into structured records.
 
 ## Non-Negotiable Measurement Rule
@@ -27,13 +27,13 @@ medication events or turns medication mentions into structured records.
 A patient-reported outcome comes directly from the patient without another
 person or system interpreting the response.
 
-Therefore Letter must not map:
+Therefore Letter Within must not map:
 
 - tap count to anger severity
 - tap speed, pressure, or acceleration to a DRSP score
 - time spent touching a pain scene to pain severity
 - copying a boundary message to severe social withdrawal
-- not reopening Letter to any symptom or impairment score
+- not reopening Letter Within to any symptom or impairment score
 - haptic use to clinical improvement
 
 These behaviors vary with device hardware, motor ability, game style,
@@ -53,7 +53,7 @@ The app may record factual product events locally:
 - personal action selected
 - later `better`, `same`, or `worse` response
 
-This layer answers `what happened in Letter`, not `how clinically severe the
+This layer answers `what happened in Letter Within`, not `how clinically severe the
 symptom was`.
 
 ### Layer 2: Symptom Candidate
@@ -115,7 +115,7 @@ The legacy `concentration` code remains readable but is not offered for new
 records; new capture uses `brainFog`.
 
 `Suicidal thoughts` and `Self-harm` are safety signals outside this symptom
-taxonomy. They do not receive the routine six-point score and are not silently
+taxonomy. They do not receive the routine five-level score and are not silently
 written from a safety interruption. Selecting either opens the deterministic,
 region-aware crisis boundary immediately. Crisis resources must not depend on
 record creation, network analytics, or LLM interpretation.
@@ -133,10 +133,10 @@ Example:
 20:47  user sealed a private draft
 ```
 
-Letter may store this as an unrated Care event. It must not silently add:
+Letter Within may store this as an unrated Care event. It must not silently add:
 
 ```text
-anger = 6
+anger = 5
 social impairment = severe
 PMDD event = true
 ```
@@ -148,7 +148,7 @@ If the user never confirms clinical fields, the report may say:
 
 ## Recovery Receipt
 
-At a user-chosen later time, Letter presents a short reconciliation flow. This
+At a user-chosen later time, Letter Within presents a short reconciliation flow. This
 is the bridge between expressive Care and structured data.
 
 ### Screen 1: Confirm The Signal
@@ -171,19 +171,18 @@ confirmed.
 
 > At its strongest, how intense was it?
 
-Use the six explicit anchors:
+Use the five explicit anchors after the user selects a present symptom:
 
-1. not at all
-2. minimal
-3. mild
-4. moderate
-5. severe
-6. extreme
+1. minimal
+2. mild
+3. moderate
+4. severe
+5. extreme
 
 The UI may look like ink wells or marks on a letter, but labels and numbers
 must remain visible. Decorative interaction cannot obscure the scale.
 
-Routine symptom capture uses one six-point intensity scale. Letter does not ask
+Routine symptom capture uses one five-level intensity scale. Letter Within does not ask
 for a second 0-10 pain score or pain location in this flow. A conventional pain
 scale may be reconsidered only in a dedicated pain diary or clinically reviewed
 Doctor Mode where its distinct purpose is explicit.
@@ -208,7 +207,7 @@ Signal selection uses ordinary tap-to-keep controls. No forced metaphor
 gesture (such as circling or crossing) is required when a normal tap is more
 accessible:
 
-> Letter noticed possible signals in what you recorded. Keep only what was
+> Letter Within noticed possible signals in what you recorded. Keep only what was
 > actually present.
 
 Possible chips include:
@@ -233,7 +232,7 @@ primary event. A later rating is marked `retrospective`, not `prospective`.
 There is no honest way to recreate a validated prospective daily diary from
 tap behavior or end-of-cycle memory.
 
-For users seeking PMDD evaluation, Letter offers a temporary Doctor Mode:
+For users seeking PMDD evaluation, Letter Within offers a temporary Doctor Mode:
 
 - explain why daily ratings matter
 - collect daily self-ratings across at least two consecutive cycles
@@ -248,7 +247,7 @@ and 3 functional-impairment items, each rated daily from 1 to 6. Reproducing
 the exact instrument in a commercial app requires confirmation of wording,
 scoring, attribution, and permission from the rights holder.
 
-Until that is resolved, Letter must call its own flow:
+Until that is resolved, Letter Within must call its own flow:
 
 > Prospective daily symptom diary
 
@@ -320,7 +319,7 @@ confirmed_by_user: true
 
 ## Report A: Cycle And Care Summary
 
-This is available from normal Letter use.
+This is available from normal Letter Within use.
 
 ### Data Quality Header
 

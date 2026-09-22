@@ -38,7 +38,7 @@ crisis content selected deterministically from the device region:
   emergency services, the nearest emergency department, or a trusted person.
   Never invent or guess another country's crisis numbers.
 
-REQ-002: Crisis content must state plainly that Letter cannot provide
+REQ-002: Crisis content must state plainly that Letter Within cannot provide
 emergency help, and must encourage reaching out now. It must not diagnose,
 moralize, shame, argue, minimize, or promise that the feeling will resolve on
 any timeline.
@@ -59,7 +59,7 @@ guidance:
 
 REQ-005: Medical content must not diagnose, name conditions as the cause,
 recommend starting/stopping medication or supplements, give dosing, or claim
-Letter can assess the symptom.
+Letter Within can assess the symptom.
 
 REQ-006: Region selection must be pure and deterministic: a domain function
 mapping a region/locale code to content, with no network, no LLM, no random

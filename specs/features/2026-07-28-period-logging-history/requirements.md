@@ -5,7 +5,7 @@ Branch: `feature/period-logging-history`
 
 ## Context
 
-Letter must first work as a trustworthy period tracker. This feature creates
+Letter Within must first work as a trustworthy period tracker. This feature creates
 the first readable health records in the product, so it also resolves the
 previously deferred encrypted local database decision.
 
@@ -15,8 +15,9 @@ interpretation remain separate features.
 
 ## Goal
 
-Let a user start and end a period, add a past period, and correct or delete
-history without an account or network connection.
+Let a signed-in user start and end a period, add a past period, and correct or
+delete history without requiring a live network connection after initial
+authentication.
 
 ## Requirements
 
@@ -63,7 +64,7 @@ repository.
 REQ-014: Show explicit loading, empty, populated, save-error, and retry states.
 Do not flash an empty history while secure local storage is opening.
 
-REQ-015: Use familiar date and edit controls inside Letter's modern
+REQ-015: Use familiar date and edit controls inside Letter Within's modern
 correspondence visual language. Metaphor must not obscure the actual dates or
 actions.
 
@@ -106,5 +107,5 @@ must not be exposed as clinical observations.
 - A new interval cannot overlap an existing open or closed interval.
 - Date validation uses the user's current local calendar day at action time.
 - Web preview data resets when the app process/page is reset.
-- Native encryption availability must fail closed; Letter must not silently
+- Native encryption availability must fail closed; Letter Within must not silently
   open an unencrypted health database.

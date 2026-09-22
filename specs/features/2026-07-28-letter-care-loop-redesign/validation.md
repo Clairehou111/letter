@@ -1,4 +1,4 @@
-# Letter Care Loop Redesign Validation
+# Letter Within Care Loop Redesign Validation
 
 Status: participatory Care prototype implemented; target-user validation pending
 

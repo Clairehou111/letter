@@ -1,6 +1,6 @@
 # Production Workspace Foundation Validation
 
-Status: validated with native release gate deferred
+Status: validated; native encrypted-storage acceptance complete, release review remains open
 
 ## Automated Requirement Coverage
 
@@ -8,7 +8,7 @@ Status: validated with native release gate deferred
 | --- | --- |
 | REQ-001 | Root structure test or check confirms both apps, contract output, documentation, and independent application entry points |
 | REQ-002 | Clean dependency sync uses committed locks; toolchain versions satisfy the documented constraints |
-| REQ-003 | Mobile metadata tests or inspections confirm Letter naming and identifiers; Flutter formatting, analysis, and tests pass |
+| REQ-003 | Mobile metadata tests or inspections confirm Letter Within naming and identifiers; Flutter formatting, analysis, and tests pass |
 | REQ-004 | API tests exercise application creation, typed settings, liveness, versioned routing, and layer import boundaries |
 | REQ-005 | OpenAPI export and Dart generation are reproducible; drift checks pass from a clean tree |
 | REQ-006 | API smoke test matches the contract and generated Dart client compiles against it |
@@ -73,7 +73,7 @@ After installing the native toolchains:
 2. Launch the app on an Android emulator at approximately 412x915 logical
    pixels.
 3. On each platform, verify:
-   - Letter name and application identity
+   - Letter Within name and application identity
    - successful cold launch without a red error screen or crash
    - native safe-area and keyboard/inset behavior
    - bundled typography and design tokens
@@ -109,21 +109,31 @@ The feature is ready for validation status when:
 - all limitations are recorded honestly
 
 Native builds, launch reviews, and screenshots remain a release-preparation
-gate under the user-approved 2026-07-28 amendment.
+gate under the user-approved 2026-07-28 amendment. The encrypted-storage,
+migration, and restore portions of that gate are now separately evidenced;
+manual UX, accessibility, target-user, clinical, store, payment, and live
+configuration checks remain open.
 
 The feature must not be merged, pushed, or deployed without separate explicit
 user instruction.
 
-## Known Pre-Implementation Blocker
+## Historical Toolchain Note
 
-Native validation is presently unavailable because the Android SDK is absent
-and the Xcode installation is incomplete. CocoaPods is also absent. The
-foundation may be implemented after this specification is approved, but it
-cannot satisfy its acceptance gate until both native toolchains are available.
+The original 2026-07-27 validation was recorded before the native toolchains
+were complete. That historical limitation no longer describes the current
+Android environment: Android licenses are accepted, NDK `28.2.13676358` is
+repaired, and API 37 ARM64 Pixel emulator `emulator-5554` is available. The
+current Android debug APK smoke pass built, installed, and launched
+successfully. Post-upgrade iOS smoke validation is now also complete:
+`flutter build ios --simulator` passed with deployment target 14.0,
+`Runner.app` installed and launched on an iPhone 17 simulator, and the second
+post-launch screenshot rendered onboarding correctly.
 
 ## Implementation Validation Result
 
-Status: automated foundation passed; native acceptance gate pending
+Status: automated foundation passed; Android and iOS smoke passes passed;
+native encrypted-storage and restore acceptance passed; accessibility and
+release review remain open.
 
 Validated on 2026-07-27:
 
@@ -154,11 +164,11 @@ Implemented boundaries:
 
 Pending:
 
-- Android build, emulator launch, and screenshots: Android SDK unavailable.
-- iOS build, simulator launch, and screenshots: full Xcode and CocoaPods
-  unavailable.
+- Manual Files/share UX, screen-reader/accessibility review, target-user Care
+  usability, clinical review, store/payment configuration, and live
+  authentication remain release gates.
 - Clean-checkout GitHub Actions execution requires a local commit and push,
   neither of which was requested.
 
 Browser rendering remains development evidence only and does not satisfy the
-deferred native release gate.
+remaining manual native UX, accessibility, or release-review gates.

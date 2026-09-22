@@ -1,6 +1,7 @@
 # Angry And Overloaded Impulse Buffer Validation
 
-Status: validated for shared logic and web preview; native gate deferred
+Status: validated for shared logic, web preview, and native encrypted-storage
+acceptance; manual product review remains separate
 
 ## Automated Checks
 
@@ -35,18 +36,26 @@ Status: validated for shared logic and web preview; native gate deferred
 
 ## Native Checks
 
-- [ ] iOS opens the shared version-2 database with
-  SQLite3MultipleCiphers available
-- [ ] Android opens the shared version-2 database with
-  SQLite3MultipleCiphers available
-- [ ] reopening with the secure key preserves both period and impulse records
-- [ ] opening without the correct key cannot read private draft content
-- [ ] the database file contains no searchable private draft content
+- [x] iOS opens the shared encrypted database with SQLite3MultipleCiphers
+  available
+- [x] Android opens the shared encrypted database with SQLite3MultipleCiphers
+  available
+- [x] real schema 10-to-11 migration preserves period rows and the cycle
+  reflection `startingPeriodId`
+- [x] reopening with the secure key preserves records in the shared database
+- [x] opening without the correct key cannot read the shared database
+- [x] the encrypted file contains no searchable acceptance-test plaintext;
+  focused repository tests separately cover private impulse-draft behavior
+- [x] the secure key and encrypted data survive a second launch of the same
+  installed app without reinstall
 
-Native runtime checks remain deferred under the approved native validation
-gate. Drift repository and migration tests use an in-memory SQLite executor;
-they prove schema, migration, and repository behavior, not device
-encryption-at-rest.
+Native acceptance evidence was exercised on Android API 37 (`emulator-5554`)
+and an iPhone 17 iOS 26.5 simulator using
+`integration_test/native_storage_acceptance_test.dart`. Drift repository and
+in-memory migration tests remain complementary; they are not the basis for
+the device encryption claims above. The native acceptance sentinel is a
+synthetic capture note, so this evidence proves the shared database boundary
+rather than claiming a separately seeded impulse draft on each device.
 
 ## Evidence
 
@@ -75,7 +84,7 @@ encryption-at-rest.
 ## Merge Gate
 
 - [x] the impulse buffer is local-first with native encryption configured
-- [x] native runtime verification remains explicitly deferred
+- [x] native encrypted-storage and migration verification is evidenced
 - [x] the cooldown is honest, finite, and user-controlled
 - [x] sealed content is not rendered before unlock
 - [x] existing period data survives migration

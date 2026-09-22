@@ -6,20 +6,20 @@ Parent feature: `need-space-flow-integration`
 ## Purpose
 
 Safe Cocoon is the immediate sensory response after a user enters Care through
-`I need everyone away.` Its job is to make the Letter screen feel quieter,
+`I need everyone away.` Its job is to make the Letter Within screen feel quieter,
 more enclosed, and less socially demanding without asking the user to explain,
 learn, regulate, or complete an exercise.
 
-The experience is a temporary visual container, not a claim that Letter has
+The experience is a temporary visual container, not a claim that Letter Within has
 isolated the user from people or changed the phone.
 
 ## Confirmed Product Facts
 
-- The product is the Letter Flutter mobile app.
+- The product is the Letter Within Flutter mobile app.
 - The Care entrance label is `I need everyone away.`
 - The primary user need is an immediate isolated, protected, and safe feeling.
-- Letter does not access contacts or send messages.
-- Letter must not claim that it blocks people, calls, messages, notifications,
+- Letter Within does not access contacts or send messages.
+- Letter Within must not claim that it blocks people, calls, messages, notifications,
   or activity in other apps.
 - The experience must remain finite, low stimulation, usable with one thumb,
   and easy to leave.
@@ -41,7 +41,7 @@ never be required.
 The screen must disclose the platform boundary without turning it into the
 headline:
 
-`Letter can quiet this screen. It cannot silence calls or other apps.`
+`Letter Within can quiet this screen. It cannot silence calls or other apps.`
 
 ### 2. Closing
 
@@ -70,7 +70,7 @@ Supporting copy:
 `Nothing is required here.`
 
 The cocoon may use a static textile, paper, or layered-curtain treatment
-consistent with Letter's visual system. It must not resemble a locked door,
+consistent with Letter Within's visual system. It must not resemble a locked door,
 cage, sealed container, restraint, surveillance screen, or emergency service.
 
 The cocoon does not end automatically. Remaining on a static screen is allowed,
@@ -136,7 +136,7 @@ existing deterministic emotional safety boundary. Dismissing that boundary
 must return to the same Safe Cocoon state.
 
 REQ-009: Copy must distinguish the visual cocoon from device-level isolation.
-It must not state or imply that Letter has blocked contacts, calls, messages,
+It must not state or imply that Letter Within has blocked contacts, calls, messages,
 notifications, people, networks, or other apps.
 
 REQ-010: The component must not request contacts, recipients, permissions,

@@ -1,6 +1,6 @@
-# Letter Mission
+# Letter Within Mission
 
-Letter is a private period tracker that helps people get through difficult
+Letter Within is a private period tracker that helps people get through difficult
 cycle-related moments and carry their own knowledge forward.
 
 The product must:
@@ -17,10 +17,10 @@ The product must:
 
 Product promise:
 
-> Your body writes in patterns. Letter helps you through hard moments,
+> Your body writes in patterns. Letter Within helps you through hard moments,
 > remembers what helped, and brings your own wisdom back when you need it.
 
-The user authors the meaning. Letter can preserve observations and offer
+The user authors the meaning. Letter Within can preserve observations and offer
 hypotheses, but it must never claim to reveal an objective hidden truth about a
 relationship, job, body, or mind.
 

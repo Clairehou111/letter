@@ -23,3 +23,9 @@ Status: completed
    - [x] Test accessibility, 320-pixel layout, and 200% text scaling.
    - [x] Add representative onboarding golden coverage.
    - [x] Run mobile and repository validation and record results.
+
+5. Privacy Explanation Amendment
+   - [x] Keep the account-separation and on-device promises visible in onboarding.
+   - [x] Add a read-only `See how privacy works` explanation sheet.
+   - [x] Test open, close, preference preservation, accessibility, and layout.
+   - [x] Refresh the onboarding privacy golden and run mobile validation.

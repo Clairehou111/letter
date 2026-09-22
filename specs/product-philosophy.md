@@ -1,18 +1,18 @@
-# Letter Product Philosophy
+# Letter Within Product Philosophy
 
 Status: approved
 Date: 2026-07-28
 
 ## Core Idea
 
-Letter is a private period tracker built around a conversation across time:
+Letter Within is a private period tracker built around a conversation across time:
 
-- in a hard moment, Letter reduces decisions and holds what the user does not
+- in a hard moment, Letter Within reduces decisions and holds what the user does not
   want to act on yet
-- after the wave, Letter offers a small, optional check-back
-- on a clearer day, Letter helps the user decide what the experience may have
+- after the wave, Letter Within offers a small, optional check-back
+- on a clearer day, Letter Within helps the user decide what the experience may have
   been asking for
-- before a similar moment, Letter returns the user's own words and previously
+- before a similar moment, Letter Within returns the user's own words and previously
   helpful actions
 
 The product does not tell a user what their body "really means." It preserves
@@ -20,10 +20,10 @@ evidence, offers hypotheses, and lets the user author the interpretation.
 
 Product promise:
 
-> Your body writes in patterns. Letter helps you through hard moments,
+> Your body writes in patterns. Letter Within helps you through hard moments,
 > remembers what helped, and brings your own wisdom back when you need it.
 
-## The Letter Loop
+## The Letter Within Loop
 
 ```text
 NOTICE
@@ -90,7 +90,7 @@ Icons support the labels but never replace them:
 4. `I need everyone away`
 5. `My body needs care`
 
-The user names their state. Letter must not infer or declare it from a cycle
+The user names their state. Letter Within must not infer or declare it from a cycle
 prediction.
 
 See `care-experience-system.md` for the finite reward loop and detailed scenes.
@@ -118,7 +118,7 @@ if it commonly escalates distress.
 
 #### 24-Hour Impulse Buffer
 
-After the transition, Letter:
+After the transition, Letter Within:
 
 1. names the purpose directly: do not send, post, resign, purchase, or make a
    relationship decision from this screen state
@@ -126,14 +126,14 @@ After the transition, Letter:
 3. shows the exact consequence before sealing
 4. seals the draft for a fixed 24 hours when the user confirms
 5. prevents reading, copying, exporting, or sharing the sealed text inside
-   Letter until the period ends
+   Letter Within until the period ends
 6. always permits deleting the sealed envelope without opening it
 
-The draft is encrypted at rest with the rest of the local health store. Letter
+The draft is encrypted at rest with the rest of the local health store. Letter Within
 must describe the feature as an app-enforced cooldown, not an unbreakable
 cryptographic time lock or a guarantee that the user cannot act elsewhere.
 
-When the period ends, Letter does not reveal the text in a notification. The
+When the period ends, Letter Within does not reveal the text in a notification. The
 user can open it privately, keep it sealed, delete it, or rewrite it as a
 calmer message. A later clearer-day feature may let the user explicitly turn
 the underlying need into a note for the next cycle.
@@ -164,16 +164,16 @@ The goal is to turn simultaneous demands into one controllable point:
 
 The goal is a truthful, low-effort boundary:
 
-- first create a symbolic, low-stimulation cocoon inside Letter
+- first create a symbolic, low-stimulation cocoon inside Letter Within
 - offer at most two truthful, user-edited boundary cards only as an optional
   next step
 - never invent a migraine, illness, or safety claim
 - let the user choose a bounded duration without choosing a recipient
 - allow explicit clipboard copy, but do not read contacts, send, share, open a
   composer, or claim that anyone received the words
-- clear all Letter-side text when the Care session ends
+- clear all Letter Within-side text when the Care session ends
 
-Letter cannot promise to disconnect the phone or control other apps. Platform
+Letter Within cannot promise to disconnect the phone or control other apps. Platform
 focus-mode integrations require separate feasibility work.
 
 ### Physical Pain
@@ -185,18 +185,18 @@ The goal is practical comfort with an explicit medical boundary:
 - return the user's saved comfort action and location-specific note
 - allow a later effect check-back
 
-Letter does not record medication history or provide medication names, doses,
+Letter Within does not record medication history or provide medication names, doses,
 intervals, reminders, interaction advice, or timers. It does not claim haptics
 treat pain.
 
 ## Letters Across Time
 
-Letter has three distinct artifacts:
+Letter Within has three distinct artifacts:
 
 ### A Private Draft
 
 Words written during a hard moment. Before sealing, the user can edit or delete
-them. After explicitly starting the 24-hour protocol, Letter hides and disables
+them. After explicitly starting the 24-hour protocol, Letter Within hides and disables
 copy/share/export of the content until the timer ends, while still allowing the
 unopened envelope to be deleted. After the timer, the user may revisit, edit,
 export, keep, or delete it.
@@ -224,7 +224,7 @@ and doctor exports stay direct and clinically legible.
 ## Reflection Without Overclaiming
 
 Premenstrual symptoms can amplify distress around real situations, coexist
-with another condition, or be misattributed. Letter therefore asks:
+with another condition, or be misattributed. Letter Within therefore asks:
 
 > Looking back, did this point to something you want to remember?
 
@@ -243,7 +243,7 @@ created a thought.
 
 ## Brand And Cultural Boundary
 
-`Letter` and `monthly correspondence` are the primary metaphors. Moon phases,
+`Letter Within` and `monthly correspondence` are the primary metaphors. Moon phases,
 envelopes, stamps, and archival details may provide restrained visual language.
 
 They are not health measurements or medical explanations. The product must
@@ -276,7 +276,7 @@ and commercial boundaries.
 - Clinical reports distinguish prospective user ratings, same-day ratings,
   later recall, and factual Care events.
 - The energetic Shatter ritual is not treated as a therapeutic mechanism.
-  Letter's defensible intervention is the immediate downshift, removal of send
+  Letter Within's defensible intervention is the immediate downshift, removal of send
   affordances, explicit delay, and later user-directed review.
 - Safety and red-flag routing remains deterministic and locale-aware.
 - The product does not diagnose PMS/PMDD, prescribe, or replace clinical care.
@@ -308,7 +308,7 @@ evidence behind poetic copy.
 
 ### Three Signature Views
 
-Letter moves from context to pattern to evidence through three views:
+Letter Within moves from context to pattern to evidence through three views:
 
 1. `Gravity Horizon` on Today: observed and estimated cycle timing, never a
    prediction of the user's state
@@ -326,14 +326,14 @@ health facts.
 It is visible in Today and the containing cycle Story, but excluded from
 clinical reports and symptom-pattern severity.
 
-A confirmed symptom rating remains a separate, explicit six-point record.
+A confirmed symptom rating remains a separate, explicit five-level record.
 Repeated moment check-ins are allowed. Re-entering the same confirmed symptom
 for the same day updates the daily rating unless the user explicitly chooses to
 record a distinct timestamped episode.
 
 ## P0 Value
 
-Letter earns payment through compounding personal usefulness:
+Letter Within earns payment through compounding personal usefulness:
 
 > period tracking + low-effort logging + in-the-moment Care + the user's own
 > remembered remedies and messages + cautious patterns + doctor-ready evidence

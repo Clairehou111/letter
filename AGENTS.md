@@ -1,8 +1,8 @@
-# Letter Repository Instructions
+# Letter Within Repository Instructions
 
 ## Mission
 
-Build Letter as a private, local-first period and PMS/PMDD companion for North
+Build Letter Within as a private, local-first period and PMS/PMDD companion for North
 American users. Product behavior must remain supportive, evidence-aware, and
 useful during both emotional and physical symptom episodes.
 
@@ -42,4 +42,15 @@ Never push, deploy, or merge without explicit user instruction.
 - Use synthetic examples in tests and screenshots.
 - Prefer narrow changes over unrelated refactors.
 
+## Delegation Policy
+
+- Use `gpt-5.6-luna` subagents for bounded, inexpensive work whenever the
+  task can proceed independently: repository inventories, synthetic fixture
+  preparation, prompt drafts, generated-code comparisons, isolated tests,
+  analyzer/test runs, and visual-diff classification.
+- Keep product decisions, privacy and safety judgments, cross-feature
+  architecture, Lovable design direction, integration review, and final
+  acceptance with the primary agent.
+- Give implementation subagents disjoint file ownership and review their
+  changes before integration. Do not duplicate delegated work locally.
 

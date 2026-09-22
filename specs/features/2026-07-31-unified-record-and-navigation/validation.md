@@ -1,6 +1,7 @@
 # Unified Record And Navigation Validation
 
-Status: validated; native device review deferred
+Status: validated; native encrypted-storage acceptance complete, manual device
+UX and accessibility review remain separate
 
 - `+ Check in` opens state choices directly and one state tap persists locally.
 - Saved check-ins survive screen reconstruction, show timestamps, can be undone,
@@ -38,4 +39,8 @@ Status: validated; native device review deferred
 - [x] The Flutter web build completes.
 - [x] Widget tests cover Today and symptom capture at 320x700 with 200 percent
       text; Today also matches its approved 390x844 golden baseline.
-- [ ] Native iOS and Android device review before release.
+- [x] Native iOS and Android encrypted-storage acceptance covers schema
+      migration, period preservation, and cycle-reflection `startingPeriodId`
+      preservation.
+- [ ] Manual iOS and Android UX, screen-reader/accessibility, target-user, and
+      release review before release.

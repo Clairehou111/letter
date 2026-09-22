@@ -48,8 +48,10 @@ and the user can forget the stored passphrase at any time. The stored
 passphrase is never included in the backup file or transmitted off-device.
 
 REQ-010: Export saves a timestamped copy in a dedicated `letter/` subfolder
-of the app documents directory and opens the OS share sheet. The share-sheet
-filename matches the local copy filename.
+of the app documents directory and then automatically opens the OS destination
+sheet with that saved file. Installed providers may include iCloud Drive,
+Google Drive, or Dropbox. The user chooses one destination or cancels; Letter Within
+does not upload to every provider.
 
 REQ-011: In-app help is available from the backup screen and covers where
 files are saved, the encryption envelope format, restore steps, and password
@@ -57,8 +59,9 @@ guidance.
 
 ## Non-Goals
 
-- mandatory accounts or cloud sync
+- using account storage or cloud sync as a backup prerequisite
 - server-side backup
 - background export
 - export of unsaved text or clipboard contents
-- automatic cloud upload (user uploads manually via share sheet)
+- background or simultaneous upload to cloud accounts without a user-selected
+  destination in the native sheet

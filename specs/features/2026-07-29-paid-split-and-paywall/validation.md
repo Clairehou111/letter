@@ -1,21 +1,26 @@
 # Paid Split And Paywall Validation
 
-Status: validated
+Status: bounded implementation validated; external store/native validation pending
 
 ## Automated Checks
 
 - [x] every REQ-001 capability is available with lapsed/no entitlement
 - [x] every REQ-002 capability requires active entitlement
 - [x] lapse pauses premium memory but deletes nothing
-- [x] plans sheet shows intro price, renewal price, alternatives, effective
-      monthly prices, and the `$1 more` note with explicit selection
+- [x] plans sheet shows monthly/yearly/lifetime options, explicit selection,
+      Restore Purchases, and store-localized prices when offerings are present
 - [x] no countdown, scarcity, or preselected consent exists
 - [x] paywall is unreachable from Care flows, safety routes, and export flows
 - [x] locked surfaces show honest previews, never fabricated content
 - [x] offline state keeps free capabilities working
+- [x] pending, active-intro, active-paid, grace, lapsed, offline-unknown, unconfigured,
+      failure, and cancellation states remain truthful
 - [x] no health value appears on purchase surfaces
 - [x] goldens reviewed; 320px at 200 percent text passes
 - [x] `flutter analyze` clean; full `flutter test` passes; web build passes
+- [ ] actual RevenueCat keys, store products, entitlement/offering, agreements,
+      sandbox accounts, and native iOS/Android purchase flows are configured and
+      validated
 
 ## Manual Product Review
 
