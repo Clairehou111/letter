@@ -1572,12 +1572,23 @@ class _DayEditorSheetState extends State<_DayEditorSheet> {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         mainAxisSize: MainAxisSize.min,
         children: <Widget>[
-          Semantics(
-            header: true,
-            child: Text(
-              summaryDateLabel(widget.date),
-              style: ExperienceType.headline(ExperienceColors.ink),
-            ),
+          Row(
+            children: <Widget>[
+              Expanded(
+                child: Semantics(
+                  header: true,
+                  child: Text(
+                    summaryDateLabel(widget.date),
+                    style: ExperienceType.headline(ExperienceColors.ink),
+                  ),
+                ),
+              ),
+              IconButton(
+                tooltip: 'Close day editor',
+                onPressed: () => Navigator.of(context).pop(),
+                icon: const Icon(Icons.close, color: ExperienceColors.inkSoft),
+              ),
+            ],
           ),
           const SizedBox(height: ExperienceSpacing.xs),
           Text(
@@ -1608,14 +1619,6 @@ class _DayEditorSheetState extends State<_DayEditorSheet> {
             onDelete: _deleteObservation,
             onWithdraw: _withdrawObservation,
             onEditImpacts: _openImpactsEditor,
-          ),
-          const SizedBox(height: ExperienceSpacing.sm),
-          Align(
-            alignment: Alignment.centerRight,
-            child: TextButton(
-              onPressed: () => Navigator.of(context).pop(),
-              child: const Text('Close'),
-            ),
           ),
         ],
       ),

@@ -108,14 +108,18 @@ final class ObservationPicker extends StatefulWidget {
     return showExperienceSheet<void>(
       context,
       careWorld: careWorld,
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: <Widget>[
-          Padding(
-            padding: const EdgeInsets.symmetric(
-              horizontal: ExperienceSpacing.screenMargin,
-            ),
-            child: Align(
+      child: SingleChildScrollView(
+        padding: const EdgeInsets.fromLTRB(
+          ExperienceSpacing.screenMargin,
+          0,
+          ExperienceSpacing.screenMargin,
+          ExperienceSpacing.lg,
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: <Widget>[
+            Align(
               alignment: Alignment.centerRight,
               child: IconButton(
                 tooltip: 'Close pain and observations',
@@ -128,29 +132,19 @@ final class ObservationPicker extends StatefulWidget {
                 ),
               ),
             ),
-          ),
-          Flexible(
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.fromLTRB(
-                ExperienceSpacing.screenMargin,
-                0,
-                ExperienceSpacing.screenMargin,
-                ExperienceSpacing.lg,
-              ),
-              child: ObservationPicker(
-                experiencedDate: experiencedDate,
-                provenance: provenance,
-                existingRecords: existingRecords,
-                onSave: onSave,
-                onDelete: onDelete,
-                onWithdraw: onWithdraw,
-                onEditImpacts: onEditImpacts,
-                onMedicalAttention: onMedicalAttention,
-                careWorld: careWorld,
-              ),
+            ObservationPicker(
+              experiencedDate: experiencedDate,
+              provenance: provenance,
+              existingRecords: existingRecords,
+              onSave: onSave,
+              onDelete: onDelete,
+              onWithdraw: onWithdraw,
+              onEditImpacts: onEditImpacts,
+              onMedicalAttention: onMedicalAttention,
+              careWorld: careWorld,
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -174,6 +168,11 @@ class _ObservationPickerState extends State<ObservationPicker> {
   /// saves even before the parent re-supplies [existingRecords].
   final Map<String, HealthRecordDraft> _sessionDrafts =
       <String, HealthRecordDraft>{};
+
+  /// Records removed while this picker is open. Some callers provide a
+  /// snapshot of [ObservationPicker.existingRecords], so successful removals
+  /// must be reflected locally until the sheet closes.
+  final Set<SymptomType> _sessionRemoved = <SymptomType>{};
 
   bool _saving = false;
   String? _ackLine;
@@ -217,6 +216,7 @@ class _ObservationPickerState extends State<ObservationPicker> {
   // --- Record state ---------------------------------------------------------
 
   HealthRecord? _recordFor(SymptomType symptom) {
+    if (_sessionRemoved.contains(symptom)) return null;
     for (final record in widget.existingRecords) {
       if (record.symptom == symptom) return record;
     }
@@ -227,12 +227,15 @@ class _ObservationPickerState extends State<ObservationPicker> {
       _sessionDrafts[definitionId];
 
   bool _isRecorded(ObservationDefinition definition) =>
-      _recordFor(definition.symptom) != null ||
-      _sessionDrafts.containsKey(definition.id);
+      !_sessionRemoved.contains(definition.symptom) &&
+      (_recordFor(definition.symptom) != null ||
+          _sessionDrafts.containsKey(definition.id));
 
   SymptomSeverity? _currentSeverity(ObservationDefinition definition) =>
-      _recordFor(definition.symptom)?.severity ??
-      _sessionDraftFor(definition.id)?.severity;
+      _sessionRemoved.contains(definition.symptom)
+      ? null
+      : _sessionDraftFor(definition.id)?.severity ??
+            _recordFor(definition.symptom)?.severity;
 
   // --- Entry lifecycle ------------------------------------------------------
 
@@ -247,7 +250,7 @@ class _ObservationPickerState extends State<ObservationPicker> {
       _activeId = definition.id;
       final record = _recordFor(definition.symptom);
       final session = _sessionDraftFor(definition.id);
-      _workingSeverity = record?.severity ?? session?.severity;
+      _workingSeverity = session?.severity ?? record?.severity;
     });
   }
 
@@ -277,14 +280,16 @@ class _ObservationPickerState extends State<ObservationPicker> {
     });
     try {
       await widget.onSave?.call(draft);
-      final line = await SavedRhythm.acknowledge(SavedRhythmKind.record);
       if (!mounted) return;
       setState(() {
         _saving = false;
+        _sessionRemoved.remove(definition.symptom);
         _sessionDrafts[definition.id] = draft;
         _workingSeverity = draft.severity;
-        _ackLine = line;
       });
+      final line = await SavedRhythm.acknowledge(SavedRhythmKind.record);
+      if (!mounted || !_sessionDrafts.containsKey(definition.id)) return;
+      setState(() => _ackLine = line);
     } on HealthRecordException catch (error) {
       if (!mounted) return;
       setState(() {
@@ -331,6 +336,7 @@ class _ObservationPickerState extends State<ObservationPicker> {
         await widget.onDelete?.call(record);
         if (!mounted) return;
         setState(() {
+          _sessionRemoved.add(definition.symptom);
           _sessionDrafts.remove(definition.id);
           _ackLine = 'Removed from this record.';
         });
@@ -339,6 +345,7 @@ class _ObservationPickerState extends State<ObservationPicker> {
         await widget.onWithdraw!(definition.symptom);
         if (!mounted) return;
         setState(() {
+          _sessionRemoved.add(definition.symptom);
           _sessionDrafts.remove(definition.id);
           _ackLine = 'Removed from this record.';
         });
@@ -387,7 +394,7 @@ class _ObservationPickerState extends State<ObservationPicker> {
         if (_searching)
           _buildSearchResults()
         else ...<Widget>[
-          if (widget.existingRecords.isNotEmpty) _buildHistory(),
+          if (_hasVisibleHistory) _buildHistory(),
           _buildQuickPicks(),
           _buildBrowse(),
         ],
@@ -685,6 +692,19 @@ class _ObservationPickerState extends State<ObservationPicker> {
   }
 
   Widget _buildHistory() {
+    final visibleExisting = widget.existingRecords
+        .where((record) => !_sessionRemoved.contains(record.symptom))
+        .toList(growable: false);
+    final newDrafts = _sessionDrafts.entries.where((entry) {
+      final definition = _definitionFor(entry.key);
+      if (definition == null || _sessionRemoved.contains(definition.symptom)) {
+        return false;
+      }
+      return !widget.existingRecords.any(
+        (record) => record.symptom == definition.symptom,
+      );
+    });
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       mainAxisSize: MainAxisSize.min,
@@ -694,19 +714,70 @@ class _ObservationPickerState extends State<ObservationPicker> {
           caption:
               '${widget.provenance.label} · stable identifiers, never words.',
         ),
-        for (final record in widget.existingRecords) _buildHistoryRow(record),
+        for (final record in visibleExisting)
+          _buildHistoryRow(
+            record,
+            severityOverride: _sessionDraftFor(
+              ObservationCatalog.definitionFor(record.symptom).id,
+            )?.severity,
+          ),
+        for (final entry in newDrafts)
+          _buildSessionHistoryRow(entry.key, entry.value),
       ],
     );
   }
 
-  Widget _buildHistoryRow(HealthRecord record) {
+  bool get _hasVisibleHistory {
+    if (widget.existingRecords.any(
+      (record) => !_sessionRemoved.contains(record.symptom),
+    )) {
+      return true;
+    }
+    return _sessionDrafts.entries.any((entry) {
+      final definition = _definitionFor(entry.key);
+      return definition != null &&
+          !_sessionRemoved.contains(definition.symptom);
+    });
+  }
+
+  Widget _buildSessionHistoryRow(String definitionId, HealthRecordDraft draft) {
+    final definition = _definitionFor(definitionId);
+    if (definition == null) return const SizedBox.shrink();
+    return _buildHistoryEntry(
+      definition: definition,
+      severity: draft.severity,
+      impactLabels: draft.functionalImpacts
+          .map((impact) => impact.label)
+          .toList(growable: false),
+    );
+  }
+
+  Widget _buildHistoryRow(
+    HealthRecord record, {
+    SymptomSeverity? severityOverride,
+  }) {
     final definition = ObservationCatalog.definitionFor(record.symptom);
-    final available = record.symptom.availableForNewRecords;
     final impactLabels =
         record.functionalImpacts
             .map((impact) => impact.label)
             .toList(growable: false)
           ..sort();
+    return _buildHistoryEntry(
+      definition: definition,
+      severity: severityOverride ?? record.severity,
+      impactLabels: impactLabels,
+      record: record,
+    );
+  }
+
+  Widget _buildHistoryEntry({
+    required ObservationDefinition definition,
+    required SymptomSeverity severity,
+    required List<String> impactLabels,
+    HealthRecord? record,
+  }) {
+    impactLabels.sort();
+    final available = definition.symptom.availableForNewRecords;
     final impactSummary = impactLabels.isEmpty
         ? 'Daily impact not marked'
         : 'Daily impact: ${impactLabels.join(', ')}';
@@ -739,11 +810,8 @@ class _ObservationPickerState extends State<ObservationPicker> {
               children: <Widget>[
                 Text(definition.label, style: ExperienceType.bodyStrong(_ink)),
                 const SizedBox(height: ExperienceSpacing.xs),
-                Text(
-                  record.severity.label,
-                  style: ExperienceType.caption(_inkSoft),
-                ),
-                if (widget.onEditImpacts != null) ...<Widget>[
+                Text(severity.label, style: ExperienceType.caption(_inkSoft)),
+                if (record != null && widget.onEditImpacts != null) ...<Widget>[
                   const SizedBox(height: ExperienceSpacing.xs),
                   Text(impactSummary, style: ExperienceType.caption(_inkFaint)),
                 ],
@@ -758,7 +826,7 @@ class _ObservationPickerState extends State<ObservationPicker> {
               ],
             ),
           ),
-          if (widget.onEditImpacts != null)
+          if (record != null && widget.onEditImpacts != null)
             IconButton(
               tooltip: 'Edit daily impact for ${definition.label}',
               onPressed: _saving
@@ -770,6 +838,17 @@ class _ObservationPickerState extends State<ObservationPicker> {
                 color: ExperienceColors.ember,
               ),
             ),
+          if ((record != null && widget.onDelete != null) ||
+              (record == null && widget.onWithdraw != null))
+            IconButton(
+              tooltip: 'Remove ${definition.label} from this day',
+              onPressed: _saving ? null : () => _deselect(definition),
+              icon: const Icon(
+                Icons.delete_outline,
+                size: 18,
+                color: ExperienceColors.inkFaint,
+              ),
+            ),
         ],
       ),
     );
@@ -778,7 +857,7 @@ class _ObservationPickerState extends State<ObservationPicker> {
       // Readable in history, never offered for new entry.
       return Semantics(
         label:
-            'Recorded: ${definition.label}. ${record.severity.label}. '
+            'Recorded: ${definition.label}. ${severity.label}. '
             '$impactSummary. No longer offered for '
             'new records.',
         child: row,
@@ -787,7 +866,7 @@ class _ObservationPickerState extends State<ObservationPicker> {
     return Semantics(
       button: true,
       label:
-          'Recorded: ${definition.label}. ${record.severity.label}. '
+          'Recorded: ${definition.label}. ${severity.label}. '
           '$impactSummary. Activate to edit severity.',
       child: InkWell(
         onTap: _saving ? null : () => _openDefinition(definition),

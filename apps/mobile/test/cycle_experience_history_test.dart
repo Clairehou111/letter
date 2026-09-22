@@ -4,6 +4,7 @@ import 'package:letter_mobile/experience/cycle/cycle_experience.dart';
 import 'package:letter_mobile/experience/records/observation_picker.dart';
 import 'package:letter_mobile/features/care/data/in_memory_care_memory_repository.dart';
 import 'package:letter_mobile/features/cycle/data/in_memory_period_repository.dart';
+import 'package:letter_mobile/features/cycle/domain/bleeding_flow.dart';
 import 'package:letter_mobile/features/cycle/domain/local_date.dart';
 import 'package:letter_mobile/features/cycle/domain/period_record.dart';
 import 'package:letter_mobile/features/health_records/data/in_memory_health_record_repository.dart';
@@ -168,6 +169,91 @@ void main() {
     expect(find.text('Daily impact not marked'), findsOneWidget);
     expect(find.byTooltip('Edit daily impact for Back pain'), findsOneWidget);
     expect(find.text('What this day affected'), findsNothing);
+  });
+
+  testWidgets('day editor updates symptom history without reopening', (
+    tester,
+  ) async {
+    const today = LocalDate(2026, 7, 15);
+    const priorStart = LocalDate(2026, 6, 16);
+    final periods = InMemoryPeriodRepository(
+      seed: <PeriodRecord>[
+        PeriodRecord(
+          id: 'prior',
+          startDate: priorStart,
+          endDate: priorStart,
+          createdAt: DateTime.utc(2026),
+          updatedAt: DateTime.utc(2026),
+        ),
+        PeriodRecord(
+          id: 'current',
+          startDate: today,
+          endDate: null,
+          createdAt: DateTime.utc(2026),
+          updatedAt: DateTime.utc(2026),
+        ),
+      ],
+    );
+    await periods.setFlow(
+      'prior',
+      priorStart,
+      BleedingFlow.light,
+      today: today,
+    );
+    final healthRecords = InMemoryHealthRecordRepository();
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: CycleExperience(
+          periodRepository: periods,
+          healthRecordRepository: healthRecords,
+          careMemoryRepository: InMemoryCareMemoryRepository(),
+          onCycleDataChanged: () {},
+          now: DateTime(2026, 7, 15, 12),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.scrollUntilVisible(
+      find.text('Bleeding flow, last period'),
+      400,
+    );
+    await tester.ensureVisible(find.text('D1'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('D1'));
+    await tester.pumpAndSettle();
+    expect(find.byTooltip('Close day editor'), findsOneWidget);
+
+    await tester.ensureVisible(find.text('Cramps').first);
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Cramps').first);
+    await tester.pumpAndSettle();
+    final mildDegree = find.bySemanticsLabel('Cramps, Severity: Mild, 2 of 5');
+    await tester.ensureVisible(mildDegree);
+    await tester.pumpAndSettle();
+    await tester.tap(mildDegree);
+    await tester.pumpAndSettle();
+    expect(find.text('On record for this day'), findsOneWidget);
+
+    await tester.ensureVisible(mildDegree);
+    await tester.pumpAndSettle();
+    await tester.tap(mildDegree);
+    await tester.pumpAndSettle();
+    expect(await healthRecords.getAll(), isEmpty);
+    expect(find.text('On record for this day'), findsNothing);
+
+    await tester.ensureVisible(mildDegree);
+    await tester.tap(mildDegree);
+    await tester.pumpAndSettle();
+    expect(find.text('On record for this day'), findsOneWidget);
+
+    final removeCramps = find.byTooltip('Remove Cramps from this day');
+    await tester.ensureVisible(removeCramps);
+    await tester.tap(removeCramps);
+    await tester.pumpAndSettle();
+    expect(await healthRecords.getAll(), isEmpty);
+    expect(find.text('On record for this day'), findsNothing);
   });
 
   testWidgets('current cycle retains the next period-start entry', (
