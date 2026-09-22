@@ -1,8 +1,8 @@
-import 'dart:math' as math;
-
 import 'package:flutter/material.dart';
 
+import 'package:letter_mobile/experience/degree/degree_graphics.dart';
 import 'package:letter_mobile/experience/theme/experience_foundation.dart';
+import 'package:letter_mobile/features/cycle/domain/bleeding_flow.dart';
 import 'package:letter_mobile/features/cycle/domain/local_date.dart';
 import 'package:letter_mobile/features/patterns/domain/patterns_experience_data.dart';
 
@@ -13,9 +13,8 @@ import 'package:letter_mobile/features/patterns/domain/patterns_experience_data.
 //  * A saved flow entry only enriches one of those already-recorded days.
 //  * A period day without a flow entry is an honest unknown — never "none",
 //    never "light", and never an absent period day.
-//  * Flow degrees reuse Today's exact bleeding colors and teardrop
-//    silhouette, drawn locally as one segmented droplet (see FlowDrop) so
-//    compact day cells keep the 1/2/3/4 degree readable at 16 px.
+//  * Flow degrees reuse Today's exact shared droplet — DegreeGraphics.flow —
+//    so the glyph reads identically across Today, Cycle, and Patterns.
 //
 // Evidence-language contract: findings lead; missingness is explained once
 // per view in a quiet subordinate line — never repeated as a per-cycle
@@ -169,8 +168,8 @@ String flowName(String key) => switch (key) {
 };
 
 /// The canonical flow colour is Today's phase-period raspberry. Degrees are
-/// distinguished by the segmented glyph's band count and shape — never by a
-/// second alpha-coded palette.
+/// distinguished by the shared glyph's fill level — never by a second
+/// alpha-coded palette.
 Color flowColor(String key) => ExperienceColors.phasePeriod;
 
 int _flowRank(String key) => switch (key) {
@@ -534,7 +533,7 @@ class _PatternsExperienceScreenState extends State<PatternsExperienceScreen> {
                                 ),
                               ),
                             ),
-                          const Text('LETTER WITHIN', style: _S.eyebrow),
+                          const Text('PATTERNS', style: _S.eyebrow),
                           const SizedBox(height: 12),
                           Row(
                             crossAxisAlignment: CrossAxisAlignment.end,
@@ -1101,7 +1100,7 @@ Widget _bleedingDayEvidenceRow(
     trailing: f != null ? flowName(f.flow.name) : 'No flow recorded',
     color: f != null ? flowColor(f.flow.name) : T.inkSoft,
     meta: f != null
-        ? (f.color == null ? null : 'Colour saved: ${_cap(f.color!.name)}')
+        ? (f.color == null ? null : 'Color saved: ${_cap(f.color!.name)}')
         : 'A recorded period day — flow detail was not saved.',
     onTap: () => openDaySheet(context, data, date.epochDay, onEdit),
   );
@@ -1193,7 +1192,7 @@ void openFlowDaySheet(
             _Chip(flowName(day.flow.name), flowColor(day.flow.name)),
             if (day.color != null)
               _Chip(
-                'Colour: ${_cap(day.color!.name)}',
+                'Color: ${_cap(day.color!.name)}',
                 T.coralDeep,
                 filled: false,
               ),
@@ -1547,7 +1546,7 @@ void openDaySheet(
             color: flowColor(flow.flow.name),
             meta: flow.color == null
                 ? null
-                : 'Colour saved: ${_cap(flow.color!.name)}',
+                : 'Color saved: ${_cap(flow.color!.name)}',
           )
         else if (period)
           _EvidenceRow(
@@ -1624,140 +1623,46 @@ void openDaySheet(
 }
 
 // ---------------------------------------------------------------------------
-// Flow marks — the segmented droplet is Patterns' compact translation of
-// Today's bleeding selector: one fixed 16 x 16 cell holding an ~11 x 14 soft
-// teardrop in Today's exact bleeding color (#C95D3A for every degree). The
-// droplet is divided
-// into four stacked bands by quiet 0.5 px slivers of the surrounding warm
-// background — never drawn separator lines. Spotting fills the bottom band,
-// Light the bottom two, Medium the bottom three, and each partial state is
-// always wrapped in the complete #C95D3A droplet outline so the unfilled
-// upper silhouette never collapses into a bowl or bar. Heavy is one solid
-// solid mass with a 1.75 px contour — its notches disappear and it never
-// reads weaker than Light. _PeriodDayMark is the quiet sibling: a recorded
-// period day whose flow was never saved. It is a pale outlined ring — never
-// a droplet (so it can never be mistaken for Spotting) and never nothing
-// (so a period day never reads as blank).
+// Flow marks — FlowDrop is Patterns' thin string-keyed adapter over the
+// shared DegreeGraphics.flow droplet: one outlined teardrop in stable
+// terracotta #C95D3A for every degree, with a bottom-anchored fill level
+// (Spotting / Light / Medium / Heavy). It is the exact visual authority used
+// by Today and Cycle, so a saved degree reads identically everywhere —
+// 16 px in strips and sheets, 20 px in legends. The wrapper owns no visual
+// and no semantics of its own: the shared glyph carries the single image
+// announcement ("Bleeding flow: …") for each mark, so nothing is announced
+// twice. _PeriodDayMark is the quiet sibling: a recorded period day whose
+// flow was never saved. It is a pale outlined ring — never a droplet (so it
+// can never be mistaken for Spotting) and never nothing (so a period day
+// never reads as blank).
 // ---------------------------------------------------------------------------
 class FlowDrop extends StatelessWidget {
   final String flowKey;
   final double size;
   const FlowDrop({super.key, required this.flowKey, this.size = 16});
 
+  /// Maps the existing string flow keys onto the shared [BleedingFlow]
+  /// degrees without changing their meaning.
+  static BleedingFlow _degreeOf(String key) => switch (key) {
+    'spotting' => BleedingFlow.spotting,
+    'light' => BleedingFlow.light,
+    'medium' => BleedingFlow.medium,
+    'heavy' => BleedingFlow.heavy,
+    _ => BleedingFlow.medium,
+  };
+
   @override
   Widget build(BuildContext context) {
-    return Semantics(
-      label: 'Flow: ${flowName(flowKey)}',
-      image: true,
-      child: CustomPaint(
-        size: Size.square(size),
-        painter: _SegmentedFlowPainter(_flowRank(flowKey) + 1),
-      ),
+    // Delegate the visual entirely to the shared glyph. No Semantics wrapper
+    // here — DegreeGraphics.flow already exposes exactly one image
+    // announcement for this mark.
+    return DegreeGraphics.flow(
+      _degreeOf(flowKey),
+      key: key,
+      size: size,
+      showWord: false,
     );
   }
-}
-
-/// Paints one soft teardrop divided into four stacked bands, filled from the
-/// bottom. [bands] is 1 (Spotting) through 4 (Heavy). The construction is
-/// identical at every cell size — 16 px in strips and sheets, 20 px in
-/// legends — so the degree reads the same wherever it appears.
-class _SegmentedFlowPainter extends CustomPainter {
-  final int bands;
-  const _SegmentedFlowPainter(this.bands);
-
-  // Today's exact bleeding colors — never the page coral/ember tokens.
-  static const _bandColor = Color(0xFFC95D3A);
-  static const _heavyColor = Color(0xFFC95D3A);
-
-  /// Quiet gap between bands, left as unpainted background.
-  static const _gap = 0.5;
-
-  /// The Today-established soft teardrop: a gently pointed tip tapering into
-  /// a full semicircular base, normalized to the supplied rect.
-  static Path _droplet(Rect r) {
-    final cx = r.center.dx;
-    final w = r.width, h = r.height;
-    final rad = w / 2;
-    final base = Offset(cx, r.bottom - rad);
-    return Path()
-      ..moveTo(cx, r.top)
-      ..cubicTo(
-        cx + w * 0.05,
-        r.top + h * 0.26,
-        cx + rad,
-        r.top + h * 0.46,
-        cx + rad,
-        base.dy,
-      )
-      ..arcTo(Rect.fromCircle(center: base, radius: rad), 0, math.pi, false)
-      ..cubicTo(
-        cx - rad,
-        r.top + h * 0.46,
-        cx - w * 0.05,
-        r.top + h * 0.26,
-        cx,
-        r.top,
-      )
-      ..close();
-  }
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final dropW = size.width * 11 / 16;
-    final dropH = size.height * 14 / 16;
-    final rect = Rect.fromLTWH(
-      (size.width - dropW) / 2,
-      (size.height - dropH) / 2,
-      dropW,
-      dropH,
-    );
-    final droplet = _droplet(rect);
-    final outline = Paint()
-      ..style = PaintingStyle.stroke
-      ..strokeJoin = StrokeJoin.round;
-
-    if (bands >= 4) {
-      // Heavy — one solid mass with a 1.75 px contour.
-      canvas.drawPath(droplet, Paint()..color = _heavyColor);
-      canvas.drawPath(
-        droplet,
-        outline
-          ..color = _heavyColor
-          ..strokeWidth = 1.75,
-      );
-      return;
-    }
-
-    // Spotting / Light / Medium — segmented bottom fill first…
-    final bandH = rect.height / 4;
-    canvas.save();
-    canvas.clipPath(droplet);
-    final fill = Paint()..color = _bandColor;
-    for (var i = 0; i < bands; i++) {
-      final slot = 3 - i; // fill upward from the bottom band
-      canvas.drawRect(
-        Rect.fromLTRB(
-          rect.left - 1,
-          rect.top + slot * bandH + _gap / 2,
-          rect.right + 1,
-          rect.top + (slot + 1) * bandH - _gap / 2,
-        ),
-        fill,
-      );
-    }
-    canvas.restore();
-    // …then the complete droplet outline around the partial fill, so the
-    // unfilled upper silhouette still reads unmistakably as a droplet.
-    canvas.drawPath(
-      droplet,
-      outline
-        ..color = _bandColor
-        ..strokeWidth = 1.2,
-    );
-  }
-
-  @override
-  bool shouldRepaint(_SegmentedFlowPainter old) => old.bands != bands;
 }
 
 class _PeriodDayMark extends StatelessWidget {
@@ -2374,8 +2279,8 @@ class _FlowLegend extends StatelessWidget {
 }
 
 /// One recorded period, start to end. Every bleeding date is represented —
-/// a saved flow degree as the canonical segmented drop, an unsaved one as
-/// the quiet period mark. Every day opens the full date sheet.
+/// a saved flow degree as the shared droplet, an unsaved one as the quiet
+/// period mark. Every day opens the full date sheet.
 class _FlowStrip extends StatelessWidget {
   final PatternsExperienceData data;
   final int index;

@@ -20,7 +20,8 @@ import '../theme/experience_foundation.dart';
 ///    with the same five named [SymptomSeverity] degrees, composed in one
 ///    card ([PainEntryCard]). There is no numeric pain score.
 ///  * Every glyph carries label + degree semantics and is distinguishable
-///    by shape, count, or pattern — never by color alone (grayscale safe).
+///    by shape, fill level, count, or pattern — never by color alone
+///    (grayscale safe).
 abstract final class DegreeGraphics {
   // --- Contracts -----------------------------------------------------------
 
@@ -199,13 +200,11 @@ abstract final class DegreeGraphics {
 }
 
 // ---------------------------------------------------------------------------
-// Flow — four terracotta teardrop glyphs distinguished purely by count:
-// spotting = 1 filled drop, light = 2, medium = 3, heavy = 4. Every drop is
-// filled (outlines belong only to the separate "None" mark, which this
-// component never renders). The drops of one degree form a single
-// bottom-aligned horizontal row, scaled as a group to fit the requested
-// size so counts stay easy to compare from picker down to 12–20 px rows.
-// Label always paired.
+// Flow — one stable terracotta droplet with a bottom-anchored internal fill
+// level: spotting = 18%, light = 42%, medium = 68%, heavy = full. The upper
+// region is empty rather than a lighter tint, so amount is never encoded by
+// hue, darkness, saturation, opacity, or droplet count. Observed bleeding
+// color remains the separate swatch vocabulary below. Label always paired.
 // ---------------------------------------------------------------------------
 
 class FlowDegreeGlyph extends StatelessWidget {
@@ -226,22 +225,10 @@ class FlowDegreeGlyph extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final count = switch (flow) {
-      BleedingFlow.spotting => 1,
-      BleedingFlow.light => 2,
-      BleedingFlow.medium => 3,
-      BleedingFlow.heavy => 4,
-    };
-    final scale = size / 20;
-    final dropWidth = (8.5 + count * 1.1) * scale;
-    const basePadding = 1.3;
-    final glyphWidth = count * (dropWidth + basePadding * 2 * scale);
     final glyph = SizedBox(
-      // Intrinsic cluster width and a fixed 20px reference height are the
-      // exact rules used by Today. No degree is independently stretched.
-      width: glyphWidth,
+      width: size * 0.72,
       height: size,
-      child: CustomPaint(painter: _FlowDropsPainter(flow: flow)),
+      child: CustomPaint(painter: _FlowLevelPainter(flow: flow)),
     );
     return Semantics(
       label: DegreeGraphics.flowSemanticsLabel(flow),
@@ -274,14 +261,23 @@ class FlowDegreeGlyph extends StatelessWidget {
   }
 }
 
-final class _FlowDropsPainter extends CustomPainter {
-  const _FlowDropsPainter({required this.flow});
+final class _FlowLevelPainter extends CustomPainter {
+  const _FlowLevelPainter({required this.flow});
 
   final BleedingFlow flow;
 
-  /// The product's primary flow color — terracotta, identical for every
-  /// flow degree, including spotting, in both worlds.
+  /// The product's stable flow color, identical for every flow degree,
+  /// including spotting, in both worlds.
   static const Color _terracotta = Color(0xFFC95D3A);
+
+  static double _fillFraction(BleedingFlow flow) {
+    return switch (flow) {
+      BleedingFlow.spotting => 0.18,
+      BleedingFlow.light => 0.42,
+      BleedingFlow.medium => 0.68,
+      BleedingFlow.heavy => 1.0,
+    };
+  }
 
   /// The soft teardrop silhouette established by the Today bleeding
   /// selector: it starts at the top center, curves to the lower center
@@ -309,39 +305,44 @@ final class _FlowDropsPainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
-    final count = switch (flow) {
-      BleedingFlow.spotting => 1,
-      BleedingFlow.light => 2,
-      BleedingFlow.medium => 3,
-      BleedingFlow.heavy => 4,
-    };
+    final strokeWidth = math.max(1.2, size.height * 0.07);
+    final dropHeight = size.height - strokeWidth;
+    final dropWidth = math.min(size.width - strokeWidth, dropHeight * 0.72);
+    final left = (size.width - dropWidth) / 2;
+    final top = strokeWidth / 2;
+    final drop = _dropPath(
+      left: left,
+      top: top,
+      width: dropWidth,
+      height: dropHeight,
+    );
+    final fillFraction = _fillFraction(flow);
 
-    // Exact Today geometry: a 20px-high reference box, 1.3px horizontal
-    // padding around every drop, and a slight per-degree growth.
-    final scale = size.height / 20;
-    final dropW = (8.5 + count * 1.1) * scale;
-    final dropH = (13.0 + count * 1.1) * scale;
-    final sidePadding = 1.3 * scale;
-    final rowW = count * (dropW + sidePadding * 2);
-    final originX = (size.width - rowW) / 2;
-    final originY = size.height - dropH;
+    canvas.save();
+    canvas.clipPath(drop);
+    canvas.drawRect(
+      Rect.fromLTRB(
+        left,
+        top + dropHeight * (1 - fillFraction),
+        left + dropWidth,
+        top + dropHeight,
+      ),
+      Paint()..color = _terracotta,
+    );
+    canvas.restore();
 
-    final paint = Paint()..color = _terracotta;
-    for (var i = 0; i < count; i++) {
-      canvas.drawPath(
-        _dropPath(
-          left: originX + sidePadding + i * (dropW + sidePadding * 2),
-          top: originY,
-          width: dropW,
-          height: dropH,
-        ),
-        paint,
-      );
-    }
+    canvas.drawPath(
+      drop,
+      Paint()
+        ..color = _terracotta
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = strokeWidth
+        ..strokeJoin = StrokeJoin.round,
+    );
   }
 
   @override
-  bool shouldRepaint(_FlowDropsPainter oldDelegate) {
+  bool shouldRepaint(_FlowLevelPainter oldDelegate) {
     return oldDelegate.flow != flow;
   }
 }

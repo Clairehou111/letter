@@ -108,24 +108,49 @@ final class ObservationPicker extends StatefulWidget {
     return showExperienceSheet<void>(
       context,
       careWorld: careWorld,
-      child: SingleChildScrollView(
-        padding: const EdgeInsets.fromLTRB(
-          ExperienceSpacing.screenMargin,
-          0,
-          ExperienceSpacing.screenMargin,
-          ExperienceSpacing.lg,
-        ),
-        child: ObservationPicker(
-          experiencedDate: experiencedDate,
-          provenance: provenance,
-          existingRecords: existingRecords,
-          onSave: onSave,
-          onDelete: onDelete,
-          onWithdraw: onWithdraw,
-          onEditImpacts: onEditImpacts,
-          onMedicalAttention: onMedicalAttention,
-          careWorld: careWorld,
-        ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: <Widget>[
+          Padding(
+            padding: const EdgeInsets.symmetric(
+              horizontal: ExperienceSpacing.screenMargin,
+            ),
+            child: Align(
+              alignment: Alignment.centerRight,
+              child: IconButton(
+                tooltip: 'Close pain and observations',
+                onPressed: () => Navigator.of(context).pop(),
+                icon: Icon(
+                  Icons.close,
+                  color: careWorld
+                      ? ExperienceColors.careInkSoft
+                      : ExperienceColors.inkSoft,
+                ),
+              ),
+            ),
+          ),
+          Flexible(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.fromLTRB(
+                ExperienceSpacing.screenMargin,
+                0,
+                ExperienceSpacing.screenMargin,
+                ExperienceSpacing.lg,
+              ),
+              child: ObservationPicker(
+                experiencedDate: experiencedDate,
+                provenance: provenance,
+                existingRecords: existingRecords,
+                onSave: onSave,
+                onDelete: onDelete,
+                onWithdraw: onWithdraw,
+                onEditImpacts: onEditImpacts,
+                onMedicalAttention: onMedicalAttention,
+                careWorld: careWorld,
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }

@@ -153,10 +153,7 @@ class _YouExperienceState extends State<YouExperience> {
       crossAxisAlignment: CrossAxisAlignment.center,
       children: <Widget>[
         Expanded(
-          child: Text(
-            'Letter Within',
-            style: ExperienceType.title(ExperienceColors.ink),
-          ),
+          child: Text('You', style: ExperienceType.title(ExperienceColors.ink)),
         ),
         Text(
           _formatDate(_today()),
