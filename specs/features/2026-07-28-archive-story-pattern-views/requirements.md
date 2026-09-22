@@ -20,7 +20,7 @@ REQ-001: Each completed cycle provides `Story`, `Pattern`, and `Clinical`
 views. The current incomplete cycle remains clearly separate.
 
 REQ-002: Story contains only user-authored reflections, approved future-self
-notes, and factual Care memories. Letter must not invent a narrative voice.
+notes, and factual Care memories. Letter Within must not invent a narrative voice.
 
 REQ-003: Pattern contains confirmed symptom counts, observed Care outcomes,
 action history, and confidence or missingness context. It does not diagnose.

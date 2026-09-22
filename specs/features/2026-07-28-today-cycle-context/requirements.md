@@ -77,7 +77,7 @@ layout.
 REQ-018: Keep primary controls at least 44 logical pixels and preserve
 operation at 320 logical pixels with 200 percent text scaling.
 
-REQ-019: Keep actual health context direct and familiar. Letter styling must
+REQ-019: Keep actual health context direct and familiar. Letter Within styling must
 not obscure date, cycle day, period state, or prediction provenance.
 
 ## Context Rules

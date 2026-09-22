@@ -27,7 +27,7 @@ criteria for later approval.
 - [x] dismissing the emotional safety boundary restores the prior state
 - [x] leaving from the emotional safety boundary exits without obstruction
 - [x] no copy says or implies that the user is guaranteed to be safe
-- [x] no copy says or implies that Letter blocks people, contacts, calls,
+- [x] no copy says or implies that Letter Within blocks people, contacts, calls,
       messages, notifications, networks, or other apps
 - [x] the device-control limitation is readable before the curtain closes
 - [x] the cocoon does not resemble a lock, cage, restraint, surveillance

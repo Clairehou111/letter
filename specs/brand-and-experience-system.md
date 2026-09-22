@@ -1,11 +1,11 @@
-# Letter Brand And Experience System
+# Letter Within Brand And Experience System
 
 Status: approved
 Date: 2026-07-28
 
 ## Brand Thesis
 
-`Letter` is not a decorative name. It is the product's model of time:
+`Letter Within` is not a decorative name. It is the product's model of time:
 
 - the body produces recurring signals
 - a difficult moment may leave an urgent note
@@ -17,12 +17,12 @@ The metaphor creates continuity. It does not explain physiology.
 
 Primary brand promise:
 
-> Your body writes in patterns. Letter helps you through hard moments,
+> Your body writes in patterns. Letter Within helps you through hard moments,
 > remembers what helped, and brings your own wisdom back when you need it.
 
 ## Three-Layer Design
 
-Letter must preserve three different visual responsibilities.
+Letter Within must preserve three different visual responsibilities.
 
 ### Ritual Layer
 
@@ -63,12 +63,12 @@ Used for doctor-facing evidence:
 - data provenance
 - export controls
 
-The clinical layer can carry Letter typography and restrained color, but it
+The clinical layer can carry Letter Within typography and restrained color, but it
 must not hide evidence inside poetic narrative or a simulated object.
 
 ## Three Signature Views
 
-Letter's visual identity is expressed through a progression rather than
+Letter Within's visual identity is expressed through a progression rather than
 repeated decorative motifs:
 
 - `Gravity Horizon`: ritual orientation to observed and estimated cycle timing
@@ -85,7 +85,7 @@ Metaphor strength decreases as clinical seriousness increases. The Horizon may
 feel tidal, the Spectrum may use restrained color, and the Twin Matrix must
 prioritize dates, scales, provenance, and missingness.
 
-None of the three views may imply that Letter measures hormones, knows how the
+None of the three views may imply that Letter Within measures hormones, knows how the
 user feels, identifies a medical danger window, or verifies a diagnosis.
 
 ## Metaphor Budget
@@ -310,7 +310,7 @@ Choices:
 
 ### Interpretation
 
-Local rules or optional NLP may underline candidate words. Letter asks:
+Local rules or optional NLP may underline candidate words. Letter Within asks:
 
 > Some words came up more than once. Do any of them matter to you now?
 
@@ -339,8 +339,7 @@ scan on a phone.
 
 Use a vertical folio list rather than a literal 3D wooden shelf:
 
-- `Letter No. 112`
-- cycle date range
+- stable date-first cycle label (for example `Jun 13–Jul 13 · 31-day cycle`)
 - observed period dates
 - coverage indicator
 - one user-approved title or short summary
@@ -351,7 +350,7 @@ supports search, filters, and accessibility.
 
 ### Cycle Detail
 
-Each Letter has three views:
+Each Letter Within has three views:
 
 1. `Story`
 2. `Pattern`
@@ -400,7 +399,7 @@ Subscription value remains:
 > period tracking + personal Care + remembered actions and words + trustworthy
 > patterns + doctor-ready evidence + local-first privacy
 
-### Physical Letter
+### Physical Letter Within
 
 Physical products are not P0.
 

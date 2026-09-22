@@ -1,14 +1,21 @@
 # Paid Split And Paywall Requirements
 
-Status: approved
+Status: superseded in part by `../../pricing-and-entitlement-strategy.md`
+
+The safety and local-data-access requirements below remain approved. The
+price points, plan architecture, and upfront paywall placement are historical
+and must not be used for release configuration.
 Branch: `feature/paid-entitlement-split`
 Base branch: `feature/safety-boundary-content`
 Depends on: `2026-07-28-auth-subscription-entitlement` (entitlement source)
 
 ## Context
 
-The MVP launches paid from day one: `$0.99` first month, then `$8.99/month`,
-`$49.99/6 months`, `$50.99/year` highlighted `Best for learning your pattern`.
+Historical decision (superseded for current implementation): the MVP launches
+paid from day one with a `$0.99` first month, `$8.99/month`, six-month, and
+`$50.99/year` catalog. The current approved catalog is monthly, yearly, and
+lifetime with reference prices `$6.99`, `$29.99`, and `$79.99`; store offerings
+are authoritative for localized labels.
 Until now no spec defined which features are free, which are premium, or how
 the paywall behaves. The corpus is explicit that gating value at the moment of
 need reads as irresponsible (mg-009, mg-018, mg-052), and the 2026-07-29
@@ -46,13 +53,13 @@ state (mirrors auth-subscription-entitlement REQ-005/007).
 REQ-004: Premium-gated surfaces must degrade honestly: a locked surface shows
 what it would contain and one upgrade action, never fabricated content.
 
-REQ-005: The purchase surface appears before onboarding asks any personal or
-health question. It must show, on one surface:
+REQ-005: The purchase surface appears after an eligible user has seen the real
+free preview, outside Care and safety. It must show, on one surface:
 
-- `$0.99 first month` labeled as a paid introductory month, not a free trial
-- the renewal price (`then $8.99/month`) with equal visual weight
-- yearly and six-month alternatives, including effective monthly price and
-  the note that yearly costs only `$1` more than six months
+- monthly, yearly, and lifetime options;
+- store-provided localized prices and renewal terms when configured;
+- the approved reference prices `$6.99/month`, `$29.99/year`, and `$79.99 once`
+  only as non-authoritative marketing anchors;
 - explicit plan selection; no preselected consent, no countdowns, no false
   scarcity, no hidden renewal language
 
@@ -69,8 +76,9 @@ generic feature descriptions.
 
 ## Non-Goals
 
-- store account creation, App Store / Play product configuration, or real
-  RevenueCat keys (release-preparation task)
+- production store configuration is outside this bounded code slice: actual
+  RevenueCat keys, App Store/Play products and entitlement/offering, store
+  agreements, sandbox accounts, and native validation remain release gates
 - promotional offers, discounts, or win-back flows
 - server-side paywall or remote paywall configuration
 - a one-time report SKU (rejected 2026-07-29: fake-door validation only)

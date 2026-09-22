@@ -4,7 +4,7 @@ Status: proposed; release gate
 
 ## Goal
 
-Define evidence required before Letter can be called a native, privacy-safe,
+Define evidence required before Letter Within can be called a native, privacy-safe,
 clinically legible release.
 
 ## Gates

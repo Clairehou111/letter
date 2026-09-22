@@ -1,6 +1,6 @@
-# Letter
+# Letter Within
 
-Letter is a private, local-first period and PMS/PMDD companion. This repository
+Letter Within is a private, local-first period and PMS/PMDD companion. This repository
 contains independently runnable mobile and API applications.
 
 ## Structure
@@ -48,13 +48,13 @@ unnamed set-down, or immediate exit. Entered text is cleared on set-down,
 discard, reconstruction, or leave and is never saved for tomorrow. `I need
 everyone away` now closes one symbolic curtain around a protected cocoon, then
 offers either immediate rest or an optional session-only boundary card. Copying
-is explicit and discloses the device clipboard boundary; Letter never reads
+is explicit and discloses the device clipboard boundary; Letter Within never reads
 contacts, chooses a recipient, sends, shares, silences other apps, or persists
 the text. `My body needs care` now offers five symptom-appropriate, low-effort
 comfort paths with an always-available medical boundary and no medication
 guidance or treatment claim.
 
-After a completed Care action, Letter offers one optional Better/Same/Worse
+After a completed Care action, Letter Within offers one optional Better/Same/Worse
 check-back. Skipping creates no record; an explicit outcome is stored only in
 the local health database and can be explicitly pinned into the Care Kit.
 The enabled Letters tab groups completed cycles from real period starts,
@@ -65,7 +65,7 @@ Care behavior creates an inferred severity, analytics event, API request, or
 LLM request.
 
 The current product direction is defined in
-[`specs/product-philosophy.md`](specs/product-philosophy.md). Letter combines
+[`specs/product-philosophy.md`](specs/product-philosophy.md). Letter Within combines
 period tracking with a cross-cycle Care loop: contain a hard moment, check back
 later, let the user author what it meant, and return their own helpful actions
 and words next time.
@@ -80,7 +80,7 @@ Clinical reporting is defined in
 Care behavior may propose a symptom for later confirmation but never becomes an
 inferred clinical severity score.
 
-The global Letter metaphor and visual responsibilities are defined in
+The global Letter Within metaphor and visual responsibilities are defined in
 [`specs/brand-and-experience-system.md`](specs/brand-and-experience-system.md).
 Ritual styling never replaces familiar health controls or clinician-readable
 evidence.
@@ -97,6 +97,11 @@ flutter run
 
 Web is available for visual development only. iOS and Android are the product
 targets.
+
+The unconfigured mobile build uses local development adapters and is suitable
+for immediate UI, cycle, Care, and Plus-loop verification. See
+`apps/mobile/README.md` for the optional Supabase, RevenueCat, and PostHog
+configuration used by a release-like build.
 
 ## API
 

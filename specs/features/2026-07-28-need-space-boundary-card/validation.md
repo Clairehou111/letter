@@ -15,7 +15,7 @@ Status: validated
   exists
 - [x] clipboard writing occurs only after an explicit `Copy text` tap
 - [x] selecting, editing, completing, and navigating do not copy automatically
-- [x] Letter never reads existing clipboard content
+- [x] Letter Within never reads existing clipboard content
 - [x] clipboard disclosure is visible before or beside the copy action
 - [x] successful copy says only that text was copied to the device clipboard
 - [x] no copy state claims sending, sharing, delivery, scheduling, or receipt
@@ -51,8 +51,8 @@ Status: validated
 5. Continue without copying and confirm no clipboard acknowledgement appears.
 6. Re-enter, discard, and confirm the text does not return.
 7. Re-enter, read the clipboard disclosure, then explicitly copy synthetic text.
-8. Confirm Letter reports only that the text was copied to the device clipboard.
-9. Leave and re-enter; confirm Letter forgot the text while making no claim that
+8. Confirm Letter Within reports only that the text was copied to the device clipboard.
+9. Leave and re-enter; confirm Letter Within forgot the text while making no claim that
    the OS clipboard was cleared.
 10. Open and dismiss safety; confirm active text remains.
 11. Leave through safety; confirm the session text is cleared.
@@ -81,6 +81,6 @@ Status: validated
 - [x] typing and copying remain optional
 - [x] no contact or messaging capability exists
 - [x] clipboard limitations are stated honestly
-- [x] Letter forgets all boundary-card data after the Care session
+- [x] Letter Within forgets all boundary-card data after the Care session
 - [x] safety and accessibility requirements pass
 - [ ] user explicitly requests merge

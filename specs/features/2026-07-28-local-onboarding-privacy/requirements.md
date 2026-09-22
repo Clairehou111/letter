@@ -5,7 +5,7 @@ Branch: `feature/local-onboarding-privacy`
 
 ## Context
 
-The first product experience must establish Letter's purpose and privacy model
+The first product experience must establish Letter Within's purpose and privacy model
 without forcing a long questionnaire. Research defines the first-use sequence
 as promise/privacy, period history, symptom goals, then Today, with useful
 completion in under two minutes.
@@ -36,12 +36,12 @@ completion and non-diagnostic preferences persist securely on the device.
 ## Scope
 
 REQ-001: Route a new installation to onboarding and a completed installation
-to the main Letter experience without flashing the wrong screen.
+to the main Letter Within experience without flashing the wrong screen.
 
 REQ-002: Present a three-step flow with visible and semantic progress, Back and
 Continue controls, and no dead end at supported phone widths or 200% text scale.
 
-REQ-003: Explain Letter's product promise without pregnancy-first language,
+REQ-003: Explain Letter Within's product promise without pregnancy-first language,
 diagnosis claims, or framing the cycle as an enemy.
 
 REQ-004: Explain in plain language that readable health records stay on the
@@ -67,6 +67,12 @@ allows changing it, and allows clearing onboarding data after confirmation.
 
 REQ-010: Preserve the approved Today visual baseline and bottom-navigation
 order while making `You` functional.
+
+REQ-011: Keep the onboarding privacy promise concise—account data is separate
+from health records, and readable health records remain on the device—and
+provide a `See how privacy works` action that opens a readable,
+non-interactive explanation. Closing the explanation must return to the same
+onboarding step without changing any preference.
 
 ## Non-Goals
 

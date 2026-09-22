@@ -1,6 +1,6 @@
 # Period Logging And History Validation
 
-Status: validated for shared logic and web preview; native gate deferred
+Status: validated for shared logic, web preview, and native encrypted-storage acceptance; manual product review remains separate
 
 ## Automated Checks
 
@@ -28,18 +28,21 @@ Status: validated for shared logic and web preview; native gate deferred
 
 ## Native Checks
 
-- [ ] iOS database opens only with SQLite3MultipleCiphers available
-- [ ] Android database opens only with SQLite3MultipleCiphers available
-- [ ] reopening with the secure key preserves records
-- [ ] opening without the correct key cannot read records
-- [ ] database file contains no searchable period values
+- [x] Android API 37 emulator opens the real `sqlite3mc` encrypted database
+- [x] iPhone 17 iOS 26.5 simulator opens the real `sqlite3mc` encrypted database
+- [x] mobile secure-storage failure fails closed rather than falling back to a file key
+- [x] reopening with the secure key preserves records
+- [x] opening with the wrong database key fails before records can be read
+- [x] a plaintext sentinel is absent and the database file header is encrypted
+- [x] the same installed app launched twice without reinstall preserves the key and data across process restart
 
-Native checks remain deferred until the previously deferred native toolchain
-gate is enabled. This feature cannot be marked fully native-validated without
-them.
+Native acceptance evidence was exercised on Android API 37 (`emulator-5554`)
+and an iPhone 17 iOS 26.5 simulator. The test used the production native
+encrypted store and its secure key path; it did not use an in-memory executor.
 
-The Drift repository is covered against an in-memory SQLite executor. That
-proves schema and CRUD behavior, not native encryption-at-rest behavior.
+The Drift repository remains covered against an in-memory SQLite executor for
+schema and CRUD behavior. That is complementary to, not a replacement for,
+the native encryption-at-rest evidence above.
 
 ## Manual Product Review
 

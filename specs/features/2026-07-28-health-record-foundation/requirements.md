@@ -17,12 +17,13 @@ traceable without interrupting an acute Care scene.
 REQ-001: Today can record one or more user-selected symptoms from a reviewed,
 versioned vocabulary covering physical symptoms, mood, energy, and sleep.
 
-REQ-002: Each selected symptom has an explicit severity using visible six-point
-anchors: not at all, minimal, mild, moderate, severe, and extreme.
+REQ-002: Each selected symptom has an explicit severity using visible five-level
+anchors: minimal, mild, moderate, severe, and extreme. Absence is represented by
+not selecting the symptom.
 
 REQ-003: A pain entry may additionally use a separate explicit 0-10 pain scale
 and one or more user-selected locations. Pain scores must not be converted to
-the six-point symptom scale.
+the five-level symptom scale.
 
 REQ-004: The user may record functional impact directly for work or school,
 home responsibilities, relationships, social activity, and sleep. The UI must

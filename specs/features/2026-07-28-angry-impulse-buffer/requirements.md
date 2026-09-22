@@ -11,7 +11,7 @@ that the acute loop can be finite. Its current one-tap transformation does not
 yet provide the approved Shatter ritual, private unsent draft, or 24-hour
 app-enforced cooldown.
 
-This feature stores highly sensitive free text. It must reuse Letter's
+This feature stores highly sensitive free text. It must reuse Letter Within's
 encrypted local health database on native platforms and remain memory-only on
 the Web preview.
 
@@ -52,7 +52,7 @@ export, or external-app action. Voice capture remains outside this feature.
 REQ-009: Accept 1 to 4,000 non-whitespace characters. The user may explicitly
 save an unsealed draft and leave, resume it later, or delete it.
 
-REQ-010: Before sealing, show the exact consequence: Letter will hide the text
+REQ-010: Before sealing, show the exact consequence: Letter Within will hide the text
 for 24 hours inside the app; the user can still act elsewhere; the unopened
 envelope can always be deleted.
 
@@ -62,7 +62,7 @@ or network access.
 
 REQ-012: Describe the mechanism as an app-enforced cooldown. Do not claim it
 is cryptographically unbreakable, resistant to device-clock changes, or able
-to prevent action outside Letter.
+to prevent action outside Letter Within.
 
 REQ-013: While `now < unlockAt`, never render the draft text, place it in
 semantics, expose copy/share/export controls, or reveal it in a notification.

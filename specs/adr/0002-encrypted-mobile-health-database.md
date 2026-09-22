@@ -4,9 +4,9 @@ Status: accepted
 
 ## Context
 
-Period logging creates Letter's first structured readable health records.
+Period logging creates Letter Within's first structured readable health records.
 `flutter_secure_storage` is suitable for small secrets but not relational
-history. Letter needs transactions, migrations, deterministic queries, test
+history. Letter Within needs transactions, migrations, deterministic queries, test
 substitution, and encryption at rest on iOS and Android.
 
 The older `sqlcipher_flutter_libs` package is end-of-life. Drift supports

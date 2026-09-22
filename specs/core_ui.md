@@ -1,11 +1,11 @@
-# Letter Core UI
+# Letter Within Core UI
 
 Status: approved
 Date: 2026-07-31
 
 ## Purpose
 
-Letter uses three signature views to move from current context to personal
+Letter Within uses three signature views to move from current context to personal
 pattern to clinician-readable evidence:
 
 1. `Gravity Horizon` on Today
@@ -157,7 +157,7 @@ chart, but it must also expose:
 - missingness
 - source-record access
 
-The user-facing name is `Spectrum Log`, not `Hormonal Spectrum`, because Letter
+The user-facing name is `Spectrum Log`, not `Hormonal Spectrum`, because Letter Within
 does not measure hormone levels. Empty and insufficient-history states remain
 plain and do not fabricate a spectrum.
 
@@ -185,7 +185,7 @@ from the other. Unobserved cells remain blank.
 
 Until clinical wording, scoring, attribution, and licensing are approved, the
 matrix must not use `DRSP`, `DRSP-compatible`, or diagnostic-equivalence copy.
-Medication history remains outside Letter's current scope.
+Medication history remains outside Letter Within's current scope.
 
 ## Shared Accessibility
 
