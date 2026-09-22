@@ -7,7 +7,7 @@ Branch: `spike/flutter-ui-fidelity`
 
 The existing React prototype establishes an accepted visual direction, while
 the team's existing Flutter application creates concern that Flutter may look
-generic or dated. This spike tests Letter's actual interface before the mobile
+generic or dated. This spike tests Letter Within's actual interface before the mobile
 framework is locked.
 
 ## Goal
@@ -17,7 +17,7 @@ standard of the React prototype with maintainable, testable code.
 
 ## Scope
 
-REQ-001: Render a responsive Letter Today screen at representative iPhone and
+REQ-001: Render a responsive Letter Within Today screen at representative iPhone and
 Android phone widths.
 
 REQ-002: Present a balanced current-state selector containing positive,
@@ -33,7 +33,7 @@ REQ-005: Provide stable bottom navigation with Today in the center.
 REQ-006: Provide one interactive Care flow as a modal sheet with supportive,
 low-effort actions.
 
-REQ-007: Use a coherent Letter design system rather than unmodified default
+REQ-007: Use a coherent Letter Within design system rather than unmodified default
 Material styling.
 
 REQ-008: Preserve readable layout at 320 logical pixels and at 200% text scale.
@@ -41,7 +41,7 @@ REQ-008: Preserve readable layout at 320 logical pixels and at 200% text scale.
 REQ-009: Expose meaningful accessibility labels, selected states, and touch
 targets.
 
-REQ-010: Keep the spike dependency-light and organize reusable UI as Letter
+REQ-010: Keep the spike dependency-light and organize reusable UI as Letter Within
 components.
 
 ## Decisions

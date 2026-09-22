@@ -6,7 +6,7 @@ Base branch: `feature/period-logging-history`
 
 ## Context
 
-Period history is now the local source of truth. Letter needs to turn that
+Period history is now the local source of truth. Letter Within needs to turn that
 history into a useful next-period estimate without presenting false precision
 or expanding into fertility and phase claims.
 

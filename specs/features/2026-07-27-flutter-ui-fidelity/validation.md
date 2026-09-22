@@ -10,7 +10,7 @@
 | REQ-004 | Pain selection exposes and selects multiple locations |
 | REQ-005 | Navigation order and centered Today semantics test |
 | REQ-006 | Care sheet opens, offers actions, and dismisses |
-| REQ-007, REQ-010 | Analyzer passes and UI uses shared Letter components/tokens |
+| REQ-007, REQ-010 | Analyzer passes and UI uses shared Letter Within components/tokens |
 | REQ-008 | 200% text-scale overflow test |
 | REQ-009 | Semantics labels and minimum touch dimensions test |
 

@@ -66,11 +66,11 @@ changes, distinct pain locations, appetite and digestive changes, hot flashes,
 and palpitations. Existing stored codes remain readable.
 
 REQ-010B: `Suicidal thoughts` and `Self-harm` are first-class safety signals,
-not ordinary symptoms on the six-point severity scale. Selecting either
-immediately opens the region-aware crisis boundary. Letter does not infer,
+not ordinary symptoms on the five-level severity scale. Selecting either
+immediately opens the region-aware crisis boundary. Letter Within does not infer,
 score, save, analyze, or export that selection from this interruption.
 `Heart palpitations` is a physical safety signal rather than a routine Care
-interaction or new six-point rating; selecting it opens the physical medical
+interaction or new five-level rating; selecting it opens the physical medical
 boundary. Existing historical palpitation records remain readable.
 
 ## Letters

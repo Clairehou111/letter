@@ -1,6 +1,7 @@
 # Local Onboarding And Privacy Choices Validation
 
-Status: validated with native plugin gate deferred
+Status: validated; shared native secure-storage availability is evidenced,
+while onboarding-profile restart and manual release review remain separate
 
 ## Automated Requirement Coverage
 
@@ -15,6 +16,7 @@ Status: validated with native plugin gate deferred
 | REQ-008 | Load and save failure tests verify retry and no false completion |
 | REQ-009 | Privacy-center update, confirmation, and reset tests |
 | REQ-010 | Existing Today golden/behavior tests remain green; You navigation test |
+| REQ-011 | Widget test opens and closes the explanation, verifies factual copy, and preserves the selected cloud preference |
 
 ## Required Commands
 
@@ -51,9 +53,13 @@ sizes:
   and iOS Keychain entitlements are configured.
 - The onboarding implementation has no API client dependency, network call, or
   health-value logging.
-- Native Keychain/Keystore execution remains deferred until the release
-  preparation gate because this environment does not have a complete iOS or
-  Android toolchain. The web build is development smoke evidence only.
+- The shared `flutter_secure_storage` platform path is exercised by the native
+  encrypted-database key acceptance test on Android API 37 and an iPhone 17
+  iOS 26.5 simulator, including process-restart persistence. That is evidence
+  that Keychain/Keystore integration is available, not a native restart test
+  of the separate onboarding-profile key. The web build remains development
+  smoke evidence only; onboarding-profile restart, manual screen-reader,
+  accessibility, target-user, and release checks remain separate.
 
 ## Acceptance Gate
 
@@ -62,5 +68,21 @@ sizes:
 - [x] a failed save cannot enter the main app
 - [x] no onboarding data is transmitted or logged
 - [x] existing Today behavior and visual baseline remain intact
-- [x] native plugin behavior is recorded in the deferred native release gate
+- [x] shared native secure-storage behavior is recorded without claiming a
+      native onboarding-profile restart test; that manual check remains open
 - [x] no merge, push, or deployment occurred
+
+## Privacy Explanation Amendment — 2026-08-07
+
+- `See how privacy works` is visible from the onboarding privacy promise.
+- The explanation verifies account/health-record separation, on-device health
+  records, explicit approval for optional tools, and user-controlled
+  backup/export/delete.
+- Widget coverage verifies open, close, and preservation of the selected
+  cloud-tools preference.
+- The explanation remains scrollable and reachable at 320 logical pixels and
+  200% text scale.
+- Privacy-step and privacy-explanation golden baselines were reviewed at
+  390×844.
+- `flutter analyze` passed with no issues.
+- `flutter test` passed: 584 tests.

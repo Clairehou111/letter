@@ -1,6 +1,7 @@
 # Privacy-Safe Operational Analytics Requirements
 
-Status: proposed
+Status: validated (typed, consent-gated implementation; production project
+configuration and final release payload review pending)
 Dependencies: authentication, explicit privacy settings, and product event review
 
 ## Goal

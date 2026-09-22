@@ -7,10 +7,10 @@ Integration feature: `need-space-flow-integration`
 ## Context
 
 `I need everyone away` should first create a quiet, protected feeling inside
-Letter. Once the user is in that cocoon, Letter may optionally help them put a
+Letter Within. Once the user is in that cocoon, Letter Within may optionally help them put a
 truthful boundary into words.
 
-The boundary card is not a messaging feature. Letter does not read contacts,
+The boundary card is not a messaging feature. Letter Within does not read contacts,
 collect a recipient, send anything, open a share or message composer, or claim
 that another person has received the boundary. The card only prepares
 session-local text and, after a separate explicit action, copies that text to
@@ -56,7 +56,7 @@ emergency, lack of safety, medical appointment, family event, work obligation,
 or any other explanation the user did not provide.
 
 REQ-008: The card must not describe the boundary as sent, delivered, scheduled,
-shared, enforced, or seen. Letter cannot know whether another person receives
+shared, enforced, or seen. Letter Within cannot know whether another person receives
 or follows it.
 
 REQ-009: Copying must occur only after the user taps a clearly labelled
@@ -64,12 +64,12 @@ REQ-009: Copying must occur only after the user taps a clearly labelled
 selection, editing, completion, navigation, or app lifecycle changes.
 
 REQ-010: Immediately before or beside `Copy text`, explain:
-`Copying puts this text on your device clipboard. It may remain there after you leave Letter.`
+`Copying puts this text on your device clipboard. It may remain there after you leave Letter Within.`
 
 REQ-011: After a successful copy, show only a factual acknowledgement such as
 `Copied to your device clipboard.` Do not imply sending or delivery.
 
-REQ-012: Letter must not read the existing clipboard. It may only write the
+REQ-012: Letter Within must not read the existing clipboard. It may only write the
 currently visible boundary text after explicit user action. Do not attempt to
 clear, monitor, or verify the OS clipboard after the user leaves.
 
@@ -81,7 +81,7 @@ REQ-014: Completing without copying and discarding are both successful,
 non-judgmental outcomes. Neither path may be represented as a failure, missed
 task, broken streak, or incomplete Care session.
 
-REQ-015: Boundary-card text is current-session-only inside Letter. It must be
+REQ-015: Boundary-card text is current-session-only inside Letter Within. It must be
 cleared on discard, leaving Care, leaving through the safety boundary, and
 reconstruction or re-entry of the Care flow.
 
@@ -143,8 +143,8 @@ ANY
   -> CLOSED_COCOON or LEAVE_CARE
 ```
 
-Copying changes only the acknowledgement state inside Letter. It does not
-transfer responsibility for the OS clipboard back to Letter.
+Copying changes only the acknowledgement state inside Letter Within. It does not
+transfer responsibility for the OS clipboard back to Letter Within.
 
 ## Component Contract
 
@@ -164,7 +164,7 @@ Care session and before every leave-Care path.
 ## Approved Copy
 
 - clipboard disclosure:
-  `Copying puts this text on your device clipboard. It may remain there after you leave Letter.`
+  `Copying puts this text on your device clipboard. It may remain there after you leave Letter Within.`
 - copy action: `Copy text`
 - copy acknowledgement: `Copied to your device clipboard.`
 - private completion: `Continue without copying`
@@ -186,6 +186,6 @@ Care session and before every leave-Care path.
 
 - Protected isolation is the primary experience; boundary words are optional.
 - Two static truthful templates are enough for P0.
-- A duration describes the requested boundary, not a timer Letter enforces.
-- The OS clipboard is outside Letter's session-only privacy boundary.
+- A duration describes the requested boundary, not a timer Letter Within enforces.
+- The OS clipboard is outside Letter Within's session-only privacy boundary.
 - No typing or copying is required to complete Care.

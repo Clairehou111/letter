@@ -6,7 +6,7 @@ Branch: `feature/production-workspace-foundation`
 ## Context
 
 The Flutter UI fidelity spike is validated and Flutter has been approved for
-Letter's production mobile application. The repository now needs a reproducible
+Letter Within's production mobile application. The repository now needs a reproducible
 foundation for separate mobile and API applications before product data,
 onboarding, or cycle behavior is introduced.
 
@@ -17,12 +17,12 @@ pipeline, and cannot currently be validated on native iOS or Android tooling.
 ## Goal
 
 Create a production-oriented monorepo foundation that a new contributor and CI
-can set up, validate, and run deterministically while preserving Letter's
+can set up, validate, and run deterministically while preserving Letter Within's
 local-first health-data boundary.
 
 ## Approved Decisions
 
-- Use `Letter` as the application display name and
+- Use `Letter Within` as the application display name and
   `com.letterhealth.letter` as the iOS bundle identifier and Android
   application ID.
 - Retain the approved design tokens, reusable controls, and synthetic Today
@@ -51,7 +51,7 @@ dependencies so a clean checkout uses Flutter stable with sound null safety and
 Python 3.13 or newer through `uv`.
 
 REQ-003: Promote the Flutter spike into a production mobile application with
-Letter package metadata, production application identifiers, the approved
+Letter Within package metadata, production application identifiers, the approved
 design-system baseline, and supported iOS and Android projects. Web remains a
 development and visual-validation target only.
 

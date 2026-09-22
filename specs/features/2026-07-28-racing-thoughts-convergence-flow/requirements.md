@@ -117,7 +117,7 @@ ANY
 
 - convergence: `Your mind opened every tab at once. We only need one.`
 - unnamed set-down: `You do not have to name it for it to stop owning this minute.`
-- named set-down: `It is set down for now. Letter will not bring it back tomorrow.`
+- named set-down: `It is set down for now. Letter Within will not bring it back tomorrow.`
 - nothing-now hand-off: `Nothing else is required from this screen.`
 
 ## Non-Goals

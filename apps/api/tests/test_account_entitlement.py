@@ -135,7 +135,7 @@ def test_restore_persists_provider_state_without_accepting_unknown_fields() -> N
     provider = BillingProviderFake(
         ProviderEntitlement(
             account_id="anon-001",
-            product_id="letter-annual",
+            product_id="letter_yearly",
             store=BillingStore.APPLE,
             state=EntitlementState.RESTORED,
             checked_at=NOW,
@@ -147,19 +147,19 @@ def test_restore_persists_provider_state_without_accepting_unknown_fields() -> N
     restored = service.restore(
         account_id="anon-001",
         store=BillingStore.APPLE,
-        product_id="letter-annual",
+        product_id="letter_yearly",
     )
 
     assert restored.state is EntitlementState.RESTORED
     assert restored.availability is EntitlementAvailability.ONLINE
     assert is_premium_access(restored)
-    assert provider.calls == [("anon-001", BillingStore.APPLE, "letter-annual")]
+    assert provider.calls == [("anon-001", BillingStore.APPLE, "letter_yearly")]
 
     with pytest.raises(ValidationError):
         RestoreEntitlementModel.model_validate(
             {
                 "account_id": "anon-001",
-                "product_id": "letter-annual",
+                "product_id": "letter_yearly",
                 "store": "apple",
                 "cycle_date": "2026-07-28",
             }
@@ -179,7 +179,7 @@ def test_pydantic_boundary_round_trips_domain_models() -> None:
 
     entitlement = SubscriptionEntitlement(
         account_id="anon-001",
-        product_id="letter-monthly",
+        product_id="letter_monthly",
         store=BillingStore.GOOGLE,
         state=EntitlementState.PENDING,
         availability=EntitlementAvailability.ONLINE,
@@ -196,7 +196,7 @@ def test_reconcile_moves_expired_entitlement_through_grace_then_expired() -> Non
     repository.save(
         SubscriptionEntitlement(
             account_id="anon-001",
-            product_id="letter-monthly",
+            product_id="letter_monthly",
             store=BillingStore.GOOGLE,
             state=EntitlementState.ACTIVE,
             availability=EntitlementAvailability.ONLINE,
@@ -213,7 +213,7 @@ def test_reconcile_moves_expired_entitlement_through_grace_then_expired() -> Non
     )
     grace = grace_service.reconcile(
         account_id="anon-001",
-        product_id="letter-monthly",
+        product_id="letter_monthly",
     )
     assert grace is not None
     assert grace.state is EntitlementState.GRACE
@@ -226,7 +226,7 @@ def test_reconcile_moves_expired_entitlement_through_grace_then_expired() -> Non
     )
     expired = expired_service.reconcile(
         account_id="anon-001",
-        product_id="letter-monthly",
+        product_id="letter_monthly",
     )
     assert expired is not None
     assert expired.state is EntitlementState.EXPIRED
@@ -237,7 +237,7 @@ def test_unavailable_restore_returns_offline_state_without_deleting_cache() -> N
     repository = EntitlementRepositoryFake()
     cached = SubscriptionEntitlement(
         account_id="anon-001",
-        product_id="letter-annual",
+        product_id="letter_yearly",
         store=BillingStore.APPLE,
         state=EntitlementState.ACTIVE,
         availability=EntitlementAvailability.ONLINE,
@@ -251,13 +251,13 @@ def test_unavailable_restore_returns_offline_state_without_deleting_cache() -> N
     offline = service.restore(
         account_id="anon-001",
         store=BillingStore.APPLE,
-        product_id="letter-annual",
+        product_id="letter_yearly",
     )
 
     assert offline.state is EntitlementState.OFFLINE
     assert offline.last_known_state is EntitlementState.ACTIVE
     assert is_premium_access(offline)
-    assert repository.get("anon-001", "letter-annual") == offline
+    assert repository.get("anon-001", "letter_yearly") == offline
 
 
 def test_server_deletion_is_explicit_idempotent_and_does_not_delete_local_data() -> (

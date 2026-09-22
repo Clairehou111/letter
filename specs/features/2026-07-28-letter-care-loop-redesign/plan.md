@@ -1,20 +1,20 @@
-# Letter Care Loop Redesign Plan
+# Letter Within Care Loop Redesign Plan
 
 Status: completed
 
 1. Product Synthesis
-   - [x] Read the new first-aid and Letter philosophy discussion.
+   - [x] Read the new first-aid and Letter Within philosophy discussion.
    - [x] Compare it with the existing mission, research, and MVP specification.
    - [x] Verify the highest-risk clinical and behavioral assumptions.
    - [x] Separate valuable product ideas from unsafe or unsupported mechanisms.
 
 2. Product System
-   - [x] Define the cross-cycle Letter loop.
+   - [x] Define the cross-cycle Letter Within loop.
    - [x] Define hard-moment and clearer-moment responsibilities.
    - [x] Define Care entrances and the role of personal memory.
    - [x] Define finite game loops for emotional and physical Care scenes.
    - [x] Define clinical data provenance, recovery receipts, and report tiers.
-   - [x] Define the global Letter brand, Reply Ritual, Archive, and metaphor boundaries.
+   - [x] Define the global Letter Within brand, Reply Ritual, Archive, and metaphor boundaries.
    - [x] Define brand, AI, physical-Care, haptic, and safety boundaries.
 
 3. Information Architecture And Roadmap

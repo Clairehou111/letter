@@ -1,4 +1,4 @@
-# Letter Roadmap
+# Letter Within Roadmap
 
 Status values: `proposed`, `specifying`, `approved`, `in_progress`,
 `validated`, `merged`, `deferred`.
@@ -9,11 +9,24 @@ Only one product feature should normally be `in_progress`.
 
 | Order | Feature | Status | Specification |
 | --- | --- | --- | --- |
-| 1 | Unified record and navigation architecture | in_progress | `features/2026-07-31-unified-record-and-navigation/` |
+| 1 | Unified record and navigation architecture | validated | `features/2026-07-31-unified-record-and-navigation/` |
 
 This feature supersedes session-only quick states and reconciles Today,
 cycle-grouped records, Letters, reflections, Gravity Horizon, Spectrum Log, and
 Twin Matrix before additional release-surface work continues.
+
+Explicitly authorized parallel slice (2026-08-07): Premium companion loop is
+implemented under `features/2026-08-07-premium-companion-loop/`, including the
+bounded RevenueCat/domain/payment slice. The later user instruction to finish
+payment superseded the earlier “billing remains deferred” timing decision; the
+historical decision remains recorded in the feature specs. Public store
+configuration and native purchase validation remain release gates.
+
+Exceptional-cycle handling and stable cycle-reflection identity are validated
+for the bounded local data and presentation rules covered by the focused test
+suite. The approved data, presentation, and estimate-engine boundaries remain
+recorded in [`exceptional-cycles.md`](exceptional-cycles.md). The period-delete
+warning names an attached cycle reflection before deletion.
 
 Current roadmap exclusions:
 
@@ -26,7 +39,7 @@ Current roadmap exclusions:
 | --- | --- | --- | --- |
 | 1 | Flutter UI fidelity spike | validated | `features/2026-07-27-flutter-ui-fidelity/` |
 | 2 | Production workspace foundation | validated | `features/2026-07-27-production-workspace-foundation/` |
-| 3 | Letter Care-loop product redesign | approved | `features/2026-07-28-letter-care-loop-redesign/` |
+| 3 | Letter Within Care-loop product redesign | approved | `features/2026-07-28-letter-care-loop-redesign/` |
 
 The user accepted the Flutter visual result on 2026-07-27. Flutter is the
 confirmed mobile stack.
@@ -41,8 +54,10 @@ confirmed mobile stack.
 | 4 | Today context and low-effort logging entry | validated ([spec](features/2026-07-28-today-cycle-context/)) |
 
 Period logging is validated for shared logic, widget behavior, visual baseline,
-and the non-persistent web preview. Native cipher-at-rest verification remains
-deferred under the approved native validation gate.
+the non-persistent web preview, and native encrypted storage. The native
+acceptance suite also verifies schema 10-to-11 migration while preserving
+period data and cycle-reflection identity. Manual accessibility, target-user,
+clinical, store, payment, and live-configuration gates remain separate.
 
 Cycle prediction is a derived, local-only date range based on at least two
 observed start-to-start intervals. It shows confidence and recorded variation
@@ -74,8 +89,9 @@ The Care gate is now a working primary destination. All five experiential
 entrances use a finite, escapable response shell with explicit emotional or
 physical safety boundaries. Angry/overloaded Care now adds Shatter, a private
 local draft, and an honest app-enforced 24-hour cooldown. Shared logic, schema
-migration, and Web behavior are validated; native cipher-at-rest runtime checks
-remain deferred under the approved native validation gate. Heavy/low Care now
+migration, Web behavior, and native encrypted-storage runtime checks are
+validated; manual UX, accessibility, and release review remain separate.
+Heavy/low Care now
 adds a one-tap light, finite protective copy, optional foreground-only
 two-minute presence, and a practical hand-off without storing an episode.
 Racing-thoughts Care now uses one-tap visual convergence, then allows optional
@@ -122,11 +138,11 @@ candidates rather than records.
 | Order | Feature | Status |
 | --- | --- | --- |
 | 1 | Encrypted local export and import | validated ([spec](features/2026-07-28-encrypted-local-export-import/)) |
-| 2 | Cycle and Care Summary export | validated ([spec](features/2026-07-28-cycle-care-summary-export/)) |
+| 2 | Cycle and Care Summary export | proposed ([spec](features/2026-07-28-cycle-care-summary-export/)) |
 | 3 | Doctor Mode, prospective diary, and clinical report | in_progress (diary built; clinical report deferred) ([spec](features/2026-07-28-doctor-mode-prospective-diary/)) |
-| 4 | Authentication and subscription entitlement | in_progress ([spec](features/2026-07-28-auth-subscription-entitlement/)) |
-| 5 | Privacy-safe operational analytics (PostHog Cloud) | in_progress ([spec](features/2026-07-28-privacy-safe-operational-analytics/)) |
-| 6 | Encrypted cloud backup (MVP) | in_progress ([spec](features/2026-07-28-encrypted-backup-demand-test/)) |
+| 4 | Authentication and subscription entitlement | in_progress (mobile auth and bounded RevenueCat slice implemented; Supabase deployment, store configuration, and native billing validation remain) ([spec](features/2026-07-28-auth-subscription-entitlement/)) |
+| 5 | Privacy-safe operational analytics (PostHog Cloud) | validated (typed, consent-gated implementation; production project configuration and release review remain) ([spec](features/2026-07-28-privacy-safe-operational-analytics/)) |
+| 6 | Encrypted cloud backup (MVP) | deferred ([spec](features/2026-07-28-encrypted-backup-demand-test/)) |
 
 Local export/import is separate from optional cloud backup. Reports are
 generated from local, user-confirmed data. Doctor Mode cannot use DRSP wording
@@ -140,7 +156,7 @@ Release-blocking work for the first paid public MVP, ordered by dependency.
 | Order | Feature | Status |
 | --- | --- | --- |
 | 1 | Safety boundary content (locale-aware crisis + medical red flags) | validated ([spec](features/2026-07-29-safety-boundary-content/)) |
-| 2 | Paid split and paywall | validated ([spec](features/2026-07-29-paid-split-and-paywall/)) |
+| 2 | Paid split and paywall | validated (bounded implementation; external store release pending) ([spec](features/2026-07-29-paid-split-and-paywall/)) |
 | 3 | Design token layer completion (V1) | validated (shipped in branch `feature/safety-boundary-content`) |
 | 4 | Today letter hero (ritual envelope surface) | validated (shipped in branch `feature/today-letter-hero`) |
 
@@ -154,7 +170,7 @@ gates.
 
 | Order | Gate | Status |
 | --- | --- | --- |
-| 1 | Native encryption, migration, and recovery validation | proposed ([spec](features/2026-07-28-release-acceptance-gates/)) |
+| 1 | Native encryption, migration, and recovery validation | in_progress (encrypted-storage, migration, and restore evidence complete; manual/release checks remain) ([spec](features/2026-07-28-release-acceptance-gates/)) |
 | 2 | Target-user Care usability and adverse-response validation | proposed ([spec](features/2026-07-28-release-acceptance-gates/)) |
 | 3 | Clinical report provenance and clinician comprehension validation | proposed ([spec](features/2026-07-28-release-acceptance-gates/)) |
 | 4 | Accessibility, privacy, billing, and store-readiness validation | proposed ([spec](features/2026-07-28-release-acceptance-gates/)) |

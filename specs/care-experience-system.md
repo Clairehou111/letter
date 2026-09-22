@@ -1,4 +1,4 @@
-# Letter Care Experience System
+# Letter Within Care Experience System
 
 Status: active product direction; usability validation pending
 Date: 2026-08-03
@@ -25,7 +25,9 @@ Shared interaction rules:
 - reduced-motion settings preserve the same finite ending automatically, and
   headache/migraine uses a dim motionless physical-Care presentation
 - sound is off by default, explicitly enabled, local, material, and never a
-  reward jingle, voice, heartbeat, notification, or requirement
+  reward jingle, voice, notification, or requirement; non-headache Physical
+  Care may use a clearly simulated soft heartbeat as an optional internal
+  anchor, never as measured personal heart-rate data
 - the scene ends automatically at 90 seconds, and the user may choose
   `Stay a moment` immediately; there is no timed extension screen
 - one Back control, an icon-only sound toggle, `Stay a moment`, and deterministic
@@ -39,7 +41,7 @@ Shared interaction rules:
   headache/migraine selection forces the still presentation
 - `More intense` stops novelty and does not prompt the user to keep trying
 
-The shared Letter signature is **Living Ink Fields**: the abstract material
+The shared Letter Within signature is **Living Ink Fields**: the abstract material
 responds under the finger, has momentum and depth, and settles into a changed
 relationship rather than awarding a completion. The five scenes remain
 distinct:
@@ -50,7 +52,8 @@ distinct:
 4. needing space: an architectural door closes on a lit, crowded corridor and
    leaves a quiet lamp on this side
 5. physical discomfort: cramps soften as a warm knot, nausea settles like
-   water, headache stays quiet and dim, and tension rings widen into one line
+   water, headache stays quiet and dim, and tension rings widen into one line;
+   outside headache mode, optional sound centers a soft simulated heartbeat
 
 The old crystal-smashing scene is retired as the lead anger interaction.
 Repeated aggressive impact is not the reward. The new scene matches the
@@ -76,7 +79,7 @@ Short-video objective:
 
 > Keep the person consuming the next item.
 
-Letter objective:
+Letter Within objective:
 
 > Make the person feel met within seconds, move them toward one useful action,
 > and make it easy to leave the screen within 20 to 90 seconds.
@@ -130,7 +133,7 @@ noise stops, a boundary closes, or a rough object becomes smooth.
 
 ### 3. Emotional Reward
 
-Letter gives one protective line. It does not teach or argue.
+Letter Within gives one protective line. It does not teach or argue.
 
 ### 4. Personal Reward
 
@@ -203,14 +206,14 @@ Suggested copy:
 
 > Don't send it. Don't post it. Don't quit tonight.
 
-> Write it here exactly as it came. No recipient. Nothing leaves Letter.
+> Write it here exactly as it came. No recipient. Nothing leaves Letter Within.
 
 ### Hand-Off
 
 The user writes or dictates an unsent draft, reviews the exact consequence, and
 chooses `Seal for 24 hours`.
 
-While sealed, Letter prevents read, copy, share, and export inside the app. The
+While sealed, Letter Within prevents read, copy, share, and export inside the app. The
 unopened envelope can always be deleted. After 24 hours the user chooses open,
 keep sealed, delete, rewrite, or convert to a future-self note.
 
@@ -299,7 +302,7 @@ Suggested copy:
 
 The user may type one thought or tap `I don't want to name it`. In P0 this text
 exists only on the current screen and is cleared when set down, discarded, or
-left. Letter does not save or bring it back tomorrow.
+left. Letter Within does not save or bring it back tomorrow.
 
 Choices:
 
@@ -312,7 +315,7 @@ optional while keeping the interaction finite.
 
 ### Hand-Off
 
-P0 returns to the Care choices or closes Letter with no further action. Saved
+P0 returns to the Care choices or closes Letter Within with no further action. Saved
 grounding environments and cross-session memory remain separate features.
 
 ## Mode 4: Close The Curtain
@@ -340,14 +343,14 @@ Suggested copy:
 
 The experience is symbolic and must state:
 
-> Letter can quiet this screen. It cannot silence calls or other apps.
+> Letter Within can quiet this screen. It cannot silence calls or other apps.
 
 ### Prepared Boundary
 
 After the cocoon closes, the user may choose `Prepare words` or
 `Nothing else right now`. The words path shows at most two static, truthful,
 editable templates and three bounded durations: `30 minutes`, `2 hours`, and
-`4 hours`. It has no recipient field. Letter does not invent a migraine,
+`4 hours`. It has no recipient field. Letter Within does not invent a migraine,
 illness, or claim of safety.
 
 Example:
@@ -356,9 +359,9 @@ Example:
 > reply.
 
 An explicit `Copy text` action may write only the visible text to the operating
-system clipboard after disclosing that it may remain there after Letter closes.
-Letter does not read contacts or the existing clipboard, send or share,
-open a composer or another app, or claim delivery. Letter-side text is cleared
+system clipboard after disclosing that it may remain there after Letter Within closes.
+Letter Within does not read contacts or the existing clipboard, send or share,
+open a composer or another app, or claim delivery. Letter Within-side text is cleared
 when the Care session ends.
 
 ### Hand-Off
@@ -401,7 +404,7 @@ Primary control:
 
 `I'm getting it now`
 
-Then Letter offers a user-chosen comfort interval and a later effect check.
+Then Letter Within offers a user-chosen comfort interval and a later effect check.
 
 ### Headache Or Migraine: Blackout
 
@@ -440,10 +443,10 @@ must route to urgent medical guidance.
 
 ### Medication Scope
 
-Letter does not record medication history or provide medication names, doses,
+Letter Within does not record medication history or provide medication names, doses,
 intervals, reminders, interaction advice, or medication timers.
 
-Heart palpitations are not a routine Care interaction or six-point symptom
+Heart palpitations are not a routine Care interaction or five-level symptom
 rating. Selecting that signal routes to the physical medical boundary, which
 explains urgent and booked-assessment warning signs. Existing historical
 palpitation records remain readable.
@@ -489,7 +492,7 @@ user-approved action or note
 AI may suggest fields, but the user approves every interpretation.
 
 Repeated Care actions are summarized by action and outcome count in a Cycle
-Letter. Dates and individual outcomes are available as expandable factual
+Letter Within. Dates and individual outcomes are available as expandable factual
 detail and remain in Clinical. Reflections saved under the earlier per-Care
 model are preserved as `Saved Care note` content nested beneath the related
 Care action; they are not shown as equal-level Story entries and do not create
@@ -532,7 +535,7 @@ Do not optimize:
 ## Evidence Boundary
 
 Game-based emotion-regulation evidence is promising but heterogeneous and does
-not validate these specific Letter scenes as treatment. Each scene requires
+not validate these specific Letter Within scenes as treatment. Each scene requires
 usability and adverse-response testing.
 
 Physical Care follows two principles:

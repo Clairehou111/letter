@@ -1,4 +1,4 @@
-# Letter Architecture
+# Letter Within Architecture
 
 ## Applications
 
