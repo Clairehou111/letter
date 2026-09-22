@@ -1,4 +1,5 @@
 import '../../cycle/domain/cycle_prediction.dart';
+import '../../cycle/domain/local_date.dart';
 import '../../cycle/domain/period_repository.dart';
 import '../../privacy/domain/privacy_preferences_repository.dart';
 import '../domain/local_notification_port.dart';
@@ -28,7 +29,11 @@ final class CycleCheckInScheduler {
       return;
     }
 
-    final records = await _periodRepository.getAll();
+    final now = _now().toLocal();
+    final records = CyclePredictionEngine.recordsThrough(
+      await _periodRepository.getAll(),
+      LocalDate.fromDateTime(now),
+    );
     if (records.any((record) => record.isOpen)) {
       await _notificationPort.cancelCycleCheckIn();
       return;
@@ -47,7 +52,7 @@ final class CycleCheckInScheduler {
       reminderDay.day,
       notificationHour,
     );
-    if (!scheduledAt.isAfter(_now())) {
+    if (!scheduledAt.isAfter(now)) {
       await _notificationPort.cancelCycleCheckIn();
       return;
     }

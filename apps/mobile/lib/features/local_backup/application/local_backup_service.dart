@@ -21,12 +21,13 @@ final class LocalBackupService {
 
   final Cipher _cipher;
   final LocalBackupKdfParameters _kdfParameters;
+  static const minimumPassphraseLength = 8;
 
   Future<List<int>> encryptSnapshot({
     required LocalBackupSnapshot snapshot,
     required String passphrase,
   }) async {
-    _requirePassphrase(passphrase);
+    _requireNewPassphrase(passphrase);
     final cleartext = utf8.encode(jsonEncode(snapshot.toJson()));
     if (cleartext.length > localBackupMaximumPayloadBytes) {
       throw const LocalBackupException(LocalBackupFailure.payloadTooLarge);
@@ -139,6 +140,13 @@ final class LocalBackupService {
   void _requirePassphrase(String passphrase) {
     if (passphrase.trim().isEmpty) {
       throw const LocalBackupException(LocalBackupFailure.emptyPassphrase);
+    }
+  }
+
+  void _requireNewPassphrase(String passphrase) {
+    _requirePassphrase(passphrase);
+    if (passphrase.trim().length < minimumPassphraseLength) {
+      throw const LocalBackupException(LocalBackupFailure.weakPassphrase);
     }
   }
 }

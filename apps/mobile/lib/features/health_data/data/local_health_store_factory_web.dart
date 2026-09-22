@@ -4,6 +4,7 @@ import '../../check_in/data/in_memory_moment_check_in_repository.dart';
 import '../../cycle/data/in_memory_period_repository.dart';
 import '../../health_records/data/in_memory_health_record_repository.dart';
 import '../../preparation/data/in_memory_preparation_repository.dart';
+import '../domain/local_health_read_transaction.dart';
 import 'local_health_store.dart';
 
 LocalHealthStore createDefaultLocalHealthStore() {
@@ -17,6 +18,7 @@ LocalHealthStore createDefaultLocalHealthStore() {
     captureNoteStore: InMemoryCaptureNoteStore(),
     momentCheckInRepository: InMemoryMomentCheckInRepository(),
     preparationRepository: InMemoryPreparationRepository(),
+    readTransaction: const PassthroughLocalHealthReadTransaction(),
     localBackupStore: null,
     closeStore: () async {
       await periodRepository.close();

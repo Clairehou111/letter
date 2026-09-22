@@ -101,7 +101,7 @@ void _registerContract(
     });
 
     test(
-      'adjacent periods are allowed but inclusive edge overlap is rejected',
+      'adjacent periods merge while inclusive edge overlap is rejected',
       () async {
         final first = await repository.create(
           const PeriodDraft(
@@ -124,7 +124,12 @@ void _registerContract(
           ),
           today: _today,
         );
-        expect({first.id, before.id, after.id}, hasLength(3));
+        expect(before.id, first.id);
+        expect(after.id, first.id);
+        final merged = (await repository.getAll()).single;
+        expect(merged.id, first.id);
+        expect(merged.startDate, const LocalDate(2026, 8, 7));
+        expect(merged.endDate, const LocalDate(2026, 8, 15));
 
         for (final draft in <PeriodDraft>[
           const PeriodDraft(
@@ -148,6 +153,58 @@ void _registerContract(
             ),
           );
         }
+      },
+    );
+
+    test(
+      'a bridging period merges both neighbours and preserves their flow',
+      () async {
+        final earlier = await repository.create(
+          const PeriodDraft(
+            startDate: LocalDate(2026, 8, 1),
+            endDate: LocalDate(2026, 8, 3),
+          ),
+          today: _today,
+        );
+        final later = await repository.create(
+          const PeriodDraft(
+            startDate: LocalDate(2026, 8, 7),
+            endDate: LocalDate(2026, 8, 9),
+          ),
+          today: _today,
+        );
+        await repository.setFlow(
+          earlier.id,
+          const LocalDate(2026, 8, 2),
+          BleedingFlow.light,
+          today: _today,
+        );
+        await repository.setFlow(
+          later.id,
+          const LocalDate(2026, 8, 8),
+          BleedingFlow.heavy,
+          today: _today,
+        );
+
+        final merged = await repository.create(
+          const PeriodDraft(
+            startDate: LocalDate(2026, 8, 4),
+            endDate: LocalDate(2026, 8, 6),
+          ),
+          today: _today,
+        );
+
+        expect(merged.id, earlier.id);
+        expect(merged.startDate, const LocalDate(2026, 8, 1));
+        expect(merged.endDate, const LocalDate(2026, 8, 9));
+        expect(await repository.getAll(), hasLength(1));
+        final flow = await repository.getAllFlowDays();
+        expect(flow, hasLength(2));
+        expect(flow.map((row) => row.periodId).toSet(), {earlier.id});
+        expect(flow.map((row) => row.date).toSet(), {
+          const LocalDate(2026, 8, 2),
+          const LocalDate(2026, 8, 8),
+        });
       },
     );
 

@@ -46,7 +46,7 @@ class _PersonalPatternsRouteState extends State<PersonalPatternsRoute> {
   bool _markingPreview = false;
 
   LocalDate get _today =>
-      LocalDate.fromDateTime((widget.now ?? DateTime.now)());
+      LocalDate.fromDateTime((widget.now ?? DateTime.now)().toLocal());
 
   VoidCallback? get _onBack =>
       widget.showBack ? () => Navigator.of(context).maybePop() : null;

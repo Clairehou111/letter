@@ -2,6 +2,8 @@ import '../../care/domain/care_memory_repository.dart';
 import '../../check_in/domain/moment_check_in.dart';
 import '../../check_in/domain/moment_check_in_repository.dart';
 import '../../cycle/domain/period_repository.dart';
+import '../../cycle/domain/local_date.dart';
+import '../../health_data/domain/local_health_read_transaction.dart';
 import '../../health_records/domain/health_record.dart';
 import '../../health_records/domain/health_record_repository.dart';
 import '../domain/pattern_source.dart';
@@ -14,15 +16,21 @@ final class RepositoryPatternSource
     required this.careMemory,
     required this.periods,
     this.momentCheckIns,
-  });
+    DateTime Function()? now,
+    this.readTransaction = const PassthroughLocalHealthReadTransaction(),
+  }) : _now = now ?? DateTime.now;
 
   final HealthRecordRepository healthRecords;
   final CareMemoryRepository careMemory;
   final PeriodRepository periods;
   final MomentCheckInRepository? momentCheckIns;
+  final DateTime Function() _now;
+  final LocalHealthReadTransaction readTransaction;
 
   @override
-  Future<PatternSourceSnapshot> read() async {
+  Future<PatternSourceSnapshot> read() => readTransaction.run(_read);
+
+  Future<PatternSourceSnapshot> _read() async {
     final healthRecordsFuture = healthRecords.getAll();
     final careRecordsFuture = careMemory.getRecords();
     final reflectionsFuture = careMemory.getReflections();
@@ -38,7 +46,7 @@ final class RepositoryPatternSource
       periods: recordedPeriods,
       flowDays: await flowDaysFuture,
       momentCheckIns: await checkInsFuture,
-    );
+    ).through(LocalDate.fromDateTime(_now().toLocal()));
   }
 
   @override

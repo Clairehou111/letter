@@ -93,7 +93,8 @@ class _CycleExperienceState extends State<CycleExperience> {
   String? _ackLine;
   int _pulseTick = 0;
 
-  LocalDate get _today => LocalDate.fromDateTime(widget.now ?? DateTime.now());
+  LocalDate get _today =>
+      LocalDate.fromDateTime((widget.now ?? DateTime.now()).toLocal());
 
   static const List<String> _weekdayNames = <String>[
     'Mon',
@@ -596,7 +597,7 @@ class _CycleExperienceState extends State<CycleExperience> {
           child: Semantics(
             header: true,
             child: Text(
-              'Letter Within',
+              'Cycle',
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
               style: ExperienceType.title(ExperienceColors.ink),
@@ -1138,9 +1139,16 @@ class _CycleSkeleton extends StatelessWidget {
 }
 
 // ---------------------------------------------------------------------------
-// Flow bar chart — observed flow days of one period. Blank days render as
-// blank dot-grid cells, never zero. Flow is factual: it never feeds
-// severity, prediction, Gravity, Spectrum, or Twin.
+// Flow chart — observed flow days of one period. Every day occupies the same
+// fixed mark area above a shared baseline, so recorded and missing days read
+// as one aligned sequence with equal footprints. Recorded days render the
+// shared fixed-terracotta fill-level droplet (the same language as the
+// Today/Cycle flow selector); amount is encoded only by the droplet's own
+// internal fill level, never by hue, opacity, size, or bar height. Missing
+// days render a compact dotted slot at the same footprint — visibly "not
+// recorded," never zero, and never mistakable for a Spotting droplet. Flow
+// is factual: it never feeds severity, prediction, Gravity, Spectrum, or
+// Twin.
 // ---------------------------------------------------------------------------
 
 class _FlowBarChart extends StatelessWidget {
@@ -1154,29 +1162,11 @@ class _FlowBarChart extends StatelessWidget {
   final List<BleedingDayRecord> flowDays;
   final ValueChanged<LocalDate> onDayTapped;
 
-  static const double _chartHeight = 120;
-
-  double _fractionFor(BleedingFlow flow) {
-    return switch (flow) {
-      BleedingFlow.spotting => 0.18,
-      BleedingFlow.light => 0.42,
-      BleedingFlow.medium => 0.68,
-      BleedingFlow.heavy => 0.94,
-    };
-  }
-
-  Color _colorFor(BleedingFlow flow) {
-    return switch (flow) {
-      BleedingFlow.spotting => ExperienceColors.phasePeriod.withValues(
-        alpha: 0.25,
-      ),
-      BleedingFlow.light => ExperienceColors.phasePeriod.withValues(alpha: 0.5),
-      BleedingFlow.medium => ExperienceColors.phasePeriod.withValues(
-        alpha: 0.78,
-      ),
-      BleedingFlow.heavy => ExperienceColors.phasePeriod,
-    };
-  }
+  /// One fixed mark area per day. Every day's mark — droplet or dotted
+  /// slot — rests on the same baseline inside this height.
+  static const double _markAreaHeight = 56;
+  static const double _dropletSize = 40;
+  static const double _missingSlotSize = 40;
 
   @override
   Widget build(BuildContext context) {
@@ -1231,10 +1221,6 @@ class _FlowBarChart extends StatelessWidget {
         : 'Day ${dayIndex + 1}: ${record.flow.label}'
               '${record.color != null ? ', ${record.color!.label}' : ''}';
 
-    final barHeight = record == null
-        ? _chartHeight
-        : _chartHeight * _fractionFor(record.flow) * drawFraction;
-
     return Semantics(
       button: true,
       label: '$semanticsLabel. Activate to edit this day.',
@@ -1246,38 +1232,26 @@ class _FlowBarChart extends StatelessWidget {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: <Widget>[
+              // The shared mark area: fixed height, bottom-anchored, one
+              // footprint for every day in the sequence.
               SizedBox(
-                height: _chartHeight,
+                height: _markAreaHeight,
                 child: Align(
                   alignment: Alignment.bottomCenter,
                   child: record == null
-                      ? Container(
-                          height: barHeight,
-                          decoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(6),
-                            border: Border.all(
-                              color: ExperienceColors.hairline,
+                      ? _buildMissingSlot()
+                      // The shared droplet: one stable terracotta outline
+                      // for every degree, with the amount read only from
+                      // its bottom-anchored internal fill level.
+                      : Opacity(
+                          opacity: drawFraction,
+                          child: Transform.scale(
+                            scale: 0.6 + (0.4 * drawFraction),
+                            child: DegreeGraphics.flow(
+                              record.flow,
+                              size: _dropletSize,
+                              showWord: false,
                             ),
-                          ),
-                          child: ClipRRect(
-                            borderRadius: BorderRadius.circular(6),
-                            child: const CustomPaint(
-                              painter: DotGridPainter(spacing: 8),
-                              size: Size.infinite,
-                            ),
-                          ),
-                        )
-                      : Container(
-                          height: barHeight,
-                          decoration: BoxDecoration(
-                            color: _colorFor(record.flow),
-                            borderRadius: BorderRadius.circular(6),
-                            border: record.flow == BleedingFlow.spotting
-                                ? Border.all(
-                                    color: ExperienceColors.phasePeriod,
-                                    width: 1.2,
-                                  )
-                                : null,
                           ),
                         ),
                 ),
@@ -1293,6 +1267,26 @@ class _FlowBarChart extends StatelessWidget {
               ),
             ],
           ),
+        ),
+      ),
+    );
+  }
+
+  /// A missing day: a compact dotted slot at the droplet's footprint.
+  /// Clearly "not recorded," and never confused with a Spotting droplet.
+  Widget _buildMissingSlot() {
+    return Container(
+      width: _missingSlotSize,
+      height: _missingSlotSize,
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: ExperienceColors.hairline),
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(8),
+        child: const CustomPaint(
+          painter: DotGridPainter(spacing: 7),
+          size: Size.infinite,
         ),
       ),
     );

@@ -138,6 +138,16 @@ void main() {
         ),
       ),
     );
+    await expectLater(
+      service.encryptSnapshot(snapshot: snapshot, passphrase: 'short'),
+      throwsA(
+        isA<LocalBackupException>().having(
+          (error) => error.failure,
+          'failure',
+          LocalBackupFailure.weakPassphrase,
+        ),
+      ),
+    );
   });
 
   test('rejects a corrupt or structurally invalid package', () async {

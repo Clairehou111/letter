@@ -135,7 +135,9 @@ final class PersonalPatternEngine {
       }
       final dates =
           records
-              .map((record) => LocalDate.fromDateTime(record.occurredAt))
+              .map(
+                (record) => LocalDate.fromDateTime(record.occurredAt.toLocal()),
+              )
               .toSet()
               .toList()
             ..sort();
@@ -175,7 +177,7 @@ final class PersonalPatternEngine {
               (record) => PatternSourceReference(
                 id: record.id,
                 kind: PatternSourceKind.careRecord,
-                date: LocalDate.fromDateTime(record.occurredAt),
+                date: LocalDate.fromDateTime(record.occurredAt.toLocal()),
               ),
             ),
           ),

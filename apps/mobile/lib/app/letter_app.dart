@@ -20,6 +20,7 @@ import '../features/entitlement/data/local_entitlement_repository.dart';
 import '../features/entitlement/presentation/entitlement_scope.dart';
 import '../features/health_data/data/local_health_store.dart';
 import '../features/health_data/data/local_health_store_factory.dart';
+import '../features/health_data/domain/local_health_read_transaction.dart';
 import '../features/health_records/data/in_memory_health_record_repository.dart';
 import '../features/notifications/application/cycle_check_in_scheduler.dart';
 import '../features/notifications/application/notifying_period_repository.dart';
@@ -109,6 +110,7 @@ class _LetterAppState extends State<LetterApp> with WidgetsBindingObserver {
   final ValueNotifier<int> _navigationRequest = ValueNotifier<int>(0);
   LocalHealthStore? _ownedHealthStore;
   LocalBackupStore? _localBackupStore;
+  late final LocalHealthReadTransaction _healthReadTransaction;
   OnboardingProfile? _profile;
   PrivacyPreferences _privacyPreferences = const PrivacyPreferences();
   bool _loaded = false;
@@ -155,6 +157,7 @@ class _LetterAppState extends State<LetterApp> with WidgetsBindingObserver {
       _captureNoteStore = healthStore.captureNoteStore;
       _momentCheckInRepository = healthStore.momentCheckInRepository;
       _preparationRepository = healthStore.preparationRepository;
+      _healthReadTransaction = healthStore.readTransaction;
     } else {
       _basePeriodRepository =
           widget.periodRepository ?? InMemoryPeriodRepository();
@@ -170,6 +173,7 @@ class _LetterAppState extends State<LetterApp> with WidgetsBindingObserver {
           InMemoryMomentCheckInRepository(clock: widget.now);
       _preparationRepository =
           widget.preparationRepository ?? InMemoryPreparationRepository();
+      _healthReadTransaction = const PassthroughLocalHealthReadTransaction();
     }
     final useProductionAdapters =
         widget.onboardingRepository == null && widget.periodRepository == null;
@@ -444,6 +448,7 @@ class _LetterAppState extends State<LetterApp> with WidgetsBindingObserver {
           healthRecordRepository: _healthRecordRepository,
           momentCheckInRepository: _momentCheckInRepository,
           captureNoteStore: _captureNoteStore,
+          readTransaction: _healthReadTransaction,
           now: widget.now,
         ),
         backupPort: _localBackupStore == null
@@ -459,6 +464,7 @@ class _LetterAppState extends State<LetterApp> with WidgetsBindingObserver {
         ),
         onCycleDataChanged: () =>
             _reconcileCycleCheckIn(requestPermission: true),
+        readTransaction: _healthReadTransaction,
         now: widget.now,
       );
     }

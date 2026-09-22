@@ -36,7 +36,7 @@ import '../theme/experience_foundation.dart';
 /// Upper presets remain visible and tappable but are Plus-gated: tapping one
 /// without access opens the commitment sheet instead of switching.
 ///
-/// Gating: reading local material here is free forever. Clinician-ready
+/// Gating: reading local material here is free. Clinician-ready
 /// report generation (the export itself) requires the `clinicianReports`
 /// capability; after an entitlement lapse everything remains readable.
 /// Contextual Plus acquisition is never shown or opened within 24 hours of
@@ -160,7 +160,7 @@ class _ReportsExperienceState extends State<ReportsExperience> {
 
   DateTime _currentTime() => widget.now?.call() ?? DateTime.now();
 
-  LocalDate _today() => LocalDate.fromDateTime(_currentTime());
+  LocalDate _today() => LocalDate.fromDateTime(_currentTime().toLocal());
 
   /// Honest bounds: the start is the earliest actual record date (period
   /// days, health records, Care events, notes) and the end is always today.
@@ -228,7 +228,7 @@ class _ReportsExperienceState extends State<ReportsExperience> {
     // record exists (the missingness list then says exactly what is blank)
     // but it never ends past the current date.
     final start = LocalDate.fromDateTime(
-      _currentTime().subtract(Duration(days: days)),
+      _currentTime().toLocal().subtract(Duration(days: days)),
     );
     return SummaryDateRange(start: start, end: bounds.end);
   }
@@ -2259,12 +2259,12 @@ class _BoundaryBlock extends StatelessWidget {
           child: OutlinedButton(
             onPressed: onExport,
             style: _actionStyle,
-            child: const Text('Export this report.'),
+            child: const Text('Export this report — included with Plus'),
           ),
         ),
         const SizedBox(height: ExperienceSpacing.sm),
         Text(
-          'Reading your records here is always free.',
+          'Reading your records here is free.',
           textAlign: TextAlign.center,
           style: ExperienceType.caption(ExperienceColors.inkSoft),
         ),
@@ -2275,7 +2275,7 @@ class _BoundaryBlock extends StatelessWidget {
 
 // ---------------------------------------------------------------------------
 // Export — the Letter-folder save is explained before the share sheet opens.
-// Entitlement gates generation only; reading local material is free forever.
+// Entitlement gates generation only; reading local material is free.
 // ---------------------------------------------------------------------------
 
 class _ExportPanel extends StatelessWidget {

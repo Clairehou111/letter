@@ -46,7 +46,7 @@ class _HealthRecordFormScreenState extends State<HealthRecordFormScreen> {
     _ratings = {if (initial != null) initial.symptom: initial.severity};
     _experiencedDate =
         initial?.experiencedDate ??
-        LocalDate.fromDateTime((widget.now ?? DateTime.now)());
+        LocalDate.fromDateTime((widget.now ?? DateTime.now)().toLocal());
     _provenance = _provenanceForDate(_experiencedDate);
     _category =
         initial?.symptom.category ??
@@ -58,7 +58,9 @@ class _HealthRecordFormScreenState extends State<HealthRecordFormScreen> {
   }
 
   HealthRecordProvenance _provenanceForDate(LocalDate date) {
-    final today = LocalDate.fromDateTime((widget.now ?? DateTime.now)());
+    final today = LocalDate.fromDateTime(
+      (widget.now ?? DateTime.now)().toLocal(),
+    );
     return date == today
         ? HealthRecordProvenance.sameDay
         : HealthRecordProvenance.laterRecall;

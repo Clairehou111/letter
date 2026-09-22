@@ -392,7 +392,7 @@ final class PatternsExperienceDataBuilder {
     };
     final sorted =
         records.where((record) {
-            final date = LocalDate.fromDateTime(record.occurredAt);
+            final date = LocalDate.fromDateTime(record.occurredAt.toLocal());
             return !date.isBefore(firstIncluded) && !date.isAfter(today);
           }).toList()
           ..sort((left, right) => left.occurredAt.compareTo(right.occurredAt));
@@ -400,7 +400,7 @@ final class PatternsExperienceDataBuilder {
       for (final record in sorted)
         PatternsCareRecord(
           id: record.id,
-          date: LocalDate.fromDateTime(record.occurredAt),
+          date: LocalDate.fromDateTime(record.occurredAt.toLocal()),
           actionLabel: record.actionLabel,
           outcome: record.outcome,
           reflection: _reflectionText(reflectionByRecord[record.id]),
@@ -420,7 +420,7 @@ final class PatternsExperienceDataBuilder {
     // conflicting moods in Patterns.
     final newestByDay = <int, MomentCheckIn>{};
     for (final checkIn in checkIns) {
-      final date = LocalDate.fromDateTime(checkIn.occurredAt);
+      final date = LocalDate.fromDateTime(checkIn.occurredAt.toLocal());
       if (date.isBefore(firstIncluded) || date.isAfter(today)) continue;
       final current = newestByDay[date.epochDay];
       if (current == null || checkIn.occurredAt.isAfter(current.occurredAt)) {
@@ -432,7 +432,7 @@ final class PatternsExperienceDataBuilder {
           final checkIn = entry.value;
           return _moodForCheckIn(
             checkIn,
-            LocalDate.fromDateTime(checkIn.occurredAt),
+            LocalDate.fromDateTime(checkIn.occurredAt.toLocal()),
           );
         }).toList()..sort((left, right) {
           final byDate = left.date.compareTo(right.date);

@@ -43,7 +43,7 @@ class _HealthRecordsScreenState extends State<HealthRecordsScreen> {
   bool _failed = false;
 
   LocalDate get _today =>
-      LocalDate.fromDateTime((widget.now ?? DateTime.now)());
+      LocalDate.fromDateTime((widget.now ?? DateTime.now)().toLocal());
 
   @override
   void initState() {

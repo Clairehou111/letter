@@ -5,6 +5,7 @@ import '../../features/cycle/domain/cycle_prediction.dart';
 import '../../features/cycle/domain/local_date.dart';
 import '../../features/cycle/domain/period_record.dart';
 import '../../features/cycle/domain/period_repository.dart';
+import '../../features/health_data/domain/local_health_read_transaction.dart';
 import '../../features/health_records/domain/health_record_repository.dart';
 import '../../features/summary_export/domain/cycle_care_pdf.dart';
 import '../../features/summary_export/domain/cycle_care_summary.dart';
@@ -26,6 +27,7 @@ final class LetterReportExperiencePort implements ReportExperiencePort {
     required this.momentCheckInRepository,
     required this.captureNoteStore,
     this.fileShareAdapter = const SystemLocalFileShareAdapter(),
+    this.readTransaction = const PassthroughLocalHealthReadTransaction(),
     this.now,
   });
 
@@ -35,12 +37,15 @@ final class LetterReportExperiencePort implements ReportExperiencePort {
   final MomentCheckInRepository momentCheckInRepository;
   final CaptureNoteStore captureNoteStore;
   final LocalFileShareAdapter fileShareAdapter;
+  final LocalHealthReadTransaction readTransaction;
   final DateTime Function()? now;
 
   DateTime _now() => now?.call() ?? DateTime.now();
 
   @override
-  Future<SummaryExportInput> load() async {
+  Future<SummaryExportInput> load() => readTransaction.run(_load);
+
+  Future<SummaryExportInput> _load() async {
     final today = LocalDate.fromDateTime(_now().toLocal());
     final periods = await periodRepository.getAll();
     final healthRecords = await healthRecordRepository.getAll();

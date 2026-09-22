@@ -1,3 +1,4 @@
+import 'package:drift/drift.dart';
 import 'package:drift/native.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:letter_mobile/features/cycle/data/drift_period_repository.dart';
@@ -177,5 +178,48 @@ void main() {
     await repository.delete('period-flow');
     expect(await repository.getAllFlowDays(), isEmpty);
     expect(await database.select(database.periodFlowRows).get(), isEmpty);
+  });
+
+  test('Drift merge keeps the surviving cycle-reflection identity', () async {
+    final database = LetterHealthDatabase(NativeDatabase.memory());
+    addTearDown(database.close);
+    final repository = DriftPeriodRepository(
+      database,
+      clock: () => DateTime.utc(2026, 8, 6, 12),
+      idGenerator: () => 'period-stable',
+      closeDatabase: false,
+    );
+    final period = await repository.create(
+      const PeriodDraft(
+        startDate: LocalDate(2026, 8, 3),
+        endDate: LocalDate(2026, 8, 5),
+      ),
+      today: today,
+    );
+    await database
+        .into(database.cycleReflectionRows)
+        .insert(
+          CycleReflectionRowsCompanion.insert(
+            id: 'reflection',
+            startingPeriodId: Value(period.id),
+            cycleStartDay: const LocalDate(2026, 8, 3).epochDay,
+            createdAtMillis: 1,
+            updatedAtMillis: 1,
+          ),
+        );
+
+    final merged = await repository.create(
+      const PeriodDraft(
+        startDate: LocalDate(2026, 8, 1),
+        endDate: LocalDate(2026, 8, 2),
+      ),
+      today: today,
+    );
+
+    expect(merged.id, period.id);
+    final reflection =
+        (await database.select(database.cycleReflectionRows).get()).single;
+    expect(reflection.startingPeriodId, period.id);
+    expect(reflection.cycleStartDay, const LocalDate(2026, 8, 1).epochDay);
   });
 }
