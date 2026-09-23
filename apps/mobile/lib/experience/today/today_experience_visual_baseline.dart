@@ -145,6 +145,11 @@ class _TodayExperienceVisualState extends State<TodayExperienceVisual> {
   bool _periodActive = false;
   bool _canRecordFlow = false;
 
+  // The Care doorway is repository truth. The mood chip may be optimistic,
+  // but the route stays hidden while a save is in flight and never appears
+  // from a failed save.
+  int _moodSavesInFlight = 0;
+
   // A line the app remembers from earlier Care check-backs. Composed
   // upstream through the factual evidence gate; shown verbatim, never
   // summarized, rewritten, or inferred. Null means intentional silence.
@@ -251,7 +256,10 @@ class _TodayExperienceVisualState extends State<TodayExperienceVisual> {
   /// terracotta to its deepest note.
   static const List<Color> _severityRamp = DegreeGraphics.severityRamp;
 
-  bool get _showCareRoute => _mood != null && _heavyMoods.contains(_mood);
+  bool get _moodSaveInFlight => _moodSavesInFlight > 0;
+
+  bool get _showCareRoute =>
+      !_moodSaveInFlight && _mood != null && _heavyMoods.contains(_mood);
 
   @override
   void initState() {
@@ -315,8 +323,11 @@ class _TodayExperienceVisualState extends State<TodayExperienceVisual> {
   // -------------------------------------------------------------------------
 
   Future<void> _selectMood(MomentCheckInState mood) async {
+    setState(() {
+      _mood = mood;
+      _moodSavesInFlight++;
+    });
     try {
-      setState(() => _mood = mood);
       final snapshot = await widget.port.saveMood(mood);
       if (!mounted) return;
       await _reloadFrom(snapshot);
@@ -325,6 +336,10 @@ class _TodayExperienceVisualState extends State<TodayExperienceVisual> {
       if (mounted) {
         await _reload();
         _acknowledge("Letter Within couldn't save that. Try again.");
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _moodSavesInFlight--);
       }
     }
   }

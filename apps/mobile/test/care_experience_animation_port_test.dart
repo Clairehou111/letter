@@ -55,6 +55,7 @@ Future<void> _pumpExperience(
   WidgetTester tester,
   CareAnimationPort animationPort, {
   List<SupportActionPattern> memoryEvidence = const [],
+  InMemoryCareMemoryRepository? repository,
   VoidCallback? onLeaveCare,
   VoidCallback? onRequestCheckIn,
 }) async {
@@ -64,7 +65,7 @@ Future<void> _pumpExperience(
   await tester.pumpWidget(
     MaterialApp(
       home: CareExperience(
-        careMemoryRepository: InMemoryCareMemoryRepository(),
+        careMemoryRepository: repository ?? InMemoryCareMemoryRepository(),
         animationPort: animationPort,
         memoryEvidence: memoryEvidence,
         onLeaveCare: onLeaveCare,
@@ -126,28 +127,35 @@ void main() {
     expect(find.text('You stayed with the moment.'), findsOneWidget);
   });
 
-  testWidgets('leaving a completed scene resets the next Care visit', (
+  testWidgets('skipping a completed scene returns to Care without saving', (
     tester,
   ) async {
+    final repository = InMemoryCareMemoryRepository();
     var leaveCount = 0;
     await _pumpExperience(
       tester,
       _ProbeAnimationPort(),
+      repository: repository,
       onLeaveCare: () => leaveCount += 1,
     );
     await _openHeavy(tester);
     await tester.tap(find.byKey(const Key('probe-complete')));
     await tester.pumpAndSettle();
 
-    await tester.tap(find.text('Leave for now'));
+    expect(find.text('Leave for now'), findsNothing);
+    expect(find.text("I'll check back later"), findsNothing);
+    await tester.tap(find.text('Skip — nothing needs saving'));
     await tester.pumpAndSettle();
 
-    expect(leaveCount, 1);
+    expect(leaveCount, 0);
+    expect(await repository.getRecords(), isEmpty);
     expect(find.byKey(const ValueKey<String>('care-landing')), findsOneWidget);
     expect(find.text('You stayed with the moment.'), findsNothing);
   });
 
-  testWidgets('later check-in also resets the next Care visit', (tester) async {
+  testWidgets('recovery still offers check-in on Today instead', (
+    tester,
+  ) async {
     var requestCount = 0;
     await _pumpExperience(
       tester,
@@ -155,10 +163,10 @@ void main() {
       onRequestCheckIn: () => requestCount += 1,
     );
     await _openHeavy(tester);
-    await tester.tap(find.byKey(const Key('probe-complete')));
+    await tester.tap(find.byKey(const Key('probe-exit')));
     await tester.pumpAndSettle();
 
-    await tester.tap(find.text("I'll check back later"));
+    await tester.tap(find.text('Check in on Today instead'));
     await tester.pumpAndSettle();
 
     expect(requestCount, 1);

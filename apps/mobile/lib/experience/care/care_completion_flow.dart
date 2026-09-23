@@ -21,6 +21,15 @@ import 'care_scene_foundation.dart';
 ///  * The outcome is optional. Better / Same / Worse render through the
 ///    shared outcome arcs in [DegreeGraphics] — shape + word, never color
 ///    alone. Skipping records nothing and loses nothing.
+///  * The unsaved check-back has exactly three honest answers — Better /
+///    Same / Worse — plus `Save this check-back`,
+///    `Skip — nothing needs saving`, and the quiet safety line. Skip and
+///    Android/system back persist nothing and delegate to [onSkip], which
+///    returns to the Care landing; they never leave Care for Today.
+///  * The saved check-back page is frozen: its confirmation, optional
+///    receipt offer, optional reflection offer, layout, copy, and its single
+///    exit — exactly `Return to daylight` — are unchanged. `Leave for now`
+///    never renders in the saved state.
 ///  * The RecoveryReceipt is offered **separately**, behind an explicit,
 ///    plainly worded per-use opt-in, and is independently dismissible.
 ///    Declining leaves the saved Care completion fully valid.
@@ -36,8 +45,6 @@ import 'care_scene_foundation.dart';
 ///    recall) and is surfaced honestly after save.
 ///  * Reflection fields respect the 280-character limit and surface
 ///    [CareMemoryException.userMessage] verbatim on failure.
-///  * Dismiss and later check-in are first-class exits. No reminder is
-///    promised anywhere in copy until a notification channel is confirmed.
 ///  * Errors are visual + textual only — never haptic.
 class CareCompletionFlow extends StatefulWidget {
   const CareCompletionFlow({
@@ -49,7 +56,7 @@ class CareCompletionFlow extends StatefulWidget {
     this.saveReceipt,
     this.onResumeScene,
     this.resumeHint,
-    this.onLaterCheckIn,
+    required this.onSkip,
     this.onOpenSafety,
     this.motionPreference = CareSceneMotionPreference.full,
     this.now,
@@ -69,8 +76,13 @@ class CareCompletionFlow extends StatefulWidget {
   final Future<RecoveryReceiptResult> Function(RecoveryReceiptDraft draft)?
   saveReceipt;
 
-  /// Leave the Care world back to daylight (dismiss / done).
+  /// Leave the Care world back to daylight. This is the saved page's single
+  /// exit, labeled exactly `Return to daylight`.
   final VoidCallback onLeaveCare;
+
+  /// Skip the unsaved check-back: persists nothing and returns to the Care
+  /// landing. Android/system back from the unsaved stage routes here too.
+  final VoidCallback onSkip;
 
   /// Continue an interrupted scene (interruption recovery).
   final VoidCallback? onResumeScene;
@@ -78,9 +90,6 @@ class CareCompletionFlow extends StatefulWidget {
   /// Named recovery copy for an interrupted scene, e.g. "You were in the
   /// middle of Release. Continue, check in, or leave it here."
   final String? resumeHint;
-
-  /// The later check-in exit. No reminder is scheduled or implied.
-  final VoidCallback? onLaterCheckIn;
 
   /// Routes to the deterministic safety surface.
   final VoidCallback? onOpenSafety;
@@ -102,7 +111,6 @@ class _CareCompletionFlowState extends State<CareCompletionFlow> {
   CareOutcome? _selectedOutcome;
   bool _savingOutcome = false;
   String? _outcomeError;
-  bool _skippedOutcome = false;
 
   CareRecord? _record;
   String? _ackLine;
@@ -173,8 +181,11 @@ class _CareCompletionFlowState extends State<CareCompletionFlow> {
   }
 
   void _skipOutcome() {
+    // While a save is in flight there is nothing to skip and retry must not
+    // duplicate records; the unsaved stage simply stays put.
+    if (_savingOutcome) return;
     ExperienceHaptics.pick();
-    setState(() => _skippedOutcome = true);
+    widget.onSkip();
   }
 
   Future<void> _openReceipt() async {
@@ -241,7 +252,7 @@ class _CareCompletionFlowState extends State<CareCompletionFlow> {
 
   @override
   Widget build(BuildContext context) {
-    return Semantics(
+    final body = Semantics(
       container: true,
       label: 'Care check-back after ${widget.mode.label}',
       child: FocusTraversalGroup(
@@ -322,13 +333,10 @@ class _CareCompletionFlowState extends State<CareCompletionFlow> {
                                   ),
                                   const SizedBox(height: ExperienceSpacing.md),
                                 ],
-                                if (_stage == _LandingStage.checkIn &&
-                                    !_skippedOutcome)
+                                if (_stage == _LandingStage.checkIn)
                                   _buildOutcomeSection()
-                                else if (_stage == _LandingStage.checkedIn)
-                                  _buildCheckedInSection()
                                 else
-                                  _buildSkippedSection(),
+                                  _buildCheckedInSection(),
                                 const SizedBox(height: ExperienceSpacing.sm),
                                 Center(
                                   child: SavedRhythmAckLine(
@@ -354,24 +362,33 @@ class _CareCompletionFlowState extends State<CareCompletionFlow> {
                     ),
                   if (_stage == _LandingStage.checkedIn)
                     const SizedBox(height: ExperienceSpacing.xs),
+                  // The unsaved footer is the quiet safety line only; once
+                  // saved, "Return to daylight" above is the single exit.
                   FocusTraversalOrder(
-                    order: const NumericFocusOrder(5),
+                    order: const NumericFocusOrder(4),
                     child: _QuietSafetyLine(onTap: widget.onOpenSafety),
                   ),
                   const SizedBox(height: ExperienceSpacing.xs),
-                  FocusTraversalOrder(
-                    order: const NumericFocusOrder(4),
-                    child: _ExitPill(
-                      label: CareSceneFoundation.defaultExitLabel,
-                      onPressed: widget.onLeaveCare,
-                    ),
-                  ),
                 ],
               ),
             ),
           ),
         ),
       ),
+    );
+
+    if (_stage != _LandingStage.checkIn) {
+      return body;
+    }
+    // Android/system back from the unsaved check-back is Skip: Care landing,
+    // zero persistence, never Today. The saved stage keeps current behavior.
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, result) {
+        if (didPop) return;
+        _skipOutcome();
+      },
+      child: body,
     );
   }
 
@@ -448,42 +465,10 @@ class _CareCompletionFlowState extends State<CareCompletionFlow> {
             textAlign: TextAlign.center,
           ),
         ),
-        if (widget.onLaterCheckIn != null)
-          TextButton(
-            style: TextButton.styleFrom(
-              minimumSize: const Size.fromHeight(
-                ExperienceSpacing.minTouchTarget,
-              ),
-            ),
-            onPressed: widget.onLaterCheckIn,
-            child: Text(
-              "I'll check back later",
-              style: ExperienceType.caption(ExperienceColors.careInkSoft),
-              textAlign: TextAlign.center,
-            ),
-          ),
         const SizedBox(height: ExperienceSpacing.md),
         Text(
           'However it went, showing up was the whole of '
           'it. Nothing needs fixing now.',
-          style: ExperienceType.bodySmall(ExperienceColors.careInkSoft),
-          textAlign: TextAlign.center,
-        ),
-      ],
-    );
-  }
-
-  Widget _buildSkippedSection() {
-    return Column(
-      children: <Widget>[
-        Text(
-          'Nothing was saved. The moment still counted.',
-          style: ExperienceType.body(ExperienceColors.careInk),
-          textAlign: TextAlign.center,
-        ),
-        const SizedBox(height: ExperienceSpacing.xs),
-        Text(
-          'You can leave whenever you like.',
           style: ExperienceType.bodySmall(ExperienceColors.careInkSoft),
           textAlign: TextAlign.center,
         ),
@@ -959,45 +944,6 @@ class _EmberAction extends StatelessWidget {
                     textAlign: TextAlign.center,
                   ),
                 ),
-              ),
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _ExitPill extends StatelessWidget {
-  const _ExitPill({required this.label, required this.onPressed});
-
-  final String label;
-  final VoidCallback onPressed;
-
-  @override
-  Widget build(BuildContext context) {
-    return Semantics(
-      button: true,
-      label: '$label. Exit is always available.',
-      child: ConstrainedBox(
-        constraints: const BoxConstraints(
-          minHeight: ExperienceSpacing.minTouchTarget,
-        ),
-        child: Material(
-          color: ExperienceColors.careInk,
-          borderRadius: ExperienceRadius.heroRadius,
-          child: InkWell(
-            borderRadius: ExperienceRadius.heroRadius,
-            onTap: onPressed,
-            child: Padding(
-              padding: const EdgeInsets.symmetric(
-                horizontal: ExperienceSpacing.lg,
-                vertical: ExperienceSpacing.sm,
-              ),
-              child: Text(
-                label,
-                style: ExperienceType.label(ExperienceColors.careSkyBottom),
-                textAlign: TextAlign.center,
               ),
             ),
           ),

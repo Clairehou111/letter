@@ -65,7 +65,13 @@ enum CareEntrySource { tab, todayDoorway, checkInAcknowledgment }
 ///  * **Completion assembly.** A deliberate scene completion becomes a
 ///    validated [CareActionCompletion] handed to [CareCompletionFlow],
 ///    which owns the optional outcome, the separately dismissible
-///    RecoveryReceipt opt-in, and the reflection offer.
+///    RecoveryReceipt opt-in, and the reflection offer. The unsaved
+///    check-back has exactly three honest answers plus `Save this
+///    check-back` and `Skip — nothing needs saving`; Skip (and
+///    Android/system back) delegates to [CareCompletionFlow.onSkip], which
+///    clears the completion here and lands back on the landing with zero
+///    writes. The saved page's single exit — exactly `Return to daylight` —
+///    is the only daylight route out of the completion stage.
 ///  * **Safety.** The deterministic [CareSafetyRoute] is reachable from a
 ///    quiet, persistent line on every Care surface this experience renders.
 ///
@@ -376,6 +382,19 @@ class _CareExperienceState extends State<CareExperience>
     });
   }
 
+  /// The unsaved check-back's Skip path (and Android/system back, which the
+  /// flow routes to the same seam): the completed scene is consumed, zero
+  /// persistence happens here, and the journey returns to the Care landing.
+  /// The stage change reuses the world-crossing switcher like every other
+  /// stage change; the completion flow itself is presentation-only and
+  /// cannot self-navigate.
+  void _skipCompletionToLanding() {
+    setState(() {
+      _activeCompletion = null;
+      _stage = _CareStage.landing;
+    });
+  }
+
   void _openSafety() {
     ExperienceHaptics.pick();
     CareSafetyRoute.show(
@@ -577,6 +596,87 @@ class _CareExperienceState extends State<CareExperience>
     return height;
   }
 
+  /// Measures the compact door grid against its real tile widths before it
+  /// is composed. Returns one required height per row when every door can
+  /// render its full label — the mode doors wrap to at most three lines,
+  /// the breathing fast path to two — or null when the tiles are too narrow
+  /// and the landing must fall back to the roomier single-column rows.
+  ///
+  /// An intentional ellipsis never throws a Flutter overflow error, so this
+  /// pre-paint measurement is the only honest guarantee that no Care mode
+  /// label is ever clipped.
+  List<double>? _measureCompactDoorRows(double maxWidth) {
+    final textDirection = Directionality.of(context);
+    final textScaler = MediaQuery.textScalerOf(context);
+    final labelStyle = ExperienceType.headline(ExperienceColors.careInk);
+    final captionStyle = ExperienceType.caption(ExperienceColors.careInkSoft);
+
+    TextPainter layoutText(
+      String text,
+      TextStyle style,
+      double width, {
+      int? maxLines,
+    }) {
+      return TextPainter(
+        text: TextSpan(text: text, style: style),
+        textDirection: textDirection,
+        textScaler: textScaler,
+        maxLines: maxLines,
+      )..layout(maxWidth: width);
+    }
+
+    // Mirrors _PhoneDoorGrid's composition exactly: the staggered flexes,
+    // the mode pairing, and the breathing fast path sharing the last row.
+    const rowFlexes = <(int, int)>[(5, 4), (4, 5), (4, 5)];
+    const rowModes = <(CareMode, CareMode?)>[
+      (CareMode.explode, CareMode.heavy),
+      (CareMode.racing, CareMode.space),
+      (CareMode.physical, null), // the breathing fast path
+    ];
+
+    final usable = maxWidth - _LandingMetrics.doorGap;
+    final heights = <double>[];
+    for (var i = 0; i < rowFlexes.length; i++) {
+      final (leftFlex, rightFlex) = rowFlexes[i];
+      // 20 is the tile's horizontal padding; the extra 1 is a sub-pixel
+      // guard so flex rounding can never wrap one line beyond the measure.
+      final leftWidth = usable * leftFlex / (leftFlex + rightFlex) - 21;
+      final rightWidth = usable * rightFlex / (leftFlex + rightFlex) - 21;
+
+      double modeTileHeight(CareMode mode, double width) {
+        final label = layoutText(mode.label, labelStyle, width);
+        if (label.computeLineMetrics().length > 3) return -1;
+        // top padding + preview + gap + label + bottom padding.
+        return 10 + 40 + 8 + label.height + 10;
+      }
+
+      final leftHeight = modeTileHeight(rowModes[i].$1, leftWidth);
+      if (leftHeight < 0) return null;
+      var rowHeight = leftHeight;
+
+      final rightMode = rowModes[i].$2;
+      if (rightMode != null) {
+        final rightHeight = modeTileHeight(rightMode, rightWidth);
+        if (rightHeight < 0) return null;
+        if (rightHeight > rowHeight) rowHeight = rightHeight;
+      } else {
+        final label = layoutText(_BreathingDoor._label, labelStyle, rightWidth);
+        if (label.computeLineMetrics().length > 2) return null;
+        final caption = layoutText(
+          _BreathingDoor._caption,
+          captionStyle,
+          rightWidth - 12, // the fast-path dot and its gap
+          maxLines: 2,
+        );
+        final breathingHeight =
+            10 + 34 + 6 + label.height + 2 + caption.height + 10;
+        if (breathingHeight > rowHeight) rowHeight = breathingHeight;
+      }
+      heights.add(rowHeight);
+    }
+    return heights;
+  }
+
   Widget _buildLanding(CareSceneMotionPreference motion) {
     final entryLine = _entryLine;
     final memoryLine = _resolveLandingMemoryLine();
@@ -595,15 +695,43 @@ class _CareExperienceState extends State<CareExperience>
             final useGrid =
                 wide || (constraints.maxWidth >= 352 && textScale <= 1.3);
 
-            final doors = <Widget>[
-              for (final mode in CareMode.values)
-                _ModeDoor(
-                  mode: mode,
-                  descriptor: _modeDescriptor(mode),
-                  stacked: useGrid,
-                  onTap: () => _openScene(mode),
-                ),
-            ];
+            // Single-column: breathing leads the list as the fast path,
+            // then the five doors at reading width. Rows grow with their
+            // labels — every mode's own words render in full.
+            Widget singleColumnContent() {
+              final doors = <Widget>[
+                for (final mode in CareMode.values)
+                  _ModeDoor(
+                    mode: mode,
+                    descriptor: _modeDescriptor(mode),
+                    stacked: false,
+                    onTap: () => _openScene(mode),
+                  ),
+              ];
+              final choices = Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: <Widget>[
+                  _BreathingDoor(onTap: _openBreathing),
+                  const SizedBox(height: _LandingMetrics.doorGap),
+                  ..._gapped(doors),
+                ],
+              );
+              return ListView(
+                physics: const ClampingScrollPhysics(),
+                padding: const EdgeInsets.only(bottom: ExperienceSpacing.lg),
+                children: <Widget>[
+                  _LandingHeader(motion: motion, entryLine: entryLine),
+                  if (memoryLine != null) ...<Widget>[
+                    const SizedBox(height: ExperienceSpacing.sm),
+                    memoryLine,
+                  ],
+                  const SizedBox(height: ExperienceSpacing.md),
+                  choices,
+                  const SizedBox(height: _LandingMetrics.doorGap),
+                  _EverydayCareCard(onTap: _openToolkit),
+                ],
+              );
+            }
 
             Widget footer() {
               return Center(
@@ -627,38 +755,23 @@ class _CareExperienceState extends State<CareExperience>
             }
 
             if (!useGrid) {
-              // Single-column: breathing leads the list as the fast path,
-              // then the five doors at reading width.
-              final choices = Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: <Widget>[
-                  _BreathingDoor(onTap: _openBreathing),
-                  const SizedBox(height: _LandingMetrics.doorGap),
-                  ..._gapped(doors),
-                ],
-              );
               return _landingFrame(
                 maxContentWidth: maxContentWidth,
-                content: ListView(
-                  physics: const ClampingScrollPhysics(),
-                  padding: const EdgeInsets.only(bottom: ExperienceSpacing.lg),
-                  children: <Widget>[
-                    _LandingHeader(motion: motion, entryLine: entryLine),
-                    if (memoryLine != null) ...<Widget>[
-                      const SizedBox(height: ExperienceSpacing.sm),
-                      memoryLine,
-                    ],
-                    const SizedBox(height: ExperienceSpacing.md),
-                    choices,
-                    const SizedBox(height: _LandingMetrics.doorGap),
-                    _EverydayCareCard(onTap: _openToolkit),
-                  ],
-                ),
+                content: singleColumnContent(),
                 footer: footer(),
               );
             }
 
             if (wide) {
+              final doors = <Widget>[
+                for (final mode in CareMode.values)
+                  _ModeDoor(
+                    mode: mode,
+                    descriptor: _modeDescriptor(mode),
+                    stacked: true,
+                    onTap: () => _openScene(mode),
+                  ),
+              ];
               return _landingFrame(
                 maxContentWidth: maxContentWidth,
                 content: ListView(
@@ -688,9 +801,11 @@ class _CareExperienceState extends State<CareExperience>
 
             // Compact phone grid: the rows are sized from the measured space
             // above the pinned footer so all six choices land fully readable
-            // on the first viewport — nothing is accidentally clipped. When
-            // the space genuinely cannot hold them (very short viewports),
-            // the same composition scrolls with complete rows.
+            // on the first viewport — nothing is accidentally clipped. Each
+            // row is then grown to whatever its labels actually need, so a
+            // longer label is given room rather than an ellipsis. When the
+            // space genuinely cannot hold them (very short viewports), the
+            // same composition scrolls with complete rows.
             final compactDoors = <Widget>[
               for (final mode in CareMode.values)
                 _CompactModeDoor(
@@ -719,10 +834,24 @@ class _CareExperienceState extends State<CareExperience>
                     _LandingMetrics.compactRowHeight,
                     _LandingMetrics.maxRowHeight,
                   );
-                  final rowHeight =
+                  final fittedRowHeight =
                       gridSpace / 3 >= _LandingMetrics.compactRowHeight
                       ? fitted
                       : _LandingMetrics.compactRowHeight;
+
+                  // The broken grid keeps its place only while every door
+                  // can show its full label; otherwise the landing falls
+                  // back to the roomier single-column rows.
+                  final measuredRows = _measureCompactDoorRows(
+                    content.maxWidth,
+                  );
+                  if (measuredRows == null) {
+                    return singleColumnContent();
+                  }
+                  final rowHeights = <double>[
+                    for (final needed in measuredRows)
+                      needed > fittedRowHeight ? needed : fittedRowHeight,
+                  ];
 
                   return SingleChildScrollView(
                     physics: const ClampingScrollPhysics(),
@@ -741,7 +870,7 @@ class _CareExperienceState extends State<CareExperience>
                             compact: true,
                             onTap: _openBreathing,
                           ),
-                          rowHeight: rowHeight,
+                          rowHeights: rowHeights,
                         ),
                         const SizedBox(height: _LandingMetrics.doorGap),
                         _EverydayCareCard(onTap: _openToolkit),
@@ -1048,10 +1177,12 @@ class _CareExperienceState extends State<CareExperience>
       completion: completion,
       careMemoryRepository: widget.careMemoryRepository,
       saveReceipt: widget.saveReceipt,
+      // The saved page's single exit — exactly "Return to daylight".
       onLeaveCare: _leaveToDaylight,
-      onLaterCheckIn: widget.onRequestCheckIn == null
-          ? null
-          : _requestCheckInOnToday,
+      // Skip (and Android/system back): consume the completion and return
+      // to the landing with zero writes. The unsaved check-back has no
+      // daylight exit of its own.
+      onSkip: _skipCompletionToLanding,
       onOpenSafety: _openSafety,
       motionPreference: motion,
       now: widget.now,
@@ -1155,25 +1286,36 @@ class _LandingHeader extends StatelessWidget {
 
 /// Compact phone: the five doors and the breathing fast path as one
 /// broken grid — staggered widths so the set reads as composed, not
-/// templated. Rows take an explicit [rowHeight] so the whole set is
-/// composed to sit fully above the pinned footer on the first viewport.
+/// templated. Each row takes an explicit height — measured from its real
+/// labels before paint — so the whole set sits fully above the pinned
+/// footer when it can, and every label always renders in full.
 class _PhoneDoorGrid extends StatelessWidget {
   const _PhoneDoorGrid({
     required this.doors,
     required this.breathing,
-    this.rowHeight = _LandingMetrics.compactRowHeight,
+    required this.rowHeights,
   });
 
   /// The five mode doors, in [CareMode.values] order.
   final List<Widget> doors;
   final Widget breathing;
-  final double rowHeight;
+
+  /// One height per row: the fitted first-viewport height, grown per row
+  /// to whatever its tallest door actually needs. Rows may differ once a
+  /// longer label asks for the room.
+  final List<double> rowHeights;
 
   @override
   Widget build(BuildContext context) {
-    Widget row(Widget left, int leftFlex, Widget right, int rightFlex) {
+    Widget row(
+      double height,
+      Widget left,
+      int leftFlex,
+      Widget right,
+      int rightFlex,
+    ) {
       return SizedBox(
-        height: rowHeight,
+        height: height,
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: <Widget>[
@@ -1188,13 +1330,13 @@ class _PhoneDoorGrid extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: <Widget>[
-        row(doors[0], 5, doors[1], 4),
+        row(rowHeights[0], doors[0], 5, doors[1], 4),
         const SizedBox(height: _LandingMetrics.doorGap),
-        row(doors[2], 4, doors[3], 5),
+        row(rowHeights[1], doors[2], 4, doors[3], 5),
         const SizedBox(height: _LandingMetrics.doorGap),
         // The last door shares its row with the glowing fast path — kept
         // beside the choices, never buried beneath them.
-        row(doors[4], 4, breathing, 5),
+        row(rowHeights[2], doors[4], 4, breathing, 5),
       ],
     );
   }
@@ -1237,7 +1379,8 @@ class _WideDoorGrid extends StatelessWidget {
 /// One door: the mode's own words and a small distinctive preview echoing
 /// its scene. [stacked] renders the compact vertical door used in the
 /// wide grid; the horizontal row is the roomier single-column fallback for
-/// narrow widths and large text.
+/// narrow widths and large text. The label always wraps in full — a door
+/// that cannot say its own name is no door at all.
 class _ModeDoor extends StatelessWidget {
   const _ModeDoor({
     required this.mode,
@@ -1276,8 +1419,6 @@ class _ModeDoor extends StatelessWidget {
               Text(
                 mode.label,
                 style: ExperienceType.headline(ExperienceColors.careInk),
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
               ),
             ],
           )
@@ -1293,8 +1434,6 @@ class _ModeDoor extends StatelessWidget {
                     Text(
                       mode.label,
                       style: ExperienceType.headline(ExperienceColors.careInk),
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
                     ),
                     const SizedBox(height: ExperienceSpacing.xs),
                     Text(
@@ -1347,9 +1486,10 @@ class _ModeDoor extends StatelessWidget {
 }
 
 /// The phone-grid door: the same identity as [_ModeDoor], recomposed for a
-/// bounded row height — the preview rests slightly smaller, the chevron
-/// overlays the corner instead of claiming a row, and the label flexes so
-/// the tile can never overflow or look accidentally clipped.
+/// bounded row height — the preview rests slightly smaller and the chevron
+/// overlays the corner instead of claiming a row. The label wraps in full;
+/// the grid's row heights are measured from these labels before paint, so
+/// the tile can neither overflow nor clip.
 class _CompactModeDoor extends StatelessWidget {
   const _CompactModeDoor({
     required this.mode,
@@ -1399,8 +1539,6 @@ class _CompactModeDoor extends StatelessWidget {
                             style: ExperienceType.headline(
                               ExperienceColors.careInk,
                             ),
-                            maxLines: 2,
-                            overflow: TextOverflow.ellipsis,
                           ),
                         ),
                       ),
@@ -1512,6 +1650,8 @@ class _BreathingDoor extends StatelessWidget {
   Widget build(BuildContext context) {
     final Widget content;
     if (compact) {
+      // Bounded by the measured phone-grid row: the grid keeps this variant
+      // only while the label fits in two lines, so the cap cannot clip.
       content = Padding(
         padding: const EdgeInsets.all(10),
         child: Stack(
@@ -1574,8 +1714,6 @@ class _BreathingDoor extends StatelessWidget {
           Text(
             _label,
             style: ExperienceType.headline(ExperienceColors.careInk),
-            maxLines: 2,
-            overflow: TextOverflow.ellipsis,
           ),
           const SizedBox(height: ExperienceSpacing.xs),
           _fastPathLine,
@@ -1594,8 +1732,6 @@ class _BreathingDoor extends StatelessWidget {
                 Text(
                   _label,
                   style: ExperienceType.headline(ExperienceColors.careInk),
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
                 ),
                 const SizedBox(height: ExperienceSpacing.xs),
                 _fastPathLine,

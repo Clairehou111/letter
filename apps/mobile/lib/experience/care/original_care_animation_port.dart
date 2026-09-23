@@ -10,6 +10,12 @@ import 'care_animation_port.dart';
 /// The original painter remains the visual and interaction authority. This
 /// adapter only translates its exit and completion callbacks into the stable
 /// [CareAnimationPort] signals owned by [CareExperience].
+///
+/// Completion and dismissal are distinct signals: `Done for now` is a
+/// deliberate completion that enters the external check-back
+/// ([CareSceneSignal.sceneCompleted]); only a deliberate back tap is an
+/// ordinary dismissal ([CareSceneSignal.sceneDismissed]) that returns to the
+/// Care landing with zero persistence and no check-back.
 final class OriginalCareAnimationPort implements CareAnimationPort {
   const OriginalCareAnimationPort();
 
@@ -29,7 +35,9 @@ final class OriginalCareAnimationPort implements CareAnimationPort {
       onSafety: () => onSignal(CareSceneSignal.requestedSafety),
       onCompleted: () => onSignal(CareSceneSignal.sceneCompleted),
       onCheckedIn: (_) => onSignal(CareSceneSignal.sceneCompleted),
-      onDone: () => onSignal(CareSceneSignal.sceneDismissed),
+      // `Done for now` is a deliberate completion: it enters the external
+      // check-back like every other completion path. It is not a dismissal.
+      onDone: () => onSignal(CareSceneSignal.sceneCompleted),
     );
 
     if (motionPreference != CareSceneMotionPreference.full) {

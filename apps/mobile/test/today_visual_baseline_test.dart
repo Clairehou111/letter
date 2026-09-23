@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:letter_mobile/experience/today/today_experience_visual_baseline.dart';
@@ -11,6 +13,51 @@ import 'package:letter_mobile/features/cycle/domain/local_date.dart';
 import 'package:letter_mobile/features/cycle/domain/period_record.dart';
 import 'package:letter_mobile/features/health_records/data/in_memory_health_record_repository.dart';
 import 'package:letter_mobile/features/health_records/domain/health_record.dart';
+
+final class _DeferredMoodPort implements TodayVisualPort {
+  _DeferredMoodPort(this.delegate, this.onSaveMood);
+
+  final TodayVisualPort delegate;
+  final Future<TodayVisualSnapshot> Function(MomentCheckInState) onSaveMood;
+
+  @override
+  Future<TodayVisualSnapshot> load() => delegate.load();
+
+  @override
+  Future<TodayVisualSnapshot> saveMood(MomentCheckInState state) =>
+      onSaveMood(state);
+
+  @override
+  Future<TodayVisualSnapshot> startPeriod() => delegate.startPeriod();
+
+  @override
+  Future<TodayVisualSnapshot> endOpenPeriodToday() =>
+      delegate.endOpenPeriodToday();
+
+  @override
+  Future<TodayVisualSnapshot> setFlow(BleedingFlow? flow) =>
+      delegate.setFlow(flow);
+
+  @override
+  Future<TodayVisualSnapshot> setColor(BleedingColor color) =>
+      delegate.setColor(color);
+
+  @override
+  Future<TodayVisualSnapshot> saveSymptom(
+    SymptomType symptom,
+    SymptomSeverity severity,
+  ) => delegate.saveSymptom(symptom, severity);
+
+  @override
+  Future<TodayVisualSnapshot> removeSymptom(String recordId) =>
+      delegate.removeSymptom(recordId);
+
+  @override
+  Future<TodayVisualSnapshot> saveNote(String text) => delegate.saveNote(text);
+
+  @override
+  Future<void> openCare() => delegate.openCare();
+}
 
 void main() {
   testWidgets('a difficult mood offers and opens the production Care route', (
@@ -52,6 +99,93 @@ void main() {
     await tester.tap(openCare);
     await tester.pumpAndSettle();
     expect(careOpened, isTrue);
+  });
+
+  testWidgets(
+    'Care doorway stays hidden until a difficult mood save succeeds',
+    (tester) async {
+      const today = LocalDate(2026, 8, 15);
+      final now = DateTime(2026, 8, 15, 12);
+      final base = RepositoryTodayVisualPort(
+        periodRepository: InMemoryPeriodRepository(clock: () => now),
+        checkInRepository: InMemoryMomentCheckInRepository(clock: () => now),
+        healthRecordRepository: InMemoryHealthRecordRepository(
+          clock: () => now,
+        ),
+        captureNoteStore: InMemoryCaptureNoteStore(),
+        today: () => today,
+        now: () => now,
+        onCycleDataChanged: () {},
+        onOpenCare: () {},
+      );
+      final pending = Completer<TodayVisualSnapshot>();
+      final port = _DeferredMoodPort(base, (_) => pending.future);
+
+      await tester.binding.setSurfaceSize(const Size(390, 844));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+      await tester.pumpWidget(
+        MaterialApp(home: TodayExperienceVisual(port: port)),
+      );
+      await tester.pumpAndSettle();
+
+      final irritable = find.text('Irritable');
+      await tester.scrollUntilVisible(
+        irritable,
+        320,
+        scrollable: find.byType(Scrollable).first,
+      );
+      await tester.tap(irritable);
+      await tester.pump();
+
+      expect(find.text('Open Care'), findsNothing);
+
+      pending.complete(await base.saveMood(MomentCheckInState.irritable));
+      await tester.pumpAndSettle();
+      expect(find.text('Open Care'), findsOneWidget);
+    },
+  );
+
+  testWidgets('failed difficult mood save never exposes the Care doorway', (
+    tester,
+  ) async {
+    const today = LocalDate(2026, 8, 15);
+    final now = DateTime(2026, 8, 15, 12);
+    final base = RepositoryTodayVisualPort(
+      periodRepository: InMemoryPeriodRepository(clock: () => now),
+      checkInRepository: InMemoryMomentCheckInRepository(clock: () => now),
+      healthRecordRepository: InMemoryHealthRecordRepository(clock: () => now),
+      captureNoteStore: InMemoryCaptureNoteStore(),
+      today: () => today,
+      now: () => now,
+      onCycleDataChanged: () {},
+      onOpenCare: () {},
+    );
+    final pending = Completer<TodayVisualSnapshot>();
+    final port = _DeferredMoodPort(base, (_) => pending.future);
+
+    await tester.binding.setSurfaceSize(const Size(390, 844));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+    await tester.pumpWidget(
+      MaterialApp(home: TodayExperienceVisual(port: port)),
+    );
+    await tester.pumpAndSettle();
+
+    final irritable = find.text('Irritable');
+    await tester.scrollUntilVisible(
+      irritable,
+      320,
+      scrollable: find.byType(Scrollable).first,
+    );
+    await tester.tap(irritable);
+    await tester.pump();
+    pending.completeError(StateError('forced save failure'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Open Care'), findsNothing);
+    expect(
+      find.text("Letter Within couldn't save that. Try again."),
+      findsOneWidget,
+    );
   });
 
   testWidgets('Today shows factual remembered help when the gate supplies it', (
