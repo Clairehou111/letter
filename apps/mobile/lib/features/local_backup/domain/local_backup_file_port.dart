@@ -7,6 +7,20 @@ import '../../local_export/domain/letter_local_export_store.dart';
 
 const localBackupExportFolderName = letterLocalExportFolderName;
 
+/// One cross-platform filter for Letter Within's encrypted package.
+///
+/// iOS accepts UTIs only and throws before showing its picker when a group
+/// contains just an extension or MIME type. `public.data` is intentionally
+/// broad because `.letter` is a private encrypted container rather than a
+/// system-registered document type; package validation still happens after
+/// selection, before any records can be changed.
+const localBackupFileTypeGroup = XTypeGroup(
+  label: 'Letter Within encrypted backup',
+  extensions: ['letter'],
+  mimeTypes: ['application/octet-stream'],
+  uniformTypeIdentifiers: ['public.data'],
+);
+
 String localBackupExportFileName(DateTime value) {
   String two(int number) => number.toString().padLeft(2, '0');
   return 'letter-backup-${value.year}-${two(value.month)}-'
@@ -84,13 +98,7 @@ final class SystemLocalBackupFilePort implements LocalBackupFilePort {
   @override
   Future<Uint8List?> pickEncryptedBackup() async {
     final selection = await openFile(
-      acceptedTypeGroups: const [
-        XTypeGroup(
-          label: 'Letter Within encrypted backup',
-          extensions: ['letter'],
-          mimeTypes: ['application/octet-stream'],
-        ),
-      ],
+      acceptedTypeGroups: const [localBackupFileTypeGroup],
     );
     return selection?.readAsBytes();
   }

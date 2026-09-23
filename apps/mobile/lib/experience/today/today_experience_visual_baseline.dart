@@ -1,6 +1,9 @@
 import 'dart:async';
+import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
+import 'package:flutter/semantics.dart' show SemanticsService;
+import 'package:flutter/services.dart' show HapticFeedback;
 
 import '../../features/check_in/domain/moment_check_in.dart';
 import '../../features/cycle/domain/bleeding_flow.dart';
@@ -19,7 +22,7 @@ import 'today_visual_port.dart';
 /// semantic groups, each with one named severity explained by a calm
 /// visual legend, period start/end, and an optional private note.
 /// No forms, no page-level save — every selection acknowledges itself
-/// immediately.
+/// immediately, both visibly and audibly.
 class TodayExperienceVisual extends StatefulWidget {
   const TodayExperienceVisual({
     super.key,
@@ -47,6 +50,16 @@ const Color _terra = Color(0xFFC95D3A); // terracotta accent
 const Color _terraDeep = Color(0xFFA8482C);
 const Color _terraTint = Color(0xFFF6E4D8);
 const Color _hairline = Color(0xFFE7DFD0);
+
+/// Minimum accessible touch target. Chips keep their visible size and grow
+/// only an invisible hit area to reach it.
+const double _minTouchTarget = 48;
+
+/// Above this text scale (or below the width threshold) the masthead stops
+/// sitting beside the date and stacks instead, so no word is ever split
+/// across lines and the hero stays reachable in the first viewport.
+const double _headerStackTextScale = 1.5;
+const double _headerStackMinWidth = 380;
 
 TextStyle _serif(
   double size, {
@@ -101,11 +114,108 @@ BoxDecoration _cardDecoration({Color color = _paper, bool shadow = true}) {
   );
 }
 
+/// Motion constitution: the platform reduced-motion flag comes first. When
+/// set, every animated surface on Today degrades to an instant, composed
+/// transition with identical copy and controls.
+Duration _motion(BuildContext context, Duration duration) =>
+    MediaQuery.disableAnimationsOf(context) ? Duration.zero : duration;
+
+/// Keeps authored masthead words intact at extreme text scale: the line is
+/// laid out as one unbroken word sequence and scaled down to fit, never
+/// wrapped mid-word and never clipped mid-glyph.
+Widget _fitMastheadLine(Text text) {
+  return FittedBox(
+    fit: BoxFit.scaleDown,
+    alignment: Alignment.centerLeft,
+    child: text,
+  );
+}
+
+/// Display-title resilience, scoped to editorial hero titles only.
+///
+/// At extreme accessibility text scale a single long word (e.g. "beginning")
+/// would otherwise be split across lines mid-glyph, and the title alone
+/// could consume the first viewport. This widget measures the title at its
+/// authored style and computes the largest text scale at which the longest
+/// word still fits the available width whole; if the full title still
+/// exceeds [maxLines] at that scale it steps down gently (shrinking text
+/// never re-introduces a mid-word split). Normal-scale rendering is
+/// untouched: whenever the device scale already fits, the authored style is
+/// used exactly as designed. Body copy, controls, and chips are never
+/// affected by this clamp.
+class _DisplayTitle extends StatelessWidget {
+  const _DisplayTitle(this.text, {required this.style, this.maxLines = 3});
+
+  final String text;
+  final TextStyle style;
+  final int maxLines;
+
+  @override
+  Widget build(BuildContext context) {
+    return LayoutBuilder(
+      builder: (BuildContext context, BoxConstraints constraints) {
+        final MediaQueryData media = MediaQuery.of(context);
+        final double deviceScale = media.textScaler.scale(1.0);
+        double available = constraints.maxWidth;
+        if (!available.isFinite || available <= 0) {
+          available = media.size.width;
+        }
+        final TextDirection direction =
+            Directionality.maybeOf(context) ?? TextDirection.ltr;
+
+        double measureWordWidth(String word) {
+          final TextPainter painter = TextPainter(
+            text: TextSpan(text: word, style: style),
+            textDirection: direction,
+            maxLines: 1,
+          )..layout();
+          final double width = painter.width;
+          painter.dispose();
+          return width;
+        }
+
+        bool fitsWithinLines(double scale) {
+          final TextPainter painter = TextPainter(
+            text: TextSpan(text: text, style: style),
+            textDirection: direction,
+            textScaler: TextScaler.linear(scale),
+          )..layout(maxWidth: available);
+          final bool fits = painter.computeLineMetrics().length <= maxLines;
+          painter.dispose();
+          return fits;
+        }
+
+        // The no-split ceiling: the largest scale at which the longest word
+        // still fits on one line inside the available width (with a small
+        // safety margin so rendering rounding can never tip it over).
+        double longestWord = 0;
+        for (final String word in text.split(RegExp(r'\s+'))) {
+          if (word.isEmpty) continue;
+          longestWord = math.max(longestWord, measureWordWidth(word));
+        }
+        final double wordFitScale = longestWord > 0
+            ? (available / longestWord) * 0.97
+            : deviceScale;
+
+        double scale = math.min(deviceScale, wordFitScale);
+        // If the whole title still exceeds the line budget, step down
+        // gently. Shrinking only ever shortens lines, so this can never
+        // cause a word to split; the floor keeps the type legible.
+        for (int i = 0; i < 20 && scale > 0.5 && !fitsWithinLines(scale); i++) {
+          scale *= 0.92;
+        }
+
+        return Text(text, style: style, textScaler: TextScaler.linear(scale));
+      },
+    );
+  }
+}
+
 // ---------------------------------------------------------------------------
 // Local visual state
 // ---------------------------------------------------------------------------
 
-enum _CycleView { loading, known, learning, empty }
+enum _CycleView { loading, known, learning, empty, error }
 
 class _SymptomEntry {
   const _SymptomEntry({
@@ -134,7 +244,6 @@ class _TodayExperienceVisualState extends State<TodayExperienceVisual> {
   // Cycle-context hero. Its day number and estimated date range are always
   // read from the shared prediction contract in [TodayVisualSnapshot].
   _CycleView _view = _CycleView.loading;
-  Timer? _viewTimer;
   TodayCycleContext? _cycleContext;
 
   // Today's quick captures.
@@ -282,40 +391,76 @@ class _TodayExperienceVisualState extends State<TodayExperienceVisual> {
       if (!mounted) return;
       _applySnapshot(snapshot);
     } on Object {
-      if (mounted) setState(() => _view = _CycleView.learning);
+      // Honesty under every condition: a failed read is a failed read, not a
+      // lifecycle state. The error hero is visually distinct from learning.
+      if (mounted) setState(() => _view = _CycleView.error);
     }
+  }
+
+  Future<void> _retryLoad() async {
+    setState(() => _view = _CycleView.loading);
+    await _reload();
   }
 
   @override
   void dispose() {
-    _viewTimer?.cancel();
     _ackTimer?.cancel();
     _noteController.dispose();
     super.dispose();
   }
 
   // -------------------------------------------------------------------------
-  // Acknowledgement
+  // Acknowledgement — visible toast, live-region announcement, and a
+  // restrained haptic only for meaningful successful saves.
   // -------------------------------------------------------------------------
 
-  void _acknowledge(String message) {
+  void _acknowledge(String message, {bool saved = false}) {
+    if (!mounted) return;
     _ackTimer?.cancel();
     setState(() => _ack = message);
+    final view = View.maybeOf(context);
+    if (view != null) {
+      SemanticsService.sendAnnouncement(
+        view,
+        message,
+        Directionality.maybeOf(context) ?? TextDirection.ltr,
+      );
+    }
+    if (saved) HapticFeedback.selectionClick();
     _ackTimer = Timer(const Duration(milliseconds: 2200), () {
       if (mounted) setState(() => _ack = null);
     });
   }
 
   // -------------------------------------------------------------------------
-  // Hero transitions — a brief shimmer between honest states
+  // Hero transitions — a brief crossfade between honest states, synchronized
+  // with the real state change. No fabricated latency.
   // -------------------------------------------------------------------------
 
   void _transitionHero(_CycleView target) {
-    _viewTimer?.cancel();
-    setState(() => _view = _CycleView.loading);
-    _viewTimer = Timer(const Duration(milliseconds: 650), () {
-      if (mounted) setState(() => _view = target);
-    });
+    setState(() => _view = target);
+  }
+
+  /// Reduced-motion-safe state swap. When the platform asks for no motion,
+  /// Today does not build an AnimatedSwitcher at all: the new state simply
+  /// exists, composed and complete, with identical copy and controls.
+  Widget _swap(
+    Widget child, {
+    required Duration duration,
+    Widget Function(Widget child, Animation<double> animation)?
+    transitionBuilder,
+  }) {
+    if (MediaQuery.disableAnimationsOf(context)) {
+      return child;
+    }
+    if (transitionBuilder == null) {
+      return AnimatedSwitcher(duration: duration, child: child);
+    }
+    return AnimatedSwitcher(
+      duration: duration,
+      transitionBuilder: transitionBuilder,
+      child: child,
+    );
   }
 
   // -------------------------------------------------------------------------
@@ -331,7 +476,7 @@ class _TodayExperienceVisualState extends State<TodayExperienceVisual> {
       final snapshot = await widget.port.saveMood(mood);
       if (!mounted) return;
       await _reloadFrom(snapshot);
-      _acknowledge('Mood noted — ${mood.label}');
+      _acknowledge('Mood noted — ${mood.label}', saved: true);
     } on Object {
       if (mounted) {
         await _reload();
@@ -452,7 +597,7 @@ class _TodayExperienceVisualState extends State<TodayExperienceVisual> {
       final snapshot = await widget.port.setFlow(flow);
       if (!mounted) return;
       await _reloadFrom(snapshot);
-      _acknowledge('Bleeding noted — ${flow?.label ?? 'None'}');
+      _acknowledge('Bleeding noted — ${flow?.label ?? 'None'}', saved: true);
     } on Object {
       if (mounted) {
         await _reload();
@@ -539,7 +684,7 @@ class _TodayExperienceVisualState extends State<TodayExperienceVisual> {
         final snapshot = await widget.port.setFlow(flow);
         if (!mounted) return;
         await _reloadFrom(snapshot);
-        _acknowledge('Period started — day 1 noted');
+        _acknowledge('Period started — day 1 noted', saved: true);
       } on Object {
         if (mounted) {
           await _reload();
@@ -557,7 +702,7 @@ class _TodayExperienceVisualState extends State<TodayExperienceVisual> {
       final snapshot = await widget.port.setColor(color);
       if (!mounted) return;
       await _reloadFrom(snapshot);
-      _acknowledge('Color noted — ${color.label}');
+      _acknowledge('Color noted — ${color.label}', saved: true);
     } on Object {
       if (mounted) {
         await _reload();
@@ -594,6 +739,7 @@ class _TodayExperienceVisualState extends State<TodayExperienceVisual> {
       await _reloadFrom(snapshot);
       _acknowledge(
         'Symptom noted — ${symptom.label}, ${severity.label.toLowerCase()}',
+        saved: true,
       );
     } on Object {
       if (mounted) {
@@ -619,6 +765,7 @@ class _TodayExperienceVisualState extends State<TodayExperienceVisual> {
       await _reloadFrom(snapshot);
       _acknowledge(
         '${entry.definition.label} updated — ${severity.label.toLowerCase()}',
+        saved: true,
       );
     } on Object {
       if (mounted) {
@@ -633,7 +780,7 @@ class _TodayExperienceVisualState extends State<TodayExperienceVisual> {
       final snapshot = await widget.port.removeSymptom(_symptoms[index].id);
       if (!mounted) return;
       await _reloadFrom(snapshot);
-      _acknowledge('Symptom removed');
+      _acknowledge('Symptom removed', saved: true);
     } on Object {
       if (mounted) {
         await _reload();
@@ -731,7 +878,7 @@ class _TodayExperienceVisualState extends State<TodayExperienceVisual> {
       if (!mounted) return;
       await _reloadFrom(snapshot);
       _transitionHero(_cycleViewFor(snapshot.cycleContext));
-      _acknowledge('Period started — day 1 noted');
+      _acknowledge('Period started — day 1 noted', saved: true);
     } on Object {
       if (mounted) {
         await _reload();
@@ -792,7 +939,7 @@ class _TodayExperienceVisualState extends State<TodayExperienceVisual> {
       if (!mounted) return;
       await _reloadFrom(snapshot);
       _transitionHero(_cycleViewFor(snapshot.cycleContext));
-      _acknowledge('Period ended — noted');
+      _acknowledge('Period ended — noted', saved: true);
     } on Object {
       if (mounted) {
         await _reload();
@@ -816,7 +963,7 @@ class _TodayExperienceVisualState extends State<TodayExperienceVisual> {
       if (!mounted) return;
       await _reloadFrom(snapshot);
       setState(() => _noteOpen = false);
-      _acknowledge('Note kept — only you can read it');
+      _acknowledge('Note kept — only you can read it', saved: true);
     } on Object {
       if (mounted) {
         _acknowledge("Letter Within couldn't save that. Try again.");
@@ -940,26 +1087,69 @@ class _TodayExperienceVisualState extends State<TodayExperienceVisual> {
 
   // -------------------------------------------------------------------------
   // Header — editorial masthead, no preview controls
+  //
+  // Text-scale resilience: above [_headerStackTextScale] or below
+  // [_headerStackMinWidth] the row collapses into a stacked column — title
+  // block first, date beneath — and each masthead line is fitted as one
+  // unbroken line so no word is ever split across lines and the masthead
+  // never consumes the first viewport on its own.
   // -------------------------------------------------------------------------
 
+  Widget _buildHeaderTitleBlock({required bool compact}) {
+    final Text kicker = Text(
+      'TODAY',
+      style: _kicker(),
+      maxLines: 1,
+      softWrap: false,
+    );
+    final Text title = Text(
+      'Letter Within',
+      style: _serif(34),
+      maxLines: 1,
+      softWrap: false,
+    );
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: <Widget>[
+        compact ? _fitMastheadLine(kicker) : kicker,
+        const SizedBox(height: 6),
+        compact ? _fitMastheadLine(title) : title,
+        const SizedBox(height: 8),
+        Container(width: 34, height: 2, color: _terra),
+      ],
+    );
+  }
+
   Widget _buildHeader() {
+    final MediaQueryData media = MediaQuery.of(context);
+    final bool stacked =
+        media.textScaler.scale(1.0) > _headerStackTextScale ||
+        media.size.width < _headerStackMinWidth;
+    if (stacked) {
+      final Text date = Text(
+        _headerDateLabel(_cycleContext?.today),
+        style: _sans(14.5, color: _inkSoft),
+        maxLines: 1,
+        softWrap: false,
+      );
+      return Padding(
+        padding: const EdgeInsets.only(top: 10, bottom: 16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: <Widget>[
+            _buildHeaderTitleBlock(compact: true),
+            const SizedBox(height: 8),
+            _fitMastheadLine(date),
+          ],
+        ),
+      );
+    }
     return Padding(
       padding: const EdgeInsets.only(top: 14, bottom: 22),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.end,
         children: <Widget>[
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: <Widget>[
-                Text('TODAY', style: _kicker()),
-                const SizedBox(height: 6),
-                Text('Letter Within', style: _serif(34)),
-                const SizedBox(height: 8),
-                Container(width: 34, height: 2, color: _terra),
-              ],
-            ),
-          ),
+          Expanded(child: _buildHeaderTitleBlock(compact: false)),
           Padding(
             padding: const EdgeInsets.only(bottom: 6),
             child: Text(
@@ -977,122 +1167,142 @@ class _TodayExperienceVisualState extends State<TodayExperienceVisual> {
   // -------------------------------------------------------------------------
 
   Widget _buildHero() {
-    final context = _cycleContext;
-    final isPeriodToday = context?.kind == TodayCycleKind.periodInProgress;
-    return AnimatedSwitcher(
-      duration: const Duration(milliseconds: 320),
-      child: switch (_view) {
-        _CycleView.loading => const _StatusLoadingCard(
-          key: ValueKey<String>('loading'),
-        ),
-        _CycleView.known => _StatusCard(
-          key: ValueKey<String>('known-$_periodActive'),
-          kicker: 'TODAY’S PLACE IN THE CYCLE',
-          title: isPeriodToday ? 'Period phase' : 'Between periods',
-          footnote: context == null
-              ? 'Loading your recorded dates.'
-              : 'Based on your recorded period starts.',
-          middle: _KnownCycleMiddle(context: context),
-          action: _periodActive
-              ? TextButton(
-                  onPressed: _confirmEndPeriod,
-                  style: TextButton.styleFrom(
-                    foregroundColor: Colors.white,
-                    side: BorderSide(
-                      color: Colors.white.withValues(alpha: 0.65),
-                    ),
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 14,
-                      vertical: 9,
-                    ),
-                    minimumSize: Size.zero,
-                    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(10),
-                    ),
+    final cycle = _cycleContext;
+    final isPeriodToday = cycle?.kind == TodayCycleKind.periodInProgress;
+    final Widget heroChild = switch (_view) {
+      _CycleView.loading => const _StatusLoadingCard(
+        key: ValueKey<String>('loading'),
+      ),
+      _CycleView.known => _StatusCard(
+        key: ValueKey<String>('known-$_periodActive'),
+        kicker: 'TODAY’S PLACE IN THE CYCLE',
+        title: isPeriodToday ? 'Period phase' : 'Between periods',
+        footnote: cycle == null
+            ? 'Loading your recorded dates.'
+            : 'Based on your recorded period starts.',
+        middle: _KnownCycleMiddle(context: cycle),
+        action: _periodActive
+            ? TextButton(
+                onPressed: _confirmEndPeriod,
+                style: TextButton.styleFrom(
+                  foregroundColor: Colors.white,
+                  side: BorderSide(color: Colors.white.withValues(alpha: 0.65)),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 14,
+                    vertical: 9,
                   ),
-                  child: Text(
-                    'End period',
-                    style: _sans(12.5, weight: FontWeight.w700),
+                  minimumSize: Size.zero,
+                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10),
                   ),
-                )
-              : null,
-        ),
-        _CycleView.learning => _StatusCard(
-          key: const ValueKey<String>('learning'),
-          kicker: 'LEARNING YOUR RHYTHM',
-          title: 'Getting to know you',
-          footnote: 'Patterns begin to emerge after a few more days.',
-          middle: Text(
-            'A few days logged so far. Each note today helps this space '
-            'become more yours.',
-            style: _sans(
-              14.5,
-              color: Colors.white.withValues(alpha: 0.92),
-              height: 1.45,
-            ),
+                ),
+                child: Text(
+                  'End period',
+                  style: _sans(12.5, weight: FontWeight.w700),
+                ),
+              )
+            : null,
+      ),
+      _CycleView.learning => _StatusCard(
+        key: const ValueKey<String>('learning'),
+        kicker: 'LEARNING YOUR RHYTHM',
+        title: 'Getting to know you',
+        footnote: 'Patterns begin to emerge after a few more days.',
+        middle: Text(
+          'A few days logged so far. Each note today helps this space '
+          'become more yours.',
+          style: _sans(
+            14.5,
+            color: Colors.white.withValues(alpha: 0.92),
+            height: 1.45,
           ),
         ),
-        _CycleView.empty => _StatusCard(
-          key: const ValueKey<String>('empty'),
-          kicker: 'NO HISTORY YET',
-          title: 'A quiet beginning',
-          footnote: 'Private by default. Always yours.',
-          middle: Text(
-            'No notes yet — and nothing to catch up on. Begin with how '
-            'this moment feels.',
-            style: _sans(
-              14.5,
-              color: Colors.white.withValues(alpha: 0.92),
-              height: 1.45,
-            ),
+      ),
+      _CycleView.empty => _StatusCard(
+        key: const ValueKey<String>('empty'),
+        kicker: 'NO HISTORY YET',
+        title: 'A quiet beginning',
+        footnote: 'Private by default. Always yours.',
+        middle: Text(
+          _note == null
+              ? 'No notes yet — and nothing to catch up on. Begin with how '
+                    'this moment feels.'
+              : 'Your note is here — and there is nothing else to catch up '
+                    'on. Begin with how this moment feels.',
+          style: _sans(
+            14.5,
+            color: Colors.white.withValues(alpha: 0.92),
+            height: 1.45,
           ),
         ),
-      },
-    );
+      ),
+      _CycleView.error => _StatusErrorCard(
+        key: const ValueKey<String>('error'),
+        onRetry: _retryLoad,
+      ),
+    };
+    return _swap(heroChild, duration: const Duration(milliseconds: 320));
   }
 
   /// Slim, quiet start-period surface — appears only when no period is
   /// active, so period status is never repeated across large cards.
   Widget _buildStartPeriodStrip() {
+    final Widget startButton = OutlinedButton(
+      onPressed: _startPeriodFromStrip,
+      style: OutlinedButton.styleFrom(
+        foregroundColor: _terraDeep,
+        side: const BorderSide(color: _terra, width: 1.3),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 11),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(11)),
+      ),
+      child: Text(
+        'Start period',
+        textAlign: TextAlign.center,
+        style: _sans(13, weight: FontWeight.w700),
+      ),
+    );
+    final Widget copy = Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: <Widget>[
+        Text(
+          'Has your period started?',
+          style: _serif(16.5, weight: FontWeight.w700),
+        ),
+        const SizedBox(height: 2),
+        Text(
+          'Marking day one sets the rhythm.',
+          style: _sans(12.5, color: _inkSoft),
+        ),
+      ],
+    );
     return Container(
       decoration: _cardDecoration(shadow: false),
       padding: const EdgeInsets.fromLTRB(18, 14, 14, 14),
-      child: Row(
-        children: <Widget>[
-          Expanded(
-            child: Column(
+      child: LayoutBuilder(
+        builder: (BuildContext context, BoxConstraints constraints) {
+          final bool compact =
+              MediaQuery.textScalerOf(context).scale(1.0) >
+                  _headerStackTextScale ||
+              constraints.maxWidth < 320;
+          if (compact) {
+            return Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: <Widget>[
-                Text(
-                  'Has your period started?',
-                  style: _serif(16.5, weight: FontWeight.w700),
-                ),
-                const SizedBox(height: 2),
-                Text(
-                  'Marking day one sets the rhythm.',
-                  style: _sans(12.5, color: _inkSoft),
-                ),
+                copy,
+                const SizedBox(height: 12),
+                SizedBox(width: double.infinity, child: startButton),
               ],
-            ),
-          ),
-          const SizedBox(width: 12),
-          OutlinedButton(
-            onPressed: _startPeriodFromStrip,
-            style: OutlinedButton.styleFrom(
-              foregroundColor: _terraDeep,
-              side: const BorderSide(color: _terra, width: 1.3),
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 11),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(11),
-              ),
-            ),
-            child: Text(
-              'Start period',
-              style: _sans(13, weight: FontWeight.w700),
-            ),
-          ),
-        ],
+            );
+          }
+          return Row(
+            children: <Widget>[
+              Expanded(child: copy),
+              const SizedBox(width: 12),
+              startButton,
+            ],
+          );
+        },
       ),
     );
   }
@@ -1157,7 +1367,14 @@ class _TodayExperienceVisualState extends State<TodayExperienceVisual> {
             ),
           ],
         ),
-        AnimatedSwitcher(
+        _swap(
+          _showCareRoute
+              ? Padding(
+                  key: const ValueKey<String>('care'),
+                  padding: const EdgeInsets.only(top: 14),
+                  child: _buildCareNudge(),
+                )
+              : const SizedBox.shrink(key: ValueKey<String>('no-care')),
           duration: const Duration(milliseconds: 260),
           transitionBuilder: (Widget child, Animation<double> anim) {
             return SizeTransition(
@@ -1166,13 +1383,6 @@ class _TodayExperienceVisualState extends State<TodayExperienceVisual> {
               child: FadeTransition(opacity: anim, child: child),
             );
           },
-          child: _showCareRoute
-              ? Padding(
-                  key: const ValueKey<String>('care'),
-                  padding: const EdgeInsets.only(top: 14),
-                  child: _buildCareNudge(),
-                )
-              : const SizedBox.shrink(key: ValueKey<String>('no-care')),
         ),
       ],
     );
@@ -1181,6 +1391,43 @@ class _TodayExperienceVisualState extends State<TodayExperienceVisual> {
   /// A gentle, optional doorway to Care — visible only when the day sounds
   /// heavy, and never opened on the user's behalf.
   Widget _buildCareNudge() {
+    final Widget icon = Container(
+      width: 34,
+      height: 34,
+      decoration: const BoxDecoration(color: _paper, shape: BoxShape.circle),
+      child: const Icon(Icons.favorite_rounded, size: 16, color: _terra),
+    );
+    final Widget copy = Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: <Widget>[
+        Text(
+          'This one sounds heavy.',
+          style: _sans(14, weight: FontWeight.w700, color: _terraDeep),
+        ),
+        const SizedBox(height: 2),
+        Text(
+          'Care is here if you’d like company with it.',
+          style: _sans(12.5, color: _inkSoft, height: 1.4),
+        ),
+      ],
+    );
+    final TextButton action = TextButton(
+      onPressed: _openCare,
+      style: TextButton.styleFrom(
+        foregroundColor: _terraDeep,
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
+        minimumSize: Size.zero,
+        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: <Widget>[
+          Text('Open Care', style: _sans(13, weight: FontWeight.w700)),
+          const SizedBox(width: 3),
+          const Icon(Icons.arrow_forward_rounded, size: 15),
+        ],
+      ),
+    );
     return Container(
       decoration: BoxDecoration(
         color: _terraTint.withValues(alpha: 0.55),
@@ -1188,53 +1435,39 @@ class _TodayExperienceVisualState extends State<TodayExperienceVisual> {
         border: Border.all(color: _terra.withValues(alpha: 0.35)),
       ),
       padding: const EdgeInsets.fromLTRB(16, 14, 12, 14),
-      child: Row(
-        children: <Widget>[
-          Container(
-            width: 34,
-            height: 34,
-            decoration: const BoxDecoration(
-              color: _paper,
-              shape: BoxShape.circle,
-            ),
-            child: const Icon(Icons.favorite_rounded, size: 16, color: _terra),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
+      child: LayoutBuilder(
+        builder: (BuildContext context, BoxConstraints constraints) {
+          final bool compact =
+              MediaQuery.textScalerOf(context).scale(1.0) >
+                  _headerStackTextScale ||
+              constraints.maxWidth < 340;
+          if (compact) {
+            return Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: <Widget>[
-                Text(
-                  'This one sounds heavy.',
-                  style: _sans(14, weight: FontWeight.w700, color: _terraDeep),
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: <Widget>[
+                    icon,
+                    const SizedBox(width: 12),
+                    Expanded(child: copy),
+                  ],
                 ),
-                const SizedBox(height: 2),
-                Text(
-                  'Care is here if you’d like company with it.',
-                  style: _sans(12.5, color: _inkSoft, height: 1.4),
-                ),
+                const SizedBox(height: 8),
+                Align(alignment: Alignment.centerRight, child: action),
               ],
-            ),
-          ),
-          const SizedBox(width: 8),
-          TextButton(
-            onPressed: _openCare,
-            style: TextButton.styleFrom(
-              foregroundColor: _terraDeep,
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
-              minimumSize: Size.zero,
-              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-            ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: <Widget>[
-                Text('Open Care', style: _sans(13, weight: FontWeight.w700)),
-                const SizedBox(width: 3),
-                const Icon(Icons.arrow_forward_rounded, size: 15),
-              ],
-            ),
-          ),
-        ],
+            );
+          }
+          return Row(
+            children: <Widget>[
+              icon,
+              const SizedBox(width: 12),
+              Expanded(child: copy),
+              const SizedBox(width: 8),
+              action,
+            ],
+          );
+        },
       ),
     );
   }
@@ -1252,16 +1485,8 @@ class _TodayExperienceVisualState extends State<TodayExperienceVisual> {
   Widget _buildRememberedHelpLine() {
     final String? line = _rememberedHelpLine;
     final bool show = line != null && line.trim().isNotEmpty;
-    return AnimatedSwitcher(
-      duration: const Duration(milliseconds: 300),
-      transitionBuilder: (Widget child, Animation<double> anim) {
-        return SizeTransition(
-          sizeFactor: CurvedAnimation(parent: anim, curve: Curves.easeOut),
-          alignment: AlignmentDirectional.topStart,
-          child: FadeTransition(opacity: anim, child: child),
-        );
-      },
-      child: show
+    return _swap(
+      show
           ? Padding(
               key: const ValueKey<String>('remembered-help'),
               padding: const EdgeInsets.only(top: 18),
@@ -1309,6 +1534,14 @@ class _TodayExperienceVisualState extends State<TodayExperienceVisual> {
               ),
             )
           : const SizedBox.shrink(key: ValueKey<String>('no-remembered-help')),
+      duration: const Duration(milliseconds: 300),
+      transitionBuilder: (Widget child, Animation<double> anim) {
+        return SizeTransition(
+          sizeFactor: CurvedAnimation(parent: anim, curve: Curves.easeOut),
+          alignment: AlignmentDirectional.topStart,
+          child: FadeTransition(opacity: anim, child: child),
+        );
+      },
     );
   }
 
@@ -1340,16 +1573,8 @@ class _TodayExperienceVisualState extends State<TodayExperienceVisual> {
                     ),
                 ],
               ),
-              AnimatedSwitcher(
-                duration: const Duration(milliseconds: 260),
-                transitionBuilder: (Widget child, Animation<double> anim) {
-                  return SizeTransition(
-                    sizeFactor: anim,
-                    alignment: AlignmentDirectional.topStart,
-                    child: FadeTransition(opacity: anim, child: child),
-                  );
-                },
-                child: showColor
+              _swap(
+                showColor
                     ? Padding(
                         key: const ValueKey<String>('color'),
                         padding: const EdgeInsets.only(top: 16),
@@ -1382,6 +1607,14 @@ class _TodayExperienceVisualState extends State<TodayExperienceVisual> {
                         ),
                       )
                     : const SizedBox.shrink(key: ValueKey<String>('no-color')),
+                duration: const Duration(milliseconds: 260),
+                transitionBuilder: (Widget child, Animation<double> anim) {
+                  return SizeTransition(
+                    sizeFactor: anim,
+                    alignment: AlignmentDirectional.topStart,
+                    child: FadeTransition(opacity: anim, child: child),
+                  );
+                },
               ),
             ],
           ),
@@ -1461,6 +1694,96 @@ class _TodayExperienceVisualState extends State<TodayExperienceVisual> {
   // -------------------------------------------------------------------------
 
   Widget _buildNoteSection() {
+    final bool reduced = MediaQuery.disableAnimationsOf(context);
+    final Widget firstChild = InkWell(
+      onTap: () {
+        if (_note != null) _noteController.text = _note!;
+        setState(() => _noteOpen = true);
+      },
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 14),
+        child: Row(
+          children: <Widget>[
+            const Icon(Icons.edit_note_rounded, size: 20, color: _inkSoft),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Text(
+                _note == null
+                    ? 'Write a line for future you'
+                    : 'Add another line',
+                style: _sans(14, color: _inkSoft),
+              ),
+            ),
+            const Icon(Icons.add_rounded, size: 18, color: _inkSoft),
+          ],
+        ),
+      ),
+    );
+    final Widget secondChild = Padding(
+      padding: const EdgeInsets.only(top: 10, bottom: 12),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.end,
+        children: <Widget>[
+          TextField(
+            controller: _noteController,
+            autofocus: true,
+            maxLines: 3,
+            minLines: 2,
+            style: _serif(
+              15,
+              color: _ink,
+              weight: FontWeight.w500,
+              italic: true,
+              height: 1.45,
+            ),
+            decoration: InputDecoration(
+              hintText: 'Whatever you want to remember…',
+              hintStyle: _serif(
+                15,
+                color: _inkSoft.withValues(alpha: 0.6),
+                weight: FontWeight.w400,
+                italic: true,
+              ),
+              border: InputBorder.none,
+              isDense: true,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.end,
+            children: <Widget>[
+              TextButton(
+                onPressed: () => setState(() => _noteOpen = false),
+                style: TextButton.styleFrom(foregroundColor: _inkSoft),
+                child: Text(
+                  'Not now',
+                  style: _sans(13.5, weight: FontWeight.w600),
+                ),
+              ),
+              const SizedBox(width: 6),
+              TextButton(
+                onPressed: _saveNote,
+                style: TextButton.styleFrom(
+                  foregroundColor: Colors.white,
+                  backgroundColor: _terra,
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 10,
+                  ),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                ),
+                child: Text(
+                  'Keep note',
+                  style: _sans(13.5, weight: FontWeight.w700),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: <Widget>[
@@ -1513,111 +1836,17 @@ class _TodayExperienceVisualState extends State<TodayExperienceVisual> {
                     ),
                   ),
                 ),
-              AnimatedCrossFade(
-                duration: const Duration(milliseconds: 220),
-                crossFadeState: _noteOpen
-                    ? CrossFadeState.showSecond
-                    : CrossFadeState.showFirst,
-                firstChild: InkWell(
-                  onTap: () {
-                    if (_note != null) _noteController.text = _note!;
-                    setState(() => _noteOpen = true);
-                  },
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 14),
-                    child: Row(
-                      children: <Widget>[
-                        const Icon(
-                          Icons.edit_note_rounded,
-                          size: 20,
-                          color: _inkSoft,
-                        ),
-                        const SizedBox(width: 10),
-                        Expanded(
-                          child: Text(
-                            _note == null
-                                ? 'Write a line for future you'
-                                : 'Add another line',
-                            style: _sans(14, color: _inkSoft),
-                          ),
-                        ),
-                        const Icon(
-                          Icons.add_rounded,
-                          size: 18,
-                          color: _inkSoft,
-                        ),
-                      ],
-                    ),
-                  ),
+              if (reduced)
+                (_noteOpen ? secondChild : firstChild)
+              else
+                AnimatedCrossFade(
+                  duration: const Duration(milliseconds: 220),
+                  crossFadeState: _noteOpen
+                      ? CrossFadeState.showSecond
+                      : CrossFadeState.showFirst,
+                  firstChild: firstChild,
+                  secondChild: secondChild,
                 ),
-                secondChild: Padding(
-                  padding: const EdgeInsets.only(top: 10, bottom: 12),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.end,
-                    children: <Widget>[
-                      TextField(
-                        controller: _noteController,
-                        autofocus: true,
-                        maxLines: 3,
-                        minLines: 2,
-                        style: _serif(
-                          15,
-                          color: _ink,
-                          weight: FontWeight.w500,
-                          italic: true,
-                          height: 1.45,
-                        ),
-                        decoration: InputDecoration(
-                          hintText: 'Whatever you want to remember…',
-                          hintStyle: _serif(
-                            15,
-                            color: _inkSoft.withValues(alpha: 0.6),
-                            weight: FontWeight.w400,
-                            italic: true,
-                          ),
-                          border: InputBorder.none,
-                          isDense: true,
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.end,
-                        children: <Widget>[
-                          TextButton(
-                            onPressed: () => setState(() => _noteOpen = false),
-                            style: TextButton.styleFrom(
-                              foregroundColor: _inkSoft,
-                            ),
-                            child: Text(
-                              'Not now',
-                              style: _sans(13.5, weight: FontWeight.w600),
-                            ),
-                          ),
-                          const SizedBox(width: 6),
-                          TextButton(
-                            onPressed: _saveNote,
-                            style: TextButton.styleFrom(
-                              foregroundColor: Colors.white,
-                              backgroundColor: _terra,
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 16,
-                                vertical: 10,
-                              ),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(10),
-                              ),
-                            ),
-                            child: Text(
-                              'Keep note',
-                              style: _sans(13.5, weight: FontWeight.w700),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
-                ),
-              ),
             ],
           ),
         ),
@@ -1644,61 +1873,61 @@ class _TodayExperienceVisualState extends State<TodayExperienceVisual> {
   }
 
   Widget _buildAckToast() {
+    final Widget toast = Container(
+      padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
+      decoration: BoxDecoration(
+        color: _ink.withValues(alpha: 0.94),
+        borderRadius: BorderRadius.circular(14),
+        boxShadow: <BoxShadow>[
+          BoxShadow(
+            color: _ink.withValues(alpha: 0.25),
+            blurRadius: 20,
+            offset: const Offset(0, 8),
+          ),
+        ],
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: <Widget>[
+          Container(
+            width: 8,
+            height: 8,
+            decoration: const BoxDecoration(
+              color: _terra,
+              shape: BoxShape.circle,
+            ),
+          ),
+          const SizedBox(width: 10),
+          Flexible(
+            child: Text(
+              _ack ?? '',
+              style: _sans(13.5, color: _paper, weight: FontWeight.w600),
+            ),
+          ),
+        ],
+      ),
+    );
+    final bool reduced = MediaQuery.disableAnimationsOf(context);
     return Positioned(
       left: 0,
       right: 0,
       bottom: 22,
       child: IgnorePointer(
         child: Center(
-          child: AnimatedOpacity(
-            duration: const Duration(milliseconds: 220),
-            opacity: _ack == null ? 0 : 1,
-            child: AnimatedSlide(
-              duration: const Duration(milliseconds: 220),
-              offset: _ack == null ? const Offset(0, 0.4) : Offset.zero,
-              child: Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 18,
-                  vertical: 12,
-                ),
-                decoration: BoxDecoration(
-                  color: _ink.withValues(alpha: 0.94),
-                  borderRadius: BorderRadius.circular(14),
-                  boxShadow: <BoxShadow>[
-                    BoxShadow(
-                      color: _ink.withValues(alpha: 0.25),
-                      blurRadius: 20,
-                      offset: const Offset(0, 8),
+          child: reduced
+              ? Opacity(opacity: _ack == null ? 0 : 1, child: toast)
+              : AnimatedOpacity(
+                  duration: _motion(context, const Duration(milliseconds: 220)),
+                  opacity: _ack == null ? 0 : 1,
+                  child: AnimatedSlide(
+                    duration: _motion(
+                      context,
+                      const Duration(milliseconds: 220),
                     ),
-                  ],
+                    offset: _ack == null ? const Offset(0, 0.4) : Offset.zero,
+                    child: toast,
+                  ),
                 ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: <Widget>[
-                    Container(
-                      width: 8,
-                      height: 8,
-                      decoration: const BoxDecoration(
-                        color: _terra,
-                        shape: BoxShape.circle,
-                      ),
-                    ),
-                    const SizedBox(width: 10),
-                    Flexible(
-                      child: Text(
-                        _ack ?? '',
-                        style: _sans(
-                          13.5,
-                          color: _paper,
-                          weight: FontWeight.w600,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ),
         ),
       ),
     );
@@ -1781,7 +2010,15 @@ class _StatusCard extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 8),
-          Text(title, style: _serif(30, color: Colors.white, height: 1.05)),
+          // Display-type resilience: the hero title keeps its authored serif
+          // voice at every scale, but it is measured and clamped so no word
+          // ever splits mid-glyph and the title never fills the first
+          // viewport on its own. Normal-scale rendering is unchanged.
+          _DisplayTitle(
+            title,
+            style: _serif(30, color: Colors.white, height: 1.05),
+            maxLines: 3,
+          ),
           const SizedBox(height: 12),
           middle,
           const SizedBox(height: 14),
@@ -1805,6 +2042,68 @@ class _StatusCard extends StatelessWidget {
             ],
           ),
         ],
+      ),
+    );
+  }
+}
+
+/// The honest load-failure state. A failed read is never dressed up as a
+/// lifecycle state: this calm paper card says plainly that today's notes
+/// could not be read, reassures that nothing written is lost, and offers a
+/// single quiet retry.
+class _StatusErrorCard extends StatelessWidget {
+  const _StatusErrorCard({super.key, required this.onRetry});
+
+  final VoidCallback onRetry;
+
+  @override
+  Widget build(BuildContext context) {
+    return Semantics(
+      container: true,
+      liveRegion: true,
+      label: "We couldn't read today's notes. Try again.",
+      child: ExcludeSemantics(
+        child: Container(
+          width: double.infinity,
+          decoration: _cardDecoration(),
+          padding: const EdgeInsets.fromLTRB(24, 22, 24, 20),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: <Widget>[
+              Text('A QUIET PAUSE', style: _kicker()),
+              const SizedBox(height: 8),
+              _DisplayTitle(
+                "We couldn’t read today’s notes",
+                style: _serif(26),
+              ),
+              const SizedBox(height: 10),
+              Text(
+                'Nothing you have written is lost — this page simply could '
+                'not reach it just now.',
+                style: _sans(14.5, color: _inkSoft, height: 1.5),
+              ),
+              const SizedBox(height: 16),
+              OutlinedButton(
+                onPressed: onRetry,
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: _terraDeep,
+                  side: const BorderSide(color: _terra, width: 1.3),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 18,
+                    vertical: 12,
+                  ),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(11),
+                  ),
+                ),
+                child: Text(
+                  'Try again',
+                  style: _sans(14, weight: FontWeight.w700),
+                ),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }
@@ -1837,7 +2136,7 @@ class _KnownCycleMiddle extends StatelessWidget {
               : 'One more recorded period start will add a personalized estimate'
         : prediction.isEarlyEstimate
         ? 'Early estimate: next period ${_dateRangeLabel(prediction.predictedMensesStart, prediction.predictedMensesEnd)} · based on 1 recorded cycle'
-        : 'Estimated next period ${_dateRangeLabel(prediction.predictedMensesStart, prediction.predictedMensesEnd)}';
+        : 'Estimated next period ${_dateRangeLabel(prediction.predictedMensesStart, prediction.predictedMensesEnd)} · ${prediction.confidence.label.toLowerCase()} confidence';
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: <Widget>[
@@ -1920,6 +2219,7 @@ class _StatusLoadingCard extends StatefulWidget {
 class _StatusLoadingCardState extends State<_StatusLoadingCard>
     with SingleTickerProviderStateMixin {
   late final AnimationController _controller;
+  bool _reducedMotion = false;
 
   @override
   void initState() {
@@ -1927,7 +2227,21 @@ class _StatusLoadingCardState extends State<_StatusLoadingCard>
     _controller = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 1000),
-    )..repeat(reverse: true);
+    );
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final bool reduced = MediaQuery.disableAnimationsOf(context);
+    _reducedMotion = reduced;
+    if (reduced) {
+      // Reduced motion: no continuous shimmer — the placeholder rests at a
+      // single composed opacity instead.
+      if (_controller.isAnimating) _controller.stop();
+    } else if (!_controller.isAnimating) {
+      _controller.repeat(reverse: true);
+    }
   }
 
   @override
@@ -1949,6 +2263,18 @@ class _StatusLoadingCardState extends State<_StatusLoadingCard>
 
   @override
   Widget build(BuildContext context) {
+    final Widget bars = Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: <Widget>[
+        _bar(96, 10),
+        const SizedBox(height: 16),
+        _bar(210, 26),
+        const SizedBox(height: 16),
+        _bar(150, 12),
+        const SizedBox(height: 8),
+        _bar(230, 12),
+      ],
+    );
     return Container(
       width: double.infinity,
       decoration: BoxDecoration(
@@ -1963,23 +2289,14 @@ class _StatusLoadingCardState extends State<_StatusLoadingCard>
         borderRadius: BorderRadius.circular(20),
       ),
       padding: const EdgeInsets.fromLTRB(24, 26, 24, 24),
-      child: FadeTransition(
-        opacity: Tween<double>(begin: 0.3, end: 0.75).animate(
-          CurvedAnimation(parent: _controller, curve: Curves.easeInOut),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: <Widget>[
-            _bar(96, 10),
-            const SizedBox(height: 16),
-            _bar(210, 26),
-            const SizedBox(height: 16),
-            _bar(150, 12),
-            const SizedBox(height: 8),
-            _bar(230, 12),
-          ],
-        ),
-      ),
+      child: _reducedMotion
+          ? Opacity(opacity: 0.55, child: bars)
+          : FadeTransition(
+              opacity: Tween<double>(begin: 0.3, end: 0.75).animate(
+                CurvedAnimation(parent: _controller, curve: Curves.easeInOut),
+              ),
+              child: bars,
+            ),
     );
   }
 }
@@ -2003,52 +2320,99 @@ class _Chip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final bool reduced = MediaQuery.disableAnimationsOf(context);
+    // The visible chip keeps its exact normal-scale size; only the invisible
+    // hit area grows to meet the minimum accessible touch target. At extreme
+    // text scale the label is allowed to wrap inside the width its parent can
+    // truly offer, so every word remains fully visible instead of overflowing.
     return Semantics(
       button: true,
       selected: selected,
       label: label,
       child: GestureDetector(
+        behavior: HitTestBehavior.opaque,
         onTap: onTap,
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 180),
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-          decoration: BoxDecoration(
-            color: selected ? _terra : _paper,
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(
-              color: selected ? _terra : _hairline,
-              width: selected ? 1.4 : 1,
-            ),
-            boxShadow: selected
-                ? <BoxShadow>[
-                    BoxShadow(
-                      color: _terra.withValues(alpha: 0.28),
-                      blurRadius: 14,
-                      offset: const Offset(0, 6),
+        child: LayoutBuilder(
+          builder: (BuildContext context, BoxConstraints constraints) {
+            double maxWidth = constraints.maxWidth;
+            if (!maxWidth.isFinite) {
+              final double screenWidth = MediaQuery.sizeOf(context).width;
+              maxWidth = screenWidth - 64;
+            }
+            if (maxWidth < _minTouchTarget) maxWidth = _minTouchTarget;
+            final Widget content = Row(
+              mainAxisSize: MainAxisSize.min,
+              children: <Widget>[
+                if (selected) ...<Widget>[
+                  const Icon(
+                    Icons.check_rounded,
+                    size: 15,
+                    color: Colors.white,
+                  ),
+                  const SizedBox(width: 6),
+                ] else if (icon != null) ...<Widget>[
+                  Icon(icon, size: 15, color: _inkSoft),
+                  const SizedBox(width: 5),
+                ],
+                Flexible(
+                  child: Text(
+                    label,
+                    textAlign: TextAlign.center,
+                    style: _sans(
+                      15,
+                      weight: FontWeight.w600,
+                      color: selected ? Colors.white : _ink,
                     ),
-                  ]
-                : null,
-          ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: <Widget>[
-              if (selected) ...<Widget>[
-                const Icon(Icons.check_rounded, size: 15, color: Colors.white),
-                const SizedBox(width: 6),
-              ] else if (icon != null) ...<Widget>[
-                Icon(icon, size: 15, color: _inkSoft),
-                const SizedBox(width: 5),
-              ],
-              Text(
-                label,
-                style: _sans(
-                  15,
-                  weight: FontWeight.w600,
-                  color: selected ? Colors.white : _ink,
+                  ),
                 ),
+              ],
+            );
+            final BoxDecoration decoration = BoxDecoration(
+              color: selected ? _terra : _paper,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(
+                color: selected ? _terra : _hairline,
+                width: selected ? 1.4 : 1,
               ),
-            ],
-          ),
+              boxShadow: selected
+                  ? <BoxShadow>[
+                      BoxShadow(
+                        color: _terra.withValues(alpha: 0.28),
+                        blurRadius: 14,
+                        offset: const Offset(0, 6),
+                      ),
+                    ]
+                  : null,
+            );
+            const EdgeInsets padding = EdgeInsets.symmetric(
+              horizontal: 16,
+              vertical: 10,
+            );
+            final Widget chip = reduced
+                ? Container(
+                    constraints: BoxConstraints(maxWidth: maxWidth),
+                    padding: padding,
+                    decoration: decoration,
+                    child: content,
+                  )
+                : AnimatedContainer(
+                    duration: _motion(
+                      context,
+                      const Duration(milliseconds: 180),
+                    ),
+                    constraints: BoxConstraints(maxWidth: maxWidth),
+                    padding: padding,
+                    decoration: decoration,
+                    child: content,
+                  );
+            return ConstrainedBox(
+              constraints: const BoxConstraints(
+                minWidth: _minTouchTarget,
+                minHeight: _minTouchTarget,
+              ),
+              child: Center(widthFactor: 1, heightFactor: 1, child: chip),
+            );
+          },
         ),
       ),
     );
@@ -2074,6 +2438,44 @@ class _SymptomBrowserSheetState extends State<_SymptomBrowserSheet> {
   @override
   Widget build(BuildContext context) {
     final _SymptomGroup group = widget.groups[_group];
+    final bool reduced = MediaQuery.disableAnimationsOf(context);
+    final Widget hint = Text(
+      '${group.name} — ${group.hint}',
+      key: ValueKey<int>(_group),
+      style: _serif(
+        13,
+        color: _inkSoft,
+        weight: FontWeight.w500,
+        italic: true,
+        height: 1.3,
+      ),
+    );
+    final Widget list = ListView.separated(
+      key: ValueKey<int>(_group),
+      itemCount: group.symptoms.length,
+      separatorBuilder: (_, _) => const Divider(height: 1, color: _hairline),
+      itemBuilder: (BuildContext context, int i) {
+        return InkWell(
+          onTap: () => Navigator.of(context).pop(group.symptoms[i]),
+          borderRadius: BorderRadius.circular(8),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(vertical: 13, horizontal: 4),
+            child: Row(
+              children: <Widget>[
+                Expanded(
+                  child: Text(group.symptoms[i].label, style: _sans(15.5)),
+                ),
+                const Icon(
+                  Icons.chevron_right_rounded,
+                  size: 18,
+                  color: _inkSoft,
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
     return SafeArea(
       child: SizedBox(
         height: MediaQuery.of(context).size.height * 0.68,
@@ -2092,7 +2494,7 @@ class _SymptomBrowserSheetState extends State<_SymptomBrowserSheet> {
               ),
               const SizedBox(height: 14),
               SizedBox(
-                height: 40,
+                height: _minTouchTarget,
                 child: ListView.separated(
                   scrollDirection: Axis.horizontal,
                   itemCount: widget.groups.length,
@@ -2109,62 +2511,27 @@ class _SymptomBrowserSheetState extends State<_SymptomBrowserSheet> {
                 ),
               ),
               const SizedBox(height: 10),
-              AnimatedSwitcher(
-                duration: const Duration(milliseconds: 180),
-                child: Text(
-                  '${group.name} — ${group.hint}',
-                  key: ValueKey<int>(_group),
-                  style: _serif(
-                    13,
-                    color: _inkSoft,
-                    weight: FontWeight.w500,
-                    italic: true,
-                    height: 1.3,
-                  ),
-                ),
-              ),
+              reduced
+                  ? hint
+                  : AnimatedSwitcher(
+                      duration: const Duration(milliseconds: 180),
+                      child: hint,
+                    ),
               const SizedBox(height: 6),
               Expanded(
-                child: AnimatedSwitcher(
-                  duration: const Duration(milliseconds: 200),
-                  transitionBuilder: (Widget child, Animation<double> anim) {
-                    return FadeTransition(opacity: anim, child: child);
-                  },
-                  child: ListView.separated(
-                    key: ValueKey<int>(_group),
-                    itemCount: group.symptoms.length,
-                    separatorBuilder: (_, _) =>
-                        const Divider(height: 1, color: _hairline),
-                    itemBuilder: (BuildContext context, int i) {
-                      return InkWell(
-                        onTap: () =>
-                            Navigator.of(context).pop(group.symptoms[i]),
-                        borderRadius: BorderRadius.circular(8),
-                        child: Padding(
-                          padding: const EdgeInsets.symmetric(
-                            vertical: 13,
-                            horizontal: 4,
-                          ),
-                          child: Row(
-                            children: <Widget>[
-                              Expanded(
-                                child: Text(
-                                  group.symptoms[i].label,
-                                  style: _sans(15.5),
-                                ),
-                              ),
-                              const Icon(
-                                Icons.chevron_right_rounded,
-                                size: 18,
-                                color: _inkSoft,
-                              ),
-                            ],
-                          ),
-                        ),
-                      );
-                    },
-                  ),
-                ),
+                child: reduced
+                    ? list
+                    : AnimatedSwitcher(
+                        duration: const Duration(milliseconds: 200),
+                        transitionBuilder:
+                            (Widget child, Animation<double> anim) {
+                              return FadeTransition(
+                                opacity: anim,
+                                child: child,
+                              );
+                            },
+                        child: list,
+                      ),
               ),
             ],
           ),
@@ -2278,6 +2645,60 @@ class _SeverityChoice extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final bool reduced = MediaQuery.disableAnimationsOf(context);
+    final BoxDecoration decoration = BoxDecoration(
+      color: selected ? _terraTint : Colors.transparent,
+      borderRadius: BorderRadius.circular(12),
+      border: Border.all(
+        color: selected ? _terra : _hairline,
+        width: selected ? 1.4 : 1,
+      ),
+    );
+    const EdgeInsets padding = EdgeInsets.symmetric(
+      horizontal: 14,
+      vertical: 12,
+    );
+    final Widget body = Row(
+      children: <Widget>[
+        SizedBox(
+          width: 34,
+          child: Row(
+            children: <Widget>[
+              for (int p = 0; p < 5; p++)
+                Padding(
+                  padding: const EdgeInsets.only(right: 2.5),
+                  child: Container(
+                    width: 4,
+                    height: 4 + (p * 1.5),
+                    decoration: BoxDecoration(
+                      color: p <= index ? color : _hairline,
+                      borderRadius: BorderRadius.circular(1.5),
+                    ),
+                  ),
+                ),
+            ],
+          ),
+        ),
+        const SizedBox(width: 10),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: <Widget>[
+              Text(
+                name,
+                style: _sans(
+                  15,
+                  weight: FontWeight.w600,
+                  color: selected ? _terraDeep : _ink,
+                ),
+              ),
+              Text(desc, style: _sans(12.5, color: _inkSoft)),
+            ],
+          ),
+        ),
+        if (selected) const Icon(Icons.check_rounded, size: 18, color: _terra),
+      ],
+    );
     return Semantics(
       button: true,
       selected: selected,
@@ -2285,60 +2706,14 @@ class _SeverityChoice extends StatelessWidget {
       child: InkWell(
         onTap: onTap,
         borderRadius: BorderRadius.circular(12),
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 160),
-          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-          decoration: BoxDecoration(
-            color: selected ? _terraTint : Colors.transparent,
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(
-              color: selected ? _terra : _hairline,
-              width: selected ? 1.4 : 1,
-            ),
-          ),
-          child: Row(
-            children: <Widget>[
-              SizedBox(
-                width: 34,
-                child: Row(
-                  children: <Widget>[
-                    for (int p = 0; p < 5; p++)
-                      Padding(
-                        padding: const EdgeInsets.only(right: 2.5),
-                        child: Container(
-                          width: 4,
-                          height: 4 + (p * 1.5),
-                          decoration: BoxDecoration(
-                            color: p <= index ? color : _hairline,
-                            borderRadius: BorderRadius.circular(1.5),
-                          ),
-                        ),
-                      ),
-                  ],
-                ),
+        child: reduced
+            ? Container(padding: padding, decoration: decoration, child: body)
+            : AnimatedContainer(
+                duration: _motion(context, const Duration(milliseconds: 160)),
+                padding: padding,
+                decoration: decoration,
+                child: body,
               ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: <Widget>[
-                    Text(
-                      name,
-                      style: _sans(
-                        15,
-                        weight: FontWeight.w600,
-                        color: selected ? _terraDeep : _ink,
-                      ),
-                    ),
-                    Text(desc, style: _sans(12.5, color: _inkSoft)),
-                  ],
-                ),
-              ),
-              if (selected)
-                const Icon(Icons.check_rounded, size: 18, color: _terra),
-            ],
-          ),
-        ),
       ),
     );
   }
@@ -2397,6 +2772,10 @@ class _SymptomRow extends StatelessWidget {
               icon: const Icon(Icons.close_rounded, size: 18),
               color: _inkSoft,
               visualDensity: VisualDensity.compact,
+              constraints: const BoxConstraints(
+                minWidth: _minTouchTarget,
+                minHeight: _minTouchTarget,
+              ),
             ),
           ],
         ),

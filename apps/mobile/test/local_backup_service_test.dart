@@ -286,6 +286,57 @@ void main() {
       );
     },
   );
+
+  test(
+    'replace preview distinguishes added records and formats epoch-day dates',
+    () {
+      final incoming = _snapshot(
+        createdAt: DateTime.utc(2026, 9, 23),
+        records: [
+          _record('existing', DateTime.utc(2026, 9, 23), {
+            'symptom': 'lowMood',
+            'experiencedDay': 20719,
+          }),
+          _record('missing', DateTime.utc(2026, 9, 23), {
+            'symptom': 'headache',
+            'experiencedDay': 20719,
+          }),
+        ],
+      );
+      final destination = _snapshot(
+        createdAt: DateTime.utc(2026, 9, 23),
+        records: [
+          _record('existing', DateTime.utc(2026, 9, 23), {
+            'symptom': 'lowMood',
+            'experiencedDay': 20719,
+          }),
+        ],
+      );
+
+      final preview = planLocalBackupImport(
+        incoming: incoming,
+        destination: destination,
+        policy: LocalBackupImportPolicy.replace,
+      ).preview.collections.single;
+
+      expect((preview.wouldAdd, preview.wouldReplace), (1, 1));
+      expect(
+        preview.changes.map((change) => change.kind),
+        containsAll(<LocalBackupRecordChangeKind>[
+          LocalBackupRecordChangeKind.add,
+          LocalBackupRecordChangeKind.replace,
+        ]),
+      );
+      expect(
+        preview.changes.map((change) => change.label),
+        everyElement(endsWith('Sep 23')),
+      );
+      expect(
+        preview.changes.map((change) => change.label),
+        everyElement(isNot(contains('Jan 1'))),
+      );
+    },
+  );
 }
 
 LocalBackupSnapshot _snapshot({

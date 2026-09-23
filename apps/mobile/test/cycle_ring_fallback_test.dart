@@ -36,6 +36,14 @@ void main() {
       find.text('Cycle pattern still forming from your recorded dates.'),
       findsOneWidget,
     );
+    expect(
+      find.bySemanticsLabel(
+        'Cycle ring learning. 1 day observed. The cycle pattern is not ready '
+        'from the current recorded dates.',
+      ),
+      findsOneWidget,
+    );
+    expect(find.bySemanticsLabel(RegExp(r'1 days observed')), findsNothing);
     expect(find.textContaining('one more recorded period start'), findsNothing);
   });
 

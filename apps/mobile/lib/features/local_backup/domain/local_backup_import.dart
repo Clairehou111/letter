@@ -352,9 +352,9 @@ String _recordIdOnlyLabel(String collectionName, String id) {
 String _periodLabel(Map<String, Object?> data) {
   final start = _maybeInt(data, 'startDay');
   final end = _maybeInt(data, 'endDay');
-  final startStr = _dayString(start);
+  final startStr = start == null ? '' : _epochDayString(start);
   if (startStr.isEmpty) return 'Period record';
-  final endStr = _dayString(end);
+  final endStr = end == null ? '' : _epochDayString(end);
   if (endStr.isNotEmpty && endStr != startStr) {
     return '$startStr – $endStr';
   }
@@ -405,7 +405,10 @@ String _careReflectionLabel(Map<String, Object?> data) {
 }
 
 String _cycleReflectionLabel(Map<String, Object?> data) {
-  final cycleStartStr = _dayString(_maybeInt(data, 'cycleStartDay'));
+  final cycleStartDay = _maybeInt(data, 'cycleStartDay');
+  final cycleStartStr = cycleStartDay == null
+      ? ''
+      : _epochDayString(cycleStartDay);
   final createdStr = _dayString(_maybeInt(data, 'createdAtMillis'));
   final parts = <String>['Cycle reflection'];
   if (cycleStartStr.isNotEmpty) parts.add(cycleStartStr);
@@ -416,7 +419,10 @@ String _cycleReflectionLabel(Map<String, Object?> data) {
 String _healthRecordLabel(Map<String, Object?> data) {
   final symptom = _maybeString(data, 'symptom');
   final severity = _maybeString(data, 'severity');
-  final experiencedStr = _dayString(_maybeInt(data, 'experiencedDay'));
+  final experiencedDay = _maybeInt(data, 'experiencedDay');
+  final experiencedStr = experiencedDay == null
+      ? ''
+      : _epochDayString(experiencedDay);
   final parts = <String>[];
   if (symptom != null && symptom.isNotEmpty) parts.add(_capitalize(symptom));
   if (severity != null && severity.isNotEmpty) parts.add(severity);

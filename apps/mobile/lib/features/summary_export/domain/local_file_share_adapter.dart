@@ -147,7 +147,7 @@ LocalCsvFile buildCycleAndCareCsv(CycleAndCareSummary summary) {
         '${summaryDateLabel(range.start)} to ${summaryDateLabel(range.end)}',
         '',
         '',
-        'Observed period dates (${range.dayCount} days)',
+        'Observed period dates (${_dayCount(range.dayCount)})',
         '',
         '',
         '',
@@ -259,3 +259,5 @@ String _outcomeLabel(CareOutcome outcome) => switch (outcome) {
   CareOutcome.same => 'Same',
   CareOutcome.worse => 'Worse',
 };
+
+String _dayCount(int count) => '$count ${count == 1 ? 'day' : 'days'}';

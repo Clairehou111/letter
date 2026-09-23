@@ -80,6 +80,18 @@ RenderParagraph _paragraph(WidgetTester tester, String text) {
   return tester.renderObject<RenderParagraph>(find.text(text));
 }
 
+void _expectWordsUnbroken(RenderParagraph paragraph, String text) {
+  for (final match in RegExp(r'\S+').allMatches(text)) {
+    expect(
+      paragraph.getBoxesForSelection(
+        TextSelection(baseOffset: match.start, extentOffset: match.end),
+      ),
+      hasLength(1),
+      reason: 'The word "${match.group(0)}" must not split across lines',
+    );
+  }
+}
+
 void _expectInsideViewport(
   WidgetTester tester,
   Finder finder,
@@ -134,6 +146,53 @@ void main() {
       isEmpty,
       reason: 'Large-text labels must remain complete',
     );
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('maximum accessibility text keeps every Care choice reachable', (
+    tester,
+  ) async {
+    await _pumpLanding(tester, size: const Size(390, 844), textScale: 3.2);
+
+    final question = _paragraph(tester, 'What feels closest\nright now?');
+    expect(
+      question.getBoxesForSelection(
+        const TextSelection(baseOffset: 0, extentOffset: 29),
+      ),
+      hasLength(2),
+      reason: 'The two authored display lines must not split inside words',
+    );
+    _expectWordsUnbroken(question, 'What feels closest\nright now?');
+
+    final scrollable = find.byType(Scrollable).first;
+    final breathe = find.byKey(const Key('care-breathe-entry'));
+    await tester.scrollUntilVisible(breathe, 180, scrollable: scrollable);
+    _expectInsideViewport(tester, breathe, 390);
+    _expectWordsUnbroken(
+      _paragraph(tester, 'Breathe with me'),
+      'Breathe with me',
+    );
+
+    final ellipsized = <String>[];
+    for (final mode in CareMode.values) {
+      final label = find.text(mode.label);
+      await tester.scrollUntilVisible(label, 180, scrollable: scrollable);
+      _expectInsideViewport(tester, label, 390);
+      final paragraph = _paragraph(tester, mode.label);
+      _expectWordsUnbroken(paragraph, mode.label);
+      if (paragraph.didExceedMaxLines) {
+        ellipsized.add(mode.label);
+      }
+    }
+    expect(
+      ellipsized,
+      isEmpty,
+      reason: 'Maximum-text Care doors must remain complete',
+    );
+
+    final exit = find.text('Return to daylight');
+    await tester.scrollUntilVisible(exit, 180, scrollable: scrollable);
+    _expectInsideViewport(tester, exit, 390);
     expect(tester.takeException(), isNull);
   });
 

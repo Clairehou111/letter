@@ -191,17 +191,19 @@ final class TodayCycleRing extends StatelessWidget {
       case _RingVisual.forming:
         final remaining = _formingRemainingStarts;
         if (remaining == null) {
-          return 'Cycle ring learning. ${_formingObservedDays!} days '
+          return 'Cycle ring learning. ${_dayCount(_formingObservedDays!)} '
               'observed. The cycle pattern is not ready from the current '
               'recorded dates.';
         }
         final startsText = remaining == 1
             ? 'one more recorded period start begins the ring'
             : '$remaining more recorded period starts begin the ring';
-        return 'Cycle ring forming. ${_formingObservedDays!} days '
+        return 'Cycle ring forming. ${_dayCount(_formingObservedDays!)} '
             'observed. $startsText.';
     }
   }
+
+  static String _dayCount(int count) => '$count ${count == 1 ? 'day' : 'days'}';
 
   String? get _caption {
     switch (_visual) {

@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:letter_mobile/design_system/letter_theme.dart';
@@ -44,6 +46,15 @@ final class _FailingPreviewRepository
   }
 }
 
+final class _HangingPreviewRepository
+    implements PersonalPatternPreviewRepository {
+  @override
+  Future<bool> hasViewedPreview() => Completer<bool>().future;
+
+  @override
+  Future<void> markPreviewViewed() async {}
+}
+
 Future<void> revealPatternContent(
   WidgetTester tester,
   Finder content, {
@@ -60,6 +71,39 @@ Future<void> revealPatternContent(
 }
 
 void main() {
+  testWidgets('a missing secure-storage reply cannot trap Patterns loading', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: LetterTheme.light,
+        home: EntitlementScope(
+          repository: LocalEntitlementRepository(
+            initial: const EntitlementState(
+              status: EntitlementStatus.freeOrUnknown,
+            ),
+          ),
+          child: PersonalPatternsRoute(
+            source: RepositoryPatternSource(
+              healthRecords: InMemoryHealthRecordRepository(),
+              careMemory: InMemoryCareMemoryRepository(),
+              periods: InMemoryPeriodRepository(),
+            ),
+            previewRepository: _HangingPreviewRepository(),
+          ),
+        ),
+      ),
+    );
+
+    await tester.pump();
+    expect(find.bySemanticsLabel('Loading your patterns'), findsOneWidget);
+    await tester.pump(const Duration(seconds: 2));
+    await tester.pump();
+
+    expect(find.bySemanticsLabel('Loading your patterns'), findsNothing);
+    expect(find.text('Patterns gather quietly over cycles.'), findsOneWidget);
+  });
+
   testWidgets('eligible free user sees one real data-backed preview', (
     tester,
   ) async {

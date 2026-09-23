@@ -1,6 +1,8 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:letter_mobile/experience/today/today_experience_visual_baseline.dart';
 import 'package:letter_mobile/experience/today/today_visual_port.dart';
@@ -59,7 +61,205 @@ final class _DeferredMoodPort implements TodayVisualPort {
   Future<void> openCare() => delegate.openCare();
 }
 
+final class _LoadOnlyPort implements TodayVisualPort {
+  _LoadOnlyPort(this.onLoad);
+
+  final Future<TodayVisualSnapshot> Function() onLoad;
+
+  @override
+  Future<TodayVisualSnapshot> load() => onLoad();
+
+  Never _unsupported() => throw UnsupportedError('write not expected');
+
+  @override
+  Future<TodayVisualSnapshot> saveMood(MomentCheckInState state) =>
+      _unsupported();
+
+  @override
+  Future<TodayVisualSnapshot> startPeriod() => _unsupported();
+
+  @override
+  Future<TodayVisualSnapshot> endOpenPeriodToday() => _unsupported();
+
+  @override
+  Future<TodayVisualSnapshot> setFlow(BleedingFlow? flow) => _unsupported();
+
+  @override
+  Future<TodayVisualSnapshot> setColor(BleedingColor color) => _unsupported();
+
+  @override
+  Future<TodayVisualSnapshot> saveSymptom(
+    SymptomType symptom,
+    SymptomSeverity severity,
+  ) => _unsupported();
+
+  @override
+  Future<TodayVisualSnapshot> removeSymptom(String recordId) => _unsupported();
+
+  @override
+  Future<TodayVisualSnapshot> saveNote(String text) => _unsupported();
+
+  @override
+  Future<void> openCare() => _unsupported();
+}
+
+RepositoryTodayVisualPort _emptyPort() {
+  const today = LocalDate(2026, 8, 15);
+  final now = DateTime(2026, 8, 15, 12);
+  return RepositoryTodayVisualPort(
+    periodRepository: InMemoryPeriodRepository(clock: () => now),
+    checkInRepository: InMemoryMomentCheckInRepository(clock: () => now),
+    healthRecordRepository: InMemoryHealthRecordRepository(clock: () => now),
+    captureNoteStore: InMemoryCaptureNoteStore(),
+    today: () => today,
+    now: () => now,
+    onCycleDataChanged: () {},
+    onOpenCare: () {},
+  );
+}
+
 void main() {
+  testWidgets('maximum accessibility text keeps Today usable', (tester) async {
+    await tester.binding.setSurfaceSize(const Size(390, 844));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+    await tester.pumpWidget(
+      MaterialApp(
+        home: MediaQuery(
+          data: const MediaQueryData(
+            size: Size(390, 844),
+            textScaler: TextScaler.linear(3.2),
+            disableAnimations: true,
+          ),
+          child: TodayExperienceVisual(port: _emptyPort()),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    final title = find.text('Letter Within');
+    expect(title, findsOneWidget);
+    final titleRect = tester.getRect(title);
+    expect(titleRect.left, greaterThanOrEqualTo(0));
+    expect(titleRect.right, lessThanOrEqualTo(390));
+    expect(
+      tester.renderObject<RenderParagraph>(title).getBoxesForSelection(
+        const TextSelection(baseOffset: 0, extentOffset: 13),
+      ),
+      hasLength(1),
+    );
+
+    final hero = find.text('A quiet beginning');
+    expect(hero, findsOneWidget);
+    expect(tester.getRect(hero).top, lessThan(844));
+    expect(
+      tester
+          .renderObject<RenderParagraph>(hero)
+          .getBoxesForSelection(
+            const TextSelection(baseOffset: 0, extentOffset: 17),
+          )
+          .length,
+      lessThanOrEqualTo(3),
+      reason: 'No word in the three-word hero title may split internally',
+    );
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('a failed Today load is not presented as learning', (
+    tester,
+  ) async {
+    final port = _LoadOnlyPort(
+      () async => throw StateError('forced load failure'),
+    );
+    await tester.pumpWidget(
+      MaterialApp(home: TodayExperienceVisual(port: port)),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('We couldn’t read today’s notes'), findsOneWidget);
+    expect(find.text('Try again'), findsOneWidget);
+    expect(find.text('Getting to know you'), findsNothing);
+  });
+
+  testWidgets('reduced motion leaves the loading placeholder still', (
+    tester,
+  ) async {
+    final pending = Completer<TodayVisualSnapshot>();
+    final port = _LoadOnlyPort(() => pending.future);
+    await tester.pumpWidget(
+      MaterialApp(
+        home: MediaQuery(
+          data: const MediaQueryData(disableAnimations: true),
+          child: TodayExperienceVisual(port: port),
+        ),
+      ),
+    );
+    await tester.pump();
+
+    expect(tester.binding.transientCallbackCount, 0);
+    await tester.pumpWidget(const SizedBox.shrink());
+  });
+
+  testWidgets('Today chips keep a 48-point touch target', (tester) async {
+    await tester.pumpWidget(
+      MaterialApp(home: TodayExperienceVisual(port: _emptyPort())),
+    );
+    await tester.pumpAndSettle();
+
+    final goodChip = find
+        .ancestor(of: find.text('Good'), matching: find.byType(GestureDetector))
+        .first;
+    final size = tester.getSize(goodChip);
+    expect(size.width, greaterThanOrEqualTo(48));
+    expect(size.height, greaterThanOrEqualTo(48));
+  });
+
+  testWidgets(
+    'a successful Today save announces and gives restrained haptic feedback',
+    (tester) async {
+      final platformCalls = <MethodCall>[];
+      final messenger =
+          TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger;
+      messenger.setMockMethodCallHandler(SystemChannels.platform, (call) async {
+        platformCalls.add(call);
+        return null;
+      });
+      addTearDown(
+        () => messenger.setMockMethodCallHandler(SystemChannels.platform, null),
+      );
+
+      await tester.pumpWidget(
+        MaterialApp(home: TodayExperienceVisual(port: _emptyPort())),
+      );
+      await tester.pumpAndSettle();
+      tester.takeAnnouncements();
+      final good = find.text('Good');
+      await tester.scrollUntilVisible(
+        good,
+        240,
+        scrollable: find.byType(Scrollable).first,
+      );
+      await tester.tap(good);
+      await tester.pumpAndSettle();
+
+      expect(
+        tester.takeAnnouncements(),
+        contains(isAccessibilityAnnouncement('Mood noted — Good')),
+      );
+      expect(
+        platformCalls,
+        contains(
+          isA<MethodCall>()
+              .having((call) => call.method, 'method', 'HapticFeedback.vibrate')
+              .having(
+                (call) => call.arguments,
+                'arguments',
+                'HapticFeedbackType.selectionClick',
+              ),
+        ),
+      );
+    },
+  );
+
   testWidgets('a difficult mood offers and opens the production Care route', (
     tester,
   ) async {
@@ -294,6 +494,87 @@ void main() {
     expect(records.single.symptom, SymptomType.cramps);
     expect(records.single.severity, SymptomSeverity.moderate);
     expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('empty-history hero reflects a note immediately after save', (
+    tester,
+  ) async {
+    const today = LocalDate(2026, 8, 15);
+    final now = DateTime(2026, 8, 15, 12);
+    final notes = InMemoryCaptureNoteStore();
+    final port = RepositoryTodayVisualPort(
+      periodRepository: InMemoryPeriodRepository(clock: () => now),
+      checkInRepository: InMemoryMomentCheckInRepository(clock: () => now),
+      healthRecordRepository: InMemoryHealthRecordRepository(clock: () => now),
+      captureNoteStore: notes,
+      today: () => today,
+      now: () => now,
+      onCycleDataChanged: () {},
+      onOpenCare: () {},
+    );
+
+    await tester.binding.setSurfaceSize(const Size(390, 844));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+    await tester.pumpWidget(
+      MaterialApp(home: TodayExperienceVisual(port: port)),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.textContaining('No notes yet'), findsOneWidget);
+    final writeNote = find.text('Write a line for future you');
+    await tester.scrollUntilVisible(
+      writeNote,
+      320,
+      scrollable: find.byType(Scrollable).first,
+    );
+    await tester.tap(writeNote);
+    await tester.pumpAndSettle();
+    await tester.enterText(find.byType(TextField), 'A quiet factual note.');
+    await tester.tap(find.text('Keep note'));
+    await tester.pumpAndSettle();
+
+    expect(await notes.getAll(), hasLength(1));
+    expect(find.textContaining('No notes yet'), findsNothing);
+    expect(find.textContaining('Your note is here'), findsOneWidget);
+  });
+
+  testWidgets('formal low-confidence estimate names its confidence', (
+    tester,
+  ) async {
+    const today = LocalDate(2026, 9, 20);
+    final now = DateTime(2026, 9, 20, 12);
+    PeriodRecord period(String id, LocalDate start) => PeriodRecord(
+      id: id,
+      startDate: start,
+      endDate: start.addDays(4),
+      createdAt: now,
+      updatedAt: now,
+    );
+    final port = RepositoryTodayVisualPort(
+      periodRepository: InMemoryPeriodRepository(
+        seed: [
+          period('july', const LocalDate(2026, 7, 9)),
+          period('august', const LocalDate(2026, 8, 2)),
+          period('september', const LocalDate(2026, 9, 9)),
+        ],
+        clock: () => now,
+      ),
+      checkInRepository: InMemoryMomentCheckInRepository(clock: () => now),
+      healthRecordRepository: InMemoryHealthRecordRepository(clock: () => now),
+      captureNoteStore: InMemoryCaptureNoteStore(),
+      today: () => today,
+      now: () => now,
+      onCycleDataChanged: () {},
+      onOpenCare: () {},
+    );
+
+    await tester.pumpWidget(
+      MaterialApp(home: TodayExperienceVisual(port: port)),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.textContaining('Estimated next period'), findsOneWidget);
+    expect(find.textContaining('low confidence'), findsOneWidget);
   });
 
   testWidgets('ending a same-day period never offers an overlapping start', (

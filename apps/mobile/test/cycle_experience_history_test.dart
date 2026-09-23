@@ -23,6 +23,35 @@ PeriodRecord _period(String id, int month, int day) {
 }
 
 void main() {
+  testWidgets('one-day period uses singular duration copy', (tester) async {
+    const today = LocalDate(2026, 7, 15);
+    final period = PeriodRecord(
+      id: 'one-day',
+      startDate: today,
+      endDate: today,
+      createdAt: DateTime.utc(2026, 7, 15),
+      updatedAt: DateTime.utc(2026, 7, 15),
+    );
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: CycleExperience(
+          periodRepository: InMemoryPeriodRepository(seed: [period]),
+          healthRecordRepository: InMemoryHealthRecordRepository(),
+          careMemoryRepository: InMemoryCareMemoryRepository(),
+          onCycleDataChanged: () {},
+          now: DateTime(2026, 7, 15, 12),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Current cycle'));
+    await tester.pumpAndSettle();
+
+    expect(find.textContaining('1 period day'), findsOneWidget);
+    expect(find.textContaining('1 period days'), findsNothing);
+  });
+
   testWidgets('Cycle derives today from the local date of a UTC instant', (
     tester,
   ) async {

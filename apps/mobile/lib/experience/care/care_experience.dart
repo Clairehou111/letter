@@ -1,6 +1,7 @@
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import '../../features/care/domain/care_memory.dart';
 import '../../features/care/domain/care_memory_repository.dart';
@@ -74,6 +75,14 @@ enum CareEntrySource { tab, todayDoorway, checkInAcknowledgment }
 ///    is the only daylight route out of the completion stage.
 ///  * **Safety.** The deterministic [CareSafetyRoute] is reachable from a
 ///    quiet, persistent line on every Care surface this experience renders.
+///  * **Text-scale resilience.** The landing chrome is measured before it
+///    is composed; when the footer (safety line + daylight pill) would
+///    claim more than a fraction of the viewport, it joins the scroll flow
+///    with the content instead of pinning — so at extreme text scale the
+///    question is never clipped mid-glyph and every door stays reachable.
+///    The display question itself is fitted per authored line, and every
+///    door headline is fitted per word ([_WholeWordHeadline]), so no word
+///    ever splits internally at any scale.
 ///
 /// Entitlement is structurally absent here on purpose: acute care and
 /// safety are never gated, and no locked premium surface ever interrupts
@@ -451,21 +460,26 @@ class _CareExperienceState extends State<CareExperience>
 
     return Theme(
       data: ExperienceFoundation.careTheme(),
-      child: Scaffold(
-        backgroundColor: ExperienceColors.careSkyBottom,
-        body: AnimatedSwitcher(
-          duration: duration,
-          switchInCurve: Curves.easeOut,
-          switchOutCurve: Curves.easeIn,
-          layoutBuilder: (currentChild, previousChildren) {
-            return Stack(
-              fit: StackFit.expand,
-              children: <Widget>[...previousChildren, ?currentChild],
-            );
-          },
-          transitionBuilder: (child, animation) =>
-              _crossingTransition(child, animation, fullMotion),
-          child: _stageBody(motion),
+      // The dark plum world must carry light status-bar content so the
+      // clock and indicators stay legible against the backdrop.
+      child: AnnotatedRegion<SystemUiOverlayStyle>(
+        value: SystemUiOverlayStyle.light,
+        child: Scaffold(
+          backgroundColor: ExperienceColors.careSkyBottom,
+          body: AnimatedSwitcher(
+            duration: duration,
+            switchInCurve: Curves.easeOut,
+            switchOutCurve: Curves.easeIn,
+            layoutBuilder: (currentChild, previousChildren) {
+              return Stack(
+                fit: StackFit.expand,
+                children: <Widget>[...previousChildren, ?currentChild],
+              );
+            },
+            transitionBuilder: (child, animation) =>
+                _crossingTransition(child, animation, fullMotion),
+            child: _stageBody(motion),
+          ),
         ),
       ),
     );
@@ -596,6 +610,59 @@ class _CareExperienceState extends State<CareExperience>
     return height;
   }
 
+  /// Measures the real height of the landing footer chrome — the safety
+  /// line and the daylight pill — at the current text scale and width.
+  ///
+  /// This is the measure-then-compose discipline extended to the whole
+  /// landing: when the footer would claim more than
+  /// [_LandingMetrics.footerViewportFraction] of the viewport, pinning it
+  /// would shrink the content to a slit and clip the question mid-glyph.
+  /// In that case the footer joins the scroll flow with the content
+  /// instead, so the question, all five doors, and the breathing entry
+  /// stay reachable at any text scale.
+  double _measureLandingFooterHeight(double maxWidth) {
+    final textDirection = Directionality.of(context);
+    final textScaler = MediaQuery.textScalerOf(context);
+
+    double measureText(String text, TextStyle style, double width) {
+      final painter = TextPainter(
+        text: TextSpan(text: text, style: style),
+        textDirection: textDirection,
+        textScaler: textScaler,
+      )..layout(maxWidth: width);
+      return painter.height;
+    }
+
+    // The safety line: caption text centered within a min-touch-target row.
+    final safetyTextHeight = measureText(
+      CareSceneFoundation.defaultSafetyLine,
+      ExperienceType.caption(ExperienceColors.careInkSoft),
+      math.max(0.0, maxWidth - ExperienceSpacing.sm * 2 - 14 - 8),
+    );
+    final safetyHeight = math.max(
+      ExperienceSpacing.minTouchTarget,
+      safetyTextHeight,
+    );
+
+    // The daylight pill: label text padded vertically inside a
+    // min-touch-target body.
+    final pillTextHeight = measureText(
+      'Return to daylight',
+      ExperienceType.label(ExperienceColors.careSkyBottom),
+      math.max(0.0, maxWidth - ExperienceSpacing.lg * 2),
+    );
+    final pillHeight = math.max(
+      ExperienceSpacing.minTouchTarget,
+      pillTextHeight + ExperienceSpacing.sm * 2,
+    );
+
+    // Frame gap above the footer + the gap between the two chrome pieces.
+    return ExperienceSpacing.xs +
+        safetyHeight +
+        ExperienceSpacing.xs +
+        pillHeight;
+  }
+
   /// Measures the compact door grid against its real tile widths before it
   /// is composed. Returns one required height per row when every door can
   /// render its full label — the mode doors wrap to at most three lines,
@@ -695,10 +762,45 @@ class _CareExperienceState extends State<CareExperience>
             final useGrid =
                 wide || (constraints.maxWidth >= 352 && textScale <= 1.3);
 
+            // Measure the footer chrome before composing. When it would
+            // claim more than a fraction of the viewport, pinning it would
+            // clip the question and bury the doors — so the footer joins
+            // the scroll flow with the content instead. Exit stays visible
+            // within one scroll, never trapped off-screen by a pin.
+            final contentWidth = math.min(
+              constraints.maxWidth - ExperienceSpacing.screenMargin * 2,
+              maxContentWidth,
+            );
+            final footerHeight = _measureLandingFooterHeight(contentWidth);
+            final footerScrolls =
+                footerHeight >
+                constraints.maxHeight * _LandingMetrics.footerViewportFraction;
+
+            Widget footer() {
+              return Center(
+                child: ConstrainedBox(
+                  constraints: BoxConstraints(maxWidth: maxContentWidth),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: <Widget>[
+                      _LandingSafetyLine(onTap: _openSafety),
+                      const SizedBox(height: ExperienceSpacing.xs),
+                      _LightPill(
+                        label: 'Return to daylight',
+                        semanticsLabel:
+                            'Return to daylight. Exit is always available.',
+                        onPressed: _leaveToDaylight,
+                      ),
+                    ],
+                  ),
+                ),
+              );
+            }
+
             // Single-column: breathing leads the list as the fast path,
             // then the five doors at reading width. Rows grow with their
             // labels — every mode's own words render in full.
-            Widget singleColumnContent() {
+            Widget singleColumnContent({bool includeFooter = false}) {
               final doors = <Widget>[
                 for (final mode in CareMode.values)
                   _ModeDoor(
@@ -729,32 +831,22 @@ class _CareExperienceState extends State<CareExperience>
                   choices,
                   const SizedBox(height: _LandingMetrics.doorGap),
                   _EverydayCareCard(onTap: _openToolkit),
+                  if (includeFooter) ...<Widget>[
+                    const SizedBox(height: ExperienceSpacing.md),
+                    footer(),
+                  ],
                 ],
               );
             }
 
-            Widget footer() {
-              return Center(
-                child: ConstrainedBox(
-                  constraints: BoxConstraints(maxWidth: maxContentWidth),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: <Widget>[
-                      _LandingSafetyLine(onTap: _openSafety),
-                      const SizedBox(height: ExperienceSpacing.xs),
-                      _LightPill(
-                        label: 'Return to daylight',
-                        semanticsLabel:
-                            'Return to daylight. Exit is always available.',
-                        onPressed: _leaveToDaylight,
-                      ),
-                    ],
-                  ),
-                ),
-              );
-            }
-
             if (!useGrid) {
+              if (footerScrolls) {
+                return _landingFrame(
+                  maxContentWidth: maxContentWidth,
+                  content: singleColumnContent(includeFooter: true),
+                  footer: null,
+                );
+              }
               return _landingFrame(
                 maxContentWidth: maxContentWidth,
                 content: singleColumnContent(),
@@ -793,9 +885,13 @@ class _CareExperienceState extends State<CareExperience>
                     ),
                     const SizedBox(height: _LandingMetrics.doorGap),
                     _EverydayCareCard(onTap: _openToolkit),
+                    if (footerScrolls) ...<Widget>[
+                      const SizedBox(height: ExperienceSpacing.md),
+                      footer(),
+                    ],
                   ],
                 ),
-                footer: footer(),
+                footer: footerScrolls ? null : footer(),
               );
             }
 
@@ -806,6 +902,19 @@ class _CareExperienceState extends State<CareExperience>
             // longer label is given room rather than an ellipsis. When the
             // space genuinely cannot hold them (very short viewports), the
             // same composition scrolls with complete rows.
+            //
+            // When the measured footer would outgrow its share of the
+            // viewport, the fit-above-the-footer premise no longer holds;
+            // the landing takes the roomier single-column rows with the
+            // chrome scrolling beneath the content instead.
+            if (footerScrolls) {
+              return _landingFrame(
+                maxContentWidth: maxContentWidth,
+                content: singleColumnContent(includeFooter: true),
+                footer: null,
+              );
+            }
+
             final compactDoors = <Widget>[
               for (final mode in CareMode.values)
                 _CompactModeDoor(
@@ -890,7 +999,7 @@ class _CareExperienceState extends State<CareExperience>
   Widget _landingFrame({
     required double maxContentWidth,
     required Widget content,
-    required Widget footer,
+    required Widget? footer,
   }) {
     return Padding(
       padding: const EdgeInsets.fromLTRB(
@@ -911,8 +1020,10 @@ class _CareExperienceState extends State<CareExperience>
               ),
             ),
           ),
-          const SizedBox(height: ExperienceSpacing.xs),
-          footer,
+          if (footer != null) ...<Widget>[
+            const SizedBox(height: ExperienceSpacing.xs),
+            footer,
+          ],
         ],
       ),
     );
@@ -1077,6 +1188,9 @@ class _CareExperienceState extends State<CareExperience>
           ),
           child: FocusTraversalGroup(
             policy: OrderedTraversalPolicy(),
+            // Traversal follows visual order: headline, support line,
+            // Continue, the optional check-in exit, then the safety line
+            // that sits above the "Leave it here" pill it precedes.
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: <Widget>[
@@ -1127,12 +1241,12 @@ class _CareExperienceState extends State<CareExperience>
                   ),
                 const Spacer(),
                 FocusTraversalOrder(
-                  order: const NumericFocusOrder(6),
+                  order: const NumericFocusOrder(5),
                   child: _LandingSafetyLine(onTap: _openSafety),
                 ),
                 const SizedBox(height: ExperienceSpacing.sm),
                 FocusTraversalOrder(
-                  order: const NumericFocusOrder(5),
+                  order: const NumericFocusOrder(6),
                   child: _LightPill(
                     label: 'Leave it here',
                     semanticsLabel:
@@ -1212,6 +1326,12 @@ abstract final class _LandingMetrics {
   /// Estimated height of the everyday-care row, for first-viewport fitting.
   static const double cardEstimate = 60;
 
+  /// The share of the viewport the measured footer chrome may claim while
+  /// remaining pinned. Above this fraction the footer joins the scroll
+  /// flow with the content, so the question and the doors are never
+  /// squeezed into a slit at extreme text scale.
+  static const double footerViewportFraction = 0.30;
+
   /// Aubergine door fill — lifted just enough off the plum backdrop that
   /// the six doors read as one distinct set.
   static const Color doorFill = Color(0xFF241A2A);
@@ -1219,6 +1339,70 @@ abstract final class _LandingMetrics {
   /// One controlled acid editorial accent: the fast-path marker and the
   /// small rule beneath the question. Never a fill, never a glow.
   static const Color fastPath = Color(0xFFD9FF63);
+}
+
+/// A door headline that never splits a word at extreme text scale.
+///
+/// At platform text scales up to 1.3 this renders the untouched ambient
+/// headline — the normal-scale composition stays pixel-identical. Above
+/// that threshold the headline alone is eased down just enough for its
+/// longest word to fit the real available width on a single visual line,
+/// so wrapping can only ever happen between words: every word keeps one
+/// whole text box, the full label renders with no ellipsis, and the door
+/// row grows to hold it. The text, family, weight, and color are
+/// unchanged, and body, descriptor, and caption text on the door keep the
+/// ambient scale — this is a headline-label-specific fit, never a global
+/// cap.
+class _WholeWordHeadline extends StatelessWidget {
+  const _WholeWordHeadline(this.text);
+
+  final String text;
+
+  @override
+  Widget build(BuildContext context) {
+    final style = ExperienceType.headline(ExperienceColors.careInk);
+    final scaler = MediaQuery.textScalerOf(context);
+    if (scaler.scale(1.0) <= 1.3) {
+      return Text(text, style: style);
+    }
+    // The fully scaled headline size — identical to default rendering.
+    final baseSize = scaler.scale(style.fontSize ?? 17);
+
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        var fittedSize = baseSize;
+        final maxWidth = constraints.maxWidth;
+        if (maxWidth.isFinite && maxWidth > 1) {
+          final textDirection = Directionality.of(context);
+          var widest = 0.0;
+          for (final word in text.split(RegExp(r'\s+'))) {
+            if (word.isEmpty) continue;
+            final painter = TextPainter(
+              text: TextSpan(
+                text: word,
+                style: style.copyWith(fontSize: fittedSize),
+              ),
+              textDirection: textDirection,
+              textScaler: TextScaler.noScaling,
+              maxLines: 1,
+            )..layout();
+            if (painter.width > widest) widest = painter.width;
+          }
+          // The 1 px guard absorbs sub-pixel rounding so the paragraph can
+          // never wrap a word onto a second visual line.
+          final allowed = maxWidth - 1;
+          if (widest > allowed && widest > 0) {
+            fittedSize = math.max(1.0, fittedSize * (allowed / widest));
+          }
+        }
+        return Text(
+          text,
+          style: style.copyWith(fontSize: fittedSize),
+          textScaler: TextScaler.noScaling,
+        );
+      },
+    );
+  }
 }
 
 /// The landing header: a small held ember and the question, leading. No long
@@ -1247,13 +1431,7 @@ class _LandingHeader extends StatelessWidget {
           ],
         ),
         const SizedBox(height: 8),
-        Semantics(
-          header: true,
-          child: Text(
-            'What feels closest\nright now?',
-            style: ExperienceType.display(ExperienceColors.careInk),
-          ),
-        ),
+        Semantics(header: true, child: const _LandingQuestion()),
         const SizedBox(height: 8),
         // The single acid mark on this surface: a short editorial rule
         // anchoring the question. Static, decorative.
@@ -1280,6 +1458,70 @@ class _LandingHeader extends StatelessWidget {
           style: ExperienceType.bodySmall(ExperienceColors.careInkSoft),
         ),
       ],
+    );
+  }
+}
+
+/// The landing question, fitted as one display block. The two authored
+/// lines — "What feels closest" / "right now?" — are kept whole at every
+/// text scale: each line is measured against the real available width
+/// before paint, and the display size alone is eased down just enough for
+/// the longer line to fit on a single rendered line, so the paragraph
+/// always computes exactly the two authored lines and no word ever splits
+/// mid-glyph. At normal scale nothing changes — the platform text scale is
+/// honored in full. This is a display-title-specific fit; body text,
+/// controls, and door labels keep the ambient scale untouched.
+class _LandingQuestion extends StatelessWidget {
+  const _LandingQuestion();
+
+  static const String _text = 'What feels closest\nright now?';
+  static const List<String> _lines = <String>[
+    'What feels closest',
+    'right now?',
+  ];
+
+  @override
+  Widget build(BuildContext context) {
+    final baseStyle = ExperienceType.display(ExperienceColors.careInk);
+    final scaler = MediaQuery.textScalerOf(context);
+    if (scaler.scale(1.0) <= 1.3) {
+      return Text(_text, style: baseStyle);
+    }
+    // The fully scaled display size — identical to default rendering.
+    final baseSize = scaler.scale(baseStyle.fontSize ?? 40);
+
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        var fittedSize = baseSize;
+        final maxWidth = constraints.maxWidth;
+        if (maxWidth.isFinite && maxWidth > 1) {
+          final textDirection = Directionality.of(context);
+          var widest = 0.0;
+          for (final line in _lines) {
+            final painter = TextPainter(
+              text: TextSpan(
+                text: line,
+                style: baseStyle.copyWith(fontSize: fittedSize),
+              ),
+              textDirection: textDirection,
+              textScaler: TextScaler.noScaling,
+              maxLines: 1,
+            )..layout();
+            if (painter.width > widest) widest = painter.width;
+          }
+          // The 1 px guard absorbs sub-pixel rounding so the paragraph can
+          // never wrap either authored line into a third rendered line.
+          final allowed = maxWidth - 1;
+          if (widest > allowed && widest > 0) {
+            fittedSize = math.max(1.0, fittedSize * (allowed / widest));
+          }
+        }
+        return Text(
+          _text,
+          style: baseStyle.copyWith(fontSize: fittedSize),
+          textScaler: TextScaler.noScaling,
+        );
+      },
     );
   }
 }
@@ -1380,7 +1622,9 @@ class _WideDoorGrid extends StatelessWidget {
 /// its scene. [stacked] renders the compact vertical door used in the
 /// wide grid; the horizontal row is the roomier single-column fallback for
 /// narrow widths and large text. The label always wraps in full — a door
-/// that cannot say its own name is no door at all.
+/// that cannot say its own name is no door at all — and at extreme text
+/// scale [_WholeWordHeadline] keeps every word of that name on one whole
+/// visual line.
 class _ModeDoor extends StatelessWidget {
   const _ModeDoor({
     required this.mode,
@@ -1416,10 +1660,7 @@ class _ModeDoor extends StatelessWidget {
               ),
               _ModePreview(mode: mode),
               const SizedBox(height: 10),
-              Text(
-                mode.label,
-                style: ExperienceType.headline(ExperienceColors.careInk),
-              ),
+              _WholeWordHeadline(mode.label),
             ],
           )
         : Row(
@@ -1431,10 +1672,7 @@ class _ModeDoor extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: <Widget>[
-                    Text(
-                      mode.label,
-                      style: ExperienceType.headline(ExperienceColors.careInk),
-                    ),
+                    _WholeWordHeadline(mode.label),
                     const SizedBox(height: ExperienceSpacing.xs),
                     Text(
                       descriptor,
@@ -1568,7 +1806,9 @@ class _CompactModeDoor extends StatelessWidget {
 /// aubergine door body as the others, set apart by a warm ember edge, the
 /// one soft glow permitted on this surface, and the small acid fast-path
 /// marker. [stacked] is the wide-grid vertical variant; [compact] is the
-/// bounded phone-grid variant; the default is the single-column row.
+/// bounded phone-grid variant; the default is the single-column row. In
+/// the unbounded variants the label renders through [_WholeWordHeadline],
+/// so "Breathe with me" keeps every word whole at any text scale.
 class _BreathingDoor extends StatelessWidget {
   const _BreathingDoor({
     this.stacked = false,
@@ -1711,10 +1951,7 @@ class _BreathingDoor extends StatelessWidget {
           ),
           _iconWell(44),
           const SizedBox(height: 10),
-          Text(
-            _label,
-            style: ExperienceType.headline(ExperienceColors.careInk),
-          ),
+          const _WholeWordHeadline(_label),
           const SizedBox(height: ExperienceSpacing.xs),
           _fastPathLine,
         ],
@@ -1729,10 +1966,7 @@ class _BreathingDoor extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: <Widget>[
-                Text(
-                  _label,
-                  style: ExperienceType.headline(ExperienceColors.careInk),
-                ),
+                const _WholeWordHeadline(_label),
                 const SizedBox(height: ExperienceSpacing.xs),
                 _fastPathLine,
               ],

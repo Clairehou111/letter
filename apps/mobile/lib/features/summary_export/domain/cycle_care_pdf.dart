@@ -52,7 +52,7 @@ Future<LocalPdfFile> buildCycleAndCarePdf({
         pw.Text(
           '${summary.range.label} - ${matrix.mappedObservations} of '
           '${matrix.totalObservations} confirmed ratings mapped - '
-          '${matrix.cyclesCovered} cycles with mapped symptom ratings',
+          '${mappedCycleCountLabel(matrix.cyclesCovered)}',
           style: bodyStyle,
         ),
         pw.SizedBox(height: 2),
@@ -145,6 +145,9 @@ Future<LocalPdfFile> buildCycleAndCarePdf({
   );
 }
 
+String mappedCycleCountLabel(int count) =>
+    '$count ${count == 1 ? 'cycle' : 'cycles'} with mapped symptom ratings';
+
 pw.Widget _notice(String text) => pw.Container(
   padding: const pw.EdgeInsets.all(8),
   decoration: pw.BoxDecoration(
@@ -203,7 +206,7 @@ pw.Widget _periodTable(CycleAndCareSummary summary, pw.TextStyle style) {
       [
         'Observed period',
         '${summaryDateLabel(range.start)} to ${summaryDateLabel(range.end)}',
-        '${range.dayCount} days',
+        _dayCount(range.dayCount),
       ],
     for (final prediction in summary.predictions)
       [
@@ -290,6 +293,8 @@ String _beforePeriodLabel(int? days) {
   final count = days.abs();
   return '$count day${count == 1 ? '' : 's'} before';
 }
+
+String _dayCount(int count) => '$count ${count == 1 ? 'day' : 'days'}';
 
 pw.Widget _careTable(CycleAndCareSummary summary, pw.TextStyle style) {
   final rows = [

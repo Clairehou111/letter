@@ -462,7 +462,7 @@ class _CycleExperienceState extends State<CycleExperience> {
               dateLabel: summaryDateLabel(period.startDate),
               details: <String>[
                 if (period.durationDays != null)
-                  '${period.durationDays} days recorded'
+                  '${_dayCount(period.durationDays!)} recorded'
                 else
                   'Bleeding in progress',
                 if (interval != null)
@@ -917,7 +917,7 @@ class _AllPeriodsSheet extends StatelessWidget {
                               '${summaryDateLabel(period.endDate!)}';
                     final detail = period.isOpen
                         ? 'Period in progress'
-                        : '${period.durationDays} days recorded';
+                        : '${_dayCount(period.durationDays!)} recorded';
                     return Material(
                       color: ExperienceColors.surface,
                       borderRadius: ExperienceRadius.chipRadius,
@@ -3101,9 +3101,9 @@ class _CycleDetailSheetState extends State<_CycleDetailSheet> {
           Text(
             widget.isCurrentCycle
                 ? '$range · day ${widget.currentCycleDay} of your current cycle'
-                      '${period.durationDays != null ? ' · ${period.durationDays} period days' : ' · bleeding in progress'}'
+                      '${period.durationDays != null ? ' · ${_periodDayCount(period.durationDays!)}' : ' · bleeding in progress'}'
                 : '$range · ${widget.cycle.cycleLengthDays}-day cycle'
-                      '${period.durationDays != null ? ' · ${period.durationDays} period days' : ''}',
+                      '${period.durationDays != null ? ' · ${_periodDayCount(period.durationDays!)}' : ''}',
             style: ExperienceType.bodySmall(ExperienceColors.inkSoft),
           ),
           const SizedBox(height: ExperienceSpacing.sm),
@@ -3292,6 +3292,11 @@ class _CycleDetailSheetState extends State<_CycleDetailSheet> {
     );
   }
 }
+
+String _dayCount(int count) => '$count ${count == 1 ? 'day' : 'days'}';
+
+String _periodDayCount(int count) =>
+    '$count period ${count == 1 ? 'day' : 'days'}';
 
 class _ReflectionField extends StatelessWidget {
   const _ReflectionField({required this.controller, required this.label});

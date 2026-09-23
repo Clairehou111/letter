@@ -6,6 +6,7 @@ import 'package:letter_mobile/features/care/domain/care_mode.dart';
 import 'package:letter_mobile/features/check_in/domain/moment_check_in.dart';
 import 'package:letter_mobile/features/cycle/domain/local_date.dart';
 import 'package:letter_mobile/features/health_records/domain/health_record.dart';
+import 'package:letter_mobile/features/summary_export/domain/cycle_care_pdf.dart';
 import 'package:letter_mobile/features/summary_export/domain/cycle_care_summary.dart';
 import 'package:letter_mobile/features/summary_export/domain/local_file_share_adapter.dart';
 import 'package:letter_mobile/features/summary_export/presentation/twin_matrix_summary_adapter.dart';
@@ -161,6 +162,30 @@ void main() {
       expect(text, isNot(contains('A quiet room helped.')));
     },
   );
+
+  test('uses singular day grammar for a one-day observed period', () {
+    final summary = buildCycleAndCareSummary(
+      input: const SummaryExportInput(
+        periodDays: [SummaryPeriodDay(LocalDate(2026, 7, 1))],
+        predictions: [],
+        healthRecords: [],
+        checkIns: [],
+        careRecords: [],
+        notes: [],
+      ),
+      range: range,
+      selectedNoteIds: const {},
+    );
+    final text = utf8.decode(buildCycleAndCareCsv(summary).bytes);
+
+    expect(text, contains('Observed period dates (1 day)'));
+    expect(text, isNot(contains('1 days')));
+  });
+
+  test('uses singular cycle grammar for one mapped cycle', () {
+    expect(mappedCycleCountLabel(1), '1 cycle with mapped symptom ratings');
+    expect(mappedCycleCountLabel(2), '2 cycles with mapped symptom ratings');
+  });
 
   test('keeps derived matrix cells out of the CSV sidecar', () {
     final summary = buildCycleAndCareSummary(

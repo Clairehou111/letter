@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 
 import '../../../experience/plus/plus_experience.dart';
@@ -40,8 +42,11 @@ class PersonalPatternsRoute extends StatefulWidget {
 }
 
 class _PersonalPatternsRouteState extends State<PersonalPatternsRoute> {
+  static const Duration _previewReadTimeout = Duration(seconds: 2);
+
   late final PersonalPatternsController _controller;
   late final PersonalPatternPreviewRepository _previewRepository;
+  Timer? _previewReadTimer;
   bool? _previewViewed;
   bool _markingPreview = false;
 
@@ -65,11 +70,26 @@ class _PersonalPatternsRouteState extends State<PersonalPatternsRoute> {
   }
 
   Future<void> _loadPreviewState() async {
+    _previewReadTimer?.cancel();
+    _previewReadTimer = Timer(_previewReadTimeout, () {
+      if (mounted && _previewViewed == null) {
+        setState(() => _previewViewed = true);
+      }
+    });
     try {
       final viewed = await _previewRepository.hasViewedPreview();
-      if (mounted) setState(() => _previewViewed = viewed);
+      if (!mounted || _previewViewed != null) return;
+      _previewReadTimer?.cancel();
+      setState(() => _previewViewed = viewed);
     } on Object {
-      if (mounted) setState(() => _previewViewed = true);
+      // The preview flag is an optional acquisition preference, not health
+      // data. A simulator Keychain or platform channel can fail by never
+      // replying, so bound the read as well as handling explicit errors.
+      // Falling back to viewed preserves the existing conservative policy:
+      // never block Patterns and never repeat a preview unexpectedly.
+      if (!mounted || _previewViewed != null) return;
+      _previewReadTimer?.cancel();
+      setState(() => _previewViewed = true);
     }
   }
 
@@ -89,6 +109,7 @@ class _PersonalPatternsRouteState extends State<PersonalPatternsRoute> {
 
   @override
   void dispose() {
+    _previewReadTimer?.cancel();
     _controller.dispose();
     super.dispose();
   }

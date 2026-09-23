@@ -11,4 +11,10 @@ void main() {
     expect(name, 'letter-backup-2026-08-04-18-49-25-123.letter');
     expect(name, isNot(contains('health')));
   });
+
+  test('backup picker filter supports iOS and extension-based platforms', () {
+    expect(localBackupFileTypeGroup.extensions, ['letter']);
+    expect(localBackupFileTypeGroup.mimeTypes, ['application/octet-stream']);
+    expect(localBackupFileTypeGroup.uniformTypeIdentifiers, ['public.data']);
+  });
 }
