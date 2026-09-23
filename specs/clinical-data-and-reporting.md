@@ -58,8 +58,9 @@ symptom was`.
 
 ### Layer 2: Symptom Candidate
 
-Deterministic rules or optional AI may propose fields from the user's choices,
-text, or voice:
+Deterministic on-device rules may match fields from the user's choices, text,
+or on-device transcription. No AI reads or interprets health records or their
+text. Candidate matches are suggestions for the user to review:
 
 ```text
 selected Shatter
@@ -198,8 +199,8 @@ Doctor Mode where its distinct purpose is explicit.
 - sleep
 - nothing I want to record
 
-The user then rates selected impact directly. An AI suggestion based on text
-must still be confirmed.
+The user then rates selected impact directly. A deterministic text match can
+only surface a candidate; the user must confirm any clinical field.
 
 ### Screen 4: Reconcile Other Signals
 
@@ -275,7 +276,7 @@ sealed_draft_id?
 id
 care_event_id?
 symptom_code
-source: mode | text | voice | rule | llm
+source: mode | text | voice | rule
 evidence_reference
 status: unresolved | accepted | edited | rejected
 ```
@@ -417,26 +418,17 @@ Every reportable value has one visible source:
 - `R` later user recall
 - `E` factual Care event without a symptom score
 
-AI-generated candidates have no report code because they are not exported
+Rule-matched candidates have no report code because they are not exported
 until the user confirms them.
 
-## LLM Boundary
+## No-AI Boundary
 
-LLM may:
-
-- extract candidate symptoms from user-selected text
-- identify a possible functional-impact phrase
-- organize user-confirmed records
-- draft neutral narrative from selected structured data
-
-LLM must not:
-
-- assign severity from language intensity or interaction behavior
-- fill missing days
-- turn medication mentions into structured history or advice
-- infer treatment effectiveness
-- diagnose PMS or PMDD
-- convert an unresolved candidate into a report fact
+No AI may read, rewrite, summarize, suggest from, or interpret health records,
+including free-text notes, transcripts, or selected excerpts. Candidate matching
+uses deterministic on-device rules only. Predictions, pattern counts, and
+reports are computed deterministically on-device from local records. Reports
+contain user-confirmed values and transparent factual summaries; they do not
+generate narrative from health records.
 
 ## Validation
 

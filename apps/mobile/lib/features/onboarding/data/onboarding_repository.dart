@@ -49,7 +49,6 @@ abstract final class OnboardingProfileCodec {
       ..sort();
     return jsonEncode({
       'version': OnboardingProfile.schemaVersion,
-      'cloud_tools': profile.cloudToolsPreference.storageId,
       'goals': goals,
     });
   }
@@ -74,11 +73,6 @@ abstract final class OnboardingProfileCodec {
       }
     }
 
-    return OnboardingProfile(
-      cloudToolsPreference: CloudToolsPreference.fromStorageId(
-        decoded['cloud_tools'] as String?,
-      ),
-      selectedGoals: goals,
-    );
+    return OnboardingProfile(selectedGoals: goals);
   }
 }

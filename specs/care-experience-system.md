@@ -489,11 +489,13 @@ NEXT TIME
 user-approved action or note
 ```
 
-AI may suggest fields, but the user approves every interpretation.
+Deterministic on-device rules may match candidate fields for the user to review.
+No AI reads or interprets health records, and the user authors every reflection
+and interpretation.
 
-Repeated Care actions are summarized by action and outcome count in a Cycle
-Letter Within. Dates and individual outcomes are available as expandable factual
-detail and remain in Clinical. Reflections saved under the earlier per-Care
+Repeated Care actions are summarized by on-device deterministic action and
+outcome counts in a Cycle Letter Within. Dates and individual outcomes are
+available as expandable factual detail and remain in Clinical. Reflections saved under the earlier per-Care
 model are preserved as `Saved Care note` content nested beneath the related
 Care action; they are not shown as equal-level Story entries and do not create
 new per-event reflection entrances.

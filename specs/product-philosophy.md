@@ -73,7 +73,8 @@ The interface acts as a user-directed mirror:
 - the user chooses whether and when to reopen a note
 - the app distinguishes observation from interpretation
 - need labels are optional prompts, not diagnoses
-- AI or deterministic extraction produces editable suggestions only
+- deterministic on-device matching may produce editable candidate suggestions;
+  no AI reads or interprets health records
 - any suggested real-life action requires the user's approval
 - the user can leave a short message for a future difficult day
 

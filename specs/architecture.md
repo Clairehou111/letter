@@ -22,16 +22,16 @@ user-confirmed local records. The Web preview uses in-memory repositories.
 
 The server may store:
 
-- account or pseudonymous user ID
-- subscription entitlement
-- consent receipts
-- configuration/content versions
-- non-sensitive operational events
+- account and authentication data needed to operate the account
+- subscription entitlement and consent receipts needed for account operations
 - deletion requests
 
-Cloud LLM processing is a transient, consented exception. The mobile app builds
-a minimized payload, the user previews and approves it, and the API must not
-retain or log the request body.
+No AI reads, rewrites, summarizes, suggests from, or interprets health records.
+Health records and free-text health content are never sent to an AI service.
+Predictions, personal patterns, candidate matching, and reports are computed
+deterministically on-device from local data. Supabase and RevenueCat are
+operational account and entitlement services only; they do not process health
+records or health-derived content.
 
 ## Recovery
 

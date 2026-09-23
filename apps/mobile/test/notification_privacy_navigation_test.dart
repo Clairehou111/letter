@@ -12,10 +12,7 @@ import 'package:letter_mobile/features/privacy/domain/privacy_preferences.dart';
 import 'package:letter_mobile/features/privacy/domain/privacy_preferences_repository.dart';
 
 final class ExistingProfileRepository implements OnboardingRepository {
-  OnboardingProfile? profile = OnboardingProfile(
-    cloudToolsPreference: CloudToolsPreference.off,
-    selectedGoals: {},
-  );
+  OnboardingProfile? profile = OnboardingProfile(selectedGoals: {});
 
   @override
   Future<void> clear() async => profile = null;
@@ -113,10 +110,7 @@ void main() {
             textScaler: TextScaler.linear(2),
           ),
           child: PrivacyProtectionScreen(
-            profile: OnboardingProfile(
-              cloudToolsPreference: CloudToolsPreference.off,
-              selectedGoals: const {},
-            ),
+            profile: OnboardingProfile(selectedGoals: const {}),
             onProfileChanged: (_) async {},
             privacyPreferences: const PrivacyPreferences(),
             notificationAuthorization: NotificationAuthorization.granted,

@@ -93,7 +93,8 @@ almost identical.
 
 > Permanent access to the offline Letter Within Plus features included in the
 > purchase. Optional future services with recurring external costs, such as
-> hosted AI or cloud storage, may be offered separately.
+> encrypted cloud backup, may be offered separately. Health records remain
+> excluded from AI processing.
 
 Do not launch the paid tier merely because entitlement scaffolding exists.
 Before payment is enabled, Plus must contain at least one complete compounding

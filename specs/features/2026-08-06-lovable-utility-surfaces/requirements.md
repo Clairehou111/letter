@@ -1,5 +1,9 @@
 # Lovable utility surfaces
 
+Status: validated for the original utility-surface port; cloud-tool and App
+Lock requirements are superseded by the permanent no-AI constraint and the
+current privacy model
+
 ## Goal
 
 Port the approved Lovable presentation for Letter Within's utility family into the
@@ -8,8 +12,8 @@ production Flutter app while retaining all existing local-first behavior.
 ## Scope
 
 - Make You a brief utility index rather than one long settings form.
-- Move app lock, the always-on app-switcher cover explanation, Cycle Check-in,
-  and optional cloud-tool consent into a pushed Privacy and protection page.
+- Move the app-switcher cover explanation and Cycle Check-in into a pushed
+  Privacy and protection page. Do not expose an AI or cloud-processing choice.
 - Redesign encrypted full-data backup and staged merge/replace restore without
   changing encryption, credential storage, file, import, or commit behavior.
 - Redesign Cycle and Care Summary setup/preview under its existing Reports
@@ -20,9 +24,11 @@ production Flutter app while retaining all existing local-first behavior.
 
 ## Locked behavior
 
-- App lock is on/off only. The app-switcher cover is always on.
+- The app-switcher cover remains available; the retired App Lock control does
+  not return.
 - Cycle Check-in is on/off only and uses the existing scheduler and status.
-- Cloud tools remain Off or Ask each time and never imply synchronization.
+- There is no cloud-tool or AI-processing preference. Health-record processing
+  remains deterministic and on-device.
 - Backup creation saves locally and opens sharing as one existing operation.
 - Restore policy is selected before file picking; import remains staged and
   recoverable until commit.
@@ -43,7 +49,8 @@ production Flutter app while retaining all existing local-first behavior.
 
 ## Out of scope
 
-- Pricing, subscriptions, entitlement, accounts, cloud backup/sync, analytics.
+- Pricing, subscriptions, entitlement, accounts, cloud backup/sync, analytics,
+  or AI/LLM processing.
 - Changes to Care, Today, Cycle, Gravity Horizon, Spectrum Log, Letters, or the
   Reports hierarchy.
 - Changes to prediction, encryption, import, clinical, or export semantics.

@@ -180,3 +180,70 @@ the worktree has changed.
   assigned to the existing `Internal Testers` group with 2 invited testers.
 - No external testing group, beta-review submission, App Review submission,
   purchase, or storefront expansion was performed.
+
+## Launch positioning and screenshot masters (2026-09-24)
+
+The launch position is now fixed:
+
+- Category: private period companion and tracker.
+- Primary promise: `Cycle care for the days that feel heavier.`
+- Primary trust promise: `Encrypted on your device. No AI.`
+- Patterns and a clinician report must appear in the App Store screenshot set.
+- `No AI` is a permanent product constraint, not a temporary campaign line.
+
+The six approved local App Store masters are documented in
+`artifacts/app-store/README.md` and recorded in
+`artifacts/app-store/manifest.json`. Final JPEGs are under
+`artifacts/app-store/iphone-69/final/` in this order:
+
+1. Care for heavier days.
+2. Encrypted on-device records and no AI.
+3. Patterns across cycles, with missingness visible.
+4. A bounded report for a clinician.
+5. Tracking beyond period dates.
+6. Optional check-back to remember what helped.
+
+All six masters are 1290 × 2796 JPEGs with no alpha. They use real native
+Flutter UI and synthetic records. The privacy and clinician-report frames were
+freshly captured from production widgets on the iPhone 17 simulator; the report
+contains a populated four-cycle synthetic history. The reusable composer is
+`tool/compose_app_store_screenshot.swift`.
+
+Product and implementation alignment completed in the working tree:
+
+- Canonical specifications now prohibit AI/LLM processing and define patterns,
+  reports, estimates, and candidate matching as deterministic and on-device.
+- Dormant `CloudToolsPreference`, `cloud_tools` persistence, optional cloud NLP
+  adapter, and `cloudSuggestion` source scaffolding were removed.
+- Legacy onboarding JSON containing `cloud_tools` still decodes; new saves omit
+  the retired field.
+- Every Debug, Profile, and Release Xcode configuration now has
+  `TARGETED_DEVICE_FAMILY = "1"` for the approved iPhone-only first release.
+- `flutter analyze` passed with no issues; the full Flutter suite passed 553
+  tests with one intentional skip.
+- The local release candidate is `1.0.0+11`. Build 10 is already in TestFlight;
+  build 11 has not been uploaded.
+
+Local build-11 archive validation:
+
+- Signed archive: `apps/mobile/build/ios/archive/Runner.xcarchive`
+- IPA: `apps/mobile/build/ios/ipa/Letter Within.ipa`
+- IPA SHA-256:
+  `998e2c923a2b89f11d1671a238a84c790d60ef5392a88f1c1ef27dc6c53fbb6e`
+- Archive metadata: version `1.0.0`, build `11`, bundle `app.letterwithin`,
+  deployment target iOS 15.0, device family iPhone only.
+- Strict deep code-signature verification passed.
+- This archive was built from local `main` at baseline commit `732dade` plus
+  the release-preparation changes documented here. Commit and upload approval
+  were granted on 2026-09-24; record the resulting commit and App Store upload
+  state below without treating upload as submission approval.
+
+No App Store listing screenshot, build 11 binary, website asset, in-app
+purchase, or app version was uploaded or submitted during this preparation
+pass. Do not upload, deploy, purchase, add for review, or submit without
+explicit approval.
+
+The future website redesign is handed off at
+`/Users/clairehou/pyProjects/letter-cycle-companion/WEBSITE_REDESIGN_HANDOFF.md`.
+It is comp-first and preserves this screenshot and message hierarchy. No website
+source or deployment was changed by that handoff.

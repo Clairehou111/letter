@@ -1,6 +1,6 @@
 # Local Onboarding And Privacy Choices Requirements
 
-Status: validated
+Status: validated for the original onboarding flow; its cloud-AI preference is superseded by the permanent no-AI product constraint
 Branch: `feature/local-onboarding-privacy`
 
 ## Context
@@ -22,16 +22,16 @@ completion and non-diagnostic preferences persist securely on the device.
 ## Decisions
 
 - Use three steps: product promise, privacy choice, and goals.
-- Default cloud tools to `off`. The alternative is `ask each time`, which is a
-  preference and never consent for a particular cloud request.
-- Every future cloud operation still requires a purpose-specific payload
-  preview and confirmation.
-- Store onboarding completion, cloud preference, and goal identifiers with
-  platform secure storage.
+- Health-record processing is permanently on-device and deterministic. There
+  is no cloud-AI preference or consent path.
+- Supabase and RevenueCat provide operational account and entitlement services
+  only; account operations do not transmit health records.
+- Store onboarding completion and goal identifiers with platform secure
+  storage.
 - Keep a repository interface so widget tests never require platform channels.
 - Allow goals to be skipped; uncertainty must not block access to Today.
-- Provide a privacy center from the `You` tab where the cloud preference can be
-  changed and onboarding data can be reset.
+- Provide a privacy center from the `You` tab where account/health-data
+  boundaries can be read and onboarding data can be reset.
 
 ## Scope
 
@@ -45,11 +45,11 @@ REQ-003: Explain Letter Within's product promise without pregnancy-first languag
 diagnosis claims, or framing the cycle as an enemy.
 
 REQ-004: Explain in plain language that readable health records stay on the
-device by default and that nothing is sent to cloud AI without a later,
-purpose-specific preview and approval.
+device and are never sent to an AI service or cloud health-processing service.
 
-REQ-005: Let the user choose `Cloud tools off` or `Ask me each time`, with off
-selected by default and neither option granting upload consent.
+REQ-005: Do not offer a setting that enables cloud AI or health-record
+processing. Supabase and RevenueCat are limited to operational account and
+entitlement services.
 
 REQ-006: Let the user choose zero or more goals from cycle understanding,
 emotional changes, physical discomfort, energy and sleep, self-care
@@ -62,8 +62,8 @@ contents.
 REQ-008: Handle storage load/save failures explicitly with retryable UI. Never
 silently mark onboarding complete after a failed save.
 
-REQ-009: Provide a `You` privacy center that shows the current privacy mode,
-allows changing it, and allows clearing onboarding data after confirmation.
+REQ-009: Provide a `You` privacy center that explains the permanent local
+health-data boundary and allows clearing onboarding data after confirmation.
 
 REQ-010: Preserve the approved Today visual baseline and bottom-navigation
 order while making `You` functional.
@@ -78,7 +78,7 @@ onboarding step without changing any preference.
 
 - period dates, cycle history, prediction, or confidence
 - authentication, subscription, analytics, or server consent receipts
-- cloud AI calls, transcription, parsing, or report generation
+- AI calls, AI transcription/parsing, or cloud report generation
 - notifications or trusted contacts
 - health database selection
 - legal privacy-policy acceptance

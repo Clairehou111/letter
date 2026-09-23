@@ -15,7 +15,13 @@ import 'package:letter_mobile/features/entitlement/data/revenue_cat_entitlement_
 import 'package:letter_mobile/features/entitlement/domain/entitlement_repository.dart';
 import 'package:letter_mobile/features/health_records/data/in_memory_health_record_repository.dart';
 import 'package:letter_mobile/features/health_records/domain/health_record.dart';
+import 'package:letter_mobile/features/onboarding/presentation/privacy_explainer_sheet.dart';
 import 'package:letter_mobile/features/summary_export/domain/cycle_care_summary.dart';
+
+const String _captureFrame = String.fromEnvironment(
+  'LETTER_CAPTURE_FRAME',
+  defaultValue: '',
+);
 
 void main() {
   runApp(const _ManualQaApp());
@@ -29,9 +35,109 @@ class _ManualQaApp extends StatelessWidget {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       theme: ExperienceFoundation.lightTheme(),
-      home: const _QaShell(),
+      home: _captureFrame == 'privacy'
+          ? const _PrivacyCaptureSurface()
+          : _captureFrame == 'report'
+          ? ReportsExperience(
+              port: _QaReportPort(_reportCaptureInput()),
+              canUseClinicianReports: true,
+              now: () => DateTime(2026, 9, 19, 12),
+            )
+          : const _QaShell(),
     );
   }
+}
+
+/// Native capture surface for the App Store privacy frame.
+///
+/// This deliberately renders the production privacy explainer rather than a
+/// screenshot-only imitation. No account, health record, or network service
+/// is involved.
+class _PrivacyCaptureSurface extends StatelessWidget {
+  const _PrivacyCaptureSurface();
+
+  @override
+  Widget build(BuildContext context) {
+    return const Scaffold(
+      backgroundColor: ExperienceColors.canvas,
+      body: SafeArea(child: PrivacyExplainerSheet()),
+    );
+  }
+}
+
+SummaryExportInput _reportCaptureInput() {
+  const starts = <LocalDate>[
+    LocalDate(2026, 6, 22),
+    LocalDate(2026, 7, 20),
+    LocalDate(2026, 8, 17),
+    LocalDate(2026, 9, 14),
+  ];
+  final periodDays = <SummaryPeriodDay>[
+    for (final start in starts)
+      for (var day = 0; day < 5; day++) SummaryPeriodDay(start.addDays(day)),
+  ];
+  final records = <HealthRecord>[
+    for (var index = 0; index < starts.length; index++)
+      HealthRecord(
+        id: 'report-anxiety-$index',
+        symptom: SymptomType.anxiety,
+        severity: index.isEven
+            ? SymptomSeverity.moderate
+            : SymptomSeverity.severe,
+        functionalImpacts: const <FunctionalImpact>{
+          FunctionalImpact.workOrSchool,
+        },
+        experiencedDate: starts[index].addDays(-3),
+        recordedAt: DateTime.utc(
+          2026,
+          starts[index].month,
+          starts[index].day,
+        ).subtract(const Duration(days: 3)),
+        updatedAt: DateTime.utc(
+          2026,
+          starts[index].month,
+          starts[index].day,
+        ).subtract(const Duration(days: 3)),
+        provenance: HealthRecordProvenance.sameDay,
+        userConfirmed: true,
+        vocabularyVersion: healthRecordVocabularyVersion,
+      ),
+    HealthRecord(
+      id: 'report-cramps',
+      symptom: SymptomType.cramps,
+      severity: SymptomSeverity.mild,
+      functionalImpacts: const <FunctionalImpact>{},
+      experiencedDate: const LocalDate(2026, 9, 14),
+      recordedAt: DateTime.utc(2026, 9, 14, 9),
+      updatedAt: DateTime.utc(2026, 9, 14, 9),
+      provenance: HealthRecordProvenance.sameDay,
+      userConfirmed: true,
+      vocabularyVersion: healthRecordVocabularyVersion,
+    ),
+  ];
+  return SummaryExportInput(
+    periodDays: periodDays,
+    predictions: const <SummaryPredictionRange>[],
+    healthRecords: records,
+    checkIns: <MomentCheckIn>[
+      MomentCheckIn(
+        id: 'report-check-in',
+        state: MomentCheckInState.irritable,
+        occurredAt: DateTime.utc(2026, 9, 11, 9),
+        createdAt: DateTime.utc(2026, 9, 11, 9),
+      ),
+    ],
+    careRecords: const [],
+    notes: const <SummarySelectableNote>[
+      SummarySelectableNote(
+        id: 'report-note',
+        date: LocalDate(2026, 9, 11),
+        label: 'Your reflection',
+        text: 'A quieter evening helped me reset.',
+        sourceLabel: 'Saved Care reflection · local only',
+      ),
+    ],
+  );
 }
 
 class _QaShell extends StatefulWidget {

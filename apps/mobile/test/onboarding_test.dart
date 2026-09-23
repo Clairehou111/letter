@@ -85,21 +85,23 @@ Future<void> reachGoalsStep(WidgetTester tester) async {
 }
 
 void main() {
-  test('profile codec is versioned and preserves synthetic choices', () {
-    final profile = OnboardingProfile(
-      cloudToolsPreference: CloudToolsPreference.askEachTime,
-      selectedGoals: const {
-        OnboardingGoal.understandCycle,
-        OnboardingGoal.energyAndSleep,
-      },
-    );
-
-    final encoded = OnboardingProfileCodec.encode(profile);
-    final decoded = OnboardingProfileCodec.decode(encoded);
+  test('profile codec ignores legacy cloud preference fields', () {
+    const legacyProfile = '''
+      {"version":1,"cloud_tools":"ask_each_time","goals":[
+        "understand_cycle","energy_and_sleep"
+      ]}
+    ''';
+    final decoded = OnboardingProfileCodec.decode(legacyProfile);
+    final encoded = OnboardingProfileCodec.encode(decoded);
+    final roundTrip = OnboardingProfileCodec.decode(encoded);
 
     expect(encoded, contains('"version":1'));
-    expect(decoded.cloudToolsPreference, CloudToolsPreference.askEachTime);
-    expect(decoded.selectedGoals, profile.selectedGoals);
+    expect(encoded, isNot(contains('cloud_tools')));
+    expect(decoded.selectedGoals, roundTrip.selectedGoals);
+    expect(decoded.selectedGoals, {
+      OnboardingGoal.understandCycle,
+      OnboardingGoal.energyAndSleep,
+    });
   });
 
   testWidgets('does not flash onboarding while secure state is loading', (
@@ -135,7 +137,6 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(repository.saveCount, 1);
-    expect(repository.profile!.cloudToolsPreference, CloudToolsPreference.off);
     expect(repository.profile!.selectedGoals, {
       OnboardingGoal.understandCycle,
       OnboardingGoal.emotionalChanges,
@@ -154,7 +155,6 @@ void main() {
     await tester.tap(find.byKey(const Key('onboarding-continue')));
     await tester.pumpAndSettle();
 
-    expect(repository.profile!.cloudToolsPreference, CloudToolsPreference.off);
     expect(repository.profile!.selectedGoals, isEmpty);
   });
 
@@ -178,12 +178,13 @@ void main() {
     expect(find.byKey(const Key('privacy-explainer-sheet')), findsOneWidget);
     expect(find.text('How privacy works'), findsOneWidget);
     expect(find.text('Your account is separate'), findsOneWidget);
-    expect(find.text('Your records stay here'), findsOneWidget);
+    expect(find.text('Your records stay here, encrypted'), findsOneWidget);
     expect(find.text('You choose when records move'), findsOneWidget);
     expect(
       find.textContaining('does not upload them to our servers'),
       findsOneWidget,
     );
+    expect(find.textContaining('send them to AI services'), findsOneWidget);
 
     await tester.scrollUntilVisible(
       find.byKey(const Key('privacy-explainer-close')),
@@ -203,7 +204,6 @@ void main() {
     await tester.pumpAndSettle();
     await tester.tap(find.byKey(const Key('onboarding-continue')));
     await tester.pumpAndSettle();
-    expect(repository.profile!.cloudToolsPreference, CloudToolsPreference.off);
   });
 
   testWidgets('failed save stays in onboarding and can retry', (tester) async {

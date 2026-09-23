@@ -55,13 +55,14 @@ class PrivacyExplainerSheet extends StatelessWidget {
             ),
             const _PrivacyExplanation(
               icon: Icons.phone_android_outlined,
-              title: 'Your records stay here',
+              title: 'Your records stay here, encrypted',
               body:
                   'Period dates, symptoms, notes, and Care records are stored '
-                  'on this device. Letter Within does not upload them to our '
-                  'servers. If a different account signs in, existing records '
-                  'stay closed—not deleted—until the account that created '
-                  'them signs in again.',
+                  'in encrypted form on this device. Letter Within does not '
+                  'upload them to our servers or send them to AI services. If '
+                  'a different account signs in, existing records stay '
+                  'closed—not deleted—until the account that created them '
+                  'signs in again.',
             ),
             const _PrivacyExplanation(
               icon: Icons.move_to_inbox_outlined,

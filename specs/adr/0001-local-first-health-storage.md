@@ -12,8 +12,10 @@ risk.
 ## Decision
 
 The device is the source of truth for readable health records in P0. The server
-stores only operational account information. Cloud LLM use is explicit,
-minimized, transient processing rather than health-record storage.
+supports operational account and entitlement services only. No AI reads,
+rewrites, summarizes, suggests from, or interprets health records, and health
+records are never sent to an AI service. Predictions, personal patterns, and
+reports are computed deterministically on-device from local data.
 
 ## Consequences
 
@@ -21,4 +23,3 @@ minimized, transient processing rather than health-record storage.
 - Operational analytics cannot include health values or inferred state.
 - Automatic cloud sync is not available in P0.
 - A future backup must encrypt on the client and store only ciphertext.
-

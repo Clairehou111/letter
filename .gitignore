@@ -1,7 +1,9 @@
 .DS_Store
 .idea/
 .vscode/
-artifacts/
+artifacts/*
+!artifacts/app-store/
+!artifacts/app-store/**
 coverage/
 .cache/
 

@@ -1,0 +1,60 @@
+{
+  "product": "Letter Within",
+  "category": "Private period companion and tracker",
+  "status": "final-local-not-uploaded",
+  "locale": "en-US",
+  "storefronts": ["US", "CA"],
+  "deviceClass": "iPhone 6.9-inch",
+  "width": 1290,
+  "height": 2796,
+  "format": "jpeg",
+  "alpha": false,
+  "designDials": {
+    "designVariance": 6,
+    "motionIntensity": 1,
+    "visualDensity": 3
+  },
+  "screenshots": [
+    {
+      "order": 1,
+      "file": "iphone-69/final/01-cycle-care.jpg",
+      "caption": "Cycle care for the days that feel heavier.",
+      "sha256": "ec70c5eafe8ab6c11905f0dadae44085e84a08fbb976bf9e1716e8fcaeb6125c"
+    },
+    {
+      "order": 2,
+      "file": "iphone-69/final/02-private-no-ai.jpg",
+      "caption": "Encrypted on your device. No AI.",
+      "sha256": "550afd3ca57e39d3a4b14abf45381c5a9e2fd06f682f817b86b64a41fa8a4abd"
+    },
+    {
+      "order": 3,
+      "file": "iphone-69/final/03-patterns.jpg",
+      "caption": "See patterns across your cycles.",
+      "sha256": "2249ff55ddb66ca0278781a5e73f6678d2468335c7916b63bafaec4ea879bb60"
+    },
+    {
+      "order": 4,
+      "file": "iphone-69/final/04-clinician-report.jpg",
+      "caption": "Create a report for your clinician.",
+      "sha256": "8aebaa81511c547e8f1a8900368c6236c57fc0f8326a387a6483c3dea7ac737e"
+    },
+    {
+      "order": 5,
+      "file": "iphone-69/final/05-track-more.jpg",
+      "caption": "Track more than period dates.",
+      "sha256": "1d7f4c74a156b8b11736ecd65c5d879c31392972ff3bd2b971e285502957f53a"
+    },
+    {
+      "order": 6,
+      "file": "iphone-69/final/06-remember-what-helped.jpg",
+      "caption": "Remember what helped next time.",
+      "sha256": "3f46e3d47761f60d05af9316aefad0d79cdd8cb37f77c8b627cf4917d3ece49c"
+    }
+  ],
+  "gates": {
+    "uploadRequiresExplicitApproval": true,
+    "appReviewRequiresExplicitApproval": true,
+    "deploymentRequiresExplicitApproval": true
+  }
+}

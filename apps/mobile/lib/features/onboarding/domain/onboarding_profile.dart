@@ -1,21 +1,5 @@
 import 'dart:collection';
 
-enum CloudToolsPreference {
-  off('off'),
-  askEachTime('ask_each_time');
-
-  const CloudToolsPreference(this.storageId);
-
-  final String storageId;
-
-  static CloudToolsPreference fromStorageId(String? value) {
-    return values.firstWhere(
-      (preference) => preference.storageId == value,
-      orElse: () => CloudToolsPreference.off,
-    );
-  }
-}
-
 enum OnboardingGoal {
   understandCycle('understand_cycle'),
   emotionalChanges('emotional_changes'),
@@ -39,22 +23,15 @@ enum OnboardingGoal {
 }
 
 final class OnboardingProfile {
-  OnboardingProfile({
-    required this.cloudToolsPreference,
-    Iterable<OnboardingGoal> selectedGoals = const [],
-  }) : selectedGoals = UnmodifiableSetView(Set.of(selectedGoals));
+  OnboardingProfile({Iterable<OnboardingGoal> selectedGoals = const []})
+    : selectedGoals = UnmodifiableSetView(Set.of(selectedGoals));
 
   static const schemaVersion = 1;
 
-  final CloudToolsPreference cloudToolsPreference;
   final Set<OnboardingGoal> selectedGoals;
 
-  OnboardingProfile copyWith({
-    CloudToolsPreference? cloudToolsPreference,
-    Iterable<OnboardingGoal>? selectedGoals,
-  }) {
+  OnboardingProfile copyWith({Iterable<OnboardingGoal>? selectedGoals}) {
     return OnboardingProfile(
-      cloudToolsPreference: cloudToolsPreference ?? this.cloudToolsPreference,
       selectedGoals: selectedGoals ?? this.selectedGoals,
     );
   }

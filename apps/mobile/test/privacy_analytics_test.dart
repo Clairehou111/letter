@@ -90,10 +90,7 @@ void main() {
     await tester.pumpWidget(
       MaterialApp(
         home: PrivacyProtectionScreen(
-          profile: OnboardingProfile(
-            cloudToolsPreference: CloudToolsPreference.off,
-            selectedGoals: const {},
-          ),
+          profile: OnboardingProfile(selectedGoals: const {}),
           onProfileChanged: (_) async {},
           privacyPreferences: const PrivacyPreferences(),
           notificationAuthorization: NotificationAuthorization.granted,

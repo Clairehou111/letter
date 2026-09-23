@@ -121,17 +121,19 @@ clinical score, cloud request, analytics event, or LLM request.
 | 5 | Personal patterns and support-action matching | validated ([spec](features/2026-07-28-personal-patterns-support-matching/)) |
 | 6 | Archive Story and Pattern views | validated ([spec](features/2026-07-28-archive-story-pattern-views/)) |
 
-Phase 3 is usable without cloud processing or LLM access. Direct structured
-records are the source of truth. Care becomes a delayed, user-confirmed input
-to the same record model through Recovery Receipt. NLP and optional LLM output
-remain editable candidates and never assign severity, diagnosis, or function.
+Phase 3 uses deterministic on-device processing only. Direct structured records
+are the source of truth. Care becomes a delayed, user-confirmed input to the
+same record model through Recovery Receipt. Rule-matched candidates remain
+editable suggestions and never assign severity, diagnosis, or function. No AI
+reads, rewrites, summarizes, suggests from, or interprets health records.
 
 The first Phase 3 implementation slice is now present as local-first modules:
 the health-record foundation, Recovery Receipt, text capture, personal
 patterns, archive views, and Cycle and Care Summary navigation use the shared
 local repositories. Voice recognition remains unavailable until a reviewed
-system-speech adapter is installed; NLP and optional LLM output remain editable
-candidates rather than records.
+system-speech adapter is installed; deterministic local text rules may surface
+editable candidates, which remain suggestions rather than records. Predictions,
+patterns, and reports are deterministic and on-device.
 
 ## Phase 4: Reports And Commercial Readiness
 

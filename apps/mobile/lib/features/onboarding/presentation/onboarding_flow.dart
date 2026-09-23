@@ -46,12 +46,7 @@ class _OnboardingFlowState extends State<OnboardingFlow> {
       _saveError = null;
     });
     try {
-      await widget.onComplete(
-        OnboardingProfile(
-          cloudToolsPreference: CloudToolsPreference.off,
-          selectedGoals: _selectedGoals,
-        ),
-      );
+      await widget.onComplete(OnboardingProfile(selectedGoals: _selectedGoals));
     } on Object {
       if (!mounted) {
         return;

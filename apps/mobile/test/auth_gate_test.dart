@@ -82,9 +82,7 @@ void main() {
         requireAuthentication: true,
         periodRepository: InMemoryPeriodRepository(),
         onboardingRepository: _AuthGateOnboardingRepository(
-          profile: OnboardingProfile(
-            cloudToolsPreference: CloudToolsPreference.off,
-          ),
+          profile: OnboardingProfile(),
         ),
       ),
     );
@@ -109,9 +107,7 @@ void main() {
         requireAuthentication: true,
         periodRepository: InMemoryPeriodRepository(),
         onboardingRepository: _AuthGateOnboardingRepository(
-          profile: OnboardingProfile(
-            cloudToolsPreference: CloudToolsPreference.off,
-          ),
+          profile: OnboardingProfile(),
         ),
       ),
     );

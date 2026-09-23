@@ -56,8 +56,9 @@ advice, and do not make analgesic claims for haptics.
 REQ-009: Ask only a lightweight `better`, `same`, or `worse` check-back after a
 Care action, with `not now` always available.
 
-REQ-010: Make reflection opt-in and user-authored. Need labels and NLP/LLM
-output are editable hypotheses, not psychological conclusions.
+REQ-010: Make reflection opt-in and user-authored. Deterministic on-device
+matching may surface editable candidates; AI does not read or interpret health
+records and must not generate reflection hypotheses.
 
 REQ-011: Support private drafts, notes from clearer days, and editable cycle
 letters as distinct artifacts with distinct privacy behavior.
@@ -66,8 +67,9 @@ REQ-012: Use Letter Within, archive, envelope, and moon imagery as restrained br
 language, never as medical causality or a claim about Chinese tradition,
 astrology, witchcraft, or youth preservation.
 
-REQ-013: Keep safety and medical red-flag routing deterministic. Generative AI
-must not decide whether a user is safe.
+REQ-013: Keep safety and medical red-flag routing deterministic. No AI reads,
+rewrites, summarizes, suggests from, or interprets health records or decides
+whether a user is safe.
 
 REQ-014: Make dark mode, motion, sound, haptics, continuous hold, and audio
 optional. Care must remain operable without any one sensory channel.
@@ -157,8 +159,8 @@ until the exact instrument, licensing, wording, scoring, daily completion, and
 clinical review requirements are satisfied.
 
 REQ-024: Every report value must identify whether it came from a prospective
-user rating, same-day user rating, later recall, or factual Care event. AI
-candidates cannot appear until confirmed.
+user rating, same-day user rating, later recall, or factual Care event.
+Deterministic rule candidates cannot appear in a report until confirmed.
 
 REQ-025: Apply the Letter Within metaphor in three layers: ritual for emotional
 meaning, familiar utility controls for repeated tasks, and plain clinical
@@ -203,7 +205,7 @@ Before UI implementation begins, the redesign must answer:
 
 - what Letter Within does in the first ten seconds of a hard moment
 - what is stored during Care and when it can reappear
-- what the user, deterministic rules, and optional AI each decide
+- what the user and deterministic on-device rules each decide
 - how the product handles anger without escalating arousal
 - how medical and urgent-safety exits remain visible
 - why a user returns across a second and third cycle

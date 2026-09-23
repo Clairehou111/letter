@@ -4,13 +4,11 @@ import '../../cycle/domain/local_date.dart';
 import '../../health_records/domain/health_record.dart';
 
 const nlpVocabularyVersion = 1;
-const nlpCloudPreviewCharacterLimit = 500;
 
 enum NlpCandidateSource {
   typedText('Typed text'),
   voiceTranscript('Voice transcript'),
-  selectedSealedExcerpt('Selected sealed excerpt'),
-  cloudSuggestion('Optional cloud suggestion');
+  selectedSealedExcerpt('Selected sealed excerpt');
 
   const NlpCandidateSource(this.label);
 
@@ -154,83 +152,4 @@ final class NlpParseResult {
   final List<NlpCandidate> candidates;
   final bool excludedByPolicy;
   final String? exclusionMessage;
-}
-
-@immutable
-final class NlpCloudPayloadPreview {
-  const NlpCloudPayloadPreview({
-    required this.text,
-    required this.characterCount,
-  });
-
-  factory NlpCloudPayloadPreview.fromText(String input) {
-    final redacted = input
-        .replaceAll(RegExp(r'https?://\S+', caseSensitive: false), '[link]')
-        .replaceAll(RegExp(r'[\w.+-]+@[\w.-]+\.[A-Za-z]{2,}'), '[email]')
-        .replaceAll(RegExp(r'(?<!\d)(?:\+?\d[\d .()-]{7,}\d)(?!\d)'), '[phone]')
-        .replaceAll(RegExp(r'\s+'), ' ')
-        .trim();
-    final clipped = redacted.length <= nlpCloudPreviewCharacterLimit
-        ? redacted
-        : '${redacted.substring(0, nlpCloudPreviewCharacterLimit)}…';
-    return NlpCloudPayloadPreview(
-      text: clipped,
-      characterCount: clipped.length,
-    );
-  }
-
-  final String text;
-  final int characterCount;
-}
-
-enum NlpCloudFailure { unavailable, approvalRequired }
-
-final class NlpCloudException implements Exception {
-  const NlpCloudException(this.failure);
-
-  final NlpCloudFailure failure;
-}
-
-/// An interface-only gate. It accepts a minimized preview rather than source
-/// content and has no provider, network, persistence, or request logging.
-abstract interface class OptionalNlpLlmAdapter {
-  bool get enabled;
-
-  Future<List<NlpCandidate>> requestSuggestions(
-    NlpCloudPayloadPreview preview, {
-    required bool approved,
-  });
-}
-
-final class PreviewOnlyNlpLlmAdapter implements OptionalNlpLlmAdapter {
-  PreviewOnlyNlpLlmAdapter({required this.enabled, required this.request});
-
-  @override
-  final bool enabled;
-
-  final Future<List<NlpCandidate>> Function(NlpCloudPayloadPreview preview)
-  request;
-
-  @override
-  Future<List<NlpCandidate>> requestSuggestions(
-    NlpCloudPayloadPreview preview, {
-    required bool approved,
-  }) async {
-    if (!enabled) {
-      throw const NlpCloudException(NlpCloudFailure.unavailable);
-    }
-    if (!approved) {
-      throw const NlpCloudException(NlpCloudFailure.approvalRequired);
-    }
-    final suggestions = await request(preview);
-    return List.unmodifiable(
-      suggestions.map(
-        (candidate) => candidate.copyWith(
-          source: NlpCandidateSource.cloudSuggestion,
-          clearSeverity: true,
-          status: NlpCandidateStatus.unresolved,
-        ),
-      ),
-    );
-  }
 }
