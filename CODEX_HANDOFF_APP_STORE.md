@@ -2,17 +2,20 @@
 
 ## Start here
 
-Start the new Codex session in the actual Git repository:
+Start the new Codex session in the coherent release worktree:
 
 ```text
-/Users/clairehou/pyProjects/pms-research-agent/product/letter
+/Users/clairehou/pyProjects/pms-research-agent/.worktrees/letter-main
 ```
 
 Ask the new session to read this file completely, inspect the current worktree,
 and continue from the approval gate below.
 
-The worktree contains substantial pre-existing changes. Preserve them. Do not
-reset, discard, overwrite, broadly reformat, commit, push, purchase, or submit
+The original rescue worktree at
+`/Users/clairehou/pyProjects/pms-research-agent/product/letter` contains
+substantial unrelated changes. Preserve it and do not use it for release work.
+In the release worktree, preserve the known untracked validation artifacts and
+do not reset, discard, overwrite, broadly reformat, push, purchase, or submit
 anything unless explicitly requested.
 
 ## Source sessions
@@ -343,11 +346,15 @@ The agreed build-12 direction is:
 - Do not add public password signup until email verification, password reset,
   and recovery UX are deliberately implemented.
 
-The password fallback is implemented locally. Focused auth tests pass 26/26,
-the full Flutter suite passes 556 tests with one intentional skip,
-`flutter analyze` passes, and a clean iPhone 17 Simulator inspection verified
-the default and expanded password states without clipping. No build 12 archive
-has been created or uploaded yet.
+The password fallback is implemented. Focused auth tests pass 26/26, the full
+Flutter suite passes 556 tests with one intentional skip, and `flutter analyze`
+passes. A brand-new isolated iPhone 17 Pro simulator verified that the dedicated
+App Review email/password account signs in and reaches onboarding. The account
+is auto-confirmed in Supabase and the verified credential pair is not present
+in this repository. App Store Connect's sign-in fields were filled once but did
+not remain populated after reload because the App Review contact block is still
+incomplete. Re-enter and save the credentials together with complete contact
+information before submission; do not assume they are already persisted.
 
 PostHog will remain in the binary for a future consented analytics release. It
 must remain unconfigured, auto-init disabled, and forced opted out for 1.0.
@@ -374,10 +381,38 @@ not need an Apple OAuth secret or its six-month rotation. The
 package. Static analysis, the 26 focused auth tests, and an iOS Simulator debug
 build all pass.
 
-The signed-in Supabase Apple-provider form is prepared but not saved. It has
-Apple enabled, Client IDs set to `app.letterwithin`, OAuth secret empty, and
-"Allow users without an email" off. Saving is a live authentication change and
-still requires the owner's action-time confirmation. After it is saved, verify
-`external.apple = true`, set `LETTER_APPLE_SIGN_IN_ENABLED` to `true` in the
-ignored release configuration, and run an end-to-end native Apple sign-in
-before archiving build 12.
+The Supabase Apple provider is live with Client ID `app.letterwithin`, no OAuth
+secret, and "Allow users without an email" off. The public Auth settings report
+Apple enabled, and the ignored release configuration has
+`LETTER_APPLE_SIGN_IN_ENABLED=true`. A clean simulator verified that the app
+shows `Continue with Apple` and invokes Apple's native authorization sheet. A
+full Apple credential exchange was not completed because the isolated simulator
+has no Apple Account signed in; the dedicated password account is the reliable
+App Review path.
+
+Supabase automatically links Apple and email identities when Apple returns the
+same verified email; the production Claire account already shows both providers
+on one user. Apple's Hide My Email relay address can instead create a separate
+user. Letter Within never merges or uploads health records: matching user IDs
+reopen that account's records on the same device, different user IDs leave the
+records closed, and another device starts empty. A future account-settings
+release should offer an explicit linked-sign-in-methods flow for relay-email and
+provider-collision cases.
+
+Build 12 release state:
+
+- Local `main` includes `c6bdb3f` (`release: bump iOS build to 12`).
+- Signed archive: `apps/mobile/build/ios/archive/Runner.xcarchive`.
+- IPA: `apps/mobile/build/ios/ipa/Letter Within.ipa`.
+- IPA SHA-256:
+  `ceaa153fac20b26e9725e2e1f154a00bb5caaee2e2bb97cd3b60e14dd574905d`.
+- Archive metadata: version `1.0.0`, build `12`, bundle `app.letterwithin`,
+  deployment target iOS 15.0, device family iPhone only.
+- Strict deep code-signature verification passed.
+- Xcode uploaded build 12 to Apple on 2026-09-24 at 23:35 JST. App Store
+  Connect finished processing it as `Ready to Submit`, and build 12 is attached
+  to App Store version 1.0. The approved screenshot set remains intact at
+  `10 of 10 Screenshots` in manifest order.
+- Do not click `Add for Review` until the remaining metadata, App Review contact
+  information, sign-in credentials, and privacy gates are complete and the
+  owner gives explicit action-time approval.
