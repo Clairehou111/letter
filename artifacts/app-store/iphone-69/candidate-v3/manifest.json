@@ -1,0 +1,91 @@
+{
+  "product": "Letter Within",
+  "category": "Private period companion and tracker",
+  "status": "owner-approved-awaiting-upload",
+  "locale": "en-US",
+  "storefronts": ["US", "CA"],
+  "deviceClass": "iPhone 6.9-inch",
+  "width": 1290,
+  "height": 2796,
+  "format": "jpeg",
+  "alpha": false,
+  "visualWorlds": {
+    "daylight": ["#FBF7F3", "#2A1626", "#E4573D"],
+    "care": ["#2E1A33", "#170D1C", "#F7EEE6", "#E4573D"]
+  },
+  "review": {
+    "ownerApproved": true,
+    "ownerApprovalDate": "2026-09-24",
+    "claudeModel": "anthropic/claude-sonnet-5",
+    "claudeRoute": "OpenRouter",
+    "reviewDate": "2026-09-24",
+    "claudeDecision": "Heavy was selected from Heavy, Focus, Body, and Space because it most directly supports the heavier-days promise."
+  },
+  "screenshots": [
+    {
+      "order": 1,
+      "file": "final/01-cycle-care.jpg",
+      "caption": "Cycle care for the days that feel heavier.",
+      "sha256": "8d4ce91acafa0cc25aa08e5cb6626b998e663607d7a8dfdbc28a7c890d322185"
+    },
+    {
+      "order": 2,
+      "file": "final/02-private-no-ai.jpg",
+      "caption": "Encrypted on your device. No AI.",
+      "sha256": "e57ac16611f0eae11124ebf2ef5d35821d701e7017e12234cbef90cc4b2efaaf"
+    },
+    {
+      "order": 3,
+      "file": "final/03-today-tracking.jpg",
+      "caption": "Track more than period dates.",
+      "sha256": "f5fd57faa7658994b852598d5f27853a2b06b6b7c67ad9c6842885c46369c41e"
+    },
+    {
+      "order": 4,
+      "file": "final/04-cycle-days.jpg",
+      "caption": "See every day in your cycle.",
+      "sha256": "a7f80591f87a4804e235fbf456d22d811e0e111d2c1fdce4ab505c73b867bd5f"
+    },
+    {
+      "order": 5,
+      "file": "final/05-day-symptoms.jpg",
+      "caption": "Edit symptoms on any day.",
+      "sha256": "33d15363dda8ccbe068b6c5791c23e257ef3a1dd4ccdb3dc153863c9f762a66f"
+    },
+    {
+      "order": 6,
+      "file": "final/06-cycle-patterns.jpg",
+      "caption": "See patterns across your cycles.",
+      "sha256": "86354a8785addd6e810eaa044c18d8fb249ed1dde2c217865aaaf995edeab52c"
+    },
+    {
+      "order": 7,
+      "file": "final/07-mood-patterns.jpg",
+      "caption": "Understand the days that feel heavier.",
+      "sha256": "2b2ce27263a21a4561e291ee9dfe470390d9eff39bb364fdd2ab844c015e3531"
+    },
+    {
+      "order": 8,
+      "file": "final/08-clinician-report.jpg",
+      "caption": "Bring a clear record to your clinician.",
+      "sha256": "0795c1d76ccebc0de1763c85cd21b0af9549266273daacbf206fb069b2c2c015"
+    },
+    {
+      "order": 9,
+      "file": "final/09-care-heavy.jpg",
+      "caption": "Care for the moment you are in.",
+      "sha256": "e135c0bb034166b9caeaa286e86cf78e61011fae986764778021779874acd370"
+    },
+    {
+      "order": 10,
+      "file": "final/10-what-helped.jpg",
+      "caption": "Remember what helped next time.",
+      "sha256": "6a9e2cb5335dc5a706bea096bc73c1ce5d4e1a41100651cecfbb765e10014c0c"
+    }
+  ],
+  "gates": {
+    "replaceUploadedSetRequiresExplicitApproval": true,
+    "appReviewRequiresExplicitApproval": true,
+    "deploymentRequiresExplicitApproval": true
+  }
+}

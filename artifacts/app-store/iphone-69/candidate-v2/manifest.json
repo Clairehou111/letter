@@ -1,0 +1,73 @@
+{
+  "product": "Letter Within",
+  "category": "Private period companion and tracker",
+  "status": "local-review-candidate-not-uploaded",
+  "locale": "en-US",
+  "storefronts": ["US", "CA"],
+  "deviceClass": "iPhone 6.9-inch",
+  "width": 1290,
+  "height": 2796,
+  "format": "jpeg",
+  "alpha": false,
+  "review": {
+    "ownerApproved": false,
+    "claudeModel": "anthropic/claude-sonnet-5",
+    "claudeRoute": "OpenRouter",
+    "reviewDate": "2026-09-24"
+  },
+  "screenshots": [
+    {
+      "order": 1,
+      "file": "final/01-cycle-care.jpg",
+      "caption": "Cycle care for the days that feel heavier.",
+      "sha256": "d548a6e28fb9cbfb0a487de449f63d48eca645d75dac37b1dd19c1a4ef8b6e04"
+    },
+    {
+      "order": 2,
+      "file": "final/02-private-no-ai.jpg",
+      "caption": "Encrypted on your device. No AI.",
+      "sha256": "785a19658280e3fd7eea567041908e564f29b29deb2d9f959b79e7f2d11338b9"
+    },
+    {
+      "order": 3,
+      "file": "final/03-cycle-patterns.jpg",
+      "caption": "See patterns across your cycles.",
+      "sha256": "0b2be511cbae14d46f5419a70c83af2b07cb173fae5d064750efe7ae1d7af075"
+    },
+    {
+      "order": 4,
+      "file": "final/04-mood-patterns.jpg",
+      "caption": "Understand the days that feel heavier.",
+      "sha256": "c6809559a27cebb65e1c8a0286da74521e2b162e3f58bd67a75a7063bf32730a"
+    },
+    {
+      "order": 5,
+      "file": "final/05-clinician-report.jpg",
+      "caption": "Bring a clear record to your clinician.",
+      "sha256": "62adbea5356cd76da2a2d75c494aee98aa72236b74077a7e8a457ec6ae8283af"
+    },
+    {
+      "order": 6,
+      "file": "final/06-cycle-tracking.jpg",
+      "caption": "Track more than period dates.",
+      "sha256": "89142c47f9633fbd19f4b98100fef94312e0d5b8f68329cf1f77495ee3e6318e"
+    },
+    {
+      "order": 7,
+      "file": "final/07-care-heavy.jpg",
+      "caption": "Support for the moment you are in.",
+      "sha256": "e71825b6fe118f595da0eaf14cb3bfbb6f7f6ecf9ff1a616c9ce755cf9d776df"
+    },
+    {
+      "order": 8,
+      "file": "final/08-what-helped.jpg",
+      "caption": "Remember what helped next time.",
+      "sha256": "6b5d7c12ac694ac89934513055a02b5c010b93c0d5914ab0ec577641dd99fe57"
+    }
+  ],
+  "gates": {
+    "replaceUploadedSetRequiresExplicitApproval": true,
+    "appReviewRequiresExplicitApproval": true,
+    "deploymentRequiresExplicitApproval": true
+  }
+}

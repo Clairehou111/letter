@@ -257,3 +257,68 @@ The future website redesign is handed off at
 `/Users/clairehou/pyProjects/letter-cycle-companion/WEBSITE_REDESIGN_HANDOFF.md`.
 It is comp-first and preserves this screenshot and message hierarchy. No website
 source or deployment was changed by that handoff.
+
+## Screenshot correction after owner review (2026-09-24)
+
+The six screenshots currently visible in App Store Connect are no longer
+approved. The owner rejected the set because the Care and Patterns images were
+obsolete, the clinician report did not communicate populated data, and the
+strip looked coarse at storefront scale. Do not submit with those six images.
+
+An eight-frame replacement candidate was created from fresh current native
+iPhone 17 Pro Max captures. It is under
+`artifacts/app-store/iphone-69/candidate-v2/` and documented in
+`artifacts/app-store/SCREENSHOT_REDESIGN_BRIEF.md`. The replacement includes:
+
+- Current Care chooser and immersive low-energy scene.
+- Current encrypted Backup & restore controls as the on-device and no-AI
+  proof.
+- Current cycle and mood Patterns with realistic 28-30 day variation.
+- A clinician matrix containing 43 confirmed synthetic records across four
+  cycles.
+- Current cycle tracking and a four-action What helped view.
+
+OpenRouter Claude Sonnet 5 independently reviewed the screens and recommended
+an eight-frame, data-first set. Privacy remains second, rather than Claude's
+suggested closing position, because the owner explicitly fixed Care and privacy
+as the top two launch messages.
+
+Candidate v2 is local only and has not been uploaded. The App Store submission
+remains paused. Replacing the uploaded six screenshots requires explicit owner
+approval.
+
+## Screenshot candidate v3 after tracker and color review (2026-09-24)
+
+Candidate v2 was superseded after the owner requested three distinct tracker
+proofs and identified that its outer rose/plum canvases did not match the real
+app. Candidate v3 is under
+`artifacts/app-store/iphone-69/candidate-v3/` and contains the full ten allowed
+screenshots:
+
+1. Current Care chooser — `Cycle care for the days that feel heavier.`
+2. Backup & restore — `Encrypted on your device. No AI.`
+3. Populated Today — flow, color, and three saved symptoms.
+4. Current-cycle days — five populated flow and color rows.
+5. Day symptom editing — saved flow, color, moderate pain, and a recorded
+   symptom row.
+6. Cycle patterns — realistic 28-30 day variation.
+7. Mood patterns — 11 harder days across four cycles.
+8. Clinician report — 43 confirmed synthetic records across four cycles.
+9. Heavy Care scene — useful in-scene action and permanent exit.
+10. What helped — four actions with recorded outcomes.
+
+OpenRouter Claude Sonnet 5 reviewed four current native Care candidates:
+Heavy, Focus, Body, and Space. It selected Heavy because that scene most
+directly supports the fixed heavier-days promise. All four native options are
+preserved under candidate v3 `source/` for audit.
+
+The v3 compositor now uses only product tokens. Daylight frames extend
+`#FBF7F3` with `#2A1626` ink and `#E4573D` ember. Care frames extend the real
+`#2E1A33` to `#170D1C` Care world with `#F7EEE6` type. No marketing-only rose
+or plum canvas remains.
+
+All ten v3 finals are 1290 x 2796 JPEGs with no alpha. Hashes, order, Claude
+decision, and approval gates are recorded in
+`artifacts/app-store/iphone-69/candidate-v3/manifest.json`. The owner approved
+candidate v3 on 2026-09-24 for replacing the rejected six in App Store Connect.
+This does not authorize submitting the app version to App Review.
