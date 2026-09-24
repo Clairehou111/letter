@@ -416,3 +416,28 @@ Build 12 release state:
 - Do not click `Add for Review` until the remaining metadata and privacy gates
   are complete and the owner gives explicit action-time approval. App Review
   contact information, sign-in credentials, and reviewer notes are complete.
+
+## App Store listing and review-draft state (2026-09-25)
+
+- Promotional text, description, keywords, Support URL, and Marketing URL are
+  entered and saved on version 1.0. Copyright remains blank pending confirmation
+  of the legal rights holder.
+- The public Support and Privacy routes work. The proposed optional
+  `/account-deletion` URL returns 404 and was deliberately omitted from App
+  Store Connect. The Support page still says iPhone and Android are coming soon;
+  correct that website copy before public launch.
+- App Privacy is fully configured but not published. The saved draft declares
+  Email Address, User ID, and Purchase History as collected and linked to the
+  user; none are used for tracking. Email Address and User ID are used for App
+  Functionality. Purchase History is used for App Functionality and Analytics.
+  Health records are not declared collected because readable cycle, symptom,
+  Care, mood, note, and report data remain on-device.
+- The missing English (U.S.) subscription-group localization was added with
+  display name `Letter Within Plus` and the app name display option.
+- One App Store Connect review draft now contains four product items: Letter
+  Plus Lifetime, the Letter Plus subscription group, Letter Plus Monthly, and
+  Letter Plus Yearly. The draft has not been submitted.
+- App version 1.0 is not yet in that review draft. Before adding it, confirm the
+  copyright rights holder, decide manual versus automatic release, publish App
+  Privacy after the final compliance check, and obtain explicit action-time
+  approval. Never click `Submit for Review` without that approval.

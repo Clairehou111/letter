@@ -1,12 +1,12 @@
 # App Store metadata draft
 
-Status: ready for owner review; not entered in App Store Connect.
+Status: entered and saved in App Store Connect on 2026-09-25, except for the
+copyright field, which still requires the confirmed legal rights holder.
 
 This draft matches the approved ten-frame screenshot set and the United States
-+ Canada launch boundary. Build `1.0.0+11` is uploaded, but the intended review
-candidate is now build 12 after its auth changes and provider configuration are
-verified. This does not authorize saving, publishing, attaching a build or
-products, or submitting for review.
++ Canada launch boundary. Build `1.0.0+12` is attached to version 1.0. The
+listing copy and stable URLs below are saved. This does not authorize adding
+the app version to the review draft or submitting the draft for review.
 
 ## Product identity
 
@@ -60,9 +60,10 @@ period tracker,cycle tracker,PMS,PMDD,symptoms,mood,cramps,flow,cycle care,perio
 - Support URL: `https://letterwithin.app/support`
 - Marketing URL: `https://letterwithin.app`
 - Privacy Policy URL: `https://letterwithin.app/privacy`
-- Optional privacy choices URL: `https://letterwithin.app/account-deletion`
+- Optional privacy choices URL: omit for 1.0; the proposed
+  `https://letterwithin.app/account-deletion` route currently returns 404.
 
-The Privacy and Support routes were verified live on 2026-09-24. The Support
+The Privacy and Support routes were verified live on 2026-09-25. The Support
 page still says iPhone and Android are both coming soon; update that site copy
 before public launch, but keep the stable `/support` URL.
 
@@ -107,25 +108,20 @@ Letter Within does not use AI. Pattern text and cycle estimates are deterministi
 | `letter_lifetime` | `6800577621` | Non-consumable lifetime | US$79.99 one time |
 
 All three are configured for United States + Canada, have review screenshots,
-and are mapped to the RevenueCat `letter_plus` entitlement. Attaching them or
-clicking `Add for Review` requires explicit owner approval.
+and are mapped to the RevenueCat `letter_plus` entitlement. On 2026-09-25 the
+lifetime purchase, the subscription group, and both subscriptions were added
+to one App Store Connect review draft. The draft has not been submitted.
 
 ## Blocking owner decisions
 
 1. Confirm the legal rights holder for Copyright.
-2. Configure and verify the Supabase Apple provider, then enable
-   `LETTER_APPLE_SIGN_IN_ENABLED` for build 12. The iOS entitlement and app UI
-   already exist, but the provider currently reports disabled.
-3. Create one dedicated password-based App Review account and put its
-   credentials only in App Store Connect. Build 12 code now supports this
-   existing-account fallback; it intentionally does not add public password
-   signup without verification and recovery UX.
-4. Confirm whether version release should be manual. App Store Connect is
+2. Confirm whether version release should be manual. App Store Connect is
    currently set to automatic release; manual release is safer for a first
    launch.
-5. Complete and publish App Privacy using the separate code-backed draft.
-6. Complete the Canada/privacy/subscription legal review before submission.
-7. Confirm the applicable Terms of Use/EULA treatment for the two
+3. Publish the fully configured App Privacy declaration after final
+   owner/legal approval.
+4. Complete the Canada/privacy/subscription legal review before submission.
+5. Confirm the applicable Terms of Use/EULA treatment for the two
    auto-renewable subscriptions. No public `/terms` route exists today.
 
 ## Complimentary access after launch

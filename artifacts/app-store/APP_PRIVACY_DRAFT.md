@@ -1,20 +1,19 @@
 # App Privacy declaration draft
 
-Status: code-backed draft for owner/legal review; not entered or published in
-App Store Connect.
+Status: entered and fully configured in App Store Connect on 2026-09-25, but
+not published. Final publication remains an owner/legal confirmation gate.
 
 Apple requires a privacy policy URL and answers covering the app and integrated
-third-party partners. The currently uploaded build is `1.0.0+11`. The intended
-review candidate is build 12 after auth verification; PostHog remains
-integrated but dormant.
+third-party partners. The attached review candidate is `1.0.0+12`; PostHog
+remains integrated but dormant.
 
 ## Policy URLs
 
 - Privacy Policy URL: `https://letterwithin.app/privacy`
-- Optional User Privacy Choices URL:
-  `https://letterwithin.app/account-deletion`
+- Optional User Privacy Choices URL: omitted because the proposed
+  `https://letterwithin.app/account-deletion` route returns 404.
 
-Both routes are public. The privacy policy states that readable health records
+The privacy policy route is public and states that readable health records
 remain encrypted on-device; Supabase handles account identity and RevenueCat
 handles subscription entitlement.
 
@@ -85,9 +84,9 @@ Before any future release activates PostHog:
    build is submitted; and
 4. re-review the Xcode privacy report and the exact PostHog configuration.
 
-Publishing the narrower 1.0 label still requires owner/legal approval after
-reviewing the final build-12 privacy report, because the dormant SDK manifests
-will remain embedded.
+App Store Connect now shows the narrower 1.0 label ready to publish. Publishing
+still requires owner/legal approval after reviewing the final build-12 privacy
+report, because the dormant SDK manifests remain embedded.
 
 ## Evidence checked on 2026-09-24
 
