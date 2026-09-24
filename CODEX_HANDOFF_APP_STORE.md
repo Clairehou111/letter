@@ -221,8 +221,8 @@ Product and implementation alignment completed in the working tree:
   `TARGETED_DEVICE_FAMILY = "1"` for the approved iPhone-only first release.
 - `flutter analyze` passed with no issues; the full Flutter suite passed 553
   tests with one intentional skip.
-- The local release candidate is `1.0.0+11`. Build 10 is already in TestFlight;
-  build 11 has not been uploaded.
+- The release candidate is `1.0.0+11`. Build 11 was uploaded to App Store
+  Connect and finished processing successfully.
 
 Local build-11 archive validation:
 
@@ -234,14 +234,24 @@ Local build-11 archive validation:
   deployment target iOS 15.0, device family iPhone only.
 - Strict deep code-signature verification passed.
 - This archive was built from local `main` at baseline commit `732dade` plus
-  the release-preparation changes documented here. Commit and upload approval
-  were granted on 2026-09-24; record the resulting commit and App Store upload
-  state below without treating upload as submission approval.
+  the release-preparation changes documented here.
+- The scoped release package was committed on local `main` as `f8670c4`
+  (`release: prepare build 11 launch package`). It has not been pushed.
+- Xcode uploaded build 11 on 2026-09-24 at 03:45. App Store Connect shows the
+  upload as `Complete` and the TestFlight build as `Ready to Submit`, expiring
+  in 90 days. It remains assigned to the existing `Internal Testers` group
+  with 2 invited testers.
+- The six English (U.S.) App Store listing screenshots were uploaded to the
+  iPhone 6.9-inch display slot and verified in manifest order. App Store
+  Connect is using that set for the 6.5-inch display slot as intended.
+- The first three installation-sheet images are, in order: heavier-day care,
+  encrypted on-device/no-AI privacy, and cross-cycle patterns. The clinician
+  report is fourth.
 
-No App Store listing screenshot, build 11 binary, website asset, in-app
-purchase, or app version was uploaded or submitted during this preparation
-pass. Do not upload, deploy, purchase, add for review, or submit without
-explicit approval.
+No website asset, in-app purchase, product, beta review, or app version was
+submitted or deployed during this pass. `Add for Review` was not clicked. Do
+not purchase, add for review, submit, deploy, push, or expand storefronts
+without explicit approval.
 
 The future website redesign is handed off at
 `/Users/clairehou/pyProjects/letter-cycle-companion/WEBSITE_REDESIGN_HANDOFF.md`.
