@@ -1,12 +1,13 @@
 # App Store metadata draft
 
-Status: entered and saved in App Store Connect on 2026-09-25, except for the
-copyright field, which still requires the confirmed legal rights holder.
+Status: entered, saved, and added to the App Store Connect review draft on
+2026-09-25. The draft is ready to submit but has not been submitted.
 
 This draft matches the approved ten-frame screenshot set and the United States
 + Canada launch boundary. Build `1.0.0+12` is attached to version 1.0. The
-listing copy and stable URLs below are saved. This does not authorize adding
-the app version to the review draft or submitting the draft for review.
+listing copy and stable URLs below are saved. App version 1.0 and all four paid
+product items are in the same five-item review draft. This does not authorize
+submitting the draft for review.
 
 ## Product identity
 
@@ -69,8 +70,25 @@ before public launch, but keep the stable `/support` URL.
 
 ### Copyright
 
-Enter `2026 [legal rights holder]` only after the owner confirms the legal
-person or entity that owns the app. Do not guess this field.
+Saved as `2026 Xiaoneng Hou`, using the owner-confirmed Pinyin legal name.
+
+## App-level release settings
+
+- App price: free (`US$0.00`). The monthly, yearly, and lifetime Plus products
+  remain separately priced as listed below.
+- App availability: United States and Canada only (`2 of 175`).
+- Distribution: public App Store distribution.
+- Apple silicon Mac availability: off for the iPhone-only first release.
+- Apple Vision Pro availability: off for the iPhone-only first release.
+- Apple School Manager reduced-price option: off.
+- Version release: manual after App Review approval.
+- Content rights: the app does not contain, show, or access third-party content.
+- Primary category: `Health & Fitness`; no secondary category.
+- Regulated medical device declaration: no.
+- Age rating questionnaire: Health or Wellness Topics = Yes; Medical or
+  Treatment Information = None; all other capabilities/content answers are
+  No or None. App Store Connect calculated 9+ in 172 countries or regions,
+  with regional exceptions (12+ in Brazil and Vietnam, All in Korea).
 
 ## App Review notes draft
 
@@ -109,20 +127,19 @@ Letter Within does not use AI. Pattern text and cycle estimates are deterministi
 
 All three are configured for United States + Canada, have review screenshots,
 and are mapped to the RevenueCat `letter_plus` entitlement. On 2026-09-25 the
-lifetime purchase, the subscription group, and both subscriptions were added
-to one App Store Connect review draft. The draft has not been submitted.
+lifetime purchase, the subscription group, both subscriptions, and app version
+1.0 were added to one five-item App Store Connect review draft. Apple shows the
+version as `Ready for Review` and enables `Submit for Review`. The draft has
+not been submitted.
 
-## Blocking owner decisions
+## Remaining pre-submission checks
 
-1. Confirm the legal rights holder for Copyright.
-2. Confirm whether version release should be manual. App Store Connect is
-   currently set to automatic release; manual release is safer for a first
-   launch.
-3. Publish the fully configured App Privacy declaration after final
-   owner/legal approval.
-4. Complete the Canada/privacy/subscription legal review before submission.
-5. Confirm the applicable Terms of Use/EULA treatment for the two
+1. Complete the Canada/privacy/subscription legal review before submission.
+2. Confirm the applicable Terms of Use/EULA treatment for the two
    auto-renewable subscriptions. No public `/terms` route exists today.
+3. Correct the public Support page's stale iPhone/Android “coming soon” copy.
+4. Perform one owner visual check of the five-item review draft, then give
+   explicit approval before clicking `Submit for Review`.
 
 ## Complimentary access after launch
 

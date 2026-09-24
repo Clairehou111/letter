@@ -420,13 +420,13 @@ Build 12 release state:
 ## App Store listing and review-draft state (2026-09-25)
 
 - Promotional text, description, keywords, Support URL, and Marketing URL are
-  entered and saved on version 1.0. Copyright remains blank pending confirmation
-  of the legal rights holder.
+  entered and saved on version 1.0. Copyright is saved as
+  `2026 Xiaoneng Hou`, using the owner-confirmed Pinyin legal name.
 - The public Support and Privacy routes work. The proposed optional
   `/account-deletion` URL returns 404 and was deliberately omitted from App
   Store Connect. The Support page still says iPhone and Android are coming soon;
   correct that website copy before public launch.
-- App Privacy is fully configured but not published. The saved draft declares
+- App Privacy is published. The label declares
   Email Address, User ID, and Purchase History as collected and linked to the
   user; none are used for tracking. Email Address and User ID are used for App
   Functionality. Purchase History is used for App Functionality and Analytics.
@@ -434,10 +434,20 @@ Build 12 release state:
   Care, mood, note, and report data remain on-device.
 - The missing English (U.S.) subscription-group localization was added with
   display name `Letter Within Plus` and the app name display option.
-- One App Store Connect review draft now contains four product items: Letter
-  Plus Lifetime, the Letter Plus subscription group, Letter Plus Monthly, and
-  Letter Plus Yearly. The draft has not been submitted.
-- App version 1.0 is not yet in that review draft. Before adding it, confirm the
-  copyright rights holder, decide manual versus automatic release, publish App
-  Privacy after the final compliance check, and obtain explicit action-time
-  approval. Never click `Submit for Review` without that approval.
+- App price is free, and app availability is limited to United States and
+  Canada (`2 of 175`). Public distribution remains selected. Apple silicon Mac
+  and Apple Vision Pro availability are disabled for the iPhone-only launch;
+  the Apple School Manager reduced-price option is also disabled.
+- Primary category is Health & Fitness, no secondary category. Content rights
+  is set to no third-party content. The app is declared not to be a regulated
+  medical device. The completed age-rating questionnaire produced 9+ in 172
+  countries or regions, with regional exceptions.
+- Version 1.0 uses manual release after approval.
+- One App Store Connect review draft now contains five ready items: iOS app
+  version 1.0 / build 12, Letter Plus Lifetime, the Letter Plus subscription
+  group, Letter Plus Monthly, and Letter Plus Yearly. Version 1.0 is shown as
+  `Ready for Review`, and `Submit for Review` is enabled.
+- The draft has not been submitted. Before clicking `Submit for Review`, finish
+  the Canada/privacy/subscription and EULA review, correct the stale public
+  Support-page launch copy, perform a final owner visual check, and obtain
+  explicit action-time approval.

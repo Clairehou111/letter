@@ -1,7 +1,6 @@
 # App Privacy declaration draft
 
-Status: entered and fully configured in App Store Connect on 2026-09-25, but
-not published. Final publication remains an owner/legal confirmation gate.
+Status: published in App Store Connect on 2026-09-25.
 
 Apple requires a privacy policy URL and answers covering the app and integrated
 third-party partners. The attached review candidate is `1.0.0+12`; PostHog
@@ -84,9 +83,12 @@ Before any future release activates PostHog:
    build is submitted; and
 4. re-review the Xcode privacy report and the exact PostHog configuration.
 
-App Store Connect now shows the narrower 1.0 label ready to publish. Publishing
-still requires owner/legal approval after reviewing the final build-12 privacy
-report, because the dormant SDK manifests remain embedded.
+App Store Connect now shows the narrower 1.0 label as published. The published
+label declares Email Address, User ID, and Purchase History as collected and
+linked to the user; none are used for tracking. Email Address and User ID are
+used for App Functionality. Purchase History is used for App Functionality and
+Analytics. The dormant PostHog SDK remains embedded and must stay unconfigured,
+auto-init disabled, and forced opted out for this release.
 
 ## Evidence checked on 2026-09-24
 
@@ -100,6 +102,5 @@ report, because the dormant SDK manifests remain embedded.
 - RevenueCat Apple App Privacy guidance
 - Supabase Auth user documentation
 
-Publishing App Privacy includes an accuracy/compliance confirmation in App
-Store Connect. Stop before that confirmation unless the owner explicitly
-approves the final answers.
+The App Store Connect accuracy/compliance confirmation was completed when the
+declaration was published on 2026-09-25.
