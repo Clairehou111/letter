@@ -1,7 +1,7 @@
 {
   "product": "Letter Within",
   "category": "Private period companion and tracker",
-  "status": "owner-approved-awaiting-upload",
+  "status": "uploaded-to-app-store-connect",
   "locale": "en-US",
   "storefronts": ["US", "CA"],
   "deviceClass": "iPhone 6.9-inch",
@@ -16,6 +16,9 @@
   "review": {
     "ownerApproved": true,
     "ownerApprovalDate": "2026-09-24",
+    "uploadedToAppStoreConnect": true,
+    "uploadDate": "2026-09-24",
+    "verifiedScreenshotCount": 10,
     "claudeModel": "anthropic/claude-sonnet-5",
     "claudeRoute": "OpenRouter",
     "reviewDate": "2026-09-24",

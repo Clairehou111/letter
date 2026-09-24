@@ -241,12 +241,13 @@ Local build-11 archive validation:
   upload as `Complete` and the TestFlight build as `Ready to Submit`, expiring
   in 90 days. It remains assigned to the existing `Internal Testers` group
   with 2 invited testers.
-- The six English (U.S.) App Store listing screenshots were uploaded to the
-  iPhone 6.9-inch display slot and verified in manifest order. App Store
-  Connect is using that set for the 6.5-inch display slot as intended.
+- The owner-approved ten-frame v3 English (U.S.) App Store listing set is
+  uploaded to the iPhone 6.9-inch display slot and verified in manifest order.
+  App Store Connect is using that set for the 6.5-inch display slot as intended.
 - The first three installation-sheet images are, in order: heavier-day care,
-  encrypted on-device/no-AI privacy, and cross-cycle patterns. The clinician
-  report is fourth.
+  encrypted on-device/no-AI privacy, and populated Today tracking. Cycle and
+  mood Patterns are sixth and seventh; the populated clinician report is
+  eighth.
 
 No website asset, in-app purchase, product, beta review, or app version was
 submitted or deployed during this pass. `Add for Review` was not clicked. Do
@@ -260,10 +261,10 @@ source or deployment was changed by that handoff.
 
 ## Screenshot correction after owner review (2026-09-24)
 
-The six screenshots currently visible in App Store Connect are no longer
-approved. The owner rejected the set because the Care and Patterns images were
+The six screenshots previously visible in App Store Connect were rejected and
+removed. The owner rejected the set because the Care and Patterns images were
 obsolete, the clinician report did not communicate populated data, and the
-strip looked coarse at storefront scale. Do not submit with those six images.
+strip looked coarse at storefront scale.
 
 An eight-frame replacement candidate was created from fresh current native
 iPhone 17 Pro Max captures. It is under
@@ -283,9 +284,8 @@ an eight-frame, data-first set. Privacy remains second, rather than Claude's
 suggested closing position, because the owner explicitly fixed Care and privacy
 as the top two launch messages.
 
-Candidate v2 is local only and has not been uploaded. The App Store submission
-remains paused. Replacing the uploaded six screenshots requires explicit owner
-approval.
+Candidate v2 is local only and was never uploaded. The App Store submission
+remains paused.
 
 ## Screenshot candidate v3 after tracker and color review (2026-09-24)
 
@@ -320,5 +320,7 @@ or plum canvas remains.
 All ten v3 finals are 1290 x 2796 JPEGs with no alpha. Hashes, order, Claude
 decision, and approval gates are recorded in
 `artifacts/app-store/iphone-69/candidate-v3/manifest.json`. The owner approved
-candidate v3 on 2026-09-24 for replacing the rejected six in App Store Connect.
-This does not authorize submitting the app version to App Review.
+candidate v3 on 2026-09-24, and all ten files were uploaded and verified in
+manifest order that day. App Store Connect reports `10 of 10 Screenshots` for
+the 6.9-inch set and derives the 6.5-inch set from it. This does not authorize
+submitting the app version to App Review.

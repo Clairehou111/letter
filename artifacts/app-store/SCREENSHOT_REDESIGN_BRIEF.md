@@ -1,7 +1,7 @@
 # Letter Within storefront screenshot redesign brief
 
-Status: candidate v3 was owner-approved on 2026-09-24 and is awaiting upload.
-Candidate v2 is preserved but superseded.
+Status: candidate v3 was owner-approved, uploaded, and verified in App Store
+Connect on 2026-09-24. Candidate v2 is preserved but superseded.
 
 ## Why the uploaded set is being replaced
 
@@ -103,6 +103,8 @@ explicit approval.
 ## Approval state
 
 The owner approved replacing the rejected six screenshots in App Store Connect
-with candidate v3 on 2026-09-24. This approval covers screenshot replacement
-only. Do not submit the app version, attach build 11, add an in-app purchase for
-review, change storefronts, push, or deploy as part of this handoff.
+with candidate v3 on 2026-09-24. The replacement is complete and the live media
+manager shows the ten expected filenames in manifest order. This approval
+covers screenshot replacement only. Do not submit the app version, attach build
+11, add an in-app purchase for review, change storefronts, push, or deploy as
+part of this handoff.

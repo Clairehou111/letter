@@ -1,12 +1,12 @@
 # App Store screenshot set
 
-Status: **the six-frame v1 set is uploaded but rejected by the owner; the
-ten-frame v3 set was owner-approved on 2026-09-24 and is awaiting upload**
+Status: **the rejected six-frame v1 set was removed; the owner-approved
+ten-frame v3 set was uploaded and verified on 2026-09-24**
 
-The files under `iphone-69/final/` are the six images currently visible in App
-Store Connect. They must not be treated as approved launch masters. The owner
-rejected the set because the first Care frame and Patterns frame were obsolete,
-the report did not show enough data, and the strip read as coarse at storefront
+The files under `iphone-69/final/` preserve the removed six-image v1 audit
+trail. They must not be treated as approved launch masters. The owner rejected
+the set because the first Care frame and Patterns frame were obsolete, the
+report did not show enough data, and the strip read as coarse at storefront
 scale.
 
 The current replacement candidate is under `iphone-69/candidate-v3/`. It uses current
@@ -59,7 +59,7 @@ machine-readable candidate record is
 Candidate v2 remains preserved as the superseded eight-frame review pass. It
 was not uploaded.
 
-## Candidate v3 order - approved replacement set
+## Uploaded v3 order - approved launch set
 
 | Order | File | Caption | Real app state |
 | --- | --- | --- | --- |
@@ -81,8 +81,10 @@ plum campaign canvas. Claude reviewed Heavy, Focus, Body, and Space through
 OpenRouter and selected Heavy because it most directly supports the fixed
 heavier-days promise.
 
-All candidate v3 files are 1290 × 2796 JPEGs with no alpha channel. The
-machine-readable record is `iphone-69/candidate-v3/manifest.json`.
+All v3 files are 1290 × 2796 JPEGs with no alpha channel. App Store Connect
+shows all ten in the order below for the 6.9-inch display and derives the
+6.5-inch display from that set. The machine-readable record is
+`iphone-69/candidate-v3/manifest.json`.
 
 ## Claim boundaries
 
@@ -122,11 +124,11 @@ machine-readable record is `iphone-69/candidate-v3/manifest.json`.
   options as source evidence, and uses the same compositor constrained to the
   app's actual daylight and Care color tokens.
 
-The uploaded v1 machine-readable record is `manifest.json`.
+The superseded v1 machine-readable record is `manifest.json`.
 
 ## Release gate
 
-Do not replace the uploaded screenshots, attach build 11, add any in-app
+Do not modify the uploaded v3 screenshots, attach build 11, add any in-app
 purchase for review, submit an app version, or change storefront availability
 without explicit user approval. First launch remains United States and Canada
 only.
