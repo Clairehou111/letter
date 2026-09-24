@@ -1,6 +1,9 @@
 import 'dart:async';
+import 'dart:convert';
 
+import 'package:crypto/crypto.dart' as crypto;
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:sign_in_with_apple/sign_in_with_apple.dart';
 import 'package:supabase_flutter/supabase_flutter.dart' as supabase;
 
 import '../domain/auth_service.dart';
@@ -171,13 +174,29 @@ final class SupabaseAuthService implements AuthService {
 
   @override
   Future<void> signInWithApple() async {
-    final launched = await _client.auth.signInWithOAuth(
-      supabase.OAuthProvider.apple,
-      redirectTo: redirectUrl,
-    );
-    if (!launched) {
-      throw const supabase.AuthException('Could not open Apple sign-in.');
+    final rawNonce = _client.auth.generateRawNonce();
+    final hashedNonce = crypto.sha256.convert(utf8.encode(rawNonce)).toString();
+    final AuthorizationCredentialAppleID credential;
+    try {
+      credential = await SignInWithApple.getAppleIDCredential(
+        scopes: const [AppleIDAuthorizationScopes.email],
+        nonce: hashedNonce,
+      );
+    } on SignInWithAppleAuthorizationException catch (error) {
+      if (error.code == AuthorizationErrorCode.canceled) return;
+      rethrow;
     }
+    final idToken = credential.identityToken;
+    if (idToken == null) {
+      throw const supabase.AuthException(
+        'Apple did not return an identity token.',
+      );
+    }
+    await _client.auth.signInWithIdToken(
+      provider: supabase.OAuthProvider.apple,
+      idToken: idToken,
+      nonce: rawNonce,
+    );
   }
 
   @override

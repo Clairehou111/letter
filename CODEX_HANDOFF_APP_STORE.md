@@ -365,3 +365,19 @@ Complimentary access does not need a binary whitelist:
   and do not charge them.
 
 Do not hard-code friend email addresses or a permanent bypass into the app.
+
+Native Apple sign-in is now implemented locally with Apple's native
+authorization sheet, a SHA-256 nonce, and Supabase ID-token exchange. It no
+longer uses an external-browser OAuth redirect, so an iPhone-only release does
+not need an Apple OAuth secret or its six-month rotation. The
+`sign_in_with_apple` and direct `crypto` dependencies are pinned in the mobile
+package. Static analysis, the 26 focused auth tests, and an iOS Simulator debug
+build all pass.
+
+The signed-in Supabase Apple-provider form is prepared but not saved. It has
+Apple enabled, Client IDs set to `app.letterwithin`, OAuth secret empty, and
+"Allow users without an email" off. Saving is a live authentication change and
+still requires the owner's action-time confirmation. After it is saved, verify
+`external.apple = true`, set `LETTER_APPLE_SIGN_IN_ENABLED` to `true` in the
+ignored release configuration, and run an end-to-end native Apple sign-in
+before archiving build 12.

@@ -42,7 +42,9 @@ dependencies:
   local_auth: ^3.0.2
   timezone: ^0.11.1
   http: ^1.6.0
+  crypto: ^3.0.7
   supabase_flutter: ^2.17.1
+  sign_in_with_apple: ^8.2.0
   purchases_flutter: ^10.8.0
   posthog_flutter: ^5.36.0
   drift: 2.34.2
