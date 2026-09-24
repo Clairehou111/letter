@@ -351,10 +351,10 @@ Flutter suite passes 556 tests with one intentional skip, and `flutter analyze`
 passes. A brand-new isolated iPhone 17 Pro simulator verified that the dedicated
 App Review email/password account signs in and reaches onboarding. The account
 is auto-confirmed in Supabase and the verified credential pair is not present
-in this repository. App Store Connect's sign-in fields were filled once but did
-not remain populated after reload because the App Review contact block is still
-incomplete. Re-enter and save the credentials together with complete contact
-information before submission; do not assume they are already persisted.
+in this repository. On 2026-09-25, the App Review sign-in credentials, contact
+information, and review notes were completed and saved in App Store Connect.
+A post-save reload confirmed that the complete App Review information remained
+present. No credential or personal contact value is recorded in this repository.
 
 PostHog will remain in the binary for a future consented analytics release. It
 must remain unconfigured, auto-init disabled, and forced opted out for 1.0.
@@ -413,6 +413,6 @@ Build 12 release state:
   Connect finished processing it as `Ready to Submit`, and build 12 is attached
   to App Store version 1.0. The approved screenshot set remains intact at
   `10 of 10 Screenshots` in manifest order.
-- Do not click `Add for Review` until the remaining metadata, App Review contact
-  information, sign-in credentials, and privacy gates are complete and the
-  owner gives explicit action-time approval.
+- Do not click `Add for Review` until the remaining metadata and privacy gates
+  are complete and the owner gives explicit action-time approval. App Review
+  contact information, sign-in credentials, and reviewer notes are complete.
