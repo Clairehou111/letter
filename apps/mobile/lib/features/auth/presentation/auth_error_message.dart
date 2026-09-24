@@ -34,6 +34,13 @@ abstract final class AuthErrorMessage {
         message.contains('timeout');
     if (networkUnavailable) return serviceUnreachable;
 
+    final invalidCredentials =
+        code == 'invalid_credentials' ||
+        message.contains('invalid login credentials');
+    if (invalidCredentials) {
+      return 'That email or password was not accepted. Check both and try again.';
+    }
+
     final rateLimited =
         status == '429' ||
         code.contains('rate') ||

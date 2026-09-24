@@ -67,6 +67,57 @@ void main() {
     );
   });
 
+  testWidgets('an existing account can sign in with a password', (
+    tester,
+  ) async {
+    final service = DevAuthService();
+    await tester.pumpWidget(MaterialApp(home: AuthScreen(service: service)));
+
+    expect(find.byKey(const Key('auth-password')), findsNothing);
+    await tester.ensureVisible(find.byKey(const Key('auth-password-toggle')));
+    await tester.tap(find.byKey(const Key('auth-password-toggle')));
+    await tester.pump();
+
+    await tester.enterText(
+      find.byKey(const Key('auth-email')),
+      'review@example.com',
+    );
+    await tester.enterText(
+      find.byKey(const Key('auth-password')),
+      'review-password',
+    );
+    await tester.pump();
+    await tester.ensureVisible(find.byKey(const Key('auth-password-sign-in')));
+    expect(
+      tester
+          .widget<FilledButton>(find.byKey(const Key('auth-password-sign-in')))
+          .onPressed,
+      isNotNull,
+    );
+    await tester.tap(find.byKey(const Key('auth-password-sign-in')));
+    await tester.pumpAndSettle();
+
+    expect(service.current.status, AuthStatus.authenticated);
+    expect(service.current.email, 'review@example.com');
+  });
+
+  testWidgets('password sign-in starts disabled without credentials', (
+    tester,
+  ) async {
+    final service = DevAuthService();
+    await tester.pumpWidget(MaterialApp(home: AuthScreen(service: service)));
+    await tester.ensureVisible(find.byKey(const Key('auth-password-toggle')));
+    await tester.tap(find.byKey(const Key('auth-password-toggle')));
+    await tester.pump();
+
+    expect(
+      tester
+          .widget<FilledButton>(find.byKey(const Key('auth-password-sign-in')))
+          .onPressed,
+      isNull,
+    );
+  });
+
   testWidgets('magic-link rate limit gives a specific retry message', (
     tester,
   ) async {
@@ -210,6 +261,10 @@ final class _ThrowingAuthService implements AuthService {
 
   @override
   Future<void> sendMagicLink(String email) => Future<void>.error(error);
+
+  @override
+  Future<void> signInWithPassword(String email, String password) =>
+      Future<void>.error(error);
 
   @override
   Future<void> signInWithApple() => Future<void>.error(error);

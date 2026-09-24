@@ -324,3 +324,44 @@ candidate v3 on 2026-09-24, and all ten files were uploaded and verified in
 manifest order that day. App Store Connect reports `10 of 10 Screenshots` for
 the 6.9-inch set and derives the 6.5-inch set from it. This does not authorize
 submitting the app version to App Review.
+
+## Build 12 auth and complimentary-access decision (2026-09-24)
+
+Build 11 requires authentication but its release configuration leaves
+`LETTER_APPLE_SIGN_IN_ENABLED` unset, and the live Supabase Auth settings report
+Apple disabled. Email access is magic-link-only, which is not a dependable App
+Review login because the reviewer cannot access the owner's inbox.
+
+The agreed build-12 direction is:
+
+- Keep email magic link as the primary email signup and sign-in flow.
+- Configure the Supabase Apple provider and enable the existing Apple sign-in
+  UI for customers. The iOS Sign in with Apple entitlement is already present.
+- Add a visually secondary password sign-in path for existing accounts only.
+  Create one dedicated App Review account with a password and put its
+  credentials only in App Store Connect, never in the repository.
+- Do not add public password signup until email verification, password reset,
+  and recovery UX are deliberately implemented.
+
+The password fallback is implemented locally. Focused auth tests pass 26/26,
+the full Flutter suite passes 556 tests with one intentional skip,
+`flutter analyze` passes, and a clean iPhone 17 Simulator inspection verified
+the default and expanded password states without clipping. No build 12 archive
+has been created or uploaded yet.
+
+PostHog will remain in the binary for a future consented analytics release. It
+must remain unconfigured, auto-init disabled, and forced opted out for 1.0.
+Before enabling it later, update the consent UI, privacy policy, App Store
+privacy answers, and final privacy report; never send health data or inferred
+health state.
+
+Complimentary access does not need a binary whitelist:
+
+- Use RevenueCat granted `letter_plus` entitlements for the owner and a small
+  trusted group, by authenticated customer ID and chosen duration.
+- Use Apple offer codes for public free or discounted promotions after the app
+  and products are approved.
+- Keep pre-launch friends on TestFlight, where StoreKit purchases are sandboxed
+  and do not charge them.
+
+Do not hard-code friend email addresses or a permanent bypass into the app.

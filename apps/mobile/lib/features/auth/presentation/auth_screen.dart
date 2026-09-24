@@ -25,8 +25,11 @@ class AuthScreen extends StatefulWidget {
 
 class _AuthScreenState extends State<AuthScreen> {
   final _email = TextEditingController();
+  final _password = TextEditingController();
   bool _working = false;
   bool _linkSent = false;
+  bool _passwordMode = false;
+  bool _obscurePassword = true;
   String? _error;
 
   bool get _showApple =>
@@ -38,6 +41,7 @@ class _AuthScreenState extends State<AuthScreen> {
   @override
   void dispose() {
     _email.dispose();
+    _password.dispose();
     super.dispose();
   }
 
@@ -50,6 +54,24 @@ class _AuthScreenState extends State<AuthScreen> {
     final email = _email.text.trim();
     await _run(() => widget.service.sendMagicLink(email));
     if (mounted && _error == null) setState(() => _linkSent = true);
+  }
+
+  Future<void> _passwordSignIn() async {
+    if (_working) return;
+    await _run(
+      () =>
+          widget.service.signInWithPassword(_email.text.trim(), _password.text),
+    );
+  }
+
+  void _togglePasswordMode() {
+    if (_working) return;
+    setState(() {
+      _passwordMode = !_passwordMode;
+      _linkSent = false;
+      _error = null;
+      if (!_passwordMode) _password.clear();
+    });
   }
 
   Future<void> _run(Future<void> Function() action) async {
@@ -79,6 +101,8 @@ class _AuthScreenState extends State<AuthScreen> {
   @override
   Widget build(BuildContext context) {
     final bool magicLinkEnabled = !_working && !_linkSent;
+    final bool passwordSignInEnabled =
+        !_working && _email.text.trim().isNotEmpty && _password.text.isNotEmpty;
     return Scaffold(
       backgroundColor: ExperienceColors.canvas,
       body: SafeArea(
@@ -190,12 +214,16 @@ class _AuthScreenState extends State<AuthScreen> {
                     enabled: !_working,
                     keyboardType: TextInputType.emailAddress,
                     autofillHints: const [AutofillHints.email],
-                    textInputAction: TextInputAction.done,
+                    textInputAction: _passwordMode
+                        ? TextInputAction.next
+                        : TextInputAction.done,
                     style: ExperienceType.body(ExperienceColors.ink),
                     cursorColor: ExperienceColors.ember,
-                    onSubmitted: (_) => _magicLink(),
+                    onSubmitted: (_) {
+                      if (!_passwordMode) _magicLink();
+                    },
                     onChanged: (_) {
-                      if (_linkSent || _error != null) {
+                      if (_passwordMode || _linkSent || _error != null) {
                         setState(() {
                           _linkSent = false;
                           _error = null;
@@ -242,26 +270,76 @@ class _AuthScreenState extends State<AuthScreen> {
                       ),
                     ),
                   ),
-                  const SizedBox(height: ExperienceSpacing.sm),
-                  DecoratedBox(
-                    decoration: BoxDecoration(
-                      gradient: magicLinkEnabled
-                          ? ExperienceColors.emberGradient
-                          : null,
-                      color: magicLinkEnabled
-                          ? null
-                          : ExperienceColors.surfaceWarm,
-                      borderRadius: ExperienceRadius.chipRadius,
+                  if (_passwordMode) ...[
+                    const SizedBox(height: ExperienceSpacing.sm),
+                    TextField(
+                      key: const Key('auth-password'),
+                      controller: _password,
+                      enabled: !_working,
+                      obscureText: _obscurePassword,
+                      autofillHints: const [AutofillHints.password],
+                      textInputAction: TextInputAction.done,
+                      onSubmitted: (_) => _passwordSignIn(),
+                      onChanged: (_) => setState(() => _error = null),
+                      style: ExperienceType.body(ExperienceColors.ink),
+                      cursorColor: ExperienceColors.ember,
+                      decoration: InputDecoration(
+                        labelText: 'Password',
+                        labelStyle: ExperienceType.bodySmall(
+                          ExperienceColors.inkSoft,
+                        ),
+                        filled: true,
+                        fillColor: ExperienceColors.surface,
+                        contentPadding: const EdgeInsets.symmetric(
+                          horizontal: ExperienceSpacing.sm,
+                          vertical: ExperienceSpacing.sm,
+                        ),
+                        border: const OutlineInputBorder(
+                          borderRadius: ExperienceRadius.chipRadius,
+                          borderSide: BorderSide(
+                            color: ExperienceColors.hairline,
+                          ),
+                        ),
+                        enabledBorder: const OutlineInputBorder(
+                          borderRadius: ExperienceRadius.chipRadius,
+                          borderSide: BorderSide(
+                            color: ExperienceColors.hairline,
+                          ),
+                        ),
+                        focusedBorder: const OutlineInputBorder(
+                          borderRadius: ExperienceRadius.chipRadius,
+                          borderSide: BorderSide(
+                            color: ExperienceColors.ember,
+                            width: 1.6,
+                          ),
+                        ),
+                        suffixIcon: IconButton(
+                          key: const Key('auth-password-visibility'),
+                          tooltip: _obscurePassword
+                              ? 'Show password'
+                              : 'Hide password',
+                          onPressed: _working
+                              ? null
+                              : () => setState(
+                                  () => _obscurePassword = !_obscurePassword,
+                                ),
+                          icon: Icon(
+                            _obscurePassword
+                                ? Icons.visibility_outlined
+                                : Icons.visibility_off_outlined,
+                          ),
+                        ),
+                      ),
                     ),
-                    child: FilledButton(
-                      key: const Key('auth-magic-link'),
-                      onPressed: magicLinkEnabled ? _magicLink : null,
+                    const SizedBox(height: ExperienceSpacing.sm),
+                    FilledButton(
+                      key: const Key('auth-password-sign-in'),
+                      onPressed: passwordSignInEnabled ? _passwordSignIn : null,
                       style: FilledButton.styleFrom(
                         minimumSize: const Size.fromHeight(52),
-                        backgroundColor: Colors.transparent,
-                        foregroundColor: Colors.white,
-                        shadowColor: Colors.transparent,
-                        disabledBackgroundColor: Colors.transparent,
+                        backgroundColor: ExperienceColors.ink,
+                        foregroundColor: ExperienceColors.canvas,
+                        disabledBackgroundColor: ExperienceColors.surfaceWarm,
                         disabledForegroundColor: ExperienceColors.inkSoft
                             .withValues(alpha: 0.6),
                         shape: const RoundedRectangleBorder(
@@ -269,23 +347,68 @@ class _AuthScreenState extends State<AuthScreen> {
                         ),
                       ),
                       child: Text(
-                        _linkSent
-                            ? 'Sign-in link sent'
-                            : 'Email me a sign-in link',
+                        'Sign in',
                         style: ExperienceType.label(
-                          magicLinkEnabled
-                              ? Colors.white
+                          passwordSignInEnabled
+                              ? ExperienceColors.canvas
                               : ExperienceColors.inkSoft,
                         ),
                       ),
+                    ),
+                  ] else ...[
+                    const SizedBox(height: ExperienceSpacing.sm),
+                    DecoratedBox(
+                      decoration: BoxDecoration(
+                        gradient: magicLinkEnabled
+                            ? ExperienceColors.emberGradient
+                            : null,
+                        color: magicLinkEnabled
+                            ? null
+                            : ExperienceColors.surfaceWarm,
+                        borderRadius: ExperienceRadius.chipRadius,
+                      ),
+                      child: FilledButton(
+                        key: const Key('auth-magic-link'),
+                        onPressed: magicLinkEnabled ? _magicLink : null,
+                        style: FilledButton.styleFrom(
+                          minimumSize: const Size.fromHeight(52),
+                          backgroundColor: Colors.transparent,
+                          foregroundColor: Colors.white,
+                          shadowColor: Colors.transparent,
+                          disabledBackgroundColor: Colors.transparent,
+                          disabledForegroundColor: ExperienceColors.inkSoft
+                              .withValues(alpha: 0.6),
+                          shape: const RoundedRectangleBorder(
+                            borderRadius: ExperienceRadius.chipRadius,
+                          ),
+                        ),
+                        child: Text(
+                          _linkSent
+                              ? 'Sign-in link sent'
+                              : 'Email me a sign-in link',
+                          style: ExperienceType.label(
+                            magicLinkEnabled
+                                ? Colors.white
+                                : ExperienceColors.inkSoft,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                  TextButton(
+                    key: const Key('auth-password-toggle'),
+                    onPressed: _working ? null : _togglePasswordMode,
+                    child: Text(
+                      _passwordMode
+                          ? 'Use an email sign-in link'
+                          : 'Use a password instead',
+                      style: ExperienceType.label(ExperienceColors.inkSoft),
                     ),
                   ),
                   if (_working) ...[
                     const SizedBox(height: ExperienceSpacing.md),
                     const Center(
-                      child: EmberLoadingIndicator(
-                        semanticLabel: 'Sending sign-in link',
-                      ),
+                      child: EmberLoadingIndicator(semanticLabel: 'Signing in'),
                     ),
                   ],
                   if (_linkSent) ...[

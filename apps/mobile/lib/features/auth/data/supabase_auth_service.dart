@@ -196,6 +196,20 @@ final class SupabaseAuthService implements AuthService {
   }
 
   @override
+  Future<void> signInWithPassword(String email, String password) async {
+    final normalized = email.trim();
+    if (normalized.isEmpty || !normalized.contains('@')) {
+      throw const FormatException('Enter a valid email address.');
+    }
+    if (password.isEmpty) {
+      throw const FormatException('Enter your password.');
+    }
+    await _client.auth
+        .signInWithPassword(email: normalized, password: password)
+        .timeout(_authRequestTimeout);
+  }
+
+  @override
   Future<void> signOut() async {
     Object? providerFailure;
     StackTrace? providerStackTrace;

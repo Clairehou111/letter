@@ -57,6 +57,10 @@ abstract interface class AuthService {
   /// Sends a magic link. A new account is created when the address is new.
   Future<void> sendMagicLink(String email);
 
+  /// Signs in an existing account with a password. This never creates a new
+  /// account; normal customer onboarding continues to use a magic link.
+  Future<void> signInWithPassword(String email, String password);
+
   /// Explicit sign-out closes the local-data gate but never deletes records.
   /// The installation remains bound to this account so another account cannot
   /// read the records left on the device.

@@ -113,6 +113,13 @@ void main() {
       expect(service.current.status, AuthStatus.authenticated);
     });
 
+    test('password sign-in sets authenticated state', () async {
+      final service = DevAuthService();
+      await service.signInWithPassword('review@letter.app', 'password');
+      expect(service.current.status, AuthStatus.authenticated);
+      expect(service.current.email, 'review@letter.app');
+    });
+
     test('signOut returns to anonymous', () async {
       final service = DevAuthService();
       await service.signInWithApple();

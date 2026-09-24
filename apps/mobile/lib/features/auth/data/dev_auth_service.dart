@@ -38,6 +38,17 @@ final class DevAuthService implements AuthService {
   }
 
   @override
+  Future<void> signInWithPassword(String email, String password) async {
+    _set(
+      AuthState(
+        status: AuthStatus.authenticated,
+        userId: 'dev-user-001',
+        email: email.trim(),
+      ),
+    );
+  }
+
+  @override
   Future<void> signOut() async {
     _set(const AuthState(status: AuthStatus.signedOut));
   }
