@@ -1,13 +1,14 @@
 # App Store metadata draft
 
-Status: entered, saved, and added to the App Store Connect review draft on
-2026-09-25. The draft is ready to submit but has not been submitted.
+Status: submitted to App Review on 2026-09-25. After an automated 3.1.2
+metadata rejection, the Standard Apple EULA link was added to the App
+Description and the same five-item package was resubmitted. All five items now
+show `Waiting for Review`.
 
 This draft matches the approved ten-frame screenshot set and the United States
 + Canada launch boundary. Build `1.0.0+12` is attached to version 1.0. The
 listing copy and stable URLs below are saved. App version 1.0 and all four paid
-product items are in the same five-item review draft. This does not authorize
-submitting the draft for review.
+product items are in the same five-item submission.
 
 ## Product identity
 
@@ -48,6 +49,8 @@ PRIVATE BY DESIGN
 Readable health records stay encrypted on your device. Letter Within does not use AI. Account access and subscription entitlement use operational services, but your readable cycle, symptom, Care, and note records are not uploaded with sign-in.
 
 Letter Within is supportive software, not a medical device. It does not diagnose, treat, or provide emergency care.
+
+Terms of Use (EULA): https://www.apple.com/legal/internet-services/itunes/dev/stdeula/
 ```
 
 ### Keywords
@@ -128,18 +131,21 @@ Letter Within does not use AI. Pattern text and cycle estimates are deterministi
 All three are configured for United States + Canada, have review screenshots,
 and are mapped to the RevenueCat `letter_plus` entitlement. On 2026-09-25 the
 lifetime purchase, the subscription group, both subscriptions, and app version
-1.0 were added to one five-item App Store Connect review draft. Apple shows the
-version as `Ready for Review` and enables `Submit for Review`. The draft has
-not been submitted.
+1.0 were added to one five-item App Store Connect submission. The initial
+submission received an automated 3.1.2 metadata rejection because its public
+description lacked a functional Terms of Use link. The Standard Apple EULA
+link was added and saved, and submission
+`71fb461c-dead-493a-bc4f-f8ade898b693` was resubmitted on 2026-09-25. All five
+items now show `Waiting for Review`.
 
-## Remaining pre-submission checks
+## Remaining pre-release checks
 
-1. Complete the Canada/privacy/subscription legal review before submission.
-2. Confirm the applicable Terms of Use/EULA treatment for the two
-   auto-renewable subscriptions. No public `/terms` route exists today.
-3. Correct the public Support page's stale iPhone/Android “coming soon” copy.
-4. Perform one owner visual check of the five-item review draft, then give
-   explicit approval before clicking `Submit for Review`.
+1. Complete the Canada/privacy/subscription legal review before public release.
+2. Correct the public Support page's stale iPhone/Android “coming soon” copy.
+3. Monitor App Store Connect for Apple review questions or a status change.
+
+Version 1.0 uses Apple's Standard EULA. No custom `/terms` route is required
+for this submission.
 
 ## Complimentary access after launch
 

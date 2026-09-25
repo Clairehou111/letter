@@ -443,11 +443,17 @@ Build 12 release state:
   medical device. The completed age-rating questionnaire produced 9+ in 172
   countries or regions, with regional exceptions.
 - Version 1.0 uses manual release after approval.
-- One App Store Connect review draft now contains five ready items: iOS app
-  version 1.0 / build 12, Letter Plus Lifetime, the Letter Plus subscription
-  group, Letter Plus Monthly, and Letter Plus Yearly. Version 1.0 is shown as
-  `Ready for Review`, and `Submit for Review` is enabled.
-- The draft has not been submitted. Before clicking `Submit for Review`, finish
-  the Canada/privacy/subscription and EULA review, correct the stale public
-  Support-page launch copy, perform a final owner visual check, and obtain
-  explicit action-time approval.
+- The five-item package contains iOS app version 1.0 / build 12, Letter Plus
+  Lifetime, the Letter Plus subscription group, Letter Plus Monthly, and
+  Letter Plus Yearly.
+- The first submission received an automated App Review guideline 3.1.2
+  metadata rejection because the public App Description did not contain a
+  functional Terms of Use link for the auto-renewable subscriptions.
+- The verified Standard Apple EULA link was appended to the App Description:
+  `https://www.apple.com/legal/internet-services/itunes/dev/stdeula/`.
+- The corrected submission (`71fb461c-dead-493a-bc4f-f8ade898b693`) was
+  resubmitted on 2026-09-25. App Store Connect now shows `Waiting for Review`
+  for all five items.
+- No new binary was required. Continue monitoring App Store Connect for review
+  questions. Before public release, finish the Canada/privacy/subscription
+  review and correct the stale public Support-page launch copy.
