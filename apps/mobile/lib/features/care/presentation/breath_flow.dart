@@ -121,6 +121,8 @@ class _BreathFlowState extends State<BreathFlow>
   static const _bg = LetterColors.night;
   static const _ink = LetterColors.canvas;
   static const _glow = LetterColors.moonMetal;
+  // Kept in the injected starter contract for existing audio test doubles;
+  // the runtime starter no longer loads or plays this track.
   static const _bedAsset = 'assets/audio/care/prototype/breath.mp3';
 
   @override
@@ -135,8 +137,6 @@ class _BreathFlowState extends State<BreathFlow>
     })..start();
   }
 
-  /// The bed sits far back on purpose: it is there so the gaps between cues
-  /// aren't dead air, never something you'd notice on its own.
   Future<void> _openAudio() async {
     if (_audio != null) return;
     final generation = ++_audioGeneration;
@@ -639,16 +639,13 @@ class _BreathPainter extends CustomPainter {
 }
 
 // ── Audio: thin wrapper around flutter_soloud ────────────────────────
-// Replaces SceneAudio from scene-mind-soothe-flutter.
-// start() loads and loops a bed, cue() plays a one-shot on top,
-// setSwell() ramps bed volume, stop() tears everything down.
+// Replaces SceneAudio from scene-mind-soothe-flutter. Cue sounds are short
+// one-shots; breathing deliberately has no looping background music.
 
 class _BreathAudio implements BreathAudio {
-  _BreathAudio._(this._soloud, this._bedSource, this._bedHandle);
+  _BreathAudio._(this._soloud);
 
   final SoLoud _soloud;
-  final AudioSource _bedSource;
-  final SoundHandle _bedHandle;
   final _cueSources = <String, AudioSource>{};
   SoundHandle? _activeCue;
   int _cueGeneration = 0;
@@ -660,27 +657,12 @@ class _BreathAudio implements BreathAudio {
     double rate = 0.97,
   }) async {
     final soloud = await CareAudioRuntime.ensureInitialized();
-    AudioSource? source;
-    try {
-      source = await soloud.loadAsset(asset);
-      final handle = soloud.play(source, volume: gain, looping: true);
-      return _BreathAudio._(soloud, source, handle);
-    } catch (_) {
-      if (source != null) {
-        try {
-          await soloud.disposeSource(source);
-        } catch (_) {}
-      }
-      rethrow;
-    }
+    return _BreathAudio._(soloud);
   }
 
   @override
   void setLevel(double v) {
-    if (_stopped) return;
-    try {
-      _soloud.setVolume(_bedHandle, v.clamp(0.0, 1.0));
-    } catch (_) {}
+    // No background bed to adjust.
   }
 
   @override
@@ -712,19 +694,13 @@ class _BreathAudio implements BreathAudio {
 
   @override
   void setSwell(double v, {double seconds = 1.6}) {
-    if (_stopped) return;
-    try {
-      _soloud.setVolume(_bedHandle, (v * 0.5).clamp(0.0, 0.5));
-    } catch (_) {}
+    // No background bed to swell.
   }
 
   @override
   Future<void> stop() async {
     _stopped = true;
     _cueGeneration++;
-    try {
-      await _soloud.stop(_bedHandle);
-    } catch (_) {}
     final activeCue = _activeCue;
     _activeCue = null;
     if (activeCue != null) {
@@ -738,8 +714,5 @@ class _BreathAudio implements BreathAudio {
       } catch (_) {}
     }
     _cueSources.clear();
-    try {
-      await _soloud.disposeSource(_bedSource);
-    } catch (_) {}
   }
 }

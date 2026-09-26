@@ -85,7 +85,6 @@ flutter:
   uses-material-design: true
 
   assets:
-    - assets/audio/care/prototype/breath.mp3
     - assets/audio/care/prototype/explode.mp3
     - assets/audio/care/prototype/heavy.mp3
     - assets/audio/care/prototype/hum-in.mp3

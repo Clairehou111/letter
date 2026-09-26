@@ -31,5 +31,6 @@ pre-rendered shaped loops and crowd crossfade variants are no longer bundled.
 Physical plays at `1.0x` to retain its authored 54 BPM cadence and remains
 silent for headache/migraine.
 
-`breath.mp3`, the `voice-*.mp3` cues, and the `hum-*.mp3` cues belong to the
-separate guided breathing flow and are also loaded directly at runtime.
+The `voice-*.mp3` and `hum-*.mp3` cues belong to the separate guided breathing
+flow and are loaded directly at runtime. The breathing flow has no looping
+background track.
