@@ -24,6 +24,11 @@ import '../today/today_cycle_ring.dart';
 /// next-period line, the recent-cycles list, the last period's flow history,
 /// the day editor, whole-cycle backfill, and per-cycle reflection letters.
 ///
+/// Rendered inside Quiet Dusk: the deep-plum canvas and lifted plum surfaces
+/// arrive through the shared Experience tokens; the ember is reserved for
+/// actions, selection, and the saved pulse; the letter fields keep their
+/// inset writing material inside the dusk sheet.
+///
 /// Business behavior preserved (design authority):
 ///  * Color requires flow first (`flowRequiredForColor`): color controls are
 ///    inert until a flow exists for that date, and the verbatim repository
@@ -40,8 +45,8 @@ import '../today/today_cycle_ring.dart';
 ///    `flowDateOutsidePeriod`, and future-date failures surface verbatim.
 ///    Every mutation — including backfill — fires `onCycleDataChanged` so
 ///    the ring, Gravity, and charts refresh coherently.
-///  * Cycle reflections are validated at 280 characters per field and
-///    identified by `startingPeriodId`.
+///  * Cycle reflections keep the person's full writing and are identified by
+///    `startingPeriodId`.
 ///  * Flow and color are factual records. They render here and in reports
 ///    and never feed severity, prediction, Gravity, Spectrum, or Twin.
 ///  * Edit, save, cancel/close, and delete-with-confirmation are uniform.
@@ -557,6 +562,14 @@ class _CycleExperienceState extends State<CycleExperience> {
           OutlinedButton.icon(
             onPressed: _openAllPeriods,
             icon: const Icon(Icons.history_outlined, size: 18),
+            style: OutlinedButton.styleFrom(
+              foregroundColor: ExperienceColors.ink,
+              side: const BorderSide(color: ExperienceColors.hairline),
+              minimumSize: const Size(0, ExperienceSpacing.minTouchTarget),
+              shape: const RoundedRectangleBorder(
+                borderRadius: ExperienceRadius.chipRadius,
+              ),
+            ),
             label: Text('View all ${_periods.length} periods'),
           ),
         ],
@@ -590,28 +603,40 @@ class _CycleExperienceState extends State<CycleExperience> {
   }
 
   Widget _buildHeader() {
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.center,
-      children: <Widget>[
-        Expanded(
-          child: Semantics(
-            header: true,
-            child: Text(
-              'Cycle',
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: ExperienceType.title(ExperienceColors.ink),
-            ),
-          ),
-        ),
-        const SizedBox(width: ExperienceSpacing.xs * 2),
-        Text(
-          _todayLabel,
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
-          style: ExperienceType.caption(ExperienceColors.inkSoft),
-        ),
-      ],
+    final title = Semantics(
+      header: true,
+      child: Text('Cycle', style: ExperienceType.title(ExperienceColors.ink)),
+    );
+    final date = Text(
+      _todayLabel,
+      style: ExperienceType.caption(ExperienceColors.inkSoft),
+    );
+
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final textScale = MediaQuery.textScalerOf(context).scale(1);
+        final stackHeader = constraints.maxWidth < 360 || textScale > 1.3;
+        if (stackHeader) {
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: <Widget>[
+              title,
+              const SizedBox(height: ExperienceSpacing.xs),
+              date,
+            ],
+          );
+        }
+
+        return Row(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: <Widget>[
+            Expanded(child: title),
+            const SizedBox(width: ExperienceSpacing.xs * 2),
+            date,
+          ],
+        );
+      },
     );
   }
 
@@ -797,65 +822,11 @@ class _CycleExperienceState extends State<CycleExperience> {
         ? summaryDateLabel(period.startDate)
         : '${summaryDateLabel(period.startDate)} – '
               '${summaryDateLabel(period.endDate!)}';
-    return Padding(
-      padding: const EdgeInsets.only(bottom: ExperienceSpacing.xs * 2),
-      child: Semantics(
-        button: true,
-        label:
-            'Cycle ${cycle.cycleNumber}: $range, '
-            '${cycle.cycleLengthDays}-day cycle. Activate for details, '
-            'letter, and editing.',
-        child: Material(
-          color: ExperienceColors.surface,
-          borderRadius: ExperienceRadius.chipRadius,
-          child: InkWell(
-            borderRadius: ExperienceRadius.chipRadius,
-            onTap: () => _openCycleDetail(cycle),
-            child: Container(
-              constraints: const BoxConstraints(
-                minHeight: ExperienceSpacing.minTouchTarget,
-              ),
-              padding: const EdgeInsets.symmetric(
-                horizontal: ExperienceSpacing.sm,
-                vertical: 12,
-              ),
-              decoration: BoxDecoration(
-                borderRadius: ExperienceRadius.chipRadius,
-                border: Border.all(color: ExperienceColors.hairline),
-              ),
-              child: Row(
-                children: <Widget>[
-                  Container(
-                    width: 10,
-                    height: 10,
-                    decoration: const BoxDecoration(
-                      shape: BoxShape.circle,
-                      color: ExperienceColors.phasePeriod,
-                    ),
-                  ),
-                  const SizedBox(width: ExperienceSpacing.sm),
-                  Expanded(
-                    child: Text(
-                      range,
-                      style: ExperienceType.body(ExperienceColors.ink),
-                    ),
-                  ),
-                  Text(
-                    '${cycle.cycleLengthDays}-day cycle',
-                    style: ExperienceType.bodyStrong(ExperienceColors.ink),
-                  ),
-                  const SizedBox(width: ExperienceSpacing.xs),
-                  const Icon(
-                    Icons.chevron_right,
-                    size: 18,
-                    color: ExperienceColors.inkFaint,
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ),
-      ),
+    return CycleRecentRow(
+      cycleNumber: cycle.cycleNumber,
+      dateRange: range,
+      cycleLengthDays: cycle.cycleLengthDays,
+      onPressed: () => _openCycleDetail(cycle),
     );
   }
 }
@@ -931,6 +902,12 @@ class _AllPeriodsSheet extends StatelessWidget {
                           padding: const EdgeInsets.symmetric(
                             horizontal: ExperienceSpacing.sm,
                             vertical: ExperienceSpacing.xs * 2,
+                          ),
+                          decoration: BoxDecoration(
+                            borderRadius: ExperienceRadius.chipRadius,
+                            border: Border.all(
+                              color: ExperienceColors.hairline,
+                            ),
                           ),
                           child: Row(
                             children: <Widget>[
@@ -1089,8 +1066,14 @@ class _LoadErrorPanel extends StatelessWidget {
                 backgroundColor: ExperienceColors.ember,
                 foregroundColor: Colors.white,
                 minimumSize: const Size(0, ExperienceSpacing.degreeTarget),
+                shape: const RoundedRectangleBorder(
+                  borderRadius: ExperienceRadius.chipRadius,
+                ),
               ),
-              child: const Text('Try again'),
+              child: Text(
+                'Try again',
+                style: ExperienceType.label(Colors.white),
+              ),
             ),
           ],
         ),
@@ -1462,15 +1445,17 @@ class _DayEditorSheetState extends State<_DayEditorSheet> {
     }
   }
 
-  Future<void> _saveObservation(HealthRecordDraft draft) async {
+  Future<HealthRecord> _saveObservation(HealthRecordDraft draft) async {
     final existing = _recordForSymptom(draft.symptom);
+    final HealthRecord saved;
     if (existing != null) {
-      await widget.healthRecordRepository.update(existing.id, draft);
+      saved = await widget.healthRecordRepository.update(existing.id, draft);
     } else {
-      await widget.healthRecordRepository.create(draft);
+      saved = await widget.healthRecordRepository.create(draft);
     }
     await _reload();
     widget.onDataChanged();
+    return saved;
   }
 
   Future<void> _deleteObservation(HealthRecord record) async {
@@ -2169,7 +2154,7 @@ class _BackfillSheetState extends State<_BackfillSheet> {
     }
   }
 
-  Future<void> _saveObservation(HealthRecordDraft draft) async {
+  Future<HealthRecord> _saveObservation(HealthRecordDraft draft) async {
     HealthRecord? existing;
     for (final record in _healthRecords) {
       if (record.symptom == draft.symptom &&
@@ -2178,13 +2163,15 @@ class _BackfillSheetState extends State<_BackfillSheet> {
         break;
       }
     }
+    final HealthRecord saved;
     if (existing != null) {
-      await widget.healthRecordRepository.update(existing.id, draft);
+      saved = await widget.healthRecordRepository.update(existing.id, draft);
     } else {
-      await widget.healthRecordRepository.create(draft);
+      saved = await widget.healthRecordRepository.create(draft);
     }
     await _reloadDays();
     widget.onDataChanged();
+    return saved;
   }
 
   Future<void> _deleteObservation(HealthRecord record) async {
@@ -2246,6 +2233,7 @@ class _BackfillSheetState extends State<_BackfillSheet> {
           FilledButton(
             style: FilledButton.styleFrom(
               backgroundColor: ExperienceColors.error,
+              foregroundColor: Colors.white,
             ),
             onPressed: () => Navigator.of(dialogContext).pop(true),
             child: const Text('Discard'),
@@ -2324,6 +2312,7 @@ class _BackfillSheetState extends State<_BackfillSheet> {
               child: OutlinedButton(
                 onPressed: _busy ? null : () => _pickDate(start: true),
                 style: OutlinedButton.styleFrom(
+                  foregroundColor: ExperienceColors.ink,
                   minimumSize: const Size(0, ExperienceSpacing.degreeTarget),
                   side: const BorderSide(color: ExperienceColors.hairline),
                   shape: const RoundedRectangleBorder(
@@ -2343,6 +2332,7 @@ class _BackfillSheetState extends State<_BackfillSheet> {
               child: OutlinedButton(
                 onPressed: _busy ? null : () => _pickDate(start: false),
                 style: OutlinedButton.styleFrom(
+                  foregroundColor: ExperienceColors.ink,
                   minimumSize: const Size(0, ExperienceSpacing.degreeTarget),
                   side: const BorderSide(color: ExperienceColors.hairline),
                   shape: const RoundedRectangleBorder(
@@ -2707,6 +2697,7 @@ class _PeriodDatesSheetState extends State<_PeriodDatesSheet> {
           FilledButton(
             style: FilledButton.styleFrom(
               backgroundColor: ExperienceColors.error,
+              foregroundColor: Colors.white,
             ),
             onPressed: () => Navigator.of(dialogContext).pop(true),
             child: const Text('Delete'),
@@ -2750,6 +2741,15 @@ class _PeriodDatesSheetState extends State<_PeriodDatesSheet> {
               style: ExperienceType.headline(ExperienceColors.ink),
             ),
           ),
+          if (widget.existing != null) ...<Widget>[
+            const SizedBox(height: ExperienceSpacing.xs),
+            Text(
+              'Changing these dates changes which days count as bleeding. '
+              'Symptoms, check-ins, and notes stay on their original dates; '
+              'they are never silently deleted.',
+              style: ExperienceType.caption(ExperienceColors.inkSoft),
+            ),
+          ],
           const SizedBox(height: ExperienceSpacing.md),
           Row(
             children: <Widget>[
@@ -2757,6 +2757,7 @@ class _PeriodDatesSheetState extends State<_PeriodDatesSheet> {
                 child: OutlinedButton(
                   onPressed: _busy ? null : () => _pick(start: true),
                   style: OutlinedButton.styleFrom(
+                    foregroundColor: ExperienceColors.ink,
                     minimumSize: const Size(0, ExperienceSpacing.degreeTarget),
                     side: const BorderSide(color: ExperienceColors.hairline),
                     shape: const RoundedRectangleBorder(
@@ -2776,6 +2777,7 @@ class _PeriodDatesSheetState extends State<_PeriodDatesSheet> {
                       ? null
                       : () => _pick(start: false),
                   style: OutlinedButton.styleFrom(
+                    foregroundColor: ExperienceColors.ink,
                     minimumSize: const Size(0, ExperienceSpacing.degreeTarget),
                     side: const BorderSide(color: ExperienceColors.hairline),
                     shape: const RoundedRectangleBorder(
@@ -2856,8 +2858,8 @@ class _PeriodDatesSheetState extends State<_PeriodDatesSheet> {
 
 // ---------------------------------------------------------------------------
 // Cycle detail — dates, flow days, letter, edit, fill-in, delete.
-// Cycle reflections are validated at 280 characters per field and identified
-// by startingPeriodId.
+// Cycle reflections keep the person's full writing and are identified by
+// startingPeriodId.
 // ---------------------------------------------------------------------------
 
 class _CycleDetailSheet extends StatefulWidget {
@@ -2953,20 +2955,43 @@ class _CycleDetailSheetState extends State<_CycleDetailSheet> {
     return trimmed.isEmpty ? null : trimmed;
   }
 
+  CycleReflectionDraft get _reflectionDraft => CycleReflectionDraft(
+    observation: _normalized(_hardController.text),
+    whatHelped: _normalized(_helpedController.text),
+    futureSelfNote: _normalized(_futureController.text),
+  );
+
+  bool get _reflectionHasContent {
+    final draft = _reflectionDraft;
+    return draft.observation != null ||
+        draft.whatHelped != null ||
+        draft.futureSelfNote != null;
+  }
+
+  bool get _reflectionIsDirty {
+    final existing = _existingReflection;
+    final draft = _reflectionDraft;
+    if (existing == null) return _reflectionHasContent;
+    return draft.observation != existing.observation ||
+        draft.whatHelped != existing.whatHelped ||
+        draft.futureSelfNote != existing.futureSelfNote;
+  }
+
+  void _reflectionChanged(String _) {
+    setState(() {
+      _reflectionAck = null;
+      _reflectionError = null;
+    });
+  }
+
   Future<void> _saveReflection() async {
-    if (_savingReflection) return;
+    if (_savingReflection || !_reflectionIsDirty) return;
     setState(() {
       _savingReflection = true;
       _reflectionError = null;
     });
     try {
-      final draft = validateCycleReflection(
-        CycleReflectionDraft(
-          observation: _normalized(_hardController.text),
-          whatHelped: _normalized(_helpedController.text),
-          futureSelfNote: _normalized(_futureController.text),
-        ),
-      );
+      final draft = validateCycleReflection(_reflectionDraft);
       final saved = await widget.careMemoryRepository.saveCycleReflection(
         widget.cycle.period.startDate.epochDay,
         draft,
@@ -2979,7 +3004,6 @@ class _CycleDetailSheetState extends State<_CycleDetailSheet> {
         _existingReflection = saved;
         _reflectionAck = line;
       });
-      widget.onDataChanged();
     } on CareMemoryException catch (error) {
       if (!mounted) return;
       setState(() {
@@ -3008,6 +3032,7 @@ class _CycleDetailSheetState extends State<_CycleDetailSheet> {
           FilledButton(
             style: FilledButton.styleFrom(
               backgroundColor: ExperienceColors.error,
+              foregroundColor: Colors.white,
             ),
             onPressed: () => Navigator.of(dialogContext).pop(true),
             child: const Text('Delete'),
@@ -3049,6 +3074,7 @@ class _CycleDetailSheetState extends State<_CycleDetailSheet> {
           FilledButton(
             style: FilledButton.styleFrom(
               backgroundColor: ExperienceColors.error,
+              foregroundColor: Colors.white,
             ),
             onPressed: () => Navigator.of(dialogContext).pop(true),
             child: const Text('Delete'),
@@ -3210,8 +3236,8 @@ class _CycleDetailSheetState extends State<_CycleDetailSheet> {
             ),
             const SizedBox(height: ExperienceSpacing.xs),
             Text(
-              'A short reflection for this cycle. Each answer stays within '
-              '$careMemoryTextMaximumCharacters characters.',
+              'Write what you want the next hard moment to remember. '
+              'It stays on this device.',
               style: ExperienceType.caption(ExperienceColors.inkSoft),
             ),
             const SizedBox(height: ExperienceSpacing.sm),
@@ -3228,16 +3254,19 @@ class _CycleDetailSheetState extends State<_CycleDetailSheet> {
               _ReflectionField(
                 controller: _hardController,
                 label: 'What was hard',
+                onChanged: _reflectionChanged,
               ),
               const SizedBox(height: ExperienceSpacing.xs * 2),
               _ReflectionField(
                 controller: _helpedController,
                 label: 'What helped',
+                onChanged: _reflectionChanged,
               ),
               const SizedBox(height: ExperienceSpacing.xs * 2),
               _ReflectionField(
                 controller: _futureController,
                 label: 'A note to future you',
+                onChanged: _reflectionChanged,
               ),
               SavedRhythmAckLine(line: _reflectionAck),
               if (_reflectionError != null)
@@ -3246,11 +3275,19 @@ class _CycleDetailSheetState extends State<_CycleDetailSheet> {
               Row(
                 children: <Widget>[
                   Expanded(
-                    child: FilledButton(
-                      onPressed: _savingReflection ? null : _saveReflection,
+                    child: FilledButton.icon(
+                      onPressed: _savingReflection || !_reflectionIsDirty
+                          ? null
+                          : _saveReflection,
                       style: FilledButton.styleFrom(
                         backgroundColor: ExperienceColors.ember,
                         foregroundColor: Colors.white,
+                        disabledBackgroundColor: _existingReflection == null
+                            ? ExperienceColors.surfaceWarm
+                            : ExperienceColors.ember.withValues(alpha: 0.22),
+                        disabledForegroundColor: _existingReflection == null
+                            ? ExperienceColors.inkFaint
+                            : ExperienceColors.emberSoft,
                         minimumSize: const Size(
                           0,
                           ExperienceSpacing.degreeTarget,
@@ -3259,9 +3296,24 @@ class _CycleDetailSheetState extends State<_CycleDetailSheet> {
                           borderRadius: ExperienceRadius.chipRadius,
                         ),
                       ),
-                      child: Text(
-                        _savingReflection ? 'Saving…' : 'Save letter',
-                        style: ExperienceType.label(Colors.white),
+                      icon: _savingReflection
+                          ? const SizedBox.shrink()
+                          : _existingReflection != null && !_reflectionIsDirty
+                          ? const Icon(Icons.check_rounded, size: 18)
+                          : const SizedBox.shrink(),
+                      label: Text(
+                        _savingReflection
+                            ? 'Saving…'
+                            : _existingReflection != null && !_reflectionIsDirty
+                            ? 'Saved'
+                            : 'Save letter',
+                        style: ExperienceType.label(
+                          _savingReflection || _reflectionIsDirty
+                              ? Colors.white
+                              : _existingReflection != null
+                              ? ExperienceColors.emberSoft
+                              : ExperienceColors.inkFaint,
+                        ),
                       ),
                     ),
                   ),
@@ -3299,26 +3351,30 @@ String _periodDayCount(int count) =>
     '$count period ${count == 1 ? 'day' : 'days'}';
 
 class _ReflectionField extends StatelessWidget {
-  const _ReflectionField({required this.controller, required this.label});
+  const _ReflectionField({
+    required this.controller,
+    required this.label,
+    required this.onChanged,
+  });
 
   final TextEditingController controller;
   final String label;
+  final ValueChanged<String> onChanged;
 
   @override
   Widget build(BuildContext context) {
     return Semantics(
       textField: true,
-      label: '$label, at most $careMemoryTextMaximumCharacters characters',
+      label: label,
       child: TextField(
         controller: controller,
-        maxLength: careMemoryTextMaximumCharacters,
-        maxLines: 3,
-        minLines: 2,
+        onChanged: onChanged,
+        maxLines: 8,
+        minLines: 3,
         style: ExperienceType.body(ExperienceColors.ink),
         decoration: InputDecoration(
           labelText: label,
           labelStyle: ExperienceType.bodySmall(ExperienceColors.inkSoft),
-          counterStyle: ExperienceType.caption(ExperienceColors.inkFaint),
           filled: true,
           fillColor: ExperienceColors.surface,
           border: const OutlineInputBorder(

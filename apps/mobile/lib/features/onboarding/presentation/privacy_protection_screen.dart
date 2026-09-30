@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import '../../../design_system/lovable/letter_kit.dart';
 import '../../../design_system/letter_theme.dart';
 import '../../notifications/domain/local_notification_port.dart';
-import '../../privacy/domain/device_authenticator.dart';
 import '../../privacy/domain/privacy_preferences.dart';
 import '../domain/onboarding_profile.dart';
 
@@ -66,7 +65,6 @@ class PrivacyProtectionScreen extends StatefulWidget {
     required this.onProfileChanged,
     required this.privacyPreferences,
     required this.notificationAuthorization,
-    required this.deviceAuthenticator,
     required this.onPrivacyPreferencesChanged,
     super.key,
   });
@@ -75,7 +73,6 @@ class PrivacyProtectionScreen extends StatefulWidget {
   final SaveOnboardingProfile onProfileChanged;
   final PrivacyPreferences privacyPreferences;
   final NotificationAuthorization notificationAuthorization;
-  final DeviceAuthenticator deviceAuthenticator;
   final Future<void> Function(PrivacyPreferences preferences)
   onPrivacyPreferencesChanged;
 

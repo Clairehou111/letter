@@ -465,14 +465,7 @@ final class PatternsExperienceDataBuilder {
 
   PatternsMoodRecord _moodForCheckIn(MomentCheckIn checkIn, LocalDate date) {
     final state = checkIn.state;
-    final positive = switch (state) {
-      MomentCheckInState.good ||
-      MomentCheckInState.calm ||
-      MomentCheckInState.energized ||
-      MomentCheckInState.hopeful ||
-      MomentCheckInState.tender => true,
-      _ => false,
-    };
+    final positive = state.isPositiveSignal;
     final steady = state == MomentCheckInState.steady;
     final physical = state == MomentCheckInState.physical;
     return PatternsMoodRecord(
@@ -484,7 +477,7 @@ final class PatternsExperienceDataBuilder {
           : steady
           ? PatternsMoodTone.steady
           : PatternsMoodTone.difficult,
-      harderCategory: positive || steady
+      harderCategory: !state.isHarderDaySignal
           ? null
           : physical
           ? PatternsSymptomCategory.otherBody

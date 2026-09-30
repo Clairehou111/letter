@@ -4,7 +4,7 @@ import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
 
-import '../../../design_system/letter_theme.dart';
+import '../../../experience/theme/experience_foundation.dart';
 import '../domain/care_memory.dart';
 import '../domain/care_mode.dart';
 import 'care_haptics.dart';
@@ -15,19 +15,32 @@ enum CareBreakStage { context, active, landing, settled, extending }
 
 enum PhysicalCareContext { cramps, nausea, headache, tension }
 
-/// Shared chrome palette for the control layer. The five scene worlds keep
+/// Shared chrome palette for the control layer. The five scene rooms keep
 /// their own [CareBreakVisuals]; everything the user *operates* speaks one
-/// quiet studio language — deep plum surfaces, soft ivory type, and a single
-/// acid-lime point of life marking where the controls rest.
-const Color _kChromeSurface = Color(0xFF241A2A);
-const Color _kChromeIvory = Color(0xFFFFF8EC);
-const Color _kChromeAccent = Color(0xFFD9FF63);
+/// quiet refuge language — deep plum surfaces, warm off-white care ink, and
+/// the single ember quiet marker ([ExperienceColors.careQuietMarker]) showing
+/// where the controls rest. The pre-Quiet-Dusk acid lime is retired.
+const Color _kChromeSurface = ExperienceColors.surface;
+const Color _kChromeIvory = ExperienceColors.careInk;
+const Color _kQuietMarker = ExperienceColors.careQuietMarker;
+
+/// Quiet scrim shared by the scene sheets — the care-world sheet grammar.
+const Color _kSheetScrim = Color(0x59000000);
 
 /// A finite, motion-first Care scene.
 ///
 /// Selecting an emotional Care entrance opens its scene immediately. Physical
-/// Care asks one short context question because that choice changes the motion.
-/// Touches, lines, intensity, and the navigation result remain ephemeral.
+/// Care asks one short context question because that choice changes the
+/// motion. Touches, lines, intensity, and the navigation result remain
+/// ephemeral.
+///
+/// Ending ownership differs by room on purpose: the emotional scenes resolve
+/// on the scene's own timing (landing → settled), while physical Care is
+/// **user-ended** — its guided arrival ([CareBreakFlow.sceneSeconds]) rests
+/// into an indefinite quiet holding state with no after-care panel and no
+/// completion, and only the deliberate "Enough for now" action moves it into
+/// the settled/check-back path. A restorative body scene never ends on the
+/// app's schedule.
 class CareBreakFlow extends StatefulWidget {
   const CareBreakFlow({
     required this.mode,
@@ -63,6 +76,10 @@ class CareBreakFlow extends StatefulWidget {
   final bool usesExternalCompletionFlow;
   final bool initiallySettled;
   final double initialIntensity;
+
+  /// The guided-arrival duration. Emotional scenes resolve shortly after it
+  /// elapses; physical scenes instead hold at their calm endpoint
+  /// indefinitely until the user chooses "Enough for now".
   final double sceneSeconds;
 
   @override
@@ -90,13 +107,19 @@ class _CareBreakFlowState extends State<CareBreakFlow>
   bool _pressing = false;
   late double _intensity;
   bool _soundEnabled = false;
+
+  /// Quiet sound-failure state: when the engine cannot start, the scene menu
+  /// shows one inline line under the sound row instead of a SnackBar. The
+  /// scene is complete without sound; nothing here blocks or scolds.
+  bool _soundStartFailed = false;
   Timer? _stillClock;
   double _lastHapticAt = 0;
   double _lastAudioEnvelopeAt = -1;
 
   /// Chrome state: controls wake briefly to teach where they live, then
-  /// recede to two quiet anchors — Back on the left, the lime-dotted scene
-  /// handle on the right — so the motion owns the canvas.
+  /// recede to two quiet anchors — Back on the left, the ember-dotted scene
+  /// handle on the right — so the motion owns the canvas. Under Reduce Motion
+  /// or Increase Contrast the chrome never recedes.
   bool _chromeAwake = false;
   bool _sceneMenuOpen = false;
   Timer? _chromeClock;
@@ -144,9 +167,10 @@ class _CareBreakFlowState extends State<CareBreakFlow>
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (mounted) {
           _session.forward(from: 0);
-          // Briefly open the scene menu so the control grammar is learned
-          // spatially, then let it dissolve back into the handle.
-          _wakeChrome(openMenu: true, restAfter: const Duration(seconds: 6));
+          // Keep the canvas quiet on arrival. The permanent scene handle
+          // makes every control recoverable without opening a panel over the
+          // scene before the person asks for it.
+          _wakeChrome(restAfter: const Duration(seconds: 3));
         }
       });
     }
@@ -188,8 +212,9 @@ class _CareBreakFlowState extends State<CareBreakFlow>
   }
 
   /// Wake the chrome (and optionally open the scene menu). Without reduced
-  /// motion it recedes again after [restAfter]; with reduced motion it simply
-  /// stays visible so nothing is ever hidden behind timing.
+  /// motion it recedes again after [restAfter]; with reduced motion or
+  /// Increase Contrast it simply stays visible so nothing is ever hidden
+  /// behind timing.
   void _wakeChrome({
     bool openMenu = false,
     Duration restAfter = const Duration(seconds: 4),
@@ -197,11 +222,12 @@ class _CareBreakFlowState extends State<CareBreakFlow>
     if (!mounted || _stage == CareBreakStage.context) return;
     _chromeClock?.cancel();
     final reduced = MediaQuery.disableAnimationsOf(context);
+    final highContrast = MediaQuery.highContrastOf(context);
     setState(() {
       _chromeAwake = true;
       _sceneMenuOpen = openMenu && !reduced;
     });
-    if (!reduced) {
+    if (!reduced && !highContrast) {
       _chromeClock = Timer(restAfter, _restChrome);
     }
   }
@@ -258,7 +284,7 @@ class _CareBreakFlowState extends State<CareBreakFlow>
       _startStillClock();
     } else {
       _session.forward(from: 0);
-      _wakeChrome(openMenu: true, restAfter: const Duration(seconds: 6));
+      _wakeChrome(restAfter: const Duration(seconds: 3));
     }
   }
 
@@ -365,6 +391,12 @@ class _CareBreakFlowState extends State<CareBreakFlow>
     if (_isStill(context)) return;
     final elapsed = _elapsedSeconds;
     final mode = widget.mode;
+    // Physical holding: once the guided arrival has completed, the body room
+    // rests in an indefinite quiet hold — repeated attention-demanding
+    // haptics stop. Only the guided phase keeps its gentle warmth pulse.
+    if (mode == CareMode.physical && elapsed >= widget.sceneSeconds) {
+      return;
+    }
     final landingScale = _stage == CareBreakStage.landing
         ? ((90 - elapsed) / 15).clamp(0.0, 1.0)
         : 1.0;
@@ -451,9 +483,19 @@ class _CareBreakFlowState extends State<CareBreakFlow>
 
   /// Move through a quiet landing instead of treating 90 seconds as an exit.
   /// Explode remains user-ended because its seal can be reopened repeatedly.
+  ///
+  /// Physical Care is also user-ended, by a different contract: when the
+  /// guided arrival ([CareBreakFlow.sceneSeconds]) completes, the body room
+  /// rests at its calm endpoint in an indefinite quiet holding state — no
+  /// landing phase, no settled after-care panel, no completion callback, and
+  /// no automatic exit at the 600-second controller ceiling. Only the
+  /// deliberate "Enough for now" action moves physical Care into its
+  /// settled/check-back path; Back remains an immediate no-save exit. A
+  /// restorative scene never ends on the app's schedule.
   void _checkSceneCompletion() {
     if (_forcedClose) return;
     if (widget.mode == CareMode.explode && widget.sceneSeconds >= 90) return;
+    if (widget.mode == CareMode.physical) return;
     final elapsed = _elapsedSeconds;
     final landingStart = math.max(0, widget.sceneSeconds - 15);
     if (_stage == CareBreakStage.active && elapsed >= landingStart && mounted) {
@@ -518,6 +560,10 @@ class _CareBreakFlowState extends State<CareBreakFlow>
   /// Force-close the scene, bypassing the minimum dwell.
   /// For Explode this simply leaves — the seal is meant to be re-opened,
   /// not "completed."
+  ///
+  /// For physical Care this is the *only* path into the settled/check-back
+  /// flow: the scene holds indefinitely on its own, so this deliberate
+  /// choice is what arrives at the quiet ending.
   void _enough() {
     if (widget.mode == CareMode.explode) {
       _leave(widget.onCompleted ?? widget.onBack);
@@ -541,10 +587,10 @@ class _CareBreakFlowState extends State<CareBreakFlow>
     final settleNow = await showModalBottomSheet<bool>(
       context: context,
       useSafeArea: true,
-      barrierColor: LetterColors.ink.withValues(alpha: 0.44),
+      barrierColor: _kSheetScrim,
       backgroundColor: _kChromeSurface,
       shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+        borderRadius: ExperienceRadius.sheetRadius,
       ),
       builder: (context) => StatefulBuilder(
         builder: (context, setSheetState) => Padding(
@@ -566,52 +612,41 @@ class _CareBreakFlowState extends State<CareBreakFlow>
               const SizedBox(height: 22),
               Text(
                 'Adjust the scene',
-                style: TextStyle(
-                  color: _kChromeIvory,
-                  fontFamily: 'Newsreader',
-                  fontSize: 26,
-                  fontWeight: FontWeight.w800,
-                  height: 1.05,
-                ),
+                style: ExperienceType.title(_kChromeIvory),
               ),
               const SizedBox(height: 6),
               Text(
                 'Intensity changes the texture, not what you have to do.',
-                style: TextStyle(
-                  color: _kChromeIvory.withValues(alpha: 0.6),
-                  fontSize: 13,
-                  height: 1.4,
+                style: ExperienceType.caption(
+                  _kChromeIvory.withValues(alpha: 0.6),
                 ),
               ),
               const SizedBox(height: 20),
               Row(
                 children: [
-                  Text(
-                    'Scene intensity',
-                    style: TextStyle(
-                      color: _kChromeIvory.withValues(alpha: 0.72),
-                      fontSize: 13,
-                      fontWeight: FontWeight.w600,
+                  Expanded(
+                    child: Text(
+                      'Scene intensity',
+                      style: ExperienceType.caption(
+                        _kChromeIvory.withValues(alpha: 0.72),
+                      ).copyWith(fontWeight: FontWeight.w600),
                     ),
                   ),
-                  const Spacer(),
                   Text(
                     _intensityLabel(_intensity),
-                    style: const TextStyle(
-                      color: _kChromeAccent,
-                      fontSize: 12,
-                      fontWeight: FontWeight.w700,
-                    ),
+                    style: ExperienceType.caption(
+                      _kQuietMarker,
+                    ).copyWith(fontWeight: FontWeight.w700),
                   ),
                 ],
               ),
               SliderTheme(
                 data: SliderTheme.of(context).copyWith(
                   trackHeight: 2,
-                  activeTrackColor: _kChromeAccent,
+                  activeTrackColor: _kQuietMarker,
                   inactiveTrackColor: _kChromeIvory.withValues(alpha: 0.16),
-                  thumbColor: _kChromeAccent,
-                  overlayColor: _kChromeAccent.withValues(alpha: 0.14),
+                  thumbColor: _kQuietMarker,
+                  overlayColor: _kQuietMarker.withValues(alpha: 0.14),
                   thumbShape: const RoundSliderThumbShape(
                     enabledThumbRadius: 7,
                   ),
@@ -637,6 +672,10 @@ class _CareBreakFlowState extends State<CareBreakFlow>
                 style: TextButton.styleFrom(
                   minimumSize: const Size.fromHeight(48),
                   foregroundColor: _kChromeIvory.withValues(alpha: 0.72),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 12,
+                  ),
                 ),
                 child: const Text('Move to the quiet ending'),
               ),
@@ -654,10 +693,10 @@ class _CareBreakFlowState extends State<CareBreakFlow>
     final outcome = await showModalBottomSheet<CareOutcome>(
       context: context,
       useSafeArea: true,
-      barrierColor: LetterColors.ink.withValues(alpha: 0.4),
+      barrierColor: _kSheetScrim,
       backgroundColor: _kChromeSurface,
       shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+        borderRadius: ExperienceRadius.sheetRadius,
       ),
       builder: (context) => const _MomentCheckSheet(),
     );
@@ -676,7 +715,10 @@ class _CareBreakFlowState extends State<CareBreakFlow>
 
   Future<void> _toggleSound() async {
     if (_soundEnabled) {
-      setState(() => _soundEnabled = false);
+      setState(() {
+        _soundEnabled = false;
+        _soundStartFailed = false;
+      });
       _sound.stop();
       return;
     }
@@ -693,16 +735,15 @@ class _CareBreakFlowState extends State<CareBreakFlow>
         await _sound.setSceneProgress(_audioSceneProgress);
         if (!mounted) return;
       }
-      setState(() => _soundEnabled = true);
+      setState(() {
+        _soundEnabled = true;
+        _soundStartFailed = false;
+      });
       return;
     }
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text(
-          'Sound could not start. Check this tab or device volume, then restart the app.',
-        ),
-      ),
-    );
+    // Quiet failure: one inline line under the sound row, never a SnackBar.
+    // The scene is complete without sound; nothing is asked of the user.
+    setState(() => _soundStartFailed = true);
   }
 
   void _setIntensity(double value) {
@@ -872,8 +913,8 @@ class _CareBreakFlowState extends State<CareBreakFlow>
                   if (_sceneMenuOpen && !still && !contextStage)
                     Positioned(
                       top: 66,
-                      right: 0,
-                      child: _SceneMenu(
+                      right: 12,
+                      child: CareSceneMenu(
                         showAdjust:
                             _stage == CareBreakStage.active && !headache,
                         showEnough: showSceneControls,
@@ -882,6 +923,7 @@ class _CareBreakFlowState extends State<CareBreakFlow>
                         onSafety: widget.onSafety == null ? null : _menuSafety,
                         soundEnabled: _soundEnabled,
                         soundAvailable: soundAvailable,
+                        showSoundNotice: _soundStartFailed,
                         onToggleSound: _menuSound,
                       ),
                     ),
@@ -963,9 +1005,11 @@ class _RiseInState extends State<_RiseIn> with SingleTickerProviderStateMixin {
   }
 }
 
-/// The physical context question, composed as an editorial index rather than
-/// a stack of boxed buttons: oversized display type, numbered rows, and
-/// hairline separators so the choice feels considered, not administrative.
+/// The physical context question, composed in the corridor's own grammar:
+/// the refuge's serif display voice, numbered rows, and hairline separators
+/// so the choice feels considered, not administrative. The row indices are
+/// wayfinding, not marks, so they step down to [ExperienceColors.careInkFaint]
+/// rather than borrowing the quiet marker.
 class _PhysicalContextStage extends StatelessWidget {
   const _PhysicalContextStage({
     required this.visuals,
@@ -983,24 +1027,16 @@ class _PhysicalContextStage extends StatelessWidget {
       children: [
         Text(
           'Where is\nit today?',
-          style: TextStyle(
-            color: visuals.foreground,
-            fontFamily: 'Newsreader',
-            fontSize: 42,
-            height: 0.98,
-            fontWeight: FontWeight.w700,
-          ),
+          style: ExperienceType.display(visuals.foreground),
         ),
-        const SizedBox(height: LetterSpacing.sm),
+        const SizedBox(height: 12),
         Text(
           'This only changes how the screen moves. It is not a diagnosis.',
-          style: TextStyle(
-            color: visuals.foreground.withValues(alpha: 0.62),
-            fontSize: 13,
-            height: 1.45,
+          style: ExperienceType.caption(
+            visuals.foreground.withValues(alpha: 0.62),
           ),
         ),
-        const SizedBox(height: LetterSpacing.lg),
+        const SizedBox(height: ExperienceSpacing.md),
         Container(height: 1, color: visuals.foreground.withValues(alpha: 0.12)),
         _ContextOption(
           buttonKey: const Key('care-context-cramps'),
@@ -1071,58 +1107,52 @@ class _ContextOption extends StatelessWidget {
           child: InkWell(
             key: buttonKey,
             onTap: onPressed,
-            splashColor: _kChromeAccent.withValues(alpha: 0.06),
+            splashColor: _kQuietMarker.withValues(alpha: 0.06),
             highlightColor: visuals.foreground.withValues(alpha: 0.04),
             child: ConstrainedBox(
               constraints: const BoxConstraints(minHeight: 64),
               child: Padding(
                 padding: const EdgeInsets.symmetric(vertical: 16),
                 child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    SizedBox(
-                      width: 30,
+                    Padding(
+                      padding: const EdgeInsets.only(top: 2, right: 14),
                       child: Text(
                         index,
-                        textScaler: TextScaler.noScaling,
-                        style: const TextStyle(
-                          color: _kChromeAccent,
-                          fontSize: 11,
-                          fontWeight: FontWeight.w700,
-                          letterSpacing: 1.6,
+                        style: ExperienceType.eyebrow(
+                          ExperienceColors.careInkFaint,
                         ),
                       ),
                     ),
-                    const SizedBox(width: 14),
                     Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
                             title,
-                            style: TextStyle(
-                              color: visuals.foreground.withValues(alpha: 0.95),
-                              fontSize: 16.5,
-                              fontWeight: FontWeight.w700,
-                              height: 1.15,
+                            style: ExperienceType.bodyStrong(
+                              visuals.foreground.withValues(alpha: 0.95),
                             ),
                           ),
                           const SizedBox(height: 4),
                           Text(
                             detail,
-                            style: TextStyle(
-                              color: visuals.foreground.withValues(alpha: 0.55),
-                              fontSize: 12.5,
-                              height: 1.3,
+                            style: ExperienceType.caption(
+                              visuals.foreground.withValues(alpha: 0.55),
                             ),
                           ),
                         ],
                       ),
                     ),
                     const SizedBox(width: 12),
-                    Icon(
-                      Icons.arrow_forward_rounded,
-                      size: 16,
-                      color: visuals.foreground.withValues(alpha: 0.35),
+                    Padding(
+                      padding: const EdgeInsets.only(top: 4),
+                      child: Icon(
+                        Icons.arrow_forward_rounded,
+                        size: 16,
+                        color: visuals.foreground.withValues(alpha: 0.35),
+                      ),
                     ),
                   ],
                 ),
@@ -1201,6 +1231,16 @@ class _MotionStage extends StatelessWidget {
     final settledCue = headache
         ? 'Stay with the quiet, or leave when you need'
         : visuals.settledCue;
+    // The canvas stays actionable exactly as before: the semantic double-tap
+    // ends the scene early from anywhere, and the hint now says so plainly
+    // instead of leaving the action unannounced.
+    final hint = settled
+        ? 'Use the quiet controls below whenever you are ready'
+        : still
+        ? headache
+              ? 'No interaction is needed. Double-tap to end early, or use Back whenever you need.'
+              : 'The scene is still. Double-tap to end early, or use the quiet controls.'
+        : '${_motionGuide(mode, physicalContext)} Double-tap to end the scene early.';
     return Semantics(
       container: true,
       explicitChildNodes: true,
@@ -1210,11 +1250,7 @@ class _MotionStage extends StatelessWidget {
           : still || settled
           ? visuals.settledSemantics
           : visuals.activeSemantics,
-      hint: still || settled
-          ? headache
-                ? 'No interaction is needed. Use back whenever you need'
-                : 'Use the quiet controls below whenever you are ready'
-          : _motionGuide(mode, physicalContext),
+      hint: hint,
       onTap: settled ? null : onEnough,
       // Keep the scene itself actionable without hiding its intensity and
       // completion controls from assistive technology.
@@ -1379,8 +1415,34 @@ double _sceneProgress(
                       : 0)) /
               12)
           .clamp(0.0, 1.0),
+    // Physical progress is clamped at the calm endpoint: once the guided
+    // arrival completes the visual holds there indefinitely — the room never
+    // advances into an ending on its own.
     CareMode.physical => (elapsed / span).clamp(0.0, 1.0),
   };
+}
+
+/// The Georgia serif voice for scene copy: the refuge's headline step at
+/// reduced alpha, so motion lines, the landing title, and the seal
+/// inscription all speak the same display language as the corridor. Text
+/// scale is honored — copy reflows rather than clipping.
+TextStyle _sceneSerif(
+  Color color, {
+  double alpha = 0.64,
+  double? fontSize,
+  double height = 1.16,
+  FontStyle? fontStyle,
+  FontWeight fontWeight = FontWeight.w400,
+  List<Shadow>? shadows,
+}) {
+  return ExperienceType.headline(color.withValues(alpha: alpha)).copyWith(
+    fontSize: fontSize,
+    height: height,
+    fontStyle: fontStyle,
+    fontWeight: fontWeight,
+    letterSpacing: 0.15,
+    shadows: shadows,
+  );
 }
 
 class _MotionLine extends StatelessWidget {
@@ -1418,14 +1480,9 @@ class _MotionLine extends StatelessWidget {
         settled ? settledCue : lines.first,
         key: const Key('care-motion-line'),
         textAlign: TextAlign.center,
-        style: TextStyle(
-          color: color.withValues(alpha: 0.64),
-          fontFamily: 'Newsreader',
-          fontSize: 19,
-          fontWeight: FontWeight.w400,
-          height: 1.16,
-          letterSpacing: 0.15,
-        ),
+        maxLines: 3,
+        overflow: TextOverflow.ellipsis,
+        style: _sceneSerif(color),
       );
     }
 
@@ -1440,14 +1497,12 @@ class _MotionLine extends StatelessWidget {
           settledTitle,
           key: const Key('care-motion-line'),
           textAlign: TextAlign.center,
-          textScaler: TextScaler.noScaling,
-          style: TextStyle(
-            color: color.withValues(alpha: 0.7),
-            fontFamily: 'Newsreader',
+          maxLines: 3,
+          overflow: TextOverflow.ellipsis,
+          style: _sceneSerif(
+            color,
+            alpha: 0.7,
             fontSize: 20,
-            fontWeight: FontWeight.w400,
-            height: 1.16,
-            letterSpacing: 0.15,
             shadows: [
               Shadow(color: Colors.black.withValues(alpha: 0.3), blurRadius: 2),
               Shadow(color: glow.withValues(alpha: 0.14), blurRadius: 16),
@@ -1457,6 +1512,9 @@ class _MotionLine extends StatelessWidget {
       );
     }
 
+    // Scheduled instructional copy: each line holds briefly, then the canvas
+    // falls silent. In the physical holding state this is what quiets the
+    // room — after the final line, nothing further is scheduled.
     const lineCycle = 16.0;
     const lineDuration = 7.0;
     final index = (elapsedSeconds / lineCycle).floor();
@@ -1503,14 +1561,12 @@ class _MotionLine extends StatelessWidget {
           lines[index],
           key: const Key('care-motion-line'),
           textAlign: TextAlign.center,
-          textScaler: TextScaler.noScaling,
-          style: TextStyle(
-            color: color.withValues(alpha: 0.64),
-            fontFamily: 'Newsreader',
-            fontSize: 19,
-            fontWeight: FontWeight.w400,
-            height: 1.16,
-            letterSpacing: 0.15,
+          // Reflow over composition: lines wrap to two lines under large
+          // text scale before anything is allowed to clip.
+          maxLines: 2,
+          overflow: TextOverflow.ellipsis,
+          style: _sceneSerif(
+            color,
             shadows: [
               Shadow(
                 color: Colors.black.withValues(alpha: 0.32),
@@ -1571,35 +1627,31 @@ class _ExplodeSealInscription extends StatelessWidget {
         key: const Key('care-motion-line'),
         label: 'anger is sealed',
         child: ExcludeSemantics(
-          child: SizedBox(
-            width: 72,
-            height: 40,
-            child: Stack(
-              alignment: Alignment.center,
-              children: [
-                _SealInscriptionLayer(
-                  key: const Key('seal-inscription-large'),
-                  opacity: largeOpacity,
-                  fontSize: 13,
-                  color: color,
-                  glow: glow,
-                ),
-                _SealInscriptionLayer(
-                  key: const Key('seal-inscription-medium'),
-                  opacity: mediumOpacity,
-                  fontSize: 10.75,
-                  color: color,
-                  glow: glow,
-                ),
-                _SealInscriptionLayer(
-                  key: const Key('seal-inscription-small'),
-                  opacity: smallOpacity,
-                  fontSize: 8.75,
-                  color: color,
-                  glow: glow,
-                ),
-              ],
-            ),
+          child: Stack(
+            alignment: Alignment.center,
+            children: [
+              _SealInscriptionLayer(
+                key: const Key('seal-inscription-large'),
+                opacity: largeOpacity,
+                fontSize: 13,
+                color: color,
+                glow: glow,
+              ),
+              _SealInscriptionLayer(
+                key: const Key('seal-inscription-medium'),
+                opacity: mediumOpacity,
+                fontSize: 10.75,
+                color: color,
+                glow: glow,
+              ),
+              _SealInscriptionLayer(
+                key: const Key('seal-inscription-small'),
+                opacity: smallOpacity,
+                fontSize: 8.75,
+                color: color,
+                glow: glow,
+              ),
+            ],
           ),
         ),
       ),
@@ -1648,19 +1700,17 @@ class _SealInscriptionLayer extends StatelessWidget {
       child: Text(
         'anger\nis sealed',
         textAlign: TextAlign.center,
-        textScaler: TextScaler.noScaling,
-        style: TextStyle(
-          color: color.withValues(alpha: 0.72),
-          fontFamily: 'Newsreader',
+        style: _sceneSerif(
+          color,
+          alpha: 0.72,
           fontSize: fontSize,
-          fontWeight: FontWeight.w500,
-          fontStyle: FontStyle.italic,
           height: 1.04,
-          letterSpacing: 0.2,
+          fontStyle: FontStyle.italic,
+          fontWeight: FontWeight.w500,
           shadows: [
             Shadow(color: glow.withValues(alpha: 0.22), blurRadius: 10),
           ],
-        ),
+        ).copyWith(letterSpacing: 0.2),
       ),
     );
   }
@@ -1672,7 +1722,7 @@ double _elapsedForLanding(double elapsedSeconds) =>
 /// One small circular chrome target: a 48px hit region ringed by the same
 /// 1px hairline every control surface uses. Used for Back, inline Support,
 /// and anywhere a persistent anchor must stay visible without raising its
-/// voice.
+/// voice. Under Increase Contrast the hairline and fill strengthen.
 class _ChromeIconButton extends StatelessWidget {
   const _ChromeIconButton({
     required this.buttonKey,
@@ -1688,6 +1738,7 @@ class _ChromeIconButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final highContrast = MediaQuery.highContrastOf(context);
     return IconButton(
       key: buttonKey,
       onPressed: onPressed,
@@ -1695,10 +1746,12 @@ class _ChromeIconButton extends StatelessWidget {
       style: IconButton.styleFrom(
         minimumSize: const Size(48, 48),
         foregroundColor: _kChromeIvory.withValues(alpha: 0.9),
-        backgroundColor: _kChromeSurface.withValues(alpha: 0.38),
+        backgroundColor: _kChromeSurface.withValues(
+          alpha: highContrast ? 0.62 : 0.38,
+        ),
         side: BorderSide(
-          width: 1,
-          color: _kChromeIvory.withValues(alpha: 0.16),
+          width: highContrast ? 1.4 : 1,
+          color: _kChromeIvory.withValues(alpha: highContrast ? 0.48 : 0.16),
         ),
         shape: const CircleBorder(),
       ),
@@ -1709,10 +1762,19 @@ class _ChromeIconButton extends StatelessWidget {
 
 /// Persistent top chrome, reduced to two anchors while a scene runs: Back on
 /// the left (always reachable, always visible) and the scene handle on the
-/// right — two hairlines marked by a single acid-lime dot inside the same
-/// hairline ring, the one signature that says "the controls rest here" in
-/// every scene world. In still scenes the grammar flattens into quiet inline
-/// controls so nothing hides.
+/// right — two hairlines marked by the single ember quiet-marker dot inside
+/// the same hairline ring, the one signature that says "the controls rest
+/// here" in every scene room. In still scenes the grammar flattens into
+/// quiet inline controls so nothing hides; those inline controls reflow onto
+/// a second line under narrow widths and large text rather than clipping.
+/// Under Reduce Motion or Increase Contrast the chrome never recedes, and the
+/// receded opacity floor stays high enough that the exit anchor never drops
+/// below graphic contrast.
+///
+/// Because physical Care holds indefinitely, these anchors are the room's
+/// permanent exits: Back leaves without saving, and "Enough for now" —
+/// inline in still scenes, in the scene menu otherwise — is the only way
+/// into the settled/check-back path. Neither ever disappears on a timer.
 class _CareChrome extends StatelessWidget {
   const _CareChrome({
     required this.visuals,
@@ -1741,101 +1803,142 @@ class _CareChrome extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final reduced = MediaQuery.disableAnimationsOf(context);
+    final highContrast = MediaQuery.highContrastOf(context);
+    final persistent = reduced || highContrast;
     final fadeDuration = reduced
         ? Duration.zero
         : const Duration(milliseconds: 500);
     final onSafety = this.onSafety;
-    final backOpacity = contextStage || still || awake ? 1.0 : 0.55;
-    final handleOpacity = awake || menuOpen ? 1.0 : 0.6;
+    final backOpacity = contextStage || still || awake || persistent
+        ? 1.0
+        : 0.8;
+    final handleOpacity = awake || menuOpen || persistent ? 1.0 : 0.78;
+
+    final backButton = AnimatedOpacity(
+      duration: fadeDuration,
+      opacity: backOpacity,
+      child: _ChromeIconButton(
+        buttonKey: const Key('care-break-back'),
+        onPressed: onBack,
+        tooltip: 'Back to Care',
+        icon: Icons.arrow_back_rounded,
+      ),
+    );
 
     return Padding(
       padding: const EdgeInsets.fromLTRB(10, 8, 10, 0),
-      child: SizedBox(
-        height: 56,
-        child: Row(
-          children: [
-            AnimatedOpacity(
-              duration: fadeDuration,
-              opacity: backOpacity,
-              child: _ChromeIconButton(
-                buttonKey: const Key('care-break-back'),
-                onPressed: onBack,
-                tooltip: 'Back to Care',
-                icon: Icons.arrow_back_rounded,
-              ),
-            ),
-            const Spacer(),
-            if (contextStage || still) ...[
-              // Flat, always-visible quiet controls for the context question
-              // and for still scenes, where nothing recedes behind timing.
-              if (onSafety != null) ...[
-                _ChromeIconButton(
-                  buttonKey: const Key('care-break-safety'),
-                  onPressed: onSafety,
-                  tooltip: 'Support and safety',
-                  icon: Icons.health_and_safety_outlined,
-                ),
-                const SizedBox(width: 8),
-              ],
-              if (!contextStage && !settled)
-                TextButton(
-                  key: const Key('care-break-complete'),
-                  onPressed: onEnough,
-                  style: TextButton.styleFrom(
-                    minimumSize: const Size(64, 48),
-                    foregroundColor: _kChromeIvory.withValues(alpha: 0.78),
-                    padding: const EdgeInsets.symmetric(horizontal: 14),
-                  ),
-                  child: const Text(
-                    'Enough for now',
-                    textScaler: TextScaler.noScaling,
-                    style: TextStyle(
-                      fontSize: 12.5,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ),
-            ] else
-              AnimatedOpacity(
-                duration: fadeDuration,
-                opacity: handleOpacity,
-                child: Semantics(
-                  button: true,
-                  label: menuOpen
-                      ? 'Hide scene controls'
-                      : 'Show scene controls',
-                  child: IconButton(
-                    key: const Key('care-scene-menu'),
-                    onPressed: onToggleMenu,
-                    tooltip: menuOpen
-                        ? 'Hide scene controls'
-                        : 'Show scene controls',
-                    style: IconButton.styleFrom(
-                      minimumSize: const Size(48, 48),
-                      foregroundColor: _kChromeIvory.withValues(alpha: 0.9),
-                      side: BorderSide(
-                        width: 1,
-                        color: _kChromeIvory.withValues(alpha: 0.14),
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(minHeight: 56),
+        child: contextStage || still
+            ? Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  backButton,
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Align(
+                      alignment: Alignment.topRight,
+                      // Flat, always-visible quiet controls for the context
+                      // question and for still scenes. At ordinary sizes this
+                      // is the same right-aligned row as before; when Dynamic
+                      // Type or a narrow viewport no longer allows Back,
+                      // Support, and Enough to share one line, OverflowBar
+                      // lowers the trailing actions instead of overflowing.
+                      child: OverflowBar(
+                        spacing: 8,
+                        overflowSpacing: 4,
+                        alignment: MainAxisAlignment.end,
+                        overflowAlignment: OverflowBarAlignment.end,
+                        children: [
+                          if (onSafety != null)
+                            _ChromeIconButton(
+                              buttonKey: const Key('care-break-safety'),
+                              onPressed: onSafety,
+                              tooltip: 'Support and safety',
+                              icon: Icons.health_and_safety_outlined,
+                            ),
+                          if (!contextStage && !settled)
+                            TextButton(
+                              key: const Key('care-break-complete'),
+                              onPressed: onEnough,
+                              style: TextButton.styleFrom(
+                                minimumSize: const Size(64, 48),
+                                foregroundColor: _kChromeIvory.withValues(
+                                  alpha: 0.78,
+                                ),
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 14,
+                                  vertical: 10,
+                                ),
+                              ),
+                              child: Text(
+                                'Enough for now',
+                                textAlign: TextAlign.center,
+                                style: ExperienceType.caption(
+                                  _kChromeIvory.withValues(alpha: 0.78),
+                                ).copyWith(fontWeight: FontWeight.w600),
+                              ),
+                            ),
+                        ],
                       ),
-                      shape: const CircleBorder(),
                     ),
-                    icon: menuOpen
-                        ? const Icon(Icons.close_rounded, size: 18)
-                        : const _SceneHandleGlyph(),
                   ),
+                ],
+              )
+            : SizedBox(
+                height: 56,
+                child: Row(
+                  children: [
+                    backButton,
+                    const Spacer(),
+                    AnimatedOpacity(
+                      duration: fadeDuration,
+                      opacity: handleOpacity,
+                      child: Semantics(
+                        button: true,
+                        label: menuOpen
+                            ? 'Hide scene controls'
+                            : 'Show scene controls',
+                        child: IconButton(
+                          key: const Key('care-scene-menu'),
+                          onPressed: onToggleMenu,
+                          tooltip: menuOpen
+                              ? 'Hide scene controls'
+                              : 'Show scene controls',
+                          style: IconButton.styleFrom(
+                            minimumSize: const Size(48, 48),
+                            foregroundColor: _kChromeIvory.withValues(
+                              alpha: 0.9,
+                            ),
+                            backgroundColor: highContrast
+                                ? _kChromeSurface.withValues(alpha: 0.5)
+                                : Colors.transparent,
+                            side: BorderSide(
+                              width: highContrast ? 1.4 : 1,
+                              color: _kChromeIvory.withValues(
+                                alpha: highContrast ? 0.48 : 0.14,
+                              ),
+                            ),
+                            shape: const CircleBorder(),
+                          ),
+                          icon: menuOpen
+                              ? const Icon(Icons.close_rounded, size: 18)
+                              : const CareSceneHandleGlyph(),
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
               ),
-          ],
-        ),
       ),
     );
   }
 }
 
-/// The resting mark of the scene controls: two hairlines and one acid-lime
-/// point of life. Identical in all five worlds.
-class _SceneHandleGlyph extends StatelessWidget {
-  const _SceneHandleGlyph();
+/// The resting mark of the scene controls: two hairlines and one ember
+/// quiet-marker point of life. Identical in all five rooms.
+class CareSceneHandleGlyph extends StatelessWidget {
+  const CareSceneHandleGlyph({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -1851,7 +1954,7 @@ class _SceneHandleGlyph extends StatelessWidget {
               width: 5,
               height: 5,
               decoration: const BoxDecoration(
-                color: _kChromeAccent,
+                color: _kQuietMarker,
                 shape: BoxShape.circle,
               ),
             ),
@@ -1882,15 +1985,15 @@ class _SceneHandleGlyph extends StatelessWidget {
 }
 
 /// The transient scene menu, authored in the same light/line language as the
-/// scenes rather than a stock popup: a smoked-plum shelf that grows out of
-/// the scene's right edge — flush on one side, a single 24px sweep on the
-/// other — drawn with one 1px hairline weight throughout. Rows are separated
-/// by hairlines that run out to the edge, and the only color is the lime
-/// point that marks live sound. It gathers Support, Sound, Adjust, and the
-/// early ending into one recoverable place, sits in the upper corner clear
-/// of the canvas focal point, and dissolves on any scene touch.
-class _SceneMenu extends StatelessWidget {
-  const _SceneMenu({
+/// rooms rather than a stock popup: a smoked-plum shelf floating just inside
+/// the scene's right edge, drawn with one hairline weight throughout under
+/// the care-world radius grammar. Rows are separated by hairlines, and the
+/// only color is the ember quiet marker that marks live sound. It gathers
+/// Support, Sound, Adjust, and the early ending into one recoverable place,
+/// sits in the upper corner clear of the canvas focal point, and dissolves
+/// on any scene touch.
+class CareSceneMenu extends StatelessWidget {
+  const CareSceneMenu({
     required this.showAdjust,
     required this.showEnough,
     required this.onAdjust,
@@ -1898,7 +2001,14 @@ class _SceneMenu extends StatelessWidget {
     required this.onSafety,
     required this.soundEnabled,
     required this.soundAvailable,
+    required this.showSoundNotice,
     required this.onToggleSound,
+    this.soundKey = const Key('care-break-sound'),
+    this.adjustKey = const Key('care-scene-adjust'),
+    this.enoughKey = const Key('care-break-complete'),
+    this.soundLabel,
+    this.soundSemanticsLabel,
+    super.key,
   });
 
   final bool showAdjust;
@@ -1908,16 +2018,26 @@ class _SceneMenu extends StatelessWidget {
   final VoidCallback? onSafety;
   final bool soundEnabled;
   final bool soundAvailable;
-  final VoidCallback onToggleSound;
 
-  static const _radius = BorderRadius.only(
-    topLeft: Radius.circular(24),
-    bottomLeft: Radius.circular(24),
+  /// True when the last attempt to start sound failed quietly. The menu
+  /// shows one inline line under the sound row — never a SnackBar, never a
+  /// demand. The scene is complete without sound.
+  final bool showSoundNotice;
+  final VoidCallback onToggleSound;
+  final Key soundKey;
+  final Key adjustKey;
+  final Key enoughKey;
+  final String? soundLabel;
+  final String? soundSemanticsLabel;
+
+  static const _radius = BorderRadius.all(
+    Radius.circular(ExperienceRadius.card),
   );
 
   @override
   Widget build(BuildContext context) {
     final reduced = MediaQuery.disableAnimationsOf(context);
+    final highContrast = MediaQuery.highContrastOf(context);
     // Stay compact and edge-aware: never wider than the scene minus enough
     // room for the Back anchor and the motion line's left margin.
     final width = math.min(232.0, MediaQuery.sizeOf(context).width - 88);
@@ -1952,15 +2072,36 @@ class _SceneMenu extends StatelessWidget {
         Semantics(
           button: true,
           toggled: soundEnabled,
-          label: soundEnabled ? 'Turn sound off' : 'Turn sound on',
-          child: _SceneMenuItem(
-            buttonKey: const Key('care-break-sound'),
-            icon: soundEnabled
-                ? Icons.volume_up_rounded
-                : Icons.volume_off_rounded,
-            label: soundEnabled ? 'Sound on' : 'Sound off',
-            onTap: onToggleSound,
-            trailing: _SoundMark(enabled: soundEnabled),
+          label:
+              soundSemanticsLabel ??
+              (soundEnabled ? 'Turn sound off' : 'Turn sound on'),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              _SceneMenuItem(
+                buttonKey: soundKey,
+                icon: soundEnabled
+                    ? Icons.volume_up_rounded
+                    : Icons.volume_off_rounded,
+                label: soundLabel ?? (soundEnabled ? 'Sound on' : 'Sound off'),
+                onTap: onToggleSound,
+                trailing: _SoundMark(enabled: soundEnabled),
+              ),
+              if (showSoundNotice)
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(46, 0, 18, 10),
+                  child: Semantics(
+                    liveRegion: true,
+                    child: Text(
+                      'Sound stayed off — the scene is complete without it.',
+                      style: ExperienceType.caption(
+                        _kChromeIvory.withValues(alpha: 0.55),
+                      ),
+                    ),
+                  ),
+                ),
+            ],
           ),
         ),
       );
@@ -1968,7 +2109,7 @@ class _SceneMenu extends StatelessWidget {
     if (showAdjust) {
       addRow(
         _SceneMenuItem(
-          buttonKey: const Key('care-scene-adjust'),
+          buttonKey: adjustKey,
           icon: Icons.tune_rounded,
           label: 'Adjust',
           onTap: onAdjust,
@@ -1978,7 +2119,7 @@ class _SceneMenu extends StatelessWidget {
     if (showEnough) {
       addRow(
         _SceneMenuItem(
-          buttonKey: const Key('care-break-complete'),
+          buttonKey: enoughKey,
           icon: Icons.bedtime_outlined,
           label: 'Enough for now',
           onTap: onEnough,
@@ -2006,18 +2147,10 @@ class _SceneMenu extends StatelessWidget {
             decoration: BoxDecoration(
               color: _kChromeSurface.withValues(alpha: 0.86),
               borderRadius: _radius,
-              border: Border(
-                top: BorderSide(
-                  width: 1,
-                  color: _kChromeIvory.withValues(alpha: 0.12),
-                ),
-                bottom: BorderSide(
-                  width: 1,
-                  color: _kChromeIvory.withValues(alpha: 0.12),
-                ),
-                left: BorderSide(
-                  width: 1,
-                  color: _kChromeIvory.withValues(alpha: 0.12),
+              border: Border.all(
+                width: highContrast ? 1.4 : 1,
+                color: _kChromeIvory.withValues(
+                  alpha: highContrast ? 0.4 : 0.12,
                 ),
               ),
             ),
@@ -2050,12 +2183,12 @@ class _SceneMenuItem extends StatelessWidget {
     return InkWell(
       key: buttonKey,
       onTap: onTap,
-      splashColor: _kChromeAccent.withValues(alpha: 0.06),
+      splashColor: _kQuietMarker.withValues(alpha: 0.06),
       highlightColor: _kChromeIvory.withValues(alpha: 0.04),
       child: ConstrainedBox(
         constraints: const BoxConstraints(minHeight: 48),
         child: Padding(
-          padding: const EdgeInsets.fromLTRB(16, 0, 18, 0),
+          padding: const EdgeInsets.fromLTRB(16, 4, 18, 4),
           child: Row(
             children: [
               Icon(icon, size: 18, color: _kChromeIvory.withValues(alpha: 0.8)),
@@ -2063,13 +2196,11 @@ class _SceneMenuItem extends StatelessWidget {
               Expanded(
                 child: Text(
                   label,
-                  maxLines: 1,
+                  maxLines: 2,
                   overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
-                    color: _kChromeIvory.withValues(alpha: 0.92),
-                    fontSize: 13.5,
-                    fontWeight: FontWeight.w600,
-                  ),
+                  style: ExperienceType.caption(
+                    _kChromeIvory.withValues(alpha: 0.92),
+                  ).copyWith(fontWeight: FontWeight.w600),
                 ),
               ),
               ?trailing,
@@ -2081,8 +2212,8 @@ class _SceneMenuItem extends StatelessWidget {
   }
 }
 
-/// The sound state mark: the menu's one point of acid lime when sound is
-/// live, a hollow 1px hairline ring when it rests — the same dot/line
+/// The sound state mark: the menu's one ember quiet-marker point when sound
+/// is live, a hollow 1px hairline ring when it rests — the same dot/line
 /// grammar as the scene handle.
 class _SoundMark extends StatelessWidget {
   const _SoundMark({required this.enabled});
@@ -2096,7 +2227,7 @@ class _SoundMark extends StatelessWidget {
       height: 7,
       decoration: BoxDecoration(
         shape: BoxShape.circle,
-        color: enabled ? _kChromeAccent : Colors.transparent,
+        color: enabled ? _kQuietMarker : Colors.transparent,
         border: enabled
             ? null
             : Border.all(
@@ -2110,7 +2241,10 @@ class _SoundMark extends StatelessWidget {
 
 /// After-care, arrived at rather than appended: the scene holds, a low
 /// gradient steadies the lower third, and the three choices rise in
-/// sequence — one glowing focal action and two quieter ways to leave.
+/// sequence — one glowing ember primary (the only action light in the room)
+/// and two quieter ways to leave, all in the refuge's one radius grammar
+/// (hero for the primary, chip for the outlined secondary, flat text exit).
+/// Controls size from min-height plus padding so large text reflows.
 class _SettledAfterCare extends StatelessWidget {
   const _SettledAfterCare({
     required this.visuals,
@@ -2126,6 +2260,7 @@ class _SettledAfterCare extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final highContrast = MediaQuery.highContrastOf(context);
     return Padding(
       padding: const EdgeInsets.fromLTRB(24, 0, 24, 20),
       child: Column(
@@ -2136,10 +2271,11 @@ class _SettledAfterCare extends StatelessWidget {
             index: 1,
             child: DecoratedBox(
               decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(24),
+                gradient: ExperienceColors.emberActionGradient,
+                borderRadius: BorderRadius.circular(ExperienceRadius.hero),
                 boxShadow: [
                   BoxShadow(
-                    color: visuals.glow.withValues(alpha: 0.3),
+                    color: ExperienceColors.emberGlow.withValues(alpha: 0.75),
                     blurRadius: 30,
                     spreadRadius: -8,
                     offset: const Offset(0, 8),
@@ -2151,18 +2287,25 @@ class _SettledAfterCare extends StatelessWidget {
                 onPressed: onCheckIn,
                 style: FilledButton.styleFrom(
                   minimumSize: const Size.fromHeight(54),
-                  foregroundColor: visuals.background,
-                  backgroundColor: visuals.glow,
+                  foregroundColor: ExperienceColors.onEmber,
+                  backgroundColor: Colors.transparent,
+                  shadowColor: Colors.transparent,
+                  surfaceTintColor: Colors.transparent,
                   elevation: 0,
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 20,
+                    vertical: 15,
+                  ),
                   shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(24),
+                    borderRadius: BorderRadius.circular(ExperienceRadius.hero),
                   ),
                 ),
-                child: const Text(
+                child: Text(
                   'Check how it felt',
                   textAlign: TextAlign.center,
-                  textScaler: TextScaler.noScaling,
-                  style: TextStyle(fontSize: 13.5, fontWeight: FontWeight.w800),
+                  style: ExperienceType.label(
+                    ExperienceColors.onEmber,
+                  ).copyWith(fontWeight: FontWeight.w800),
                 ),
               ),
             ),
@@ -2177,17 +2320,25 @@ class _SettledAfterCare extends StatelessWidget {
                 minimumSize: const Size.fromHeight(50),
                 foregroundColor: visuals.foreground.withValues(alpha: 0.85),
                 side: BorderSide(
-                  color: visuals.foreground.withValues(alpha: 0.2),
+                  width: highContrast ? 1.4 : 1,
+                  color: visuals.foreground.withValues(
+                    alpha: highContrast ? 0.55 : 0.2,
+                  ),
+                ),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 20,
+                  vertical: 13,
                 ),
                 shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(4),
+                  borderRadius: BorderRadius.circular(ExperienceRadius.chip),
                 ),
               ),
-              child: const Text(
+              child: Text(
                 'Stay a little longer',
                 textAlign: TextAlign.center,
-                textScaler: TextScaler.noScaling,
-                style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.w600),
+                style: ExperienceType.caption(
+                  visuals.foreground.withValues(alpha: 0.85),
+                ).copyWith(fontWeight: FontWeight.w600),
               ),
             ),
           ),
@@ -2199,11 +2350,16 @@ class _SettledAfterCare extends StatelessWidget {
               style: TextButton.styleFrom(
                 minimumSize: const Size.fromHeight(44),
                 foregroundColor: visuals.foreground.withValues(alpha: 0.5),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 10,
+                ),
               ),
-              child: const Text(
+              child: Text(
                 'Done for now',
-                textScaler: TextScaler.noScaling,
-                style: TextStyle(fontSize: 12.5),
+                style: ExperienceType.caption(
+                  visuals.foreground.withValues(alpha: 0.5),
+                ),
               ),
             ),
           ),
@@ -2213,6 +2369,13 @@ class _SettledAfterCare extends StatelessWidget {
   }
 }
 
+/// Compatibility evidence: the legacy in-scene moment check. When
+/// [CareBreakFlow.usesExternalCompletionFlow] is true — the production
+/// configuration — this sheet is bypassed and completion hands off to the
+/// owning experience instead. It is retained (not deleted) for the fallback
+/// configuration, restyled only onto the shared refuge tokens so it compiles
+/// token-safe; no behavior here is relied upon by the production path.
+///
 /// The moment check, kept deliberately weightless: three equally-lit rows
 /// behind hairlines so no answer feels preferred, inside the shared plum
 /// chrome surface.
@@ -2232,22 +2395,20 @@ class _MomentCheckSheet extends StatelessWidget {
         InkWell(
           key: key,
           onTap: () => Navigator.of(context).pop(outcome),
-          splashColor: _kChromeAccent.withValues(alpha: 0.06),
+          splashColor: _kQuietMarker.withValues(alpha: 0.06),
           highlightColor: _kChromeIvory.withValues(alpha: 0.04),
           borderRadius: BorderRadius.circular(16),
           child: ConstrainedBox(
             constraints: const BoxConstraints(minHeight: 54),
             child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 18),
+              padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 6),
               child: Row(
                 children: [
                   Expanded(
                     child: Text(
                       label,
-                      style: TextStyle(
-                        color: _kChromeIvory.withValues(alpha: 0.92),
-                        fontSize: 15,
-                        fontWeight: FontWeight.w600,
+                      style: ExperienceType.label(
+                        _kChromeIvory.withValues(alpha: 0.92),
                       ),
                     ),
                   ),
@@ -2288,24 +2449,14 @@ class _MomentCheckSheet extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 22),
-          const Text(
+          Text(
             'How is this moment now?',
-            style: TextStyle(
-              color: _kChromeIvory,
-              fontFamily: 'Newsreader',
-              fontSize: 26,
-              fontWeight: FontWeight.w800,
-              height: 1.05,
-            ),
+            style: ExperienceType.title(_kChromeIvory),
           ),
           const SizedBox(height: 6),
           Text(
             'Choose only what feels true. You can stay with the scene instead.',
-            style: TextStyle(
-              color: _kChromeIvory.withValues(alpha: 0.6),
-              fontSize: 13,
-              height: 1.4,
-            ),
+            style: ExperienceType.caption(_kChromeIvory.withValues(alpha: 0.6)),
           ),
           const SizedBox(height: 20),
           Container(
@@ -2342,6 +2493,7 @@ class _MomentCheckSheet extends StatelessWidget {
             style: TextButton.styleFrom(
               minimumSize: const Size.fromHeight(46),
               foregroundColor: _kChromeIvory.withValues(alpha: 0.55),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
             ),
             child: const Text('Not sure — stay here'),
           ),
@@ -2425,6 +2577,14 @@ List<String> _motionLines(
   },
 };
 
+/// Per-room visual identity. Grounds resolve through the shared plum-depth
+/// ramp ([CareRefugeDepths]) so every room is the one refuge at a different
+/// floor value and the world-crossing crossfade keeps its promise; painter
+/// and visuals can never drift apart. Room accent lights keep their
+/// emotional identities but align to system hues: Release = ember family,
+/// Heavy = phaseFollicular (blue rain), Racing = phaseLuteal (violet
+/// strands), Space = emberSoft lamplight, Physical = accentGravity warmth.
+/// Ember remains the only *action* light; these accents are illumination.
 @immutable
 class CareBreakVisuals {
   const CareBreakVisuals({
@@ -2442,11 +2602,11 @@ class CareBreakVisuals {
 
   factory CareBreakVisuals.forMode(CareMode mode) => switch (mode) {
     CareMode.explode => const CareBreakVisuals(
-      background: Color(0xFF1A0806),
-      foreground: Color(0xFFF3EDE5),
-      accent: Color(0xFFFF5A36),
-      accentForeground: Colors.white,
-      secondary: Color(0xFFC23220),
+      background: CareRefugeDepths.release,
+      foreground: ExperienceColors.careInk,
+      accent: ExperienceColors.emberBright,
+      accentForeground: Color(0xFF241019),
+      secondary: ExperienceColors.emberDeep,
       glow: Color(0xFFFFD166),
       settledTitle: 'Sealed. Nothing broke.',
       settledCue: 'Press again if there is more. It holds either way',
@@ -2454,9 +2614,9 @@ class CareBreakVisuals {
       settledSemantics: 'Pressure closed inside one resting seal',
     ),
     CareMode.heavy => const CareBreakVisuals(
-      background: Color(0xFF070C14),
-      foreground: Color(0xFFF3EDE5),
-      accent: Color(0xFF8FB3D9),
+      background: CareRefugeDepths.heavy,
+      foreground: ExperienceColors.careInk,
+      accent: ExperienceColors.phaseFollicular,
       accentForeground: Color(0xFF101A25),
       secondary: Color(0xFF4B6B96),
       glow: Color(0xFFFFD9A8),
@@ -2466,9 +2626,9 @@ class CareBreakVisuals {
       settledSemantics: 'Rain ended with one steady light',
     ),
     CareMode.racing => const CareBreakVisuals(
-      background: Color(0xFF0A0910),
-      foreground: Color(0xFFF3EDE5),
-      accent: Color(0xFFA99CF0),
+      background: CareRefugeDepths.racing,
+      foreground: ExperienceColors.careInk,
+      accent: ExperienceColors.phaseLuteal,
       accentForeground: Color(0xFF171226),
       secondary: Color(0xFF66559E),
       glow: Color(0xFFE6E1FF),
@@ -2478,9 +2638,9 @@ class CareBreakVisuals {
       settledSemantics: 'Thought strands gathered into one line and period',
     ),
     CareMode.space => const CareBreakVisuals(
-      background: Color(0xFF0B0A0D),
-      foreground: Color(0xFFF3EDE5),
-      accent: Color(0xFFFFD0A0),
+      background: CareRefugeDepths.space,
+      foreground: ExperienceColors.careInk,
+      accent: ExperienceColors.emberSoft,
       accentForeground: Color(0xFF2B1B13),
       secondary: Color(0xFF8A5C46),
       glow: Color(0xFFFFD0A0),
@@ -2490,9 +2650,9 @@ class CareBreakVisuals {
       settledSemantics: 'Closed door with a quiet lamp on this side',
     ),
     CareMode.physical => const CareBreakVisuals(
-      background: Color(0xFF140D06),
-      foreground: Color(0xFFF3EDE5),
-      accent: Color(0xFFE8A34A),
+      background: CareRefugeDepths.physical,
+      foreground: ExperienceColors.careInk,
+      accent: ExperienceColors.accentGravity,
       accentForeground: Color(0xFF2D211A),
       secondary: Color(0xFF9A6330),
       glow: Color(0xFFFFE0AB),
@@ -2515,6 +2675,12 @@ class CareBreakVisuals {
   final String settledSemantics;
 }
 
+/// Compatibility evidence: the production stage paints exclusively through
+/// [PrototypeScenePainter]; this painter is unused by the live flow. It is
+/// retained (not deleted) for API compatibility and existing references, and
+/// because it consumes the token-driven [CareBreakVisuals] it inherits the
+/// plum-depth grounds and system-hue accents with no further restyling. No
+/// behavior in the production path relies on it.
 class CareBreakPainter extends CustomPainter {
   const CareBreakPainter({
     required this.mode,

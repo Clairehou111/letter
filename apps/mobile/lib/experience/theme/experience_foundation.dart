@@ -1,55 +1,77 @@
+import 'dart:async';
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
+import '../../features/care/domain/care_mode.dart';
 import '../../features/patterns/domain/personal_pattern.dart';
 import '../../features/preparation/domain/preparation_loop_state.dart';
 import '../care/care_animation_port.dart';
 
 // ---------------------------------------------------------------------------
-// Color tokens
+// Color tokens — Quiet Dusk: one plum sky, three depths.
+//
+// Dusk (default chrome & canvas) and Deep Dusk (Care & screen cover) are one
+// environment at two value depths — same ink family, same hairline logic,
+// same ember. Warm paper survives ONLY as the inset reading/writing material
+// (letters, in-app report preview) and lives quarantined in [ExperiencePaper]
+// so no dusk screen can reach for it accidentally.
+//
+// Ember coral is reserved for the ember itself, primary actions, and
+// memory/remembered-help — never a chart accent, never chrome decoration.
 // ---------------------------------------------------------------------------
 
-/// One warm paper world and one plum-dusk world, sharing a single ember.
-///
-/// Ember coral is reserved for the ember itself, primary actions, and
-/// memory/remembered-help — never a chart accent.
 abstract final class ExperienceColors {
-  // Light world — warm paper-white, genuine contrast, no beige wash.
-  static const Color canvas = Color(0xFFFBF7F3);
-  static const Color surface = Color(0xFFFFFFFF);
-  static const Color surfaceWarm = Color(0xFFF5EDE7);
-  static const Color ink = Color(0xFF2A1626);
-  static const Color inkSoft = Color(0xFF6E5A68);
-  static const Color inkFaint = Color(0xFF9A8A94);
-  static const Color hairline = Color(0xFFE9DED7);
-  static const Color shadowWarm = Color(0x1F5C3A2E);
-  static const Color error = Color(0xFFA43E36);
+  // Dusk — the everyday depth. Deep warm-plum canvas derived from the
+  // careSkyBottom family, lifted enough to hold a perceptible surface step.
+  static const Color canvas = Color(0xFF1E1224);
+  static const Color surface = Color(0xFF281A30);
+  static const Color surfaceWarm = Color(0xFF33223C); // surfaceRaised
 
-  // Ember family — coral-red gradient, confident and warm.
+  // Global ink family — the former Care ink values, now app-wide.
+  static const Color ink = Color(0xFFF7EEE6);
+  static const Color inkSoft = Color(0xFFCDB6C6);
+  static const Color inkFaint = Color(0xFF9C8496);
+
+  // Generalized glass hairline — translucent-warm, never opaque grey.
+  // Stepped to hold ~3:1 against the dusk canvas as a graphic boundary.
+  static const Color hairline = Color(0x5EF7EEE6);
+
+  // Dusk shadows deepen rather than lighten: plum-black, low opacity.
+  static const Color shadowWarm = Color(0x3D0A0510);
+
+  // Warm desaturated red, distinct from ember — errors never borrow the
+  // light source. Errors never haptic.
+  static const Color error = Color(0xFFE19A8E);
+
+  // Ember family — the product's only saturated warm hue. Verbatim.
   static const Color ember = Color(0xFFE4573D);
   static const Color emberBright = Color(0xFFF2734F);
   static const Color emberDeep = Color(0xFFC23A28);
   static const Color emberSoft = Color(0xFFF7A48C);
   static const Color emberGlow = Color(0x40F2734F);
 
-  // Phase accents — saturated enough to read at ring width; the dashed
-  // estimated treatment compensates with stroke weight, never saturation.
-  static const Color phasePeriod = Color(0xFFB23A6B); // raspberry-magenta
-  static const Color phaseFollicular = Color(0xFF4A7FC9); // clear blue
-  static const Color phaseOvulation = Color(0xFF4C9E70); // leaf green
-  static const Color phaseLuteal = Color(0xFF7A5AB0); // deep violet
+  // Phase accents — hue identities preserved, retuned for dusk so each holds
+  // ≥3.0:1 against surface as a graphic boundary. The dashed estimated
+  // treatment still compensates with stroke weight, never saturation.
+  static const Color phasePeriod = Color(0xFFE08BB0); // raspberry-magenta
+  static const Color phaseFollicular = Color(0xFF8FB4E8); // clear blue
+  static const Color phaseOvulation = Color(0xFF7FC79B); // leaf green
+  static const Color phaseLuteal = Color(0xFFB39ADB); // deep violet
 
   // Semantic accents — exactly one per chart family. Within any viewport
   // only the expanded family renders at full saturation; others step down.
-  static const Color accentGravity = Color(0xFFA85B32); // amber-plum
-  static const Color accentSpectrum = Color(0xFF2E8C82); // teal
-  static const Color accentTwin = Color(0xFF4B5AA8); // indigo
+  // Ember remains excluded from charts.
+  static const Color accentGravity = Color(0xFFD9A05B); // amber-plum
+  static const Color accentSpectrum = Color(0xFF5BC0B3); // teal
+  static const Color accentTwin = Color(0xFF9AA6E0); // indigo
   static const Color accentMemory = ember; // ember-coral
-  static const Color accentSafety = Color(0xFF4A2C4A); // deep plum, no red
+  static const Color accentSafety = Color(0xFF9B7BA6); // dusk plum, no red
 
-  // Dark Care world — plum dusk, one warm light source, red never dominates.
+  // Deep Dusk — the same plum sky taken to its floor value (Care world and
+  // the screen cover). Not a second theme: same ink, same hairlines, same
+  // radius/space system. The careSky relationship is preserved verbatim.
   static const Color careSkyTop = Color(0xFF2E1A33);
   static const Color careSkyBottom = Color(0xFF170D1C);
   static const Color careInk = Color(0xFFF7EEE6);
@@ -58,7 +80,26 @@ abstract final class ExperienceColors {
   static const Color careGlass = Color(0x14FFFFFF);
   static const Color careGlassBorder = Color(0x33FFFFFF);
 
-  /// The ember gradient used for hero fills, primary actions, and the ember.
+  /// The quiet marker: one ember-family token used at rest weight for every
+  /// small wayfinding mark in Care — the landing rule, the breathing
+  /// fast-path dot, the scene-handle dot, the sound-live mark, and the
+  /// adjustment-slider accent. It retires the pre-Quiet-Dusk acid lime
+  /// (0xFFD9FF63) everywhere; it is illumination and wayfinding, never an
+  /// action fill and never a chart accent.
+  static const Color careQuietMarker = emberSoft;
+
+  /// Accessible ink and the slightly lifted deep stop used only by tappable
+  /// ember surfaces. Decorative embers keep the more dramatic gradient below.
+  static const Color onEmber = Color(0xFF241019);
+  static const Color emberActionDeep = Color(0xFFD06A58);
+
+  static const LinearGradient emberActionGradient = LinearGradient(
+    begin: Alignment.topLeft,
+    end: Alignment.bottomRight,
+    colors: [emberBright, ember, emberActionDeep],
+  );
+
+  /// The ember gradient used for decorative hero fills and the ember itself.
   static const LinearGradient emberGradient = LinearGradient(
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,
@@ -72,7 +113,7 @@ abstract final class ExperienceColors {
     colors: [emberBright, emberDeep],
   );
 
-  /// Plum-dusk backfield for the Care world.
+  /// Deep Dusk backfield for the Care world.
   static const LinearGradient careBackdrop = LinearGradient(
     begin: Alignment.topCenter,
     end: Alignment.bottomCenter,
@@ -81,12 +122,87 @@ abstract final class ExperienceColors {
 }
 
 // ---------------------------------------------------------------------------
+// Care refuge depth ramp — the five scene rooms and the headache-still room
+// as floors of the one plum sky. Rooms are separated by depth, not hue: each
+// ground keeps the perceived darkness of its predecessor while rotating into
+// the careSkyTop/careSkyBottom family, so the world-crossing crossfade's
+// promise ("deeper into the same place") is kept by the destination.
+//
+// This is the single definition. CareBreakVisuals.forMode, the motion-flow
+// stage, and PrototypeScenePainter all resolve grounds through here so the
+// painter and the visuals can never drift apart.
+// ---------------------------------------------------------------------------
+
+abstract final class CareRefugeDepths {
+  /// Release — deep plum-wine floor. This is the ground of the explode room
+  /// ([CareMode.explode], "I want to explode"); the token keeps the
+  /// experience-language name "Release" while the domain enum keeps its
+  /// established constant.
+  static const Color release = Color(0xFF1A0A14);
+
+  /// Heavy — plum-navy floor.
+  static const Color heavy = Color(0xFF0A0B18);
+
+  /// Racing — plum-violet floor.
+  static const Color racing = Color(0xFF0E0A18);
+
+  /// Space — plum-charcoal floor.
+  static const Color space = Color(0xFF0D0A12);
+
+  /// Physical — plum-ember floor.
+  static const Color physical = Color(0xFF170D10);
+
+  /// Headache-still — the refuge's darkest plum. Still, dim, motionless,
+  /// silent; replaces the former near-black 0xFF08060A.
+  static const Color headacheStill = Color(0xFF0A0710);
+
+  /// Resolves the plum-depth ground for a Care scene [mode].
+  static Color groundFor(CareMode mode) {
+    switch (mode) {
+      case CareMode.explode:
+        return release;
+      case CareMode.heavy:
+        return heavy;
+      case CareMode.racing:
+        return racing;
+      case CareMode.space:
+        return space;
+      case CareMode.physical:
+        return physical;
+    }
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Paper inset tokens — the ONE permitted warm-paper material, used
+// exclusively as an inset reading/writing surface for the "Letter to future
+// you" sheet and the in-app report preview: paper you hold, ringed by the
+// dusk you live in. No time-based dimming, no toggle, no system switching.
+// These are the previous light-world values, preserved verbatim and
+// explicitly scoped so no dusk chrome can reach for them accidentally.
+// ---------------------------------------------------------------------------
+
+abstract final class ExperiencePaper {
+  static const Color canvas = Color(0xFFFBF7F3);
+  static const Color surface = Color(0xFFFFFFFF);
+  static const Color surfaceWarm = Color(0xFFF5EDE7);
+  static const Color ink = Color(0xFF2A1626);
+  static const Color inkSoft = Color(0xFF6E5A68);
+  // Counters, placeholders, and quiet metadata still carry meaning, so the
+  // faint paper ink keeps a 4.5:1 floor on every permitted paper surface.
+  static const Color inkFaint = Color(0xFF76656F);
+  static const Color hairline = Color(0xFFE9DED7);
+  static const Color shadowWarm = Color(0x1F5C3A2E);
+  static const Color error = Color(0xFFA43E36);
+}
+
+// ---------------------------------------------------------------------------
 // Severity ramp — five restrained, countable steps within the phase/accent
 // family. NEVER error red, NEVER ember (both are reserved: error for errors,
 // ember for action). Color is reinforcement only — the word and the
 // score/glyph remain the primary encoding everywhere this ramp renders.
 //
-//   1 inkFaint         — barely present
+//   1 inkFaint         — barely present (≥3:1 on dusk surface)
 //   2 phaseFollicular  — clear blue
 //   3 phaseLuteal      — deep violet
 //   4 phasePeriod      — raspberry-magenta
@@ -128,20 +244,20 @@ abstract final class ExperienceSeverityRamp {
   }
 
   /// A muted wash of the step color for selected fills and glyph backdrops,
-  /// keeping the warm daylight material instead of a flat saturated block.
+  /// keeping the dusk material translucent instead of a flat saturated block.
   static Color softFill(int score, {double alpha = 0.14}) {
     return forScore(score).withValues(alpha: alpha);
   }
 }
 
 // ---------------------------------------------------------------------------
-// Typography
+// Typography — Georgia (Times New Roman/serif fallback) is the single
+// display voice app-wide; the humanist sans stack carries body, labels, and
+// data. Pairing rule: serif takeaways never contain numerals adjacent to
+// data — numerals in data contexts always use [ExperienceType.data] (sans,
+// tabular figures) so the two type systems never fight inside a chart.
 // ---------------------------------------------------------------------------
 
-/// Editorial serif for display; clean humanist sans for body, labels, chips,
-/// and data. Pairing rule: serif takeaways never contain numerals adjacent to
-/// data — numerals in data contexts always use [ExperienceType.data] (sans,
-/// tabular figures) so the two type systems never fight inside a chart.
 abstract final class ExperienceType {
   static const List<String> _serifFallback = <String>[
     'Times New Roman',
@@ -238,6 +354,9 @@ abstract final class ExperienceType {
     );
   }
 
+  /// The Quiet Dusk text theme. The `light*` identifier is preserved for
+  /// source compatibility only — there is no daylight world left in the UI;
+  /// this is the single dusk theme's type ramp.
   static TextTheme lightTextTheme() {
     return TextTheme(
       displayLarge: display(ExperienceColors.ink),
@@ -252,6 +371,9 @@ abstract final class ExperienceType {
     );
   }
 
+  /// Deep Dusk (Care) text theme — the same global ink family at the
+  /// environment's floor value. Identical tokens by design: Care is not a
+  /// second theme, only a deeper value of the same plum sky.
   static TextTheme careTextTheme() {
     return TextTheme(
       displayLarge: display(ExperienceColors.careInk),
@@ -310,6 +432,8 @@ abstract final class ExperienceRadius {
   );
 }
 
+/// One focal shadow per viewport. In dusk, shadows deepen rather than
+/// lighten — plum-black at low opacity; no glow effects on ordinary cards.
 abstract final class ExperienceShadows {
   static const List<BoxShadow> card = <BoxShadow>[
     BoxShadow(
@@ -319,7 +443,7 @@ abstract final class ExperienceShadows {
     ),
   ];
   static const List<BoxShadow> hero = <BoxShadow>[
-    BoxShadow(color: Color(0x335C3A2E), blurRadius: 32, offset: Offset(0, 12)),
+    BoxShadow(color: Color(0x590A0510), blurRadius: 32, offset: Offset(0, 12)),
   ];
 }
 
@@ -444,7 +568,9 @@ abstract final class ExperienceHaptics {
 
 // ---------------------------------------------------------------------------
 // Motion — reduced motion resolves from the platform accessibility setting
-// ONLY (owner decision). No in-app toggle exists in this release.
+// ONLY (owner decision). No in-app toggle exists in this release. This is
+// the single resolver implementation; legacy resolvers elsewhere in the
+// module delegate here.
 // ---------------------------------------------------------------------------
 
 abstract final class ExperienceMotion {
@@ -538,14 +664,24 @@ abstract final class SavedRhythm {
       <SavedRhythmKind, DateTime>{};
   static final Map<SavedRhythmKind, int> _cursor = <SavedRhythmKind, int>{};
 
-  /// Performs the haptic and returns the acknowledgment line, or `null` when
-  /// the silence rule suppresses it (visual + haptic only).
+  /// Starts a best-effort haptic and immediately returns the acknowledgment
+  /// line, or `null` when the silence rule suppresses it. Platform haptics
+  /// must never hold a successful save UI in its pending state.
   static Future<String?> acknowledge(
     SavedRhythmKind kind, {
     DateTime? now,
   }) async {
-    await ExperienceHaptics.saved();
+    unawaited(_savedHaptic());
     return lineFor(kind, now: now);
+  }
+
+  static Future<void> _savedHaptic() async {
+    try {
+      await ExperienceHaptics.saved();
+    } catch (_) {
+      // Haptics are an enhancement; storage and visual acknowledgment are the
+      // source of truth on unsupported or temporarily unavailable platforms.
+    }
   }
 
   /// Pure acknowledgment resolution — haptic-free, for tests and previews.
@@ -665,12 +801,13 @@ abstract final class ExperienceMemoryGate {
 }
 
 // ---------------------------------------------------------------------------
-// Motif widgets — the Ember in Orbit.
+// Motif widgets — the Ember, the product's only light source.
 // ---------------------------------------------------------------------------
 
 /// The ember: one warm coral gradient circle with a soft inner glow. The
-/// "you are here" marker, the held orb in Care, the saved-pulse origin.
-/// Decorative by default — callers place semantics on meaningful ancestors.
+/// "you are here" marker, the held orb in Care, the saved-pulse origin, and
+/// the screen cover's resting signature. Decorative by default — callers
+/// place semantics on meaningful ancestors.
 class EmberOrb extends StatelessWidget {
   const EmberOrb({
     super.key,
@@ -988,8 +1125,9 @@ class SavedRhythmAckLine extends StatelessWidget {
 }
 
 // ---------------------------------------------------------------------------
-// Sheets — 28 radius, grab handle; in Care the scrim never fully hides the
-// world behind (exit must remain visible).
+// Sheets — 28px top radius, custom grab handle (theme drag handles stay
+// disabled), keyboard insets. Dusk scrim standard; Care keeps its
+// deliberately lighter scrim so the exit stays perceptible.
 // ---------------------------------------------------------------------------
 
 Future<T?> showExperienceSheet<T>(
@@ -997,19 +1135,24 @@ Future<T?> showExperienceSheet<T>(
   required Widget child,
   bool careWorld = false,
   bool isScrollControlled = true,
+  bool dominant = false,
 }) {
   return showModalBottomSheet<T>(
     context: context,
     isScrollControlled: isScrollControlled,
+    isDismissible: !dominant,
+    enableDrag: !dominant,
     backgroundColor: careWorld
         ? ExperienceColors.careSkyBottom
         : ExperienceColors.surface,
-    barrierColor: careWorld ? const Color(0x59000000) : const Color(0x40000000),
+    barrierColor: dominant
+        ? (careWorld ? const Color(0xF2170D1C) : const Color(0xE61F1424))
+        : (careWorld ? const Color(0x59000000) : const Color(0x40000000)),
     shape: const RoundedRectangleBorder(
       borderRadius: ExperienceRadius.sheetRadius,
     ),
     builder: (sheetContext) {
-      return Padding(
+      final sheet = Padding(
         padding: EdgeInsets.only(
           bottom: MediaQuery.viewInsetsOf(sheetContext).bottom,
         ),
@@ -1035,40 +1178,53 @@ Future<T?> showExperienceSheet<T>(
           ),
         ),
       );
+      if (!dominant) return sheet;
+      return SizedBox(
+        height: MediaQuery.sizeOf(sheetContext).height * 0.94,
+        child: sheet,
+      );
     },
   );
 }
 
 // ---------------------------------------------------------------------------
 // ExperienceFoundation — facade preserving the public API and housing the
-// two world themes plus the system-level guarantees.
+// Quiet Dusk environment (both depths) plus the system-level guarantees.
 // ---------------------------------------------------------------------------
 
 abstract final class ExperienceFoundation {
-  /// Contrast floors (design authority): body text in both worlds.
+  /// Contrast floors (design authority): body text at both depths.
   static const double minBodyContrastRatio = 4.5;
 
   /// Contrast floor for large display type and graphic boundaries.
   static const double minLargeGraphicContrastRatio = 3.0;
 
-  /// Warm paper world: Today, Cycle, Patterns, You, Reports.
+  /// The single Quiet Dusk theme: deep plum canvas, warm off-white ink,
+  /// translucent-warm hairlines, ember primary actions with dark plum text.
+  /// Every destination — onboarding, auth, Today, Cycle, Patterns, Settings,
+  /// report configuration — renders inside this dusk. There is no daylight
+  /// world left in the app UI and no theme toggle.
+  ///
+  /// The `lightTheme` identifier is preserved for source compatibility with
+  /// existing callers; the doc comment, not the name, carries the truth.
   static ThemeData lightTheme() {
+    const Color onEmber = Color(0xFF241019); // dark plum on ember fills
     final scheme = ColorScheme(
-      brightness: Brightness.light,
+      brightness: Brightness.dark,
       primary: ExperienceColors.ember,
-      onPrimary: Colors.white,
-      primaryContainer: ExperienceColors.emberSoft,
+      onPrimary: onEmber,
+      primaryContainer: ExperienceColors.emberDeep,
       onPrimaryContainer: ExperienceColors.ink,
       secondary: ExperienceColors.phaseFollicular,
-      onSecondary: Colors.white,
+      onSecondary: onEmber,
       tertiary: ExperienceColors.phaseLuteal,
-      onTertiary: Colors.white,
+      onTertiary: onEmber,
       surface: ExperienceColors.surface,
       onSurface: ExperienceColors.ink,
       surfaceContainerHighest: ExperienceColors.surfaceWarm,
       onSurfaceVariant: ExperienceColors.inkSoft,
       error: ExperienceColors.error,
-      onError: Colors.white,
+      onError: onEmber,
       outline: ExperienceColors.hairline,
       outlineVariant: ExperienceColors.inkFaint,
       shadow: ExperienceColors.shadowWarm,
@@ -1106,8 +1262,8 @@ abstract final class ExperienceFoundation {
       ),
       snackBarTheme: SnackBarThemeData(
         behavior: SnackBarBehavior.floating,
-        backgroundColor: ExperienceColors.ink,
-        contentTextStyle: ExperienceType.bodySmall(ExperienceColors.surface),
+        backgroundColor: ExperienceColors.surfaceWarm,
+        contentTextStyle: ExperienceType.bodySmall(ExperienceColors.ink),
         shape: const RoundedRectangleBorder(
           borderRadius: ExperienceRadius.chipRadius,
         ),
@@ -1115,23 +1271,26 @@ abstract final class ExperienceFoundation {
     );
   }
 
-  /// Plum-dusk Care world. Same behavior, different material: translucent
-  /// plum glass controls with visible borders, warm off-white text.
+  /// Deep Dusk: the same plum environment taken to its floor value (Care and
+  /// the screen cover). Same behavior, same ink family, same hairline logic —
+  /// translucent plum glass controls with visible borders, warm off-white
+  /// text. Not a second theme.
   static ThemeData careTheme() {
+    const Color onEmber = Color(0xFF241019);
     final scheme = ColorScheme(
       brightness: Brightness.dark,
       primary: ExperienceColors.emberBright,
-      onPrimary: const Color(0xFF241019),
+      onPrimary: onEmber,
       primaryContainer: ExperienceColors.emberDeep,
       onPrimaryContainer: ExperienceColors.careInk,
       secondary: ExperienceColors.emberSoft,
-      onSecondary: const Color(0xFF241019),
+      onSecondary: onEmber,
       surface: ExperienceColors.careSkyBottom,
       onSurface: ExperienceColors.careInk,
       surfaceContainerHighest: ExperienceColors.careGlass,
       onSurfaceVariant: ExperienceColors.careInkSoft,
-      error: ExperienceColors.emberSoft,
-      onError: const Color(0xFF241019),
+      error: ExperienceColors.error,
+      onError: onEmber,
       outline: ExperienceColors.careGlassBorder,
       outlineVariant: ExperienceColors.careInkFaint,
     );

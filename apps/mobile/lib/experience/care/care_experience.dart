@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
@@ -7,6 +8,8 @@ import '../../features/care/domain/care_memory.dart';
 import '../../features/care/domain/care_memory_repository.dart';
 import '../../features/care/domain/care_mode.dart';
 import '../../features/care/presentation/breath_flow.dart';
+import '../../features/comfort_kit/application/comfort_experience_controller.dart';
+import '../../features/comfort_kit/domain/comfort_kit.dart';
 import '../../features/patterns/domain/personal_pattern.dart';
 import '../../features/preparation/domain/preparation_loop_state.dart';
 import '../../features/recovery_receipt/domain/recovery_receipt.dart';
@@ -43,7 +46,10 @@ enum CareEntrySource { tab, todayDoorway, checkInAcknowledgment }
 ///    the glowing fast path; the everyday-care path into
 ///    [CareToolkitExperience] stays secondary. Choice is deliberately
 ///    capped: five mode doors → one immersive scene → one visible primary
-///    action at a time.
+///    action at a time. The landing's two small wayfinding marks — the
+///    short rule beneath the question and the fast-path dot — render in
+///    [ExperienceColors.careQuietMarker], the ember-family quiet marker;
+///    no neon accent remains on this surface.
 ///  * **World crossing.** Entering a scene is the signature emissive
 ///    crossfade — the screen deepens to plum while the ember enlarges into
 ///    the held orb, then scene content fades up; exiting reverses it. Under
@@ -52,17 +58,20 @@ enum CareEntrySource { tab, todayDoorway, checkInAcknowledgment }
 ///    a plain fade with a shorter duration, and scenes render through
 ///    [CareSceneMotionPreference] as composed statics with identical copy
 ///    and controls.
-///  * **Scene routing.** Each mode routes to its Flutter scene
-///    ([CareReleaseScene], [CareHeavyScene], [CareFocusScene],
-///    [CareBoundaryScene], [CareBodyScene]). The reserved [animationPort]
-///    seam is where the future companion pass plugs in via
-///    [CareAnimationPort] — per-mode scene builder, three motion
-///    preferences, and shared scene signals — without changing this journey.
-///  * **Interruption recovery.** Any scene interrupted — app backgrounded,
-///    call, or exit tap — lands on a named recoverable state: "You were in
-///    the middle of …" with *Continue*, an optional *check in* exit, and
-///    *leave it here*. Nothing is recorded without the deliberate
-///    completion; backgrounding and exit never persist.
+///  * **Scene routing.** Each mode routes to its scene through the
+///    [animationPort] when one is wired (the production path), with the
+///    Flutter scenes ([CareReleaseScene], [CareHeavyScene],
+///    [CareFocusScene], [CareBoundaryScene], [CareBodyScene]) retained as
+///    the honest fallback. Signals, motion preferences, ground plane, and
+///    journey are identical across both.
+///  * **Interruption recovery.** Backgrounding the app mid-scene arms a
+///    named recoverable state: "You were in the middle of …" with
+///    *Continue*, an optional *check in* exit, and *leave it here*. Leaving
+///    through a fallback scene's own exit affordance lands on the same
+///    recoverable state. The production scene chrome's back is a clean
+///    dismissal: it returns to the landing directly. Nothing is recorded
+///    without the deliberate completion; backgrounding and exit never
+///    persist.
 ///  * **Completion assembly.** A deliberate scene completion becomes a
 ///    validated [CareActionCompletion] handed to [CareCompletionFlow],
 ///    which owns the optional outcome, the separately dismissible
@@ -73,8 +82,22 @@ enum CareEntrySource { tab, todayDoorway, checkInAcknowledgment }
 ///    clears the completion here and lands back on the landing with zero
 ///    writes. The saved page's single exit — exactly `Return to daylight` —
 ///    is the only daylight route out of the completion stage.
+///  * **Comfort Kit — a shelf by the door.** When a
+///    [ComfortExperienceController] is wired in, the landing carries the
+///    kit's presence strictly below the door grid and the everyday-care
+///    row: silence when no kit is formed or the load fails, one quiet
+///    outlined row when a kit is formed, and one warm glass card only while
+///    [ComfortKitWindowState.proactivelyVisible] is true. The row or card
+///    crosses through the same world-crossing switcher to a reading shelf —
+///    "Things that helped before, kept close." — where each kept item
+///    offers Remove, Replace (when a replacement waits), and a two-step
+///    Don't show again, all routed through the controller's existing
+///    operations and re-composed from the fresh snapshot each returns. The
+///    kit never gates the doors, never explains forecasts, and never asks
+///    to be managed before care.
 ///  * **Safety.** The deterministic [CareSafetyRoute] is reachable from a
-///    quiet, persistent line on every Care surface this experience renders.
+///    quiet, persistent line on every Care surface this experience renders,
+///    including the kit shelf.
 ///  * **Text-scale resilience.** The landing chrome is measured before it
 ///    is composed; when the footer (safety line + daylight pill) would
 ///    claim more than a fraction of the viewport, it joins the scroll flow
@@ -95,12 +118,17 @@ class CareExperience extends StatefulWidget {
     required this.careMemoryRepository,
     this.saveReceipt,
     this.animationPort,
+    this.comfortExperienceController,
     this.loopKind,
     this.memoryEvidence = const <SupportActionPattern>[],
     this.regionCode,
     this.entrySource = CareEntrySource.tab,
     this.onLeaveCare,
     this.onRequestCheckIn,
+    this.onCareUsed,
+    this.onRecordsChanged,
+    this.careCompanionName,
+    this.onCareCompanionNameSaved,
     this.performanceConstrained = false,
     this.now,
   });
@@ -115,11 +143,18 @@ class CareExperience extends StatefulWidget {
   final Future<RecoveryReceiptResult> Function(RecoveryReceiptDraft draft)?
   saveReceipt;
 
-  /// The future animation seam. This build ships the honest, fully usable
-  /// Flutter scenes; when the professional companion pass lands, its
-  /// per-mode scene builder plugs in here with the same signals, motion
-  /// preferences, ground plane, and journey — replacing rendering only.
+  /// The scene seam. The production animation flow plugs in here; when it
+  /// is absent, the honest Flutter scenes render with the same signals,
+  /// motion preferences, ground plane, and journey.
   final CareAnimationPort? animationPort;
+
+  /// The Comfort Kit seam, wired by the shell. When null, no kit surface
+  /// renders anywhere in Care — the landing and the journey are byte-for-
+  /// byte the pre-kit world. When present, the kit loads quietly after the
+  /// first frame, reloads whenever the shelf is opened, and fails silent:
+  /// a load error renders no kit surface, never an error on an acute
+  /// surface.
+  final ComfortExperienceController? comfortExperienceController;
 
   /// Evidence inputs for the single shared memory gate, forwarded to the
   /// landing's remembered-help line and the everyday toolkit.
@@ -142,6 +177,22 @@ class CareExperience extends StatefulWidget {
   /// a quick moment check-in on Today. When null, the option is hidden.
   final VoidCallback? onRequestCheckIn;
 
+  /// Anonymous analytics seam. The callback receives no mode, outcome,
+  /// duration, timestamp, or content and is invoked only after a deliberate
+  /// scene choice.
+  final Future<void> Function()? onCareUsed;
+
+  /// Shared mutation boundary for predictions, reminders, reports, and the
+  /// first Comfort Kit formation while Care remains mounted.
+  final Future<void> Function()? onRecordsChanged;
+
+  /// Device-local display name for the cat in the two physical-care scenes.
+  /// It never enters Care records, analytics, reports, or exports.
+  final String? careCompanionName;
+
+  /// Persists a name only after the person explicitly confirms it.
+  final Future<void> Function(String name)? onCareCompanionNameSaved;
+
   /// The sanctioned frame-budget escape hatch: when the world crossing
   /// cannot hold 60 fps, scenes and crossings degrade to
   /// [CareSceneMotionPreference.staticFallback] + a plain fade — composed
@@ -155,7 +206,7 @@ class CareExperience extends StatefulWidget {
   State<CareExperience> createState() => _CareExperienceState();
 }
 
-enum _CareStage { landing, scene, recovery, toolkit, completion }
+enum _CareStage { landing, scene, recovery, toolkit, completion, kit }
 
 class _CareExperienceState extends State<CareExperience>
     with WidgetsBindingObserver {
@@ -176,6 +227,12 @@ class _CareExperienceState extends State<CareExperience>
   CareMode _completionMode = CareMode.physical;
 
   bool _memoryProposalDismissed = false;
+  int _toolkitVisitId = 0;
+
+  // Comfort Kit — the shelf by the door. Null means silence: not loaded
+  // yet, load failed, or no controller wired. Every absence renders the
+  // identical kit-free landing.
+  ComfortExperienceSnapshot? _comfortSnapshot;
 
   DateTime _now() => (widget.now ?? DateTime.now)();
 
@@ -183,12 +240,40 @@ class _CareExperienceState extends State<CareExperience>
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
+    // The kit loads after the first frame so nothing — not even a quiet
+    // read — ever stands between the person and the doors on entry.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      unawaited(_loadComfortSnapshot());
+    });
   }
 
   @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
     super.dispose();
+  }
+
+  // -------------------------------------------------------------------------
+  // Comfort Kit — quiet load, quiet failure. The existing load() boundary is
+  // the only seam; there is no cache, and a failure renders no kit surface.
+  // -------------------------------------------------------------------------
+
+  Future<void> _loadComfortSnapshot() async {
+    final controller = widget.comfortExperienceController;
+    if (controller == null) return;
+    try {
+      final snapshot = await controller.load();
+      if (!mounted) return;
+      setState(() => _comfortSnapshot = snapshot);
+    } catch (_) {
+      // Fail quiet: no kit surface renders, errors never haptic, and the
+      // acute world never learns why.
+    }
+  }
+
+  Future<void> _handleRecordsChanged() async {
+    await _loadComfortSnapshot();
+    await widget.onRecordsChanged?.call();
   }
 
   // -------------------------------------------------------------------------
@@ -274,6 +359,8 @@ class _CareExperienceState extends State<CareExperience>
 
   void _openScene(CareMode mode) {
     ExperienceHaptics.pick();
+    final onCareUsed = widget.onCareUsed;
+    if (onCareUsed != null) unawaited(onCareUsed());
     setState(() {
       _activeMode = mode;
       _activeStepIndex = 0;
@@ -284,7 +371,10 @@ class _CareExperienceState extends State<CareExperience>
 
   void _openToolkit() {
     ExperienceHaptics.pick();
-    setState(() => _stage = _CareStage.toolkit);
+    setState(() {
+      _toolkitVisitId += 1;
+      _stage = _CareStage.toolkit;
+    });
   }
 
   Future<void> _openBreathing() async {
@@ -295,6 +385,20 @@ class _CareExperienceState extends State<CareExperience>
             BreathFlow(onClose: () => Navigator.of(routeContext).pop()),
       ),
     );
+  }
+
+  /// Crosses to the kit shelf and refreshes the snapshot. The shelf is
+  /// stateless reading — backgrounding it needs no recovery, and returning
+  /// simply re-renders whatever the latest snapshot holds.
+  void _openKit() {
+    ExperienceHaptics.pick();
+    setState(() => _stage = _CareStage.kit);
+    unawaited(_loadComfortSnapshot());
+  }
+
+  void _closeKit() {
+    ExperienceHaptics.pick();
+    setState(() => _stage = _CareStage.landing);
   }
 
   void _resumeInterruptedScene() {
@@ -320,8 +424,9 @@ class _CareExperienceState extends State<CareExperience>
     });
   }
 
-  /// Any scene exit that is not the deliberate final completion is an
-  /// interruption: land on the named recoverable state.
+  /// A fallback scene's own exit affordance is an interruption: land on the
+  /// named recoverable state. (The production port's back-tap arrives as
+  /// [CareSceneSignal.sceneDismissed] and is a clean dismissal instead.)
   void _handleSceneExit() {
     final mode = _activeMode;
     if (mode == null) {
@@ -457,13 +562,16 @@ class _CareExperienceState extends State<CareExperience>
     final duration = fullMotion
         ? ExperienceMotion.worldCrossing
         : ExperienceMotion.worldCrossingReduced;
+    final paperSurface =
+        _stage == _CareStage.toolkit ||
+        (_stage == _CareStage.scene && _activeMode == CareMode.physical);
 
     return Theme(
       data: ExperienceFoundation.careTheme(),
-      // The dark plum world must carry light status-bar content so the
-      // clock and indicators stay legible against the backdrop.
       child: AnnotatedRegion<SystemUiOverlayStyle>(
-        value: SystemUiOverlayStyle.light,
+        value: paperSurface
+            ? SystemUiOverlayStyle.dark
+            : SystemUiOverlayStyle.light,
         child: Scaffold(
           backgroundColor: ExperienceColors.careSkyBottom,
           body: AnimatedSwitcher(
@@ -485,49 +593,21 @@ class _CareExperienceState extends State<CareExperience>
     );
   }
 
-  /// The world-crossing transition. Full motion: an emissive crossfade in
-  /// which the ember enlarges from its resting marker into the held orb
-  /// while scene content fades up beneath it; reversing the stage change
-  /// reverses the crossing into daylight. Reduced motion and the jank
-  /// escape hatch render a plain fade.
+  /// A plain, low-stimulation crossing. The older expanding ember read as a
+  /// strong sun/alert and made the paper rooms feel disconnected from dusk.
   Widget _crossingTransition(
     Widget child,
     Animation<double> animation,
     bool fullMotion,
   ) {
-    if (!fullMotion) {
-      return FadeTransition(opacity: animation, child: child);
-    }
-    final curved = CurvedAnimation(
-      parent: animation,
-      curve: ExperienceMotion.crossingCurve,
-    );
-    return AnimatedBuilder(
-      animation: curved,
+    return FadeTransition(
+      opacity: fullMotion
+          ? CurvedAnimation(
+              parent: animation,
+              curve: ExperienceMotion.crossingCurve,
+            )
+          : animation,
       child: child,
-      builder: (context, current) {
-        final t = curved.value;
-        final contentOpacity = ((t - 0.30) / 0.70).clamp(0.0, 1.0);
-        final emberOpacity = t < 0.35
-            ? 1.0
-            : (1 - (t - 0.35) / 0.55).clamp(0.0, 1.0);
-        final emberSize = 28 + 124 * t;
-        return RepaintBoundary(
-          child: Stack(
-            fit: StackFit.expand,
-            children: <Widget>[
-              Opacity(opacity: contentOpacity, child: current),
-              if (emberOpacity > 0)
-                IgnorePointer(
-                  child: Opacity(
-                    opacity: emberOpacity,
-                    child: Center(child: EmberOrb(size: emberSize)),
-                  ),
-                ),
-            ],
-          ),
-        );
-      },
     );
   }
 
@@ -554,6 +634,10 @@ class _CareExperienceState extends State<CareExperience>
           'care-completion-${_activeCompletion?.occurredAt.toIso8601String()}',
         ),
         child: _buildCompletion(motion),
+      ),
+      _CareStage.kit => KeyedSubtree(
+        key: const ValueKey<String>('care-kit'),
+        child: _buildKit(motion),
       ),
     };
   }
@@ -583,7 +667,8 @@ class _CareExperienceState extends State<CareExperience>
   }
 
   /// A deliberately conservative estimate of the vertical space the landing
-  /// chrome (header, optional entry and memory lines, everyday-care card)
+  /// chrome (header, optional entry and memory lines, an optional Comfort
+  /// Kit entry, and the everyday-care card)
   /// occupies, so the phone door grid can be sized to sit fully above the
   /// pinned footer on the first viewport. Overestimation only leaves a
   /// little quiet space beneath the doors — it can never clip a tile.
@@ -591,13 +676,14 @@ class _CareExperienceState extends State<CareExperience>
     required double textScale,
     required bool hasEntry,
     required bool hasMemory,
+    required bool hasKit,
   }) {
     var height =
         20 + // ember + eyebrow row
         8 +
         100 * textScale + // the question, two display lines (buffered)
         8 +
-        3 + // acid rule
+        3 + // quiet-marker rule
         8 +
         20 * textScale + // support line
         16; // estimation buffer
@@ -606,6 +692,9 @@ class _CareExperienceState extends State<CareExperience>
     }
     if (hasMemory) {
       height += 8 + 64;
+    }
+    if (hasKit) {
+      height += _LandingMetrics.doorGap + 96;
     }
     return height;
   }
@@ -744,9 +833,33 @@ class _CareExperienceState extends State<CareExperience>
     return heights;
   }
 
+  /// The kit's landing presence, resolved from the latest snapshot through
+  /// the kit's three silences: unformed (or unloaded, or failed) → null;
+  /// formed outside the proactive window → one quiet outlined row; formed
+  /// inside [ComfortKitWindowState.proactivelyVisible] → one warm glass
+  /// card. A formed kit is the first actionable surface beneath the landing
+  /// header: familiar help stays easier to reach than starting over.
+  Widget? _resolveKitPresence() {
+    if (widget.comfortExperienceController == null) return null;
+    final snapshot = _comfortSnapshot;
+    if (snapshot == null) return null;
+    if (!snapshot.windowState.formed) return null;
+    final kit = snapshot.kit;
+    if (!kit.isFormed) return null;
+    final visible = kit.visibleItems;
+    if (snapshot.windowState.proactivelyVisible && visible.isNotEmpty) {
+      return _ComfortKitProactiveCard(
+        itemTitle: visible.first.title,
+        onTap: _openKit,
+      );
+    }
+    return _ComfortKitQuietRow(onTap: _openKit);
+  }
+
   Widget _buildLanding(CareSceneMotionPreference motion) {
     final entryLine = _entryLine;
     final memoryLine = _resolveLandingMemoryLine();
+    final kitPresence = _resolveKitPresence();
 
     return DecoratedBox(
       decoration: const BoxDecoration(gradient: ExperienceColors.careBackdrop),
@@ -797,6 +910,23 @@ class _CareExperienceState extends State<CareExperience>
               );
             }
 
+            // Everyday care remains the quiet path after the acute doors.
+            List<Widget> belowDoors() {
+              return <Widget>[_EverydayCareCard(onTap: _openToolkit)];
+            }
+
+            // Once a kit has honestly formed, keep it in the landing's most
+            // prominent action position: directly under the invitation and
+            // before any new scene choice. The formation and proactive-window
+            // gates remain unchanged.
+            List<Widget> prominentKit() {
+              if (kitPresence == null) return const <Widget>[];
+              return <Widget>[
+                const SizedBox(height: ExperienceSpacing.sm),
+                kitPresence,
+              ];
+            }
+
             // Single-column: breathing leads the list as the fast path,
             // then the five doors at reading width. Rows grow with their
             // labels — every mode's own words render in full.
@@ -822,7 +952,8 @@ class _CareExperienceState extends State<CareExperience>
                 physics: const ClampingScrollPhysics(),
                 padding: const EdgeInsets.only(bottom: ExperienceSpacing.lg),
                 children: <Widget>[
-                  _LandingHeader(motion: motion, entryLine: entryLine),
+                  _LandingHeader(entryLine: entryLine),
+                  ...prominentKit(),
                   if (memoryLine != null) ...<Widget>[
                     const SizedBox(height: ExperienceSpacing.sm),
                     memoryLine,
@@ -830,7 +961,7 @@ class _CareExperienceState extends State<CareExperience>
                   const SizedBox(height: ExperienceSpacing.md),
                   choices,
                   const SizedBox(height: _LandingMetrics.doorGap),
-                  _EverydayCareCard(onTap: _openToolkit),
+                  ...belowDoors(),
                   if (includeFooter) ...<Widget>[
                     const SizedBox(height: ExperienceSpacing.md),
                     footer(),
@@ -870,7 +1001,8 @@ class _CareExperienceState extends State<CareExperience>
                   physics: const ClampingScrollPhysics(),
                   padding: const EdgeInsets.only(bottom: ExperienceSpacing.lg),
                   children: <Widget>[
-                    _LandingHeader(motion: motion, entryLine: entryLine),
+                    _LandingHeader(entryLine: entryLine),
+                    ...prominentKit(),
                     if (memoryLine != null) ...<Widget>[
                       const SizedBox(height: ExperienceSpacing.sm),
                       memoryLine,
@@ -884,7 +1016,7 @@ class _CareExperienceState extends State<CareExperience>
                       ),
                     ),
                     const SizedBox(height: _LandingMetrics.doorGap),
-                    _EverydayCareCard(onTap: _openToolkit),
+                    ...belowDoors(),
                     if (footerScrolls) ...<Widget>[
                       const SizedBox(height: ExperienceSpacing.md),
                       footer(),
@@ -932,6 +1064,7 @@ class _CareExperienceState extends State<CareExperience>
                     textScale: textScale,
                     hasEntry: entryLine != null,
                     hasMemory: memoryLine != null,
+                    hasKit: kitPresence != null,
                   );
                   final gridSpace =
                       content.maxHeight -
@@ -967,7 +1100,8 @@ class _CareExperienceState extends State<CareExperience>
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: <Widget>[
-                        _LandingHeader(motion: motion, entryLine: entryLine),
+                        _LandingHeader(entryLine: entryLine),
+                        ...prominentKit(),
                         if (memoryLine != null) ...<Widget>[
                           const SizedBox(height: ExperienceSpacing.sm),
                           memoryLine,
@@ -982,7 +1116,7 @@ class _CareExperienceState extends State<CareExperience>
                           rowHeights: rowHeights,
                         ),
                         const SizedBox(height: _LandingMetrics.doorGap),
-                        _EverydayCareCard(onTap: _openToolkit),
+                        ...belowDoors(),
                       ],
                     ),
                   );
@@ -1102,7 +1236,7 @@ class _CareExperienceState extends State<CareExperience>
       return _buildLanding(motion);
     }
     final animationPort = widget.animationPort;
-    if (animationPort != null) {
+    if (animationPort != null && mode != CareMode.physical) {
       return animationPort.buildScene(
         context,
         mode: mode,
@@ -1161,6 +1295,8 @@ class _CareExperienceState extends State<CareExperience>
         onCompleted: _completeScene,
         resumeStepId: hint == null ? null : CareBodyScene.stepIds[index],
         resumeHint: hint ?? CareBodyScene.defaultResumeHint,
+        companionName: widget.careCompanionName,
+        onCompanionNameSaved: widget.onCareCompanionNameSaved,
       ),
     };
   }
@@ -1264,11 +1400,185 @@ class _CareExperienceState extends State<CareExperience>
   }
 
   // -------------------------------------------------------------------------
+  // Comfort Kit shelf — things that helped before, kept close. A reading
+  // surface, not a dashboard: title, the kept items, safety, and the way
+  // back. Item actions are deliberate; suppression is a two-step confirm.
+  // -------------------------------------------------------------------------
+
+  /// Care-layer presentation mapping for kit item kinds. The domain stays
+  /// free of display copy; the shelf owns its own words.
+  static String _kitItemEyebrow(ComfortKitItem item) {
+    final kindLabel = switch (item.kind) {
+      ComfortKitSourceKind.careAction => 'Care that helped',
+      ComfortKitSourceKind.futureSelfNote => 'A note for you',
+      ComfortKitSourceKind.quickNote => 'A kept note',
+    };
+    final modeName = _kitCareModeDisplayName(item.careMode);
+    final combined = modeName == null ? kindLabel : '$kindLabel · $modeName';
+    return combined.toUpperCase();
+  }
+
+  static String? _kitCareModeDisplayName(String? modeName) {
+    if (modeName == null) return null;
+    for (final mode in CareMode.values) {
+      if (mode.name == modeName) return _sceneDisplayName(mode);
+    }
+    return null;
+  }
+
+  Future<void> _openKitItemActions(ComfortKitItem item) async {
+    ExperienceHaptics.pick();
+    final canReplace =
+        _comfortSnapshot?.kit.replacementItems.isNotEmpty ?? false;
+    final action = await showExperienceSheet<_KitItemAction>(
+      context,
+      careWorld: true,
+      child: _KitItemActionsSheet(item: item, canReplace: canReplace),
+    );
+    if (action == null || !mounted) return;
+    final controller = widget.comfortExperienceController;
+    if (controller == null) return;
+    try {
+      // Replace swaps in the next waiting candidate by letting the removed
+      // item's place refill — both paths route through the controller's
+      // existing remove operation.
+      final fresh = switch (action) {
+        _KitItemAction.remove ||
+        _KitItemAction.replace => await controller.remove(item),
+        _KitItemAction.dontShowAgain => await controller.dontShowAgain(item),
+      };
+      if (!mounted) return;
+      setState(() {
+        _comfortSnapshot = fresh;
+        // When the last kept item leaves the shelf, the shelf dissolves
+        // back into the corridor: unformed renders nothing, anywhere.
+        if (_stage == _CareStage.kit && !fresh.kit.isFormed) {
+          _stage = _CareStage.landing;
+        }
+      });
+    } catch (_) {
+      // Fail quiet: the shelf keeps its last honest snapshot; errors are
+      // never haptic.
+    }
+  }
+
+  Widget _buildKit(CareSceneMotionPreference motion) {
+    final snapshot = _comfortSnapshot;
+    final kit = snapshot?.kit;
+    if (snapshot == null || kit == null || !kit.isFormed) {
+      return _buildLanding(motion);
+    }
+    final items = kit.visibleItems;
+
+    return DecoratedBox(
+      decoration: const BoxDecoration(gradient: ExperienceColors.careBackdrop),
+      child: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(
+            ExperienceSpacing.screenMargin,
+            ExperienceSpacing.sm,
+            ExperienceSpacing.screenMargin,
+            ExperienceSpacing.sm,
+          ),
+          child: FocusTraversalGroup(
+            policy: OrderedTraversalPolicy(),
+            // Explicit traversal: title → item cards → item actions →
+            // safety → back. No privacy explanation joins this surface; the
+            // safety line remains the only signal, as on every Care surface.
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: <Widget>[
+                Expanded(
+                  child: ListView(
+                    physics: const ClampingScrollPhysics(),
+                    padding: const EdgeInsets.only(
+                      bottom: ExperienceSpacing.lg,
+                    ),
+                    children: <Widget>[
+                      FocusTraversalOrder(
+                        order: const NumericFocusOrder(1),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: <Widget>[
+                            Row(
+                              children: <Widget>[
+                                EmberOrb(
+                                  size: 20,
+                                  breathing: true,
+                                  motion: motion,
+                                ),
+                                const SizedBox(width: 10),
+                                Text(
+                                  'COMFORT KIT',
+                                  style: ExperienceType.eyebrow(
+                                    ExperienceColors.careInkFaint,
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 8),
+                            Semantics(
+                              header: true,
+                              child: Text(
+                                'Your comfort kit',
+                                style: ExperienceType.title(
+                                  ExperienceColors.careInk,
+                                ),
+                              ),
+                            ),
+                            const SizedBox(height: 8),
+                            Text(
+                              'Things that helped before, kept close.',
+                              style: ExperienceType.bodySmall(
+                                ExperienceColors.careInkSoft,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: ExperienceSpacing.md),
+                      for (var i = 0; i < items.length; i++) ...<Widget>[
+                        if (i > 0)
+                          const SizedBox(height: _LandingMetrics.doorGap),
+                        _KitItemCard(
+                          item: items[i],
+                          eyebrow: _kitItemEyebrow(items[i]),
+                          actionOrder: NumericFocusOrder(10.0 + i),
+                          onActions: () => _openKitItemActions(items[i]),
+                        ),
+                      ],
+                    ],
+                  ),
+                ),
+                const SizedBox(height: ExperienceSpacing.xs),
+                FocusTraversalOrder(
+                  order: const NumericFocusOrder(100),
+                  child: _LandingSafetyLine(onTap: _openSafety),
+                ),
+                const SizedBox(height: ExperienceSpacing.xs),
+                FocusTraversalOrder(
+                  order: const NumericFocusOrder(101),
+                  child: _LightPill(
+                    label: 'Back to care',
+                    semanticsLabel: 'Back to care.',
+                    onPressed: _closeKit,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  // -------------------------------------------------------------------------
   // Toolkit and completion assembly
   // -------------------------------------------------------------------------
 
   Widget _buildToolkit() {
     return CareToolkitExperience(
+      key: ValueKey<String>('everyday-care-$_toolkitVisitId'),
       onRitualCompleted: _handleRitualCompleted,
       onExit: () {
         ExperienceHaptics.pick();
@@ -1278,6 +1588,8 @@ class _CareExperienceState extends State<CareExperience>
       loopKind: widget.loopKind,
       memoryEvidence: widget.memoryEvidence,
       now: widget.now,
+      companionName: widget.careCompanionName,
+      onCompanionNameSaved: widget.onCareCompanionNameSaved,
     );
   }
 
@@ -1291,6 +1603,7 @@ class _CareExperienceState extends State<CareExperience>
       completion: completion,
       careMemoryRepository: widget.careMemoryRepository,
       saveReceipt: widget.saveReceipt,
+      onDataChanged: _handleRecordsChanged,
       // The saved page's single exit — exactly "Return to daylight".
       onLeaveCare: _leaveToDaylight,
       // Skip (and Android/system back): consume the completion and return
@@ -1307,6 +1620,19 @@ class _CareExperienceState extends State<CareExperience>
 // ---------------------------------------------------------------------------
 // Landing pieces — compact dark-world material for the doorway surface.
 // ---------------------------------------------------------------------------
+
+/// The care-world hairline, strengthened under the platform Increase
+/// Contrast setting so quiet borders never wash out. At normal contrast the
+/// returned color is the ambient translucent-warm hairline at [alpha].
+Color _careHairline(BuildContext context, double alpha) {
+  final highContrast = MediaQuery.maybeOf(context)?.highContrast ?? false;
+  if (highContrast) {
+    return ExperienceColors.careInkSoft.withValues(
+      alpha: math.max(alpha, 0.85),
+    );
+  }
+  return ExperienceColors.careGlassBorder.withValues(alpha: alpha);
+}
 
 /// Local landing metrics and accents: tighter than the world's content
 /// rhythm because the landing is a doorway, not a reading surface.
@@ -1335,10 +1661,6 @@ abstract final class _LandingMetrics {
   /// Aubergine door fill — lifted just enough off the plum backdrop that
   /// the six doors read as one distinct set.
   static const Color doorFill = Color(0xFF241A2A);
-
-  /// One controlled acid editorial accent: the fast-path marker and the
-  /// small rule beneath the question. Never a fill, never a glow.
-  static const Color fastPath = Color(0xFFD9FF63);
 }
 
 /// A door headline that never splits a word at extreme text scale.
@@ -1408,9 +1730,8 @@ class _WholeWordHeadline extends StatelessWidget {
 /// The landing header: a small held ember and the question, leading. No long
 /// explanation stands between the person and the doors.
 class _LandingHeader extends StatelessWidget {
-  const _LandingHeader({required this.motion, this.entryLine});
+  const _LandingHeader({this.entryLine});
 
-  final CareSceneMotionPreference motion;
   final String? entryLine;
 
   @override
@@ -1420,9 +1741,18 @@ class _LandingHeader extends StatelessWidget {
       children: <Widget>[
         Row(
           children: <Widget>[
-            // The held ember, resting small — the same ember from the ring.
-            // Decorative; the semantics live on the headers below.
-            EmberOrb(size: 20, breathing: true, motion: motion),
+            // A flat ember point carries the Care signature without reading
+            // as a second sun beside the display title.
+            ExcludeSemantics(
+              child: Container(
+                width: 8,
+                height: 8,
+                decoration: const BoxDecoration(
+                  color: ExperienceColors.careQuietMarker,
+                  shape: BoxShape.circle,
+                ),
+              ),
+            ),
             const SizedBox(width: 10),
             Text(
               'CARE',
@@ -1433,14 +1763,14 @@ class _LandingHeader extends StatelessWidget {
         const SizedBox(height: 8),
         Semantics(header: true, child: const _LandingQuestion()),
         const SizedBox(height: 8),
-        // The single acid mark on this surface: a short editorial rule
-        // anchoring the question. Static, decorative.
+        // The quiet marker on this surface: a short ember-family rule
+        // anchoring the question. Static, decorative, never an action.
         ExcludeSemantics(
           child: Container(
             width: 28,
             height: 3,
             decoration: BoxDecoration(
-              color: _LandingMetrics.fastPath,
+              color: ExperienceColors.careQuietMarker,
               borderRadius: BorderRadius.circular(2),
             ),
           ),
@@ -1704,7 +2034,7 @@ class _ModeDoor extends StatelessWidget {
           decoration: BoxDecoration(
             color: _LandingMetrics.doorFill,
             borderRadius: _radius,
-            border: Border.all(color: ExperienceColors.careGlassBorder),
+            border: Border.all(color: _careHairline(context, 0.2)),
           ),
           child: Material(
             color: Colors.transparent,
@@ -1752,7 +2082,7 @@ class _CompactModeDoor extends StatelessWidget {
         decoration: BoxDecoration(
           color: _LandingMetrics.doorFill,
           borderRadius: _radius,
-          border: Border.all(color: ExperienceColors.careGlassBorder),
+          border: Border.all(color: _careHairline(context, 0.2)),
         ),
         child: Material(
           color: Colors.transparent,
@@ -1804,11 +2134,12 @@ class _CompactModeDoor extends StatelessWidget {
 /// The fast path: guided breathing, rendered beside the doors. Its
 /// distinction is deliberate rather than a stuck selected state — the same
 /// aubergine door body as the others, set apart by a warm ember edge, the
-/// one soft glow permitted on this surface, and the small acid fast-path
-/// marker. [stacked] is the wide-grid vertical variant; [compact] is the
-/// bounded phone-grid variant; the default is the single-column row. In
-/// the unbounded variants the label renders through [_WholeWordHeadline],
-/// so "Breathe with me" keeps every word whole at any text scale.
+/// one soft glow permitted on this surface, and the small quiet-marker
+/// fast-path dot. [stacked] is the wide-grid vertical variant; [compact]
+/// is the bounded phone-grid variant; the default is the single-column
+/// row. In the unbounded variants the label renders through
+/// [_WholeWordHeadline], so "Breathe with me" keeps every word whole at
+/// any text scale.
 class _BreathingDoor extends StatelessWidget {
   const _BreathingDoor({
     this.stacked = false,
@@ -1852,7 +2183,7 @@ class _BreathingDoor extends StatelessWidget {
           height: 6,
           decoration: const BoxDecoration(
             shape: BoxShape.circle,
-            color: _LandingMetrics.fastPath,
+            color: ExperienceColors.careQuietMarker,
           ),
         ),
         const SizedBox(width: 6),
@@ -2258,11 +2589,7 @@ class _EverydayCareCard extends StatelessWidget {
             child: Container(
               decoration: BoxDecoration(
                 borderRadius: ExperienceRadius.chipRadius,
-                border: Border.all(
-                  color: ExperienceColors.careGlassBorder.withValues(
-                    alpha: 0.55,
-                  ),
-                ),
+                border: Border.all(color: _careHairline(context, 0.55)),
               ),
               padding: const EdgeInsets.symmetric(
                 horizontal: ExperienceSpacing.sm,
@@ -2312,6 +2639,484 @@ class _EverydayCareCard extends StatelessWidget {
   }
 }
 
+/// The kit's quiet presence: a single outlined row, visually a sibling of
+/// the everyday-care row but quieter — a small quiet-marker dot, the name,
+/// and one honest caption. Rendered only when a formed kit exists outside
+/// the proactive window.
+class _ComfortKitQuietRow extends StatelessWidget {
+  const _ComfortKitQuietRow({required this.onTap});
+
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Semantics(
+      button: true,
+      label: 'Your comfort kit. What helped before, kept close.',
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(
+          minHeight: ExperienceSpacing.minTouchTarget,
+        ),
+        child: Material(
+          color: Colors.transparent,
+          child: InkWell(
+            borderRadius: ExperienceRadius.chipRadius,
+            onTap: onTap,
+            child: Container(
+              decoration: BoxDecoration(
+                borderRadius: ExperienceRadius.chipRadius,
+                border: Border.all(color: _careHairline(context, 0.2)),
+              ),
+              padding: const EdgeInsets.symmetric(
+                horizontal: ExperienceSpacing.sm,
+                vertical: 10,
+              ),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: <Widget>[
+                  Container(
+                    width: 8,
+                    height: 8,
+                    decoration: const BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: ExperienceColors.careQuietMarker,
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: <Widget>[
+                        Text(
+                          'Your comfort kit',
+                          style: ExperienceType.label(ExperienceColors.careInk),
+                        ),
+                        Text(
+                          'What helped before, kept close.',
+                          style: ExperienceType.caption(
+                            ExperienceColors.careInkFaint,
+                          ),
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(width: ExperienceSpacing.xs),
+                  const Icon(
+                    Icons.chevron_right,
+                    size: 20,
+                    color: ExperienceColors.careInkFaint,
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// The kit's proactive presence: the quiet row warmed into a glass card —
+/// the same material as the remembered-help line — shown only while
+/// [ComfortKitWindowState.proactivelyVisible] is true. It names the first
+/// kept item and offers the way in. No prediction language, ever.
+class _ComfortKitProactiveCard extends StatelessWidget {
+  const _ComfortKitProactiveCard({
+    required this.itemTitle,
+    required this.onTap,
+  });
+
+  final String itemTitle;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Semantics(
+      button: true,
+      label:
+          'Your comfort kit. Kept for moments like this. $itemTitle. '
+          'Open your kit.',
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(
+          minHeight: ExperienceSpacing.minTouchTarget,
+        ),
+        child: DecoratedBox(
+          decoration: BoxDecoration(
+            color: ExperienceColors.careGlass,
+            borderRadius: ExperienceRadius.chipRadius,
+            border: Border.all(color: _careHairline(context, 0.2)),
+          ),
+          child: Material(
+            color: Colors.transparent,
+            child: InkWell(
+              borderRadius: ExperienceRadius.chipRadius,
+              onTap: onTap,
+              child: Padding(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: ExperienceSpacing.sm,
+                  vertical: 12,
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: <Widget>[
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: <Widget>[
+                        Container(
+                          width: 8,
+                          height: 8,
+                          decoration: const BoxDecoration(
+                            shape: BoxShape.circle,
+                            color: ExperienceColors.careQuietMarker,
+                          ),
+                        ),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: Text(
+                            'Kept for moments like this.',
+                            style: ExperienceType.bodySmall(
+                              ExperienceColors.careInkSoft,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: ExperienceSpacing.xs),
+                    Text(
+                      itemTitle,
+                      style: ExperienceType.headline(ExperienceColors.careInk),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    const SizedBox(height: ExperienceSpacing.xs),
+                    Row(
+                      children: <Widget>[
+                        Text(
+                          'Open your kit',
+                          style: ExperienceType.label(
+                            ExperienceColors.emberSoft,
+                          ),
+                        ),
+                        const SizedBox(width: ExperienceSpacing.xs),
+                        const Icon(
+                          Icons.chevron_right,
+                          size: 18,
+                          color: ExperienceColors.emberSoft,
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// One kept thing on the kit shelf: a quiet glass card — kind eyebrow,
+/// serif title, body — with a single overflow affordance. No shadows, no
+/// glow; the shelf is quieter than the doors. The card itself is
+/// descriptive, not actionable; the overflow carries the deliberate
+/// actions.
+class _KitItemCard extends StatelessWidget {
+  const _KitItemCard({
+    required this.item,
+    required this.eyebrow,
+    required this.actionOrder,
+    required this.onActions,
+  });
+
+  final ComfortKitItem item;
+  final String eyebrow;
+  final NumericFocusOrder actionOrder;
+  final VoidCallback onActions;
+
+  @override
+  Widget build(BuildContext context) {
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: ExperienceColors.careGlass,
+        borderRadius: ExperienceRadius.chipRadius,
+        border: Border.all(color: _careHairline(context, 0.2)),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(
+          horizontal: ExperienceSpacing.sm,
+          vertical: 12,
+        ),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: <Widget>[
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: <Widget>[
+                  Text(
+                    eyebrow,
+                    style: ExperienceType.eyebrow(
+                      ExperienceColors.careInkFaint,
+                    ),
+                  ),
+                  const SizedBox(height: ExperienceSpacing.xs),
+                  Text(
+                    item.title,
+                    style: ExperienceType.headline(ExperienceColors.careInk),
+                  ),
+                  const SizedBox(height: ExperienceSpacing.xs),
+                  Text(
+                    item.body,
+                    style: ExperienceType.bodySmall(
+                      ExperienceColors.careInkSoft,
+                    ),
+                    maxLines: 5,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(width: ExperienceSpacing.xs),
+            FocusTraversalOrder(
+              order: actionOrder,
+              child: Semantics(
+                button: true,
+                label: 'Options for ${item.title}',
+                child: InkWell(
+                  borderRadius: ExperienceRadius.chipRadius,
+                  onTap: onActions,
+                  child: const Padding(
+                    padding: EdgeInsets.all(ExperienceSpacing.sm),
+                    child: Icon(
+                      Icons.more_horiz,
+                      size: 20,
+                      color: ExperienceColors.careInkSoft,
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// The deliberate action chosen from a kit item's sheet. Remove and Replace
+/// are single deliberate taps; Don't show again is confirmed in a second
+/// step before it resolves.
+enum _KitItemAction { remove, replace, dontShowAgain }
+
+/// A kit item's action sheet: three honest choices in the care-world sheet
+/// grammar. Remove carries its return copy; Replace appears only when a
+/// replacement waits; Don't show again opens a two-step confirm that says
+/// plainly what suppression means and how it can be undone.
+class _KitItemActionsSheet extends StatefulWidget {
+  const _KitItemActionsSheet({required this.item, required this.canReplace});
+
+  final ComfortKitItem item;
+  final bool canReplace;
+
+  @override
+  State<_KitItemActionsSheet> createState() => _KitItemActionsSheetState();
+}
+
+class _KitItemActionsSheetState extends State<_KitItemActionsSheet> {
+  bool _confirmingSuppression = false;
+
+  void _choose(_KitItemAction action) {
+    ExperienceHaptics.pick();
+    Navigator.of(context).pop(action);
+  }
+
+  Widget _actionRow({
+    required String title,
+    required String support,
+    required String semanticsLabel,
+    required VoidCallback onTap,
+  }) {
+    return Semantics(
+      button: true,
+      label: semanticsLabel,
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(
+          minHeight: ExperienceSpacing.minTouchTarget,
+        ),
+        child: InkWell(
+          borderRadius: ExperienceRadius.chipRadius,
+          onTap: onTap,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(
+              horizontal: ExperienceSpacing.sm,
+              vertical: 12,
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: <Widget>[
+                Text(
+                  title,
+                  style: ExperienceType.label(ExperienceColors.careInk),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  support,
+                  style: ExperienceType.caption(ExperienceColors.careInkSoft),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (_confirmingSuppression) {
+      return Padding(
+        padding: const EdgeInsets.fromLTRB(
+          ExperienceSpacing.lg,
+          0,
+          ExperienceSpacing.lg,
+          ExperienceSpacing.lg,
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: <Widget>[
+            Text(
+              'Don\u2019t show this again?',
+              style: ExperienceType.title(ExperienceColors.careInk),
+            ),
+            const SizedBox(height: ExperienceSpacing.sm),
+            Text(
+              'It will stay hidden even if it changes. You can bring it '
+              'back from your kit settings.',
+              style: ExperienceType.bodySmall(ExperienceColors.careInkSoft),
+            ),
+            const SizedBox(height: ExperienceSpacing.md),
+            Semantics(
+              button: true,
+              label: 'Don\u2019t show again, stays hidden even if it changes',
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(
+                  minHeight: ExperienceSpacing.degreeTarget,
+                ),
+                child: DecoratedBox(
+                  decoration: BoxDecoration(
+                    borderRadius: ExperienceRadius.chipRadius,
+                    border: Border.all(
+                      color: ExperienceColors.emberSoft.withValues(alpha: 0.7),
+                    ),
+                  ),
+                  child: Material(
+                    color: Colors.transparent,
+                    child: InkWell(
+                      borderRadius: ExperienceRadius.chipRadius,
+                      onTap: () => _choose(_KitItemAction.dontShowAgain),
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: ExperienceSpacing.lg,
+                          vertical: ExperienceSpacing.sm,
+                        ),
+                        child: Text(
+                          'Don\u2019t show again',
+                          style: ExperienceType.label(
+                            ExperienceColors.emberSoft,
+                          ),
+                          textAlign: TextAlign.center,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(height: ExperienceSpacing.xs),
+            TextButton(
+              onPressed: () {
+                ExperienceHaptics.pick();
+                setState(() => _confirmingSuppression = false);
+              },
+              child: Text(
+                'Keep it',
+                style: ExperienceType.label(ExperienceColors.careInkSoft),
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(
+        ExperienceSpacing.sm,
+        0,
+        ExperienceSpacing.sm,
+        ExperienceSpacing.lg,
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: <Widget>[
+          Padding(
+            padding: const EdgeInsets.symmetric(
+              horizontal: ExperienceSpacing.sm,
+            ),
+            child: Text(
+              widget.item.title,
+              style: ExperienceType.title(ExperienceColors.careInk),
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+          const SizedBox(height: ExperienceSpacing.sm),
+          _actionRow(
+            title: 'Remove',
+            support: 'This can come back if things change.',
+            semanticsLabel: 'Remove. This can come back if things change.',
+            onTap: () => _choose(_KitItemAction.remove),
+          ),
+          if (widget.canReplace)
+            _actionRow(
+              title: 'Replace',
+              support: 'Set this aside and bring in the next kept thing.',
+              semanticsLabel:
+                  'Replace. Sets this aside and brings in the next kept '
+                  'thing. This can come back if things change.',
+              onTap: () => _choose(_KitItemAction.replace),
+            ),
+          _actionRow(
+            title: 'Don\u2019t show again',
+            support: 'It will stay hidden even if it changes.',
+            semanticsLabel:
+                'Don\u2019t show again, stays hidden even if it changes',
+            onTap: () {
+              ExperienceHaptics.pick();
+              setState(() => _confirmingSuppression = true);
+            },
+          ),
+          const SizedBox(height: ExperienceSpacing.xs),
+          TextButton(
+            onPressed: () {
+              ExperienceHaptics.pick();
+              Navigator.of(context).pop();
+            },
+            child: Text(
+              'Keep it',
+              style: ExperienceType.label(ExperienceColors.careInkSoft),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 class _LandingMemoryLine extends StatelessWidget {
   const _LandingMemoryLine({
     required this.line,
@@ -2332,7 +3137,7 @@ class _LandingMemoryLine extends StatelessWidget {
         decoration: BoxDecoration(
           color: ExperienceColors.careGlass,
           borderRadius: ExperienceRadius.chipRadius,
-          border: Border.all(color: ExperienceColors.careGlassBorder),
+          border: Border.all(color: _careHairline(context, 0.2)),
         ),
         child: Padding(
           padding: const EdgeInsets.symmetric(
@@ -2449,7 +3254,7 @@ class _EmberButton extends StatelessWidget {
           opacity: enabled ? 1 : 0.55,
           child: DecoratedBox(
             decoration: BoxDecoration(
-              gradient: ExperienceColors.emberGradient,
+              gradient: ExperienceColors.emberActionGradient,
               borderRadius: ExperienceRadius.heroRadius,
               boxShadow: <BoxShadow>[
                 BoxShadow(
@@ -2471,7 +3276,7 @@ class _EmberButton extends StatelessWidget {
                   ),
                   child: Text(
                     label,
-                    style: ExperienceType.label(Colors.white),
+                    style: ExperienceType.label(ExperienceColors.onEmber),
                     textAlign: TextAlign.center,
                   ),
                 ),

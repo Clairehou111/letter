@@ -50,18 +50,37 @@ final class CaptureNote {
     required this.text,
     required this.source,
     required this.createdAt,
-  });
+    DateTime? updatedAt,
+    this.keepInComfortKit = false,
+  }) : updatedAt = updatedAt ?? createdAt;
 
   final String id;
   final String text;
   final CaptureSource source;
   final DateTime createdAt;
+  final DateTime updatedAt;
+  final bool keepInComfortKit;
+
+  CaptureNote copyWith({
+    String? text,
+    bool? keepInComfortKit,
+    DateTime? updatedAt,
+  }) => CaptureNote(
+    id: id,
+    text: text ?? this.text,
+    source: source,
+    createdAt: createdAt,
+    updatedAt: updatedAt ?? this.updatedAt,
+    keepInComfortKit: keepInComfortKit ?? this.keepInComfortKit,
+  );
 }
 
 abstract interface class CaptureNoteStore {
   /// Returns only user-authored text and metadata. Raw audio is never accepted
   /// by this local storage boundary.
   Future<CaptureNote> save(CaptureNote note);
+
+  Future<CaptureNote> update(CaptureNote note);
 
   Future<List<CaptureNote>> getAll();
 
@@ -73,9 +92,13 @@ final class InMemoryCaptureNoteStore implements CaptureNoteStore {
 
   @override
   Future<CaptureNote> save(CaptureNote note) async {
+    notes.removeWhere((entry) => entry.id == note.id);
     notes.add(note);
     return note;
   }
+
+  @override
+  Future<CaptureNote> update(CaptureNote note) => save(note);
 
   @override
   Future<List<CaptureNote>> getAll() async {

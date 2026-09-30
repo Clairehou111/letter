@@ -1,4 +1,5 @@
 import '../../clinical/presentation/twin_matrix_view_model.dart';
+import '../../cycle/domain/local_date.dart';
 import '../../health_records/domain/health_record.dart';
 import '../domain/cycle_care_summary.dart';
 
@@ -22,7 +23,11 @@ abstract final class TwinMatrixSummaryAdapter {
             severity: row.severity,
             daysBeforeMenses: row.daysBeforeMenses,
             cycleDay: row.cycleDay,
-            cycleKey: row.cycleStartDate?.epochDay.toString(),
+            cycleKey: _cycleKey(
+              date: row.date,
+              cycleStartDate: row.cycleStartDate,
+              daysBeforeMenses: row.daysBeforeMenses,
+            ),
             provenance: row.provenance == SummaryRecordProvenance.sameDay
                 ? HealthRecordProvenance.sameDay
                 : HealthRecordProvenance.laterRecall,
@@ -40,7 +45,11 @@ abstract final class TwinMatrixSummaryAdapter {
             outcome: row.outcome,
             daysBeforeMenses: row.daysBeforeMenses,
             cycleDay: row.cycleDay,
-            cycleKey: row.cycleStartDate?.epochDay.toString(),
+            cycleKey: _cycleKey(
+              date: row.date,
+              cycleStartDate: row.cycleStartDate,
+              daysBeforeMenses: row.daysBeforeMenses,
+            ),
           ),
       ],
       cycleLabel: summary.range.label,
@@ -75,5 +84,19 @@ abstract final class TwinMatrixSummaryAdapter {
     }
     markers.sort((left, right) => left.recordedAt.compareTo(right.recordedAt));
     return List.unmodifiable(markers);
+  }
+
+  static String? _cycleKey({
+    required LocalDate date,
+    required LocalDate? cycleStartDate,
+    required int? daysBeforeMenses,
+  }) {
+    if (cycleStartDate != null) return 'start:${cycleStartDate.epochDay}';
+    if (daysBeforeMenses == null || daysBeforeMenses >= 0) return null;
+    // Records before the earliest saved start still share the subsequent
+    // observed period anchor. Group by that anchor rather than inventing one
+    // cycle per record.
+    final nextStart = date.addDays(-daysBeforeMenses);
+    return 'next:${nextStart.epochDay}';
   }
 }

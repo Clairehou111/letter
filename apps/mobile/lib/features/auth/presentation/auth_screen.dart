@@ -360,7 +360,7 @@ class _AuthScreenState extends State<AuthScreen> {
                     DecoratedBox(
                       decoration: BoxDecoration(
                         gradient: magicLinkEnabled
-                            ? ExperienceColors.emberGradient
+                            ? ExperienceColors.emberActionGradient
                             : null,
                         color: magicLinkEnabled
                             ? null
@@ -373,7 +373,7 @@ class _AuthScreenState extends State<AuthScreen> {
                         style: FilledButton.styleFrom(
                           minimumSize: const Size.fromHeight(52),
                           backgroundColor: Colors.transparent,
-                          foregroundColor: Colors.white,
+                          foregroundColor: ExperienceColors.onEmber,
                           shadowColor: Colors.transparent,
                           disabledBackgroundColor: Colors.transparent,
                           disabledForegroundColor: ExperienceColors.inkSoft
@@ -388,7 +388,7 @@ class _AuthScreenState extends State<AuthScreen> {
                               : 'Email me a sign-in link',
                           style: ExperienceType.label(
                             magicLinkEnabled
-                                ? Colors.white
+                                ? ExperienceColors.onEmber
                                 : ExperienceColors.inkSoft,
                           ),
                         ),

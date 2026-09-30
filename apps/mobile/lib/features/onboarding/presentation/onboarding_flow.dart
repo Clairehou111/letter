@@ -229,7 +229,7 @@ class _OnboardingFlowState extends State<OnboardingFlow> {
                                   decoration: BoxDecoration(
                                     gradient: _saving
                                         ? null
-                                        : ExperienceColors.emberGradient,
+                                        : ExperienceColors.emberActionGradient,
                                     color: _saving
                                         ? ExperienceColors.surfaceWarm
                                         : null,
@@ -256,7 +256,7 @@ class _OnboardingFlowState extends State<OnboardingFlow> {
                                                   ? 'Open Letter Within'
                                                   : 'Continue',
                                               style: ExperienceType.label(
-                                                Colors.white,
+                                                ExperienceColors.onEmber,
                                               ),
                                             ),
                                     ),

@@ -22,6 +22,13 @@ import '../theme/experience_foundation.dart';
 ///  * Every glyph carries label + degree semantics and is distinguishable
 ///    by shape, fill level, count, or pattern — never by color alone
 ///    (grayscale safe).
+///
+/// Quiet Dusk: every label, border, and selection wash in this file reads
+/// from the experience token set (`ExperienceColors`, `ExperienceType`,
+/// `ExperienceSpacing`, `ExperienceRadius`, `ExperienceMotion`) so the
+/// vocabulary stays legible on the plum canvas in every consumer — Today,
+/// Cycle, forms, Patterns, reports, and Care. The ember family is reserved
+/// for selection; unselected choices rest in calm warm ink.
 abstract final class DegreeGraphics {
   // --- Contracts -----------------------------------------------------------
 
@@ -199,6 +206,17 @@ abstract final class DegreeGraphics {
   }
 }
 
+/// Selection transitions settle through the shared chip-select timing and
+/// collapse to an instant change when the platform asks for reduced
+/// motion. No degree graphic animates continuously — motion here only ever
+/// confirms a choice the user already made.
+Duration _degreeSelectDuration(BuildContext context) {
+  if (ExperienceMotion.reducedMotion(context)) {
+    return Duration.zero;
+  }
+  return ExperienceMotion.chipSelect;
+}
+
 // ---------------------------------------------------------------------------
 // Flow — one stable terracotta droplet with a bottom-anchored internal fill
 // level: spotting = 18%, light = 42%, medium = 68%, heavy = full. The upper
@@ -348,9 +366,16 @@ final class _FlowLevelPainter extends CustomPainter {
 }
 
 // ---------------------------------------------------------------------------
-// Approved Today recording choices. These live here so Today and Cycle
-// cannot drift into separate silhouettes, dimensions, colors, or selection
+// Approved recording choices. These live here so Today and Cycle cannot
+// drift into separate silhouettes, dimensions, colors, or selection
 // treatments again.
+//
+// Quiet Dusk repair: every ink, hairline, and selection wash below is a
+// token, never a Release 1 paper hex. Unselected choices rest in warm
+// readable ink on the plum surface; the selected choice alone borrows the
+// ember — a soft translucent wash, an ember hairline, and a brightened
+// ember word — so selection stays warm and unmistakable while unselected
+// cells stay calm.
 // ---------------------------------------------------------------------------
 
 class BleedingFlowChoice extends StatelessWidget {
@@ -365,16 +390,16 @@ class BleedingFlowChoice extends StatelessWidget {
   final bool selected;
   final VoidCallback onTap;
 
-  static const Color _terra = Color(0xFFC95D3A);
-  static const Color _terraDeep = Color(0xFFA8482C);
-  static const Color _terraTint = Color(0xFFF6E4D8);
-  static const Color _ink = Color(0xFF2A1626);
-  static const Color _inkSoft = Color(0xFF6E675C);
-  static const Color _hairline = Color(0xFFE7DFD0);
-
   @override
   Widget build(BuildContext context) {
     final label = flow?.label ?? 'None';
+    final labelStyle = selected
+        ? ExperienceType.caption(
+            ExperienceColors.emberBright,
+          ).copyWith(fontWeight: FontWeight.w700)
+        : ExperienceType.caption(
+            ExperienceColors.ink,
+          ).copyWith(fontWeight: FontWeight.w500);
     return Semantics(
       button: true,
       selected: selected,
@@ -382,20 +407,29 @@ class BleedingFlowChoice extends StatelessWidget {
           ? 'Bleeding: None'
           : DegreeGraphics.flowSemanticsLabel(flow!),
       child: GestureDetector(
+        behavior: HitTestBehavior.opaque,
         onTap: onTap,
         child: AnimatedContainer(
-          duration: const Duration(milliseconds: 180),
+          duration: _degreeSelectDuration(context),
+          constraints: const BoxConstraints(
+            minHeight: ExperienceSpacing.degreeTarget,
+          ),
           margin: const EdgeInsets.symmetric(horizontal: 2.5),
           padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 2),
           decoration: BoxDecoration(
-            color: selected ? _terraTint : Colors.transparent,
-            borderRadius: BorderRadius.circular(12),
+            color: selected
+                ? ExperienceColors.ember.withValues(alpha: 0.16)
+                : Colors.transparent,
+            borderRadius: ExperienceRadius.chipRadius,
             border: Border.all(
-              color: selected ? _terra : _hairline,
+              color: selected
+                  ? ExperienceColors.ember
+                  : ExperienceColors.hairline,
               width: selected ? 1.5 : 1,
             ),
           ),
           child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
             children: <Widget>[
               SizedBox(
                 height: 20,
@@ -408,7 +442,9 @@ class BleedingFlowChoice extends StatelessWidget {
                           decoration: BoxDecoration(
                             shape: BoxShape.circle,
                             border: Border.all(
-                              color: selected ? _terra : _inkSoft,
+                              color: selected
+                                  ? ExperienceColors.ember
+                                  : ExperienceColors.inkSoft,
                               width: 1.6,
                             ),
                           ),
@@ -421,7 +457,7 @@ class BleedingFlowChoice extends StatelessWidget {
                         ),
                 ),
               ),
-              const SizedBox(height: 8),
+              const SizedBox(height: ExperienceSpacing.xs * 2),
               SizedBox(
                 width: double.infinity,
                 child: FittedBox(
@@ -431,12 +467,7 @@ class BleedingFlowChoice extends StatelessWidget {
                     maxLines: 1,
                     softWrap: false,
                     textAlign: TextAlign.center,
-                    style: TextStyle(
-                      fontSize: 11.5,
-                      fontWeight: FontWeight.w600,
-                      color: selected ? _terraDeep : _ink,
-                      height: 1.35,
-                    ),
+                    style: labelStyle,
                   ),
                 ),
               ),
@@ -460,49 +491,61 @@ class BleedingColorChoice extends StatelessWidget {
   final bool selected;
   final VoidCallback onTap;
 
-  static const Color _terra = Color(0xFFC95D3A);
-  static const Color _terraDeep = Color(0xFFA8482C);
-  static const Color _inkSoft = Color(0xFF6E675C);
-
   @override
   Widget build(BuildContext context) {
     final fill = DegreeGraphics.bleedingColorFill(color);
+    final labelStyle = selected
+        ? ExperienceType.caption(
+            ExperienceColors.emberBright,
+          ).copyWith(fontWeight: FontWeight.w700)
+        : ExperienceType.caption(
+            ExperienceColors.inkSoft,
+          ).copyWith(fontWeight: FontWeight.w500);
     return Semantics(
       button: true,
       selected: selected,
       label: DegreeGraphics.bleedingColorSemanticsLabel(color),
       child: GestureDetector(
+        behavior: HitTestBehavior.opaque,
         onTap: onTap,
         child: Column(
           children: <Widget>[
-            AnimatedContainer(
-              duration: const Duration(milliseconds: 180),
-              width: 34,
-              height: 34,
-              padding: const EdgeInsets.all(3),
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                border: Border.all(
-                  color: selected ? _terra : Colors.transparent,
-                  width: 2,
-                ),
-              ),
-              child: Container(
-                decoration: BoxDecoration(
-                  color: fill,
-                  shape: BoxShape.circle,
-                  border: Border.all(color: Colors.white, width: 2),
-                  boxShadow: <BoxShadow>[
-                    BoxShadow(
-                      color: fill.withValues(alpha: 0.4),
-                      blurRadius: 6,
-                      offset: const Offset(0, 2),
+            SizedBox(
+              width: ExperienceSpacing.degreeTarget,
+              height: ExperienceSpacing.degreeTarget,
+              child: Center(
+                child: AnimatedContainer(
+                  duration: _degreeSelectDuration(context),
+                  width: 34,
+                  height: 34,
+                  padding: const EdgeInsets.all(3),
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    border: Border.all(
+                      color: selected
+                          ? ExperienceColors.ember
+                          : Colors.transparent,
+                      width: 2,
                     ),
-                  ],
+                  ),
+                  child: Container(
+                    decoration: BoxDecoration(
+                      color: fill,
+                      shape: BoxShape.circle,
+                      border: Border.all(color: Colors.white, width: 2),
+                      boxShadow: <BoxShadow>[
+                        BoxShadow(
+                          color: fill.withValues(alpha: 0.4),
+                          blurRadius: 6,
+                          offset: const Offset(0, 2),
+                        ),
+                      ],
+                    ),
+                  ),
                 ),
               ),
             ),
-            const SizedBox(height: 6),
+            const SizedBox(height: ExperienceSpacing.xs * 2),
             SizedBox(
               width: double.infinity,
               child: FittedBox(
@@ -512,12 +555,7 @@ class BleedingColorChoice extends StatelessWidget {
                   maxLines: 1,
                   softWrap: false,
                   textAlign: TextAlign.center,
-                  style: TextStyle(
-                    fontSize: 10.5,
-                    fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
-                    color: selected ? _terraDeep : _inkSoft,
-                    height: 1.35,
-                  ),
+                  style: labelStyle,
                 ),
               ),
             ),
@@ -616,6 +654,10 @@ final class _BleedingSwatchPainter extends CustomPainter {
     final center = size.center(Offset.zero);
     final radius = size.shortestSide / 2 - (selected ? 3 : 1.5);
     final fill = DegreeGraphics.bleedingColorFill(swatch);
+    final patternInk = fill.computeLuminance() > 0.42
+        ? Color.lerp(fill, Colors.black, 0.58)!
+        : Color.lerp(fill, Colors.white, 0.78)!;
+    final swatchBounds = Rect.fromCircle(center: center, radius: radius);
 
     if (selected) {
       canvas.drawCircle(
@@ -628,6 +670,42 @@ final class _BleedingSwatchPainter extends CustomPainter {
       );
     }
     canvas.drawCircle(center, radius, Paint()..color = fill);
+    switch (swatch) {
+      case BleedingColor.pink:
+        canvas.drawCircle(center, radius * 0.24, Paint()..color = patternInk);
+      case BleedingColor.brightRed:
+        // A solid disc is the bright-red member of the pattern vocabulary.
+        break;
+      case BleedingColor.darkRed:
+        canvas.drawCircle(
+          center,
+          radius * 0.56,
+          Paint()
+            ..color = patternInk
+            ..style = PaintingStyle.stroke
+            ..strokeWidth = (size.shortestSide * 0.085).clamp(1.5, 3.0),
+        );
+      case BleedingColor.brown:
+        canvas.save();
+        canvas.clipPath(Path()..addOval(swatchBounds));
+        final hatch = Paint()
+          ..color = patternInk
+          ..strokeWidth = (size.shortestSide * 0.065).clamp(1.25, 2.5)
+          ..strokeCap = StrokeCap.round;
+        final step = (radius * 0.62).clamp(4.0, 8.0);
+        for (
+          var offset = -size.height;
+          offset <= size.width + size.height;
+          offset += step
+        ) {
+          canvas.drawLine(
+            Offset(offset, size.height),
+            Offset(offset + size.height, 0),
+            hatch,
+          );
+        }
+        canvas.restore();
+    }
     canvas.drawCircle(
       center,
       radius,
@@ -881,7 +959,9 @@ class _PainSeverityOption extends StatelessWidget {
               ? ExperienceColors.careGlassBorder
               : ExperienceColors.hairline);
     final background = selected
-        ? (careWorld ? const Color(0x29FFFFFF) : ExperienceColors.surfaceWarm)
+        ? (careWorld
+              ? const Color(0x29FFFFFF)
+              : ExperienceColors.ember.withValues(alpha: 0.12))
         : Colors.transparent;
 
     return Semantics(
@@ -893,7 +973,7 @@ class _PainSeverityOption extends StatelessWidget {
         onTap: enabled ? onTap : null,
         borderRadius: ExperienceRadius.chipRadius,
         child: AnimatedContainer(
-          duration: ExperienceMotion.chipSelect,
+          duration: _degreeSelectDuration(context),
           constraints: const BoxConstraints(
             minHeight: ExperienceSpacing.degreeTarget,
           ),

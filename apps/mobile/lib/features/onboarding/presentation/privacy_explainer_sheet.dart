@@ -87,7 +87,7 @@ class PrivacyExplainerSheet extends StatelessWidget {
                 color: Colors.transparent,
                 child: Ink(
                   decoration: const BoxDecoration(
-                    gradient: ExperienceColors.emberGradient,
+                    gradient: ExperienceColors.emberActionGradient,
                     borderRadius: ExperienceRadius.chipRadius,
                   ),
                   child: InkWell(
@@ -100,7 +100,7 @@ class PrivacyExplainerSheet extends StatelessWidget {
                       alignment: Alignment.center,
                       child: Text(
                         'Done',
-                        style: ExperienceType.label(Colors.white),
+                        style: ExperienceType.label(ExperienceColors.onEmber),
                       ),
                     ),
                   ),

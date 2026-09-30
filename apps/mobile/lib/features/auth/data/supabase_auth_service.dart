@@ -85,7 +85,12 @@ final class SupabaseAuthService implements AuthService {
       await _acceptMissingSession();
       return;
     }
-    if (await _readStorage(_accountDeletedKey) == 'true') {
+    final deletedMarker = await _readStorage(_accountDeletedKey);
+    if (deletedMarker.failed) {
+      if (!_disposed) _set(const AuthState(status: AuthStatus.signedOut));
+      return;
+    }
+    if (deletedMarker.value == 'true') {
       if (_disposed) return;
       _set(const AuthState(status: AuthStatus.localOnlyAfterAccountDeletion));
       try {
@@ -96,7 +101,12 @@ final class SupabaseAuthService implements AuthService {
       }
       return;
     }
-    final localDataOwner = await _readStorage(_priorUserIdKey);
+    final ownerMarker = await _readStorage(_priorUserIdKey);
+    if (ownerMarker.failed) {
+      if (!_disposed) _set(const AuthState(status: AuthStatus.signedOut));
+      return;
+    }
+    final localDataOwner = ownerMarker.value;
     if (localDataOwner != null && localDataOwner != session.user.id) {
       if (_disposed) return;
       _set(const AuthState(status: AuthStatus.localDataAccountMismatch));
@@ -126,15 +136,30 @@ final class SupabaseAuthService implements AuthService {
 
   Future<void> _acceptMissingSession() async {
     if (_state.hasLocalDataAccountMismatch) return;
-    if (await _readStorage(_accountDeletedKey) == 'true') {
+    final deletedMarker = await _readStorage(_accountDeletedKey);
+    if (deletedMarker.failed) {
+      if (!_disposed) _set(const AuthState(status: AuthStatus.signedOut));
+      return;
+    }
+    if (deletedMarker.value == 'true') {
       if (_disposed) return;
       _set(const AuthState(status: AuthStatus.localOnlyAfterAccountDeletion));
       return;
     }
-    final signedInBefore = await _readStorage(_priorSignInKey) == 'true';
-    final priorUserId = signedInBefore
+    final signInMarker = await _readStorage(_priorSignInKey);
+    if (signInMarker.failed) {
+      if (!_disposed) _set(const AuthState(status: AuthStatus.signedOut));
+      return;
+    }
+    final signedInBefore = signInMarker.value == 'true';
+    final ownerMarker = signedInBefore
         ? await _readStorage(_priorUserIdKey)
-        : null;
+        : const _StorageRead(value: null);
+    if (ownerMarker.failed) {
+      if (!_disposed) _set(const AuthState(status: AuthStatus.signedOut));
+      return;
+    }
+    final priorUserId = ownerMarker.value;
     if (_disposed) return;
     _set(
       AuthState(
@@ -158,11 +183,11 @@ final class SupabaseAuthService implements AuthService {
     }
   }
 
-  Future<String?> _readStorage(String key) async {
+  Future<_StorageRead> _readStorage(String key) async {
     try {
-      return await _storage.read(key: key);
+      return _StorageRead(value: await _storage.read(key: key));
     } on Object {
-      return null;
+      return const _StorageRead(value: null, failed: true);
     }
   }
 
@@ -292,4 +317,11 @@ final class SupabaseAuthService implements AuthService {
     await _subscription.cancel();
     await _controller.close();
   }
+}
+
+final class _StorageRead {
+  const _StorageRead({required this.value, this.failed = false});
+
+  final String? value;
+  final bool failed;
 }

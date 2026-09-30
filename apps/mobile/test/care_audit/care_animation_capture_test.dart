@@ -214,7 +214,7 @@ Future<void> _captureBreathScenario(
   );
   await tester.pump();
   if (pattern != 'coherent') {
-    await tester.tap(find.byKey(const Key('breath-options')));
+    await tester.tap(find.byKey(const Key('breath-menu')));
     await tester.pump();
     final label = switch (pattern) {
       'longExhale' => 'Longer out-breath',

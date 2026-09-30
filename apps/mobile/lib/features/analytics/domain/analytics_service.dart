@@ -1,14 +1,6 @@
 /// Closed, privacy-safe operational analytics events.
 library;
 
-enum AnalyticsPlatform { android, ios, web }
-
-enum StartupResult { completed, failed }
-
-enum AnalyticsRoute { archive, cycle, home, settings }
-
-enum RouteFailureCode { networkUnavailable, unexpectedResponse, timeout }
-
 enum PurchaseOffer { annual, monthly, lifetime }
 
 enum PurchaseOutcome { cancelled, completed, failed, pending }
@@ -23,53 +15,6 @@ sealed class AnalyticsEvent {
   Map<String, Object> toProperties();
 }
 
-final class AppStartupEvent extends AnalyticsEvent {
-  const AppStartupEvent({
-    required this.appVersion,
-    required this.platform,
-    required this.result,
-  });
-
-  final String appVersion;
-  final AnalyticsPlatform platform;
-  final StartupResult result;
-
-  @override
-  String get name => 'app_startup';
-
-  @override
-  Map<String, Object> toProperties() => {
-    'app_version': appVersion,
-    'platform': platform.name,
-    'startup_result': result.name,
-  };
-}
-
-final class RouteLoadFailureEvent extends AnalyticsEvent {
-  const RouteLoadFailureEvent({
-    required this.appVersion,
-    required this.platform,
-    required this.route,
-    required this.failureCode,
-  });
-
-  final String appVersion;
-  final AnalyticsPlatform platform;
-  final AnalyticsRoute route;
-  final RouteFailureCode failureCode;
-
-  @override
-  String get name => 'route_load_failed';
-
-  @override
-  Map<String, Object> toProperties() => {
-    'app_version': appVersion,
-    'platform': platform.name,
-    'route_id': route.name,
-    'failure_code': _routeFailureCodeName(failureCode),
-  };
-}
-
 final class OnboardingCompletedEvent extends AnalyticsEvent {
   const OnboardingCompletedEvent();
 
@@ -80,36 +25,76 @@ final class OnboardingCompletedEvent extends AnalyticsEvent {
   Map<String, Object> toProperties() => const {};
 }
 
-final class ExportCompletedEvent extends AnalyticsEvent {
-  const ExportCompletedEvent();
-
-  @override
-  String get name => 'export_completed';
-
-  @override
-  Map<String, Object> toProperties() => const {};
+enum SettingsAction {
+  opened,
+  analyticsEnabled,
+  analyticsDisabled,
+  screenCoverChanged,
 }
 
-final class ImportCompletedEvent extends AnalyticsEvent {
-  const ImportCompletedEvent();
+final class SettingsActionEvent extends AnalyticsEvent {
+  const SettingsActionEvent(this.action);
+
+  final SettingsAction action;
 
   @override
-  String get name => 'import_completed';
+  String get name => 'settings_action';
 
   @override
-  Map<String, Object> toProperties() => const {};
+  Map<String, Object> toProperties() => {'action': action.name};
+}
+
+enum PaywallContext { settings, patternReport, comfortInsights, previewEnded }
+
+final class PaywallViewedEvent extends AnalyticsEvent {
+  const PaywallViewedEvent(this.context);
+
+  final PaywallContext context;
+
+  @override
+  String get name => 'paywall_viewed';
+
+  @override
+  Map<String, Object> toProperties() => {'context': context.name};
+}
+
+enum PlusPreviewState { eligible, started, active, ended }
+
+final class PlusPreviewStateEvent extends AnalyticsEvent {
+  const PlusPreviewStateEvent(this.state);
+
+  final PlusPreviewState state;
+
+  @override
+  String get name => 'plus_preview_state';
+
+  @override
+  Map<String, Object> toProperties() => {'state': state.name};
+}
+
+enum CareUsageBucket { one, twoToFive, sixOrMore }
+
+final class CareUsageBucketEvent extends AnalyticsEvent {
+  const CareUsageBucketEvent(this.bucket);
+
+  final CareUsageBucket bucket;
+
+  @override
+  String get name => 'care_usage_30d';
+
+  @override
+  Map<String, Object> toProperties() => {
+    'usage_bucket': switch (bucket) {
+      CareUsageBucket.one => '1',
+      CareUsageBucket.twoToFive => '2-5',
+      CareUsageBucket.sixOrMore => '6+',
+    },
+  };
 }
 
 final class PurchaseFlowOutcomeEvent extends AnalyticsEvent {
-  const PurchaseFlowOutcomeEvent({
-    required this.appVersion,
-    required this.platform,
-    required this.offer,
-    required this.outcome,
-  });
+  const PurchaseFlowOutcomeEvent({required this.offer, required this.outcome});
 
-  final String appVersion;
-  final AnalyticsPlatform platform;
   final PurchaseOffer offer;
   final PurchaseOutcome outcome;
 
@@ -118,18 +103,8 @@ final class PurchaseFlowOutcomeEvent extends AnalyticsEvent {
 
   @override
   Map<String, Object> toProperties() => {
-    'app_version': appVersion,
-    'platform': platform.name,
     'purchase_offer': _purchaseOfferName(offer),
     'purchase_outcome': outcome.name,
-  };
-}
-
-String _routeFailureCodeName(RouteFailureCode value) {
-  return switch (value) {
-    RouteFailureCode.networkUnavailable => 'network_unavailable',
-    RouteFailureCode.unexpectedResponse => 'unexpected_response',
-    RouteFailureCode.timeout => 'timeout',
   };
 }
 
@@ -164,14 +139,6 @@ abstract interface class AnalyticsService {
   Future<void> enable();
 
   Future<void> disable();
-
-  /// Identifies only with an authenticated Supabase UUID. No person
-  /// properties are accepted by this boundary.
-  Future<void> identifyAuthenticatedUser(String supabaseUserId);
-
-  /// Forgets the current analytics identity without changing the user's
-  /// consent preference.
-  Future<void> clearAuthenticatedUser();
 
   Future<void> dispose();
 }

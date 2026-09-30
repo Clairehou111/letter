@@ -58,6 +58,15 @@ final class InMemoryHealthRecordRepository implements HealthRecordRepository {
       throw const HealthRecordException(HealthRecordFailure.notFound);
     }
     final valid = validateHealthRecordDraft(draft);
+    final duplicate = _records.any(
+      (record) =>
+          record.id != id &&
+          record.symptom == valid.symptom &&
+          record.experiencedDate == valid.experiencedDate,
+    );
+    if (duplicate) {
+      throw const HealthRecordException(HealthRecordFailure.duplicateForDay);
+    }
     final previous = _records[index];
     final updated = previous.copyWith(
       draft: valid,

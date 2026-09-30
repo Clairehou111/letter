@@ -3,6 +3,7 @@ import 'package:flutter/foundation.dart';
 import '../../features/capture/domain/capture_models.dart';
 import '../../features/check_in/domain/moment_check_in.dart';
 import '../../features/check_in/domain/moment_check_in_repository.dart';
+import '../../features/comfort_kit/application/comfort_experience_controller.dart';
 import '../../features/cycle/domain/bleeding_flow.dart';
 import '../../features/cycle/domain/local_date.dart';
 import '../../features/cycle/domain/period_record.dart';
@@ -10,6 +11,33 @@ import '../../features/cycle/domain/period_repository.dart';
 import '../../features/health_records/domain/health_record.dart';
 import '../../features/health_records/domain/health_record_repository.dart';
 import '../../features/today/today_cycle_context.dart';
+
+/// The small, reliability-gated slice of Comfort Window that Today may show.
+/// A null value means intentional silence: Today must not expose an emerging
+/// or date-uncertain forecast as preparation advice.
+final class TodayComfortWindowState {
+  const TodayComfortWindowState({
+    required this.forecastStart,
+    required this.forecastEnd,
+    required this.preparationVisible,
+    required this.kitFormed,
+    required this.reminderConfigured,
+    required this.reminderEnabled,
+    required this.reminderLeadDays,
+    required this.sourceCycleCount,
+  });
+
+  final LocalDate forecastStart;
+  final LocalDate forecastEnd;
+  final bool preparationVisible;
+  final bool kitFormed;
+  final bool reminderConfigured;
+  final bool reminderEnabled;
+  final int reminderLeadDays;
+  final int sourceCycleCount;
+
+  bool get reminderInvitationVisible => !reminderConfigured;
+}
 
 /// The complete, factual Today state supplied to the visual layer.
 final class TodayVisualSnapshot {
@@ -22,7 +50,9 @@ final class TodayVisualSnapshot {
     required this.symptoms,
     required this.note,
     required this.cycleContext,
+    this.quickNotes = const [],
     this.rememberedHelpLine,
+    this.comfortWindow,
   });
 
   final LocalDate today;
@@ -32,11 +62,15 @@ final class TodayVisualSnapshot {
   final MomentCheckInState? mood;
   final List<HealthRecord> symptoms;
   final String? note;
+  final List<CaptureNote> quickNotes;
   final TodayCycleContext cycleContext;
 
   /// Factual copy composed upstream from explicitly saved Care check-backs.
   /// Null means the evidence gate chose silence.
   final String? rememberedHelpLine;
+
+  /// Present only after the complete reminder reliability gate passes.
+  final TodayComfortWindowState? comfortWindow;
 
   bool get canRecordFlow => containingPeriod != null;
   bool get canEndPeriod => openPeriod != null;
@@ -58,6 +92,20 @@ abstract interface class TodayVisualPort {
   );
   Future<TodayVisualSnapshot> removeSymptom(String recordId);
   Future<TodayVisualSnapshot> saveNote(String text);
+  Future<TodayVisualSnapshot> saveQuickNote(
+    String text, {
+    bool keepInComfortKit = false,
+  });
+  Future<TodayVisualSnapshot> updateQuickNote(
+    String noteId, {
+    required String text,
+    required bool keepInComfortKit,
+  });
+  Future<TodayVisualSnapshot> deleteQuickNote(String noteId);
+  Future<TodayVisualSnapshot> saveComfortReminder({
+    required bool enabled,
+    required int leadDays,
+  });
   Future<void> openCare();
 }
 
@@ -74,6 +122,8 @@ final class RepositoryTodayVisualPort implements TodayVisualPort {
     required this.onCycleDataChanged,
     required this.onOpenCare,
     this.loadRememberedHelpLine,
+    this.loadComfortExperience,
+    this.saveComfortReminderPreference,
   });
 
   final PeriodRepository periodRepository;
@@ -85,6 +135,12 @@ final class RepositoryTodayVisualPort implements TodayVisualPort {
   final VoidCallback onCycleDataChanged;
   final VoidCallback onOpenCare;
   final Future<String?> Function()? loadRememberedHelpLine;
+  final Future<ComfortExperienceSnapshot> Function()? loadComfortExperience;
+  final Future<ComfortExperienceSnapshot> Function({
+    required bool enabled,
+    required int leadDays,
+  })?
+  saveComfortReminderPreference;
 
   @override
   Future<TodayVisualSnapshot> load() async {
@@ -102,12 +158,36 @@ final class RepositoryTodayVisualPort implements TodayVisualPort {
     final records = values[3] as List<HealthRecord>;
     final notes = values[4] as List<CaptureNote>;
     String? rememberedHelpLine;
+    TodayComfortWindowState? comfortWindow;
     try {
       rememberedHelpLine = await loadRememberedHelpLine?.call();
     } on Object {
       // Remembered-help is optional context. It must never block today's
       // factual record from loading when derived analysis is unavailable.
       rememberedHelpLine = null;
+    }
+    try {
+      final comfort = await loadComfortExperience?.call();
+      final window = comfort?.window;
+      if (comfort != null && window != null && window.canOfferReminder) {
+        comfortWindow = TodayComfortWindowState(
+          forecastStart: window.forecastStart,
+          forecastEnd: window.forecastEnd,
+          preparationVisible: window.isPreparationVisibleOn(
+            comfort.today,
+            leadDays: 2,
+          ),
+          kitFormed: comfort.kit.isFormed,
+          reminderConfigured: comfort.reminder.updatedAt != null,
+          reminderEnabled: comfort.reminder.enabled,
+          reminderLeadDays: comfort.reminder.leadDays,
+          sourceCycleCount: window.candidate.votingCycleCount,
+        );
+      }
+    } on Object {
+      // Comfort Window is optional derived context. Factual Today recording
+      // remains available if its local analysis cannot be read.
+      comfortWindow = null;
     }
 
     final containing = periods.where((period) {
@@ -141,6 +221,7 @@ final class RepositoryTodayVisualPort implements TodayVisualPort {
       mood: mood,
       symptoms: symptoms,
       note: notes.firstOrNull?.text,
+      quickNotes: List.unmodifiable(notes),
       // This is the exact shared prediction contract. Today does not keep a
       // visual-only day count or date estimate of its own.
       cycleContext: TodayCycleContext.fromRecords(
@@ -148,6 +229,7 @@ final class RepositoryTodayVisualPort implements TodayVisualPort {
         today: date,
       ),
       rememberedHelpLine: rememberedHelpLine,
+      comfortWindow: comfortWindow,
     );
   }
 
@@ -267,16 +349,80 @@ final class RepositoryTodayVisualPort implements TodayVisualPort {
 
   @override
   Future<TodayVisualSnapshot> saveNote(String text) async {
+    return saveQuickNote(text);
+  }
+
+  @override
+  Future<TodayVisualSnapshot> saveQuickNote(
+    String text, {
+    bool keepInComfortKit = false,
+  }) async {
+    final normalized = _validatedNoteText(text);
     final timestamp = now().toUtc();
     await captureNoteStore.save(
       CaptureNote(
         id: 'today-${timestamp.microsecondsSinceEpoch}',
-        text: text,
+        text: normalized,
         source: CaptureSource.typed,
         createdAt: timestamp,
+        keepInComfortKit: keepInComfortKit,
       ),
     );
+    onCycleDataChanged();
     return load();
+  }
+
+  @override
+  Future<TodayVisualSnapshot> updateQuickNote(
+    String noteId, {
+    required String text,
+    required bool keepInComfortKit,
+  }) async {
+    final note = (await captureNoteStore.getAll())
+        .where((entry) => entry.id == noteId)
+        .firstOrNull;
+    if (note == null) throw StateError('Quick note not found.');
+    await captureNoteStore.update(
+      note.copyWith(
+        text: _validatedNoteText(text),
+        keepInComfortKit: keepInComfortKit,
+        updatedAt: now().toUtc(),
+      ),
+    );
+    onCycleDataChanged();
+    return load();
+  }
+
+  @override
+  Future<TodayVisualSnapshot> deleteQuickNote(String noteId) async {
+    final note = (await captureNoteStore.getAll())
+        .where((entry) => entry.id == noteId)
+        .firstOrNull;
+    if (note == null) throw StateError('Quick note not found.');
+    await captureNoteStore.delete(note);
+    onCycleDataChanged();
+    return load();
+  }
+
+  @override
+  Future<TodayVisualSnapshot> saveComfortReminder({
+    required bool enabled,
+    required int leadDays,
+  }) async {
+    final save = saveComfortReminderPreference;
+    if (save == null) {
+      throw StateError('Comfort Window reminders are unavailable.');
+    }
+    await save(enabled: enabled, leadDays: leadDays);
+    return load();
+  }
+
+  String _validatedNoteText(String text) {
+    final normalized = text.trim();
+    if (normalized.isEmpty || normalized.length > captureTextLimit) {
+      throw ArgumentError.value(text, 'text');
+    }
+    return normalized;
   }
 
   @override

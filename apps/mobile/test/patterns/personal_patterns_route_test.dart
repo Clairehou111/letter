@@ -347,7 +347,10 @@ void main() {
   testWidgets('renders intentional zero- and one-period states', (
     tester,
   ) async {
-    Future<void> pumpRoute(RepositoryPatternSource source) {
+    Future<void> pumpRoute(
+      RepositoryPatternSource source, {
+      VoidCallback? onOpenCycle,
+    }) {
       return tester.pumpWidget(
         MaterialApp(
           theme: LetterTheme.light,
@@ -363,6 +366,7 @@ void main() {
             child: PersonalPatternsRoute(
               key: ValueKey(source),
               source: source,
+              onOpenCycle: onOpenCycle,
               now: () => DateTime.utc(2026, 8, 16),
             ),
           ),
@@ -370,16 +374,20 @@ void main() {
       );
     }
 
+    var cycleOpened = false;
     await pumpRoute(
       RepositoryPatternSource(
         healthRecords: InMemoryHealthRecordRepository(),
         careMemory: InMemoryCareMemoryRepository(),
         periods: InMemoryPeriodRepository(),
       ),
+      onOpenCycle: () => cycleOpened = true,
     );
     await tester.pumpAndSettle();
     expect(find.byKey(const Key('patterns-empty-state')), findsOneWidget);
     expect(find.text('Patterns begin with a first record.'), findsOneWidget);
+    await tester.tap(find.byKey(const Key('patterns-empty-open-cycle')));
+    expect(cycleOpened, isTrue);
 
     final timestamp = DateTime.utc(2026, 8, 10);
     await pumpRoute(
@@ -395,7 +403,8 @@ void main() {
     await tester.tap(find.byKey(const Key('patterns-tab-cycles')));
     await tester.pumpAndSettle();
     expect(find.byKey(const Key('patterns-current-state')), findsOneWidget);
-    expect(find.textContaining('No flow detail saved yet'), findsOneWidget);
+    expect(find.textContaining('Period dates are saved'), findsOneWidget);
+    expect(find.textContaining('Period in progress'), findsNothing);
     expect(find.byKey(const Key('patterns-line-point-august')), findsNothing);
   });
 

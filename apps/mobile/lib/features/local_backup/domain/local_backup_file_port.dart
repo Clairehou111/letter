@@ -31,7 +31,7 @@ String localBackupExportFileName(DateTime value) {
 abstract interface class LocalBackupFilePort {
   /// Hands the encrypted package to the OS share sheet so the user can save,
   /// AirDrop, or send it anywhere. Returns the filename used.
-  Future<String> shareEncryptedBackup(Uint8List bytes);
+  Future<LocalBackupShareOutcome> shareEncryptedBackup(Uint8List bytes);
 
   /// Saves the encrypted package to the app's local documents directory and
   /// returns the absolute file path. Useful as a predictable fallback when the
@@ -44,6 +44,8 @@ abstract interface class LocalBackupFilePort {
   /// Describes where exported backup files end up, for user messaging.
   String get exportLocationDescription;
 }
+
+enum LocalBackupShareOutcome { shared, savedOnly }
 
 /// Native operating-system hand-off for already encrypted package bytes.
 /// The filename and share metadata intentionally contain no health information.
@@ -59,13 +61,13 @@ final class SystemLocalBackupFilePort implements LocalBackupFilePort {
   String? _pendingExportPath;
 
   @override
-  Future<String> shareEncryptedBackup(Uint8List bytes) async {
+  Future<LocalBackupShareOutcome> shareEncryptedBackup(Uint8List bytes) async {
     final fileName = _pendingExportFileName ??= localBackupExportFileName(
       _clock(),
     );
     try {
       final savedPath = _pendingExportPath;
-      await SharePlus.instance.share(
+      final result = await SharePlus.instance.share(
         ShareParams(
           files: [
             if (savedPath != null)
@@ -79,7 +81,9 @@ final class SystemLocalBackupFilePort implements LocalBackupFilePort {
           ],
         ),
       );
-      return fileName;
+      return result.status == ShareResultStatus.success
+          ? LocalBackupShareOutcome.shared
+          : LocalBackupShareOutcome.savedOnly;
     } finally {
       _pendingExportFileName = null;
       _pendingExportPath = null;

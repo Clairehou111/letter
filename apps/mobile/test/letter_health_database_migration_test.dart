@@ -8,7 +8,7 @@ import 'package:path/path.dart' as path;
 import 'package:sqlite3/sqlite3.dart' as sqlite;
 
 void main() {
-  test('v11 keeps obsolete daily rows available for recovery', () async {
+  test('v12 keeps obsolete daily rows available for recovery', () async {
     final directory = await Directory.systemTemp.createTemp(
       'letter-health-migration-',
     );
@@ -114,7 +114,7 @@ void main() {
           .customSelect('PRAGMA user_version')
           .map((row) => row.read<int>('user_version'))
           .getSingle(),
-      11,
+      12,
     );
     final reflection =
         (await database.select(database.cycleReflectionRows).get()).single;
@@ -131,6 +131,45 @@ void main() {
       await database.select(database.preparationDismissalRows).get(),
       isEmpty,
     );
+    expect(
+      await database.select(database.comfortKitOverrideRows).get(),
+      isEmpty,
+    );
+    expect(
+      await database.select(database.comfortReminderPreferenceRows).get(),
+      isEmpty,
+    );
+  });
+
+  test('v11 adds Quick note Kit metadata without losing note text', () async {
+    final directory = await Directory.systemTemp.createTemp(
+      'letter-v11-note-migration-',
+    );
+    addTearDown(() => directory.delete(recursive: true));
+    final file = File(path.join(directory.path, 'v11.sqlite'));
+    final legacy = sqlite.sqlite3.open(file.path);
+    legacy.execute('''
+      CREATE TABLE capture_note_rows (
+        id TEXT NOT NULL PRIMARY KEY,
+        content TEXT NOT NULL,
+        source TEXT NOT NULL,
+        created_at_millis INTEGER NOT NULL
+      );
+      INSERT INTO capture_note_rows VALUES (
+        'note-v11', 'Keep this exact text', 'typed', 1234
+      );
+      PRAGMA user_version = 11;
+    ''');
+    legacy.close();
+
+    final database = LetterHealthDatabase(NativeDatabase(file));
+    addTearDown(database.close);
+    final note = (await database.select(database.captureNoteRows).get()).single;
+
+    expect(note.content, 'Keep this exact text');
+    expect(note.createdAtMillis, 1234);
+    expect(note.updatedAtMillis, 1234);
+    expect(note.keepInComfortKit, isFalse);
   });
 
   test('v10 adjacent period rows consolidate during upgrade', () async {

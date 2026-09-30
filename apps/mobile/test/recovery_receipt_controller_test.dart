@@ -73,6 +73,9 @@ void main() {
           severity: SymptomSeverity.severe,
           functionalImpacts: {FunctionalImpact.workOrSchool},
           additionalPhysicalSignals: {SymptomType.headache},
+          additionalPhysicalSignalSeverities: {
+            SymptomType.headache: SymptomSeverity.mild,
+          },
         ),
       );
       final records = await health.getAll();
@@ -84,8 +87,19 @@ void main() {
         records.map((record) => record.symptom),
         containsAll([SymptomType.irritability, SymptomType.headache]),
       );
+      expect(
+        records
+            .singleWhere((record) => record.symptom == SymptomType.irritability)
+            .severity,
+        SymptomSeverity.severe,
+      );
+      expect(
+        records
+            .singleWhere((record) => record.symptom == SymptomType.headache)
+            .severity,
+        SymptomSeverity.mild,
+      );
       for (final record in records) {
-        expect(record.severity, SymptomSeverity.severe);
         expect(record.userConfirmed, isTrue);
         expect(record.functionalImpacts, {FunctionalImpact.workOrSchool});
         expect(record.provenance, HealthRecordProvenance.sameDay);
@@ -137,6 +151,36 @@ void main() {
           symptom: SymptomType.irritability,
           severity: SymptomSeverity.moderate,
           additionalPhysicalSignals: {SymptomType.anxiety},
+        ),
+      ),
+      throwsA(
+        isA<RecoveryReceiptException>().having(
+          (error) => error.failure,
+          'failure',
+          RecoveryReceiptFailure.invalidAdditionalSignal,
+        ),
+      ),
+    );
+    expect(await health.getAll(), isEmpty);
+  });
+
+  test('rejects a severity override for an unselected signal', () async {
+    final care = sampleCareRecord();
+    final health = InMemoryHealthRecordRepository();
+    final controller = buildController(
+      careRecord: care,
+      healthRepository: health,
+    );
+
+    expect(
+      () => controller.save(
+        const RecoveryReceiptDraft(
+          careRecordId: 'care-1',
+          symptom: SymptomType.irritability,
+          severity: SymptomSeverity.moderate,
+          additionalPhysicalSignalSeverities: {
+            SymptomType.headache: SymptomSeverity.mild,
+          },
         ),
       ),
       throwsA(

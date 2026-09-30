@@ -19,7 +19,23 @@ abstract interface class LocalNotificationPort {
   Future<void> cancelCycleCheckIn();
 }
 
-final class DisabledLocalNotificationPort implements LocalNotificationPort {
+abstract interface class ComfortNotificationPort {
+  Future<NotificationAuthorization> authorizationStatus();
+
+  Future<NotificationAuthorization> requestAuthorization();
+
+  Future<void> scheduleComfortReminder({
+    required DateTime scheduledAt,
+    required String title,
+    required String body,
+    required String payload,
+  });
+
+  Future<void> cancelComfortReminder();
+}
+
+final class DisabledLocalNotificationPort
+    implements LocalNotificationPort, ComfortNotificationPort {
   const DisabledLocalNotificationPort();
 
   @override
@@ -30,6 +46,9 @@ final class DisabledLocalNotificationPort implements LocalNotificationPort {
   Future<void> cancelCycleCheckIn() async {}
 
   @override
+  Future<void> cancelComfortReminder() async {}
+
+  @override
   Future<void> initialize(NotificationTapHandler onTap) async {}
 
   @override
@@ -38,6 +57,14 @@ final class DisabledLocalNotificationPort implements LocalNotificationPort {
 
   @override
   Future<void> scheduleCycleCheckIn({
+    required DateTime scheduledAt,
+    required String title,
+    required String body,
+    required String payload,
+  }) async {}
+
+  @override
+  Future<void> scheduleComfortReminder({
     required DateTime scheduledAt,
     required String title,
     required String body,

@@ -442,12 +442,14 @@ class PatternsExperienceScreen extends StatefulWidget {
   const PatternsExperienceScreen({
     required this.data,
     this.onBack,
+    this.onOpenCycle,
     this.onEditHealthRecord,
     super.key,
   });
 
   final PatternsExperienceData data;
   final VoidCallback? onBack;
+  final VoidCallback? onOpenCycle;
   final ValueChanged<String>? onEditHealthRecord;
 
   @override
@@ -592,7 +594,11 @@ class _PatternsExperienceScreenState extends State<PatternsExperienceScreen> {
                     Container(height: 1, color: T.line),
                     Expanded(
                       child: !data.hasAnyPeriodHistory
-                          ? const _Scroll(children: [_EmptyStart()])
+                          ? _Scroll(
+                              children: [
+                                _EmptyStart(onOpenCycle: widget.onOpenCycle),
+                              ],
+                            )
                           : IndexedStack(
                               index: _view,
                               children: [
@@ -710,7 +716,10 @@ class _Scroll extends StatelessWidget {
 }
 
 class _EmptyStart extends StatelessWidget {
-  const _EmptyStart();
+  const _EmptyStart({this.onOpenCycle});
+
+  final VoidCallback? onOpenCycle;
+
   @override
   Widget build(BuildContext context) {
     return Container(
@@ -733,6 +742,23 @@ class _EmptyStart extends StatelessWidget {
             'Record a period start and this page will begin holding your cycles, moods and care — exactly as you save them, never averaged or guessed.',
             style: _S.bodyM,
           ),
+          if (onOpenCycle != null) ...[
+            const SizedBox(height: 18),
+            OutlinedButton.icon(
+              key: const Key('patterns-empty-open-cycle'),
+              onPressed: onOpenCycle,
+              style: OutlinedButton.styleFrom(
+                foregroundColor: T.coral,
+                minimumSize: const Size(0, 48),
+                side: const BorderSide(color: T.coral),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(14),
+                ),
+              ),
+              icon: const Icon(Icons.water_drop_outlined, size: 18),
+              label: const Text('Record a period start in Cycle'),
+            ),
+          ],
         ],
       ),
     );
@@ -871,12 +897,14 @@ class _QuietInfoState extends State<_QuietInfo> {
                   color: T.inkSoft,
                 ),
                 const SizedBox(width: 4),
-                Text(
-                  widget.label,
-                  style: const TextStyle(
-                    fontSize: 12.5,
-                    color: T.inkSoft,
-                    fontWeight: FontWeight.w700,
+                Flexible(
+                  child: Text(
+                    widget.label,
+                    style: const TextStyle(
+                      fontSize: 12.5,
+                      color: T.inkSoft,
+                      fontWeight: FontWeight.w700,
+                    ),
                   ),
                 ),
               ],
@@ -1735,9 +1763,14 @@ class TrendLineChart extends StatefulWidget {
     double v,
     double minY,
     double maxY,
-    Size s,
-  ) {
-    const padL = 26.0, padR = 26.0, padT = 32.0, padB = 38.0;
+    Size s, {
+    double labelTextScale = 1,
+    bool hasSubLabels = false,
+  }) {
+    final padL = 26.0 + (labelTextScale - 1) * 12;
+    final padR = padL;
+    final padT = 32.0 + (labelTextScale - 1) * 14;
+    final padB = (hasSubLabels ? 50.0 : 38.0) + (labelTextScale - 1) * 22;
     final usable = s.width - padL - padR;
     final double x;
     if (n <= 1) {
@@ -1751,6 +1784,17 @@ class TrendLineChart extends StatefulWidget {
     final y = padT + (1 - (v - minY) / span) * (s.height - padT - padB);
     return Offset(x, y);
   }
+
+  /// Canvas text does not inherit MediaQuery scaling automatically. Keep it
+  /// responsive to the user's setting while bounding the scale so a chart's
+  /// labels do not consume the plotting geometry at accessibility sizes.
+  @visibleForTesting
+  static TextScaler resolvedLabelTextScaler(TextScaler textScaler) =>
+      textScaler.clamp(minScaleFactor: 1, maxScaleFactor: 1.6);
+
+  @visibleForTesting
+  static double resolvedLabelTextScale(TextScaler textScaler) =>
+      resolvedLabelTextScaler(textScaler).scale(14) / 14;
 }
 
 class _TrendLineChartState extends State<TrendLineChart>
@@ -1782,11 +1826,18 @@ class _TrendLineChartState extends State<TrendLineChart>
 
   @override
   Widget build(BuildContext context) {
+    final labelTextScaler = TrendLineChart.resolvedLabelTextScaler(
+      MediaQuery.textScalerOf(context),
+    );
+    final labelTextScale = labelTextScaler.scale(14) / 14;
+    final chartHeight =
+        widget.height +
+        (labelTextScale - 1) * (widget.subLabels == null ? 32 : 48);
     return Semantics(
       label: widget.semantics,
       child: LayoutBuilder(
         builder: (context, cons) {
-          final size = Size(cons.maxWidth, widget.height);
+          final size = Size(cons.maxWidth, chartHeight);
           final n = widget.values.length;
           final pts = [
             for (var i = 0; i < n; i++)
@@ -1797,10 +1848,13 @@ class _TrendLineChartState extends State<TrendLineChart>
                 widget.minY,
                 widget.maxY,
                 size,
+                labelTextScale: labelTextScale,
+                hasSubLabels: widget.subLabels != null,
               ),
           ];
           return SizedBox(
-            height: widget.height,
+            key: const Key('patterns-trend-chart'),
+            height: chartHeight,
             child: Stack(
               children: [
                 AnimatedBuilder(
@@ -1818,6 +1872,7 @@ class _TrendLineChartState extends State<TrendLineChart>
                       lineColor: widget.lineColor,
                       pointColor: widget.pointColor,
                       progress: Curves.easeOutCubic.transform(_c.value),
+                      labelTextScaler: labelTextScaler,
                     ),
                   ),
                 ),
@@ -1827,12 +1882,20 @@ class _TrendLineChartState extends State<TrendLineChart>
                     top: pts[i].dy - 22,
                     width: 44,
                     height: 44,
-                    child: GestureDetector(
-                      key: widget.pointKeys[i],
-                      behavior: HitTestBehavior.opaque,
-                      onTap: widget.onPointTap == null
-                          ? null
-                          : () => widget.onPointTap!(i),
+                    child: Semantics(
+                      button: widget.onPointTap != null,
+                      label: <String>[
+                        widget.xLabels[i],
+                        if (widget.subLabels != null) widget.subLabels![i],
+                        widget.valueLabels[i],
+                      ].join(', '),
+                      child: GestureDetector(
+                        key: widget.pointKeys[i],
+                        behavior: HitTestBehavior.opaque,
+                        onTap: widget.onPointTap == null
+                            ? null
+                            : () => widget.onPointTap!(i),
+                      ),
                     ),
                   ),
               ],
@@ -1853,6 +1916,8 @@ class _TrendPainter extends CustomPainter {
   final List<double> grid;
   final Color lineColor, pointColor;
   final double progress;
+  final TextScaler labelTextScaler;
+  double get labelTextScale => labelTextScaler.scale(14) / 14;
   _TrendPainter({
     required this.values,
     required this.xLabels,
@@ -1863,6 +1928,7 @@ class _TrendPainter extends CustomPainter {
     required this.lineColor,
     required this.pointColor,
     required this.progress,
+    required this.labelTextScaler,
     this.subLabels,
   });
 
@@ -1872,14 +1938,22 @@ class _TrendPainter extends CustomPainter {
     Offset at,
     TextStyle style, {
     Alignment align = Alignment.center,
+    required double maxWidth,
+    required double canvasWidth,
   }) {
     final tp = TextPainter(
       text: TextSpan(text: t, style: style),
       textDirection: TextDirection.ltr,
-    )..layout();
-    final dx = align == Alignment.center
+      textScaler: labelTextScaler,
+      maxLines: 1,
+      ellipsis: '…',
+    )..layout(maxWidth: maxWidth);
+    final rawDx = align == Alignment.center
         ? at.dx - tp.width / 2
         : (align == Alignment.centerRight ? at.dx - tp.width : at.dx);
+    final availableRight = canvasWidth - tp.width - 2;
+    final maxDx = availableRight < 2 ? 2.0 : availableRight;
+    final dx = rawDx.clamp(2.0, maxDx).toDouble();
     tp.paint(canvas, Offset(dx, at.dy));
   }
 
@@ -1890,7 +1964,16 @@ class _TrendPainter extends CustomPainter {
     const gridStyle = TextStyle(fontSize: 10, color: T.inkSoft);
 
     for (final g in grid) {
-      final y = TrendLineChart.pointFor(0, n, g, minY, maxY, size).dy;
+      final y = TrendLineChart.pointFor(
+        0,
+        n,
+        g,
+        minY,
+        maxY,
+        size,
+        labelTextScale: labelTextScale,
+        hasSubLabels: subLabels != null,
+      ).dy;
       final paint = Paint()
         ..color = T.line
         ..strokeWidth = 1;
@@ -1900,16 +1983,30 @@ class _TrendPainter extends CustomPainter {
       _text(
         canvas,
         g.toStringAsFixed(0),
-        Offset(size.width - 2, y - 12),
+        Offset(size.width - 2, y - 12 - (labelTextScale - 1) * 4),
         gridStyle,
         align: Alignment.centerRight,
+        maxWidth: 40,
+        canvasWidth: size.width,
       );
     }
 
     final pts = [
       for (var i = 0; i < n; i++)
-        TrendLineChart.pointFor(i, n, values[i], minY, maxY, size),
+        TrendLineChart.pointFor(
+          i,
+          n,
+          values[i],
+          minY,
+          maxY,
+          size,
+          labelTextScale: labelTextScale,
+          hasSubLabels: subLabels != null,
+        ),
     ];
+    final labelSlotWidth = n <= 1
+        ? size.width - 16
+        : ((size.width - 16) / n).clamp(40.0, 88.0).toDouble();
 
     if (n > 1) {
       final linePath = Path()..moveTo(pts.first.dx, pts.first.dy);
@@ -1947,40 +2044,47 @@ class _TrendPainter extends CustomPainter {
       _text(
         canvas,
         valueLabels[i],
-        Offset(p.dx, p.dy - 27),
+        Offset(p.dx, p.dy - 27 - (labelTextScale - 1) * 8),
         TextStyle(
           fontFamily: _serif,
           fontSize: 14,
           fontWeight: FontWeight.w700,
           color: T.ink.withValues(alpha: appear),
         ),
+        maxWidth: labelSlotWidth,
+        canvasWidth: size.width,
       );
       _text(
         canvas,
         xLabels[i],
-        Offset(p.dx, size.height - 32),
+        Offset(p.dx, size.height - 32 - (labelTextScale - 1) * 14),
         TextStyle(
           fontSize: 11,
           fontWeight: FontWeight.w700,
           color: T.inkSoft.withValues(alpha: appear),
         ),
+        maxWidth: labelSlotWidth,
+        canvasWidth: size.width,
       );
       if (subLabels != null) {
         _text(
           canvas,
           subLabels![i],
-          Offset(p.dx, size.height - 17),
+          Offset(p.dx, size.height - 17 - (labelTextScale - 1) * 10),
           TextStyle(
             fontSize: 9.5,
             color: T.inkSoft.withValues(alpha: appear * 0.85),
           ),
+          maxWidth: labelSlotWidth,
+          canvasWidth: size.width,
         );
       }
     }
   }
 
   @override
-  bool shouldRepaint(_TrendPainter old) => old.progress != progress;
+  bool shouldRepaint(_TrendPainter old) =>
+      old.progress != progress || old.labelTextScaler != labelTextScaler;
 }
 
 // ---------------------------------------------------------------------------
@@ -2311,59 +2415,62 @@ class _FlowStrip extends StatelessWidget {
             border: Border(bottom: BorderSide(color: T.line)),
           ),
           padding: const EdgeInsets.fromLTRB(2, 12, 2, 14),
-          child: Row(
+          child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              SizedBox(
-                width: 96,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      _mo[_dt(cycle.startDate.epochDay).month - 1],
-                      style: const TextStyle(
-                        fontFamily: _serif,
-                        fontSize: 18,
-                        fontWeight: FontWeight.w700,
-                        color: T.ink,
-                      ),
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          _mo[_dt(cycle.startDate.epochDay).month - 1],
+                          style: const TextStyle(
+                            fontFamily: _serif,
+                            fontSize: 18,
+                            fontWeight: FontWeight.w700,
+                            color: T.ink,
+                          ),
+                        ),
+                        Text(
+                          'Started ${fmtShort(cycle.startDate.epochDay)} · '
+                          '${_plural(dates.length, 'bleeding day')}',
+                          key: ValueKey(
+                            'patterns-flow-metadata-${cycle.periodId}',
+                          ),
+                          style: const TextStyle(
+                            fontSize: 11.5,
+                            color: T.inkSoft,
+                            height: 1.4,
+                          ),
+                        ),
+                      ],
                     ),
-                    Text(
-                      'Started ${fmtShort(cycle.startDate.epochDay)}',
-                      style: const TextStyle(fontSize: 11.5, color: T.inkSoft),
-                    ),
-                    Text(
-                      _plural(dates.length, 'bleeding day'),
+                  ),
+                  const SizedBox(width: 12),
+                  Padding(
+                    padding: const EdgeInsets.only(top: 4),
+                    child: Text(
+                      '${cycle.lengthDays}-day cycle',
                       style: const TextStyle(
                         fontSize: 10.5,
                         color: T.inkSoft,
-                        height: 1.4,
+                        fontWeight: FontWeight.w700,
                       ),
                     ),
-                  ],
-                ),
-              ),
-              Expanded(
-                child: Wrap(
-                  spacing: 7,
-                  runSpacing: 8,
-                  children: [
-                    for (final date in dates)
-                      _periodDayMark(context, cycle, date, maxRank),
-                  ],
-                ),
-              ),
-              const SizedBox(width: 8),
-              Padding(
-                padding: const EdgeInsets.only(top: 4),
-                child: Text(
-                  '${cycle.lengthDays}-day cycle',
-                  style: const TextStyle(
-                    fontSize: 10.5,
-                    color: T.inkSoft,
-                    fontWeight: FontWeight.w700,
                   ),
-                ),
+                ],
+              ),
+              const SizedBox(height: 8),
+              Wrap(
+                spacing: 7,
+                runSpacing: 8,
+                children: [
+                  for (final date in dates)
+                    _periodDayMark(context, cycle, date, maxRank),
+                ],
               ),
             ],
           ),
@@ -2381,38 +2488,47 @@ class _FlowStrip extends StatelessWidget {
     final f = cycle.flowFor(date);
     final dayN = date.epochDay - cycle.startDate.epochDay + 1;
     final isMax = f != null && _flowRank(f.flow.name) == maxRank;
-    return GestureDetector(
-      key: ValueKey('patterns-flow-day-${cycle.periodId}-${date.epochDay}'),
-      behavior: HitTestBehavior.opaque,
-      onTap: () => openDaySheet(context, data, date.epochDay, onEdit),
-      child: Tooltip(
-        message: f != null
-            ? 'Day $dayN · ${flowName(f.flow.name)}'
-            : 'Day $dayN · period day, flow not recorded',
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(
-              padding: const EdgeInsets.all(2.5),
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(6),
-                border: Border.all(
-                  color: isMax
-                      ? T.coral.withValues(alpha: 0.85)
-                      : Colors.transparent,
-                  width: 1.4,
+    final label = f != null
+        ? 'Cycle day $dayN, ${flowName(f.flow.name)} flow'
+        : 'Cycle day $dayN, period recorded, flow not recorded';
+    return Semantics(
+      button: true,
+      label: label,
+      child: GestureDetector(
+        key: ValueKey('patterns-flow-day-${cycle.periodId}-${date.epochDay}'),
+        behavior: HitTestBehavior.opaque,
+        onTap: () => openDaySheet(context, data, date.epochDay, onEdit),
+        child: Tooltip(
+          message: label,
+          child: SizedBox(
+            width: 44,
+            height: 44,
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(2.5),
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(6),
+                    border: Border.all(
+                      color: isMax
+                          ? T.coral.withValues(alpha: 0.85)
+                          : Colors.transparent,
+                      width: 1.4,
+                    ),
+                  ),
+                  child: f != null
+                      ? FlowDrop(flowKey: f.flow.name, size: 16)
+                      : const _PeriodDayMark(size: 14),
                 ),
-              ),
-              child: f != null
-                  ? FlowDrop(flowKey: f.flow.name, size: 16)
-                  : const _PeriodDayMark(size: 14),
+                const SizedBox(height: 2),
+                Text(
+                  '$dayN',
+                  style: const TextStyle(fontSize: 9, color: T.inkSoft),
+                ),
+              ],
             ),
-            const SizedBox(height: 2),
-            Text(
-              '$dayN',
-              style: const TextStyle(fontSize: 9, color: T.inkSoft),
-            ),
-          ],
+          ),
         ),
       ),
     );
@@ -2457,20 +2573,31 @@ class _CurrentCycleNote extends StatelessWidget {
                 Builder(
                   builder: (context) {
                     final f = current.flowFor(date);
-                    return GestureDetector(
-                      key: ValueKey(
-                        'patterns-flow-day-${current.periodId}-${date.epochDay}',
-                      ),
-                      behavior: HitTestBehavior.opaque,
-                      onTap: () =>
-                          openDaySheet(context, data, date.epochDay, null),
-                      child: Tooltip(
-                        message: f != null
-                            ? '${fmtShort(date.epochDay)} · ${flowName(f.flow.name)}'
-                            : '${fmtShort(date.epochDay)} · period day, flow not recorded',
-                        child: f != null
-                            ? FlowDrop(flowKey: f.flow.name, size: 16)
-                            : const _PeriodDayMark(size: 14),
+                    final label = f != null
+                        ? '${fmtDate(date.epochDay)}, ${flowName(f.flow.name)} flow'
+                        : '${fmtDate(date.epochDay)}, period recorded, flow not recorded';
+                    return Semantics(
+                      button: true,
+                      label: label,
+                      child: GestureDetector(
+                        key: ValueKey(
+                          'patterns-flow-day-${current.periodId}-${date.epochDay}',
+                        ),
+                        behavior: HitTestBehavior.opaque,
+                        onTap: () =>
+                            openDaySheet(context, data, date.epochDay, null),
+                        child: Tooltip(
+                          message: label,
+                          child: SizedBox(
+                            width: 44,
+                            height: 44,
+                            child: Center(
+                              child: f != null
+                                  ? FlowDrop(flowKey: f.flow.name, size: 16)
+                                  : const _PeriodDayMark(size: 14),
+                            ),
+                          ),
+                        ),
                       ),
                     );
                   },
@@ -2480,7 +2607,9 @@ class _CurrentCycleNote extends StatelessWidget {
           if (current.flowDays.isEmpty) ...[
             const SizedBox(height: 8),
             Text(
-              'Period in progress from your saved start. No flow detail saved yet — unknown, never assumed light.',
+              current.bleedingEndDate == null
+                  ? 'Period in progress from your saved start. No flow detail saved yet — unknown, never assumed light.'
+                  : 'Period dates are saved. No flow detail was saved — unknown, never assumed light.',
               style: _S.bodyS.copyWith(
                 fontStyle: FontStyle.italic,
                 height: 1.5,
@@ -2533,7 +2662,7 @@ class MoodView extends StatelessWidget {
           takeaway =
               'No harder days were saved in these cycles. Blank days stay blank — never assumed easy.';
         } else {
-          var near = 0;
+          final nearDays = <int>{};
           for (final record in harderRecs) {
             final ci = cycleIndexFor(data, record.date.epochDay)!;
             final c = cycles[ci];
@@ -2541,11 +2670,11 @@ class MoodView extends StatelessWidget {
               LocalDate.fromDateTime(_dt(record.date.epochDay)),
             );
             final before = c.nextStartDate.epochDay - record.date.epochDay;
-            if (isFlow || before <= 7) near++;
+            if (isFlow || before <= 7) nearDays.add(record.date.epochDay);
           }
           takeaway =
               'Across ${_plural(n, 'cycle')} you saved ${_plural(totalHarder, 'harder day')}'
-              '${near * 2 >= totalHarder ? ', mostly around bleeding or the days just before it.' : ', spread through the cycle.'}'
+              '${nearDays.length * 2 > totalHarder ? ', mostly around bleeding or the days just before it.' : ', spread through the cycle.'}'
               ' A day counts once, however much it carried.';
         }
       }
@@ -2880,7 +3009,7 @@ class _RhythmPanelState extends State<RhythmPanel> {
     final avgBleed =
         cycles.fold<int>(0, (s, c) => s + c.bleedingDates.length) /
         cycles.length;
-    final bleedShare = (avgBleed / avgLen).clamp(0.10, 0.30);
+    final bleedShare = (avgBleed / avgLen).clamp(0.02, 0.30);
     final preShare = (7 / avgLen).clamp(0.14, 0.30);
     final bleedFlex = (bleedShare * 1000).round();
     final preFlex = (preShare * 1000).round();
@@ -2905,6 +3034,8 @@ class _RhythmPanelState extends State<RhythmPanel> {
         LayoutBuilder(
           builder: (context, cons) {
             final w = cons.maxWidth;
+            final labelTextScale =
+                MediaQuery.textScalerOf(context).scale(10.5) / 10.5;
             return Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -2933,47 +3064,11 @@ class _RhythmPanelState extends State<RhythmPanel> {
                   ),
                 ),
                 const SizedBox(height: 6),
-                SizedBox(
-                  width: double.infinity,
-                  child: Row(
-                    children: [
-                      Expanded(
-                        flex: bleedFlex,
-                        child: const Text(
-                          'Bleeding',
-                          style: TextStyle(
-                            fontSize: 10.5,
-                            color: T.coral,
-                            fontWeight: FontWeight.w800,
-                          ),
-                        ),
-                      ),
-                      Expanded(
-                        flex: midFlex,
-                        child: const Text(
-                          'Mid-cycle',
-                          textAlign: TextAlign.center,
-                          style: TextStyle(
-                            fontSize: 10.5,
-                            color: T.inkSoft,
-                            fontWeight: FontWeight.w700,
-                          ),
-                        ),
-                      ),
-                      Expanded(
-                        flex: preFlex,
-                        child: const Text(
-                          'Days before bleeding',
-                          textAlign: TextAlign.end,
-                          style: TextStyle(
-                            fontSize: 10.5,
-                            color: T.violet,
-                            fontWeight: FontWeight.w800,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
+                _RhythmBandLabels(
+                  stacked: labelTextScale > 1.6,
+                  bleedFlex: bleedFlex,
+                  midFlex: midFlex,
+                  preFlex: preFlex,
                 ),
                 const SizedBox(height: 10),
                 SizedBox(
@@ -2984,23 +3079,9 @@ class _RhythmPanelState extends State<RhythmPanel> {
                         Positioned(
                           left: _posOf(data, r) * (w - 14),
                           top: lanes[r.category]! * 16.0,
-                          child: GestureDetector(
-                            key: ValueKey('patterns-rhythm-point-${r.id}'),
-                            behavior: HitTestBehavior.opaque,
-                            onTap: () => r.symptom != null
-                                ? openSymptomSheet(
-                                    context,
-                                    data,
-                                    r.symptom!,
-                                    widget.onEdit,
-                                  )
-                                : openDaySheet(
-                                    context,
-                                    data,
-                                    r.date.epochDay,
-                                    widget.onEdit,
-                                  ),
+                          child: ExcludeSemantics(
                             child: Container(
+                              key: ValueKey('patterns-rhythm-point-${r.id}'),
                               width: 14,
                               height: 14,
                               decoration: BoxDecoration(
@@ -3019,6 +3100,42 @@ class _RhythmPanelState extends State<RhythmPanel> {
           },
         ),
         const SizedBox(height: 14),
+        if (shown.isNotEmpty)
+          ExpansionTile(
+            tilePadding: EdgeInsets.zero,
+            childrenPadding: EdgeInsets.zero,
+            title: Text('Browse plotted records', style: _S.titleM),
+            subtitle: Text(
+              '${shown.length} ${shown.length == 1 ? 'record' : 'records'} in this view',
+              style: _S.bodyS,
+            ),
+            children: [
+              for (final record in shown)
+                ListTile(
+                  contentPadding: EdgeInsets.zero,
+                  minTileHeight: 48,
+                  title: Text(record.label, style: _S.bodyM),
+                  subtitle: Text(
+                    '${fmtDate(record.date.epochDay)} · ${catName(record.category)}',
+                    style: _S.bodyS,
+                  ),
+                  onTap: () => record.symptom != null
+                      ? openSymptomSheet(
+                          context,
+                          data,
+                          record.symptom!,
+                          widget.onEdit,
+                        )
+                      : openDaySheet(
+                          context,
+                          data,
+                          record.date.epochDay,
+                          widget.onEdit,
+                        ),
+                ),
+            ],
+          ),
+        const SizedBox(height: 8),
         for (final item in orderedItems.take(2))
           _InsightLine(
             color: catColor(
@@ -3028,12 +3145,12 @@ class _RhythmPanelState extends State<RhythmPanel> {
           ),
         const SizedBox(height: 8),
         Text(
-          'Each dot is one harder saved day, placed by where it truly fell in its cycle. Looking back — never looking ahead.',
+          'Each dot is one saved harder record. Several dots can belong to the same day. Positions show where each record fell in its own cycle.',
           style: _S.bodyS.copyWith(fontStyle: FontStyle.italic, height: 1.5),
         ),
         const _QuietInfo(
           'How timing is read',
-          'Bleeding-day placement comes from your recorded period starts and ends. “Days before bleeding” counts backward from the following recorded start. Everything else is placed by its real position in its own cycle. Because cycles differ in length, positions are shown as a share of the whole cycle, and the bleeding band is sized by the bleeding days you actually recorded.',
+          'Each dot is placed as a share of its own recorded cycle. The first band shows the average recorded bleeding length across these cycles, so it is context rather than a claim that every dot inside it occurred during bleeding. “Days before bleeding” counts backward from the following recorded start.',
         ),
       ],
     );
@@ -3049,6 +3166,122 @@ class _RhythmPanelState extends State<RhythmPanel> {
   }
 }
 
+class _RhythmBandLabels extends StatelessWidget {
+  final bool stacked;
+  final int bleedFlex;
+  final int midFlex;
+  final int preFlex;
+
+  const _RhythmBandLabels({
+    required this.stacked,
+    required this.bleedFlex,
+    required this.midFlex,
+    required this.preFlex,
+  });
+
+  static const _bleedStyle = TextStyle(
+    fontSize: 10.5,
+    color: T.coral,
+    fontWeight: FontWeight.w800,
+  );
+  static const _midStyle = TextStyle(
+    fontSize: 10.5,
+    color: T.inkSoft,
+    fontWeight: FontWeight.w700,
+  );
+  static const _preStyle = TextStyle(
+    fontSize: 10.5,
+    color: T.violet,
+    fontWeight: FontWeight.w800,
+  );
+
+  @override
+  Widget build(BuildContext context) {
+    if (stacked) {
+      return const Column(
+        key: Key('patterns-rhythm-band-labels-stacked'),
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _RhythmBandLegendRow(
+            color: T.coralSoft,
+            label: 'Average bleeding length',
+            style: _bleedStyle,
+          ),
+          SizedBox(height: 4),
+          _RhythmBandLegendRow(
+            color: T.sand,
+            label: 'Mid-cycle',
+            style: _midStyle,
+          ),
+          SizedBox(height: 4),
+          _RhythmBandLegendRow(
+            color: T.lilac,
+            label: 'Days before bleeding',
+            style: _preStyle,
+          ),
+        ],
+      );
+    }
+
+    return Row(
+      key: const Key('patterns-rhythm-band-labels-inline'),
+      children: [
+        Expanded(
+          flex: bleedFlex,
+          child: const Text('Average bleeding length', style: _bleedStyle),
+        ),
+        Expanded(
+          flex: midFlex,
+          child: const Text(
+            'Mid-cycle',
+            textAlign: TextAlign.center,
+            style: _midStyle,
+          ),
+        ),
+        Expanded(
+          flex: preFlex,
+          child: const Text(
+            'Days before bleeding',
+            textAlign: TextAlign.end,
+            style: _preStyle,
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _RhythmBandLegendRow extends StatelessWidget {
+  final Color color;
+  final String label;
+  final TextStyle style;
+
+  const _RhythmBandLegendRow({
+    required this.color,
+    required this.label,
+    required this.style,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Container(
+          width: 18,
+          height: 6,
+          margin: const EdgeInsets.only(top: 5, right: 8),
+          decoration: BoxDecoration(
+            color: color,
+            borderRadius: BorderRadius.circular(3),
+          ),
+        ),
+        Expanded(child: Text(label, style: style)),
+      ],
+    );
+  }
+}
+
 class _FilterChip extends StatelessWidget {
   final String label;
   final bool selected;
@@ -3060,25 +3293,30 @@ class _FilterChip extends StatelessWidget {
   });
   @override
   Widget build(BuildContext context) {
-    return InkWell(
-      borderRadius: BorderRadius.circular(20),
-      onTap: onTap,
-      child: AnimatedContainer(
-        duration: MediaQuery.of(context).disableAnimations
-            ? Duration.zero
-            : const Duration(milliseconds: 180),
-        padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 8),
-        decoration: BoxDecoration(
-          color: selected ? T.ink : Colors.transparent,
-          borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: selected ? T.ink : T.line, width: 1.3),
-        ),
-        child: Text(
-          label,
-          style: TextStyle(
-            fontSize: 12,
-            fontWeight: FontWeight.w800,
-            color: selected ? T.surface : T.inkSoft,
+    return Semantics(
+      button: true,
+      selected: selected,
+      child: InkWell(
+        borderRadius: BorderRadius.circular(20),
+        onTap: onTap,
+        child: AnimatedContainer(
+          duration: MediaQuery.of(context).disableAnimations
+              ? Duration.zero
+              : const Duration(milliseconds: 180),
+          constraints: const BoxConstraints(minHeight: 48),
+          padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 8),
+          decoration: BoxDecoration(
+            color: selected ? T.ink : Colors.transparent,
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(color: selected ? T.ink : T.line, width: 1.3),
+          ),
+          child: Text(
+            label,
+            style: TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.w800,
+              color: selected ? T.surface : T.inkSoft,
+            ),
           ),
         ),
       ),
@@ -3515,38 +3753,55 @@ class _MonthGrid extends StatelessWidget {
     }
     if (isToday) border = Border.all(color: T.ink, width: 1.4);
 
-    return GestureDetector(
-      key: ValueKey('patterns-calendar-day-$epoch'),
-      behavior: HitTestBehavior.opaque,
-      onTap: () => onTap(epoch),
-      child: Container(
-        height: 46,
-        margin: const EdgeInsets.all(1.5),
-        decoration: BoxDecoration(
-          color: fill,
-          borderRadius: BorderRadius.circular(9),
-          border: border,
-        ),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Text(
-              '$day',
-              style: TextStyle(
-                fontSize: 12,
-                fontWeight: isPeriod ? FontWeight.w800 : FontWeight.w500,
-                color: flow != null ? Colors.white : T.ink,
+    final recordedSignals = mark == null
+        ? 'No saved mood or symptom marks.'
+        : 'Saved health marks are present.';
+    final periodState = isPeriod
+        ? flow == null
+              ? 'Period recorded; flow not recorded.'
+              : 'Period recorded; ${flowName(flow)} flow.'
+        : 'No period recorded.';
+    final semanticLabel =
+        '${fmtDate(epoch)}, ${month.year}. '
+        '${isToday ? 'Today. ' : ''}$periodState $recordedSignals';
+
+    return Semantics(
+      button: true,
+      label: semanticLabel,
+      excludeSemantics: true,
+      child: GestureDetector(
+        key: ValueKey('patterns-calendar-day-$epoch'),
+        behavior: HitTestBehavior.opaque,
+        onTap: () => onTap(epoch),
+        child: Container(
+          height: 46,
+          margin: const EdgeInsets.all(1.5),
+          decoration: BoxDecoration(
+            color: fill,
+            borderRadius: BorderRadius.circular(9),
+            border: border,
+          ),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Text(
+                '$day',
+                style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: isPeriod ? FontWeight.w800 : FontWeight.w500,
+                  color: flow != null ? Colors.white : T.ink,
+                ),
               ),
-            ),
-            const SizedBox(height: 2),
-            SizedBox(
-              height: 5,
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: dots.take(3).toList(),
+              const SizedBox(height: 2),
+              SizedBox(
+                height: 5,
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: dots.take(3).toList(),
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
@@ -3817,10 +4072,14 @@ class _CareRow extends StatelessWidget {
   Widget _mini(Color c, String label) => Row(
     mainAxisSize: MainAxisSize.min,
     children: [
-      Container(
-        width: 6,
-        height: 6,
-        decoration: BoxDecoration(color: c, shape: BoxShape.circle),
+      Icon(
+        label.startsWith('Better')
+            ? Icons.trending_up_rounded
+            : label.startsWith('Worse')
+            ? Icons.trending_down_rounded
+            : Icons.horizontal_rule_rounded,
+        size: 13,
+        color: c,
       ),
       const SizedBox(width: 4),
       Text(

@@ -107,6 +107,9 @@ class CaptureNoteRows extends Table {
   TextColumn get content => text()();
   TextColumn get source => text()();
   IntColumn get createdAtMillis => integer()();
+  IntColumn get updatedAtMillis => integer().withDefault(const Constant(0))();
+  BoolColumn get keepInComfortKit =>
+      boolean().withDefault(const Constant(false))();
 
   @override
   Set<Column<Object>> get primaryKey => {id};
@@ -159,6 +162,28 @@ class PreparationDismissalRows extends Table {
   Set<Column<Object>> get primaryKey => {fingerprint};
 }
 
+class ComfortKitOverrideRows extends Table {
+  TextColumn get sourceId => text()();
+  TextColumn get action => text()();
+  TextColumn get sourceVersion => text().nullable()();
+  IntColumn get updatedAtMillis => integer()();
+
+  @override
+  Set<Column<Object>> get primaryKey => {sourceId};
+}
+
+class ComfortReminderPreferenceRows extends Table {
+  TextColumn get id => text()();
+  BoolColumn get enabled => boolean().withDefault(const Constant(false))();
+  IntColumn get leadDays => integer().withDefault(const Constant(2))();
+  IntColumn get hour => integer().withDefault(const Constant(9))();
+  IntColumn get minute => integer().withDefault(const Constant(0))();
+  IntColumn get updatedAtMillis => integer()();
+
+  @override
+  Set<Column<Object>> get primaryKey => {id};
+}
+
 @DriftDatabase(
   tables: [
     PeriodRows,
@@ -171,6 +196,8 @@ class PreparationDismissalRows extends Table {
     MomentCheckInRows,
     PreparationPlanRows,
     PreparationDismissalRows,
+    ComfortKitOverrideRows,
+    ComfortReminderPreferenceRows,
   ],
 )
 class LetterHealthDatabase extends _$LetterHealthDatabase {
@@ -181,7 +208,7 @@ class LetterHealthDatabase extends _$LetterHealthDatabase {
   Future<void> normalizeContinuousPeriods() => _mergeContinuousPeriodRows();
 
   @override
-  int get schemaVersion => 11;
+  int get schemaVersion => 12;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -233,6 +260,24 @@ class LetterHealthDatabase extends _$LetterHealthDatabase {
     }
     if (!await _tableExists('capture_note_rows')) {
       await migrator.createTable(captureNoteRows);
+    } else {
+      if (!await _columnExists('capture_note_rows', 'updated_at_millis')) {
+        await migrator.addColumn(
+          captureNoteRows,
+          captureNoteRows.updatedAtMillis,
+        );
+        await customStatement('''
+          UPDATE capture_note_rows
+          SET updated_at_millis = created_at_millis
+          WHERE updated_at_millis = 0
+        ''');
+      }
+      if (!await _columnExists('capture_note_rows', 'keep_in_comfort_kit')) {
+        await migrator.addColumn(
+          captureNoteRows,
+          captureNoteRows.keepInComfortKit,
+        );
+      }
     }
     if (!await _tableExists('moment_check_in_rows')) {
       await migrator.createTable(momentCheckInRows);
@@ -242,6 +287,12 @@ class LetterHealthDatabase extends _$LetterHealthDatabase {
     }
     if (!await _tableExists('preparation_dismissal_rows')) {
       await migrator.createTable(preparationDismissalRows);
+    }
+    if (!await _tableExists('comfort_kit_override_rows')) {
+      await migrator.createTable(comfortKitOverrideRows);
+    }
+    if (!await _tableExists('comfort_reminder_preference_rows')) {
+      await migrator.createTable(comfortReminderPreferenceRows);
     }
 
     await _mergeContinuousPeriodRows();
@@ -355,7 +406,16 @@ class LetterHealthDatabase extends _$LetterHealthDatabase {
             ? byUpdated
             : left.periodId.compareTo(right.periodId);
       });
-      for (final flow in flows.where((row) => row.periodId != survivor.id)) {
+      // The final item for a day is its newest deterministic winner. Include
+      // the survivor's own rows in the comparison: otherwise an older row
+      // from an absorbed period can replace newer flow/color evidence.
+      final newestFlowByDay = <int, PeriodFlowRow>{};
+      for (final flow in flows) {
+        newestFlowByDay[flow.day] = flow;
+      }
+      for (final flow in newestFlowByDay.values.where(
+        (row) => row.periodId != survivor.id,
+      )) {
         await into(periodFlowRows).insert(
           PeriodFlowRowsCompanion.insert(
             periodId: survivor.id,

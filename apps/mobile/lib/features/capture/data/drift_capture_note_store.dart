@@ -22,13 +22,21 @@ final class DriftCaptureNoteStore implements CaptureNoteStore {
               content: note.text,
               source: note.source.name,
               createdAtMillis: note.createdAt.toUtc().millisecondsSinceEpoch,
+              updatedAtMillis: Value(
+                note.updatedAt.toUtc().millisecondsSinceEpoch,
+              ),
+              keepInComfortKit: Value(note.keepInComfortKit),
             ),
+            mode: InsertMode.insertOrReplace,
           );
       return note;
-    } on Object {
-      throw const CaptureNoteStorageException();
+    } on Object catch (error, stackTrace) {
+      throw CaptureNoteStorageException(error, stackTrace);
     }
   }
+
+  @override
+  Future<CaptureNote> update(CaptureNote note) => save(note);
 
   @override
   Future<List<CaptureNote>> getAll() async {
@@ -36,8 +44,8 @@ final class DriftCaptureNoteStore implements CaptureNoteStore {
       final query = _database.select(_database.captureNoteRows)
         ..orderBy([(row) => OrderingTerm.desc(row.createdAtMillis)]);
       return (await query.get()).map(_fromRow).toList(growable: false);
-    } on Object {
-      throw const CaptureNoteStorageException();
+    } on Object catch (error, stackTrace) {
+      throw CaptureNoteStorageException(error, stackTrace);
     }
   }
 
@@ -52,8 +60,8 @@ final class DriftCaptureNoteStore implements CaptureNoteStore {
       }
     } on CaptureNoteStorageException {
       rethrow;
-    } on Object {
-      throw const CaptureNoteStorageException();
+    } on Object catch (error, stackTrace) {
+      throw CaptureNoteStorageException(error, stackTrace);
     }
   }
 
@@ -73,13 +81,26 @@ final class DriftCaptureNoteStore implements CaptureNoteStore {
           row.createdAtMillis,
           isUtc: true,
         ),
+        updatedAt: DateTime.fromMillisecondsSinceEpoch(
+          row.updatedAtMillis == 0 ? row.createdAtMillis : row.updatedAtMillis,
+          isUtc: true,
+        ),
+        keepInComfortKit: row.keepInComfortKit,
       );
-    } on Object {
-      throw const CaptureNoteStorageException();
+    } on Object catch (error, stackTrace) {
+      throw CaptureNoteStorageException(error, stackTrace);
     }
   }
 }
 
 final class CaptureNoteStorageException implements Exception {
-  const CaptureNoteStorageException();
+  const CaptureNoteStorageException([this.cause, this.causeStackTrace]);
+
+  final Object? cause;
+  final StackTrace? causeStackTrace;
+
+  @override
+  String toString() => cause == null
+      ? 'CaptureNoteStorageException'
+      : 'CaptureNoteStorageException: $cause';
 }

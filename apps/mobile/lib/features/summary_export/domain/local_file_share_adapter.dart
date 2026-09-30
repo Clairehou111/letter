@@ -29,13 +29,15 @@ final class LocalPdfFile extends LocalExportFile {
     : super(mimeType: 'application/pdf');
 }
 
-enum LocalFileShareStatus { shared, unavailable, failed }
+enum LocalFileShareStatus { shared, savedOnly, unavailable, failed }
 
 final class LocalFileShareResult {
   const LocalFileShareResult._(this.status, {this.savedPath});
 
   const LocalFileShareResult.shared({String? savedPath})
     : this._(LocalFileShareStatus.shared, savedPath: savedPath);
+  const LocalFileShareResult.savedOnly({required String savedPath})
+    : this._(LocalFileShareStatus.savedOnly, savedPath: savedPath);
   const LocalFileShareResult.unavailable()
     : this._(LocalFileShareStatus.unavailable);
   const LocalFileShareResult.failed() : this._(LocalFileShareStatus.failed);
@@ -77,18 +79,26 @@ final class SystemLocalFileShareAdapter implements LocalFileShareAdapter {
     if (!isMobile && !isDesktop) {
       return const LocalFileShareResult.unavailable();
     }
+    String? savedPath;
     try {
-      final savedPath = await localStore.save(
+      savedPath = await localStore.save(
         fileName: file.fileName,
         bytes: file.bytes,
       );
       if (isMobile) {
-        await SharePlus.instance.share(
+        final result = await SharePlus.instance.share(
           ShareParams(files: [XFile(savedPath, mimeType: file.mimeType)]),
         );
+        if (result.status != ShareResultStatus.success) {
+          return LocalFileShareResult.savedOnly(savedPath: savedPath);
+        }
+        return LocalFileShareResult.shared(savedPath: savedPath);
       }
-      return LocalFileShareResult.shared(savedPath: savedPath);
+      return LocalFileShareResult.savedOnly(savedPath: savedPath);
     } on Object {
+      if (savedPath != null) {
+        return LocalFileShareResult.savedOnly(savedPath: savedPath);
+      }
       return const LocalFileShareResult.failed();
     }
   }
@@ -153,6 +163,21 @@ LocalCsvFile buildCycleAndCareCsv(CycleAndCareSummary summary) {
         '',
         'Observed period date',
         'Saved local period date',
+        '',
+        '',
+      ],
+    for (final day in summary.periodDays.where((day) => day.flow != null))
+      [
+        'Bleeding flow',
+        summaryDateLabel(day.date),
+        '',
+        '',
+        day.flow!.label,
+        '',
+        '',
+        '',
+        'User-recorded flow',
+        'Saved local period day',
         '',
         '',
       ],
@@ -245,7 +270,10 @@ LocalCsvFile buildCycleAndCareCsv(CycleAndCareSummary summary) {
 String _encodeCsvRow(List<String> fields) => fields.map(_escapeCsv).join(',');
 
 String _escapeCsv(String value) {
-  final escaped = value.replaceAll('"', '""');
+  final neutralized = RegExp(r'^[\x00-\x20]*[=+\-@]').hasMatch(value)
+      ? "'$value"
+      : value;
+  final escaped = neutralized.replaceAll('"', '""');
   return '"$escaped"';
 }
 

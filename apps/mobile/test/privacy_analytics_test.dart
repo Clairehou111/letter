@@ -7,7 +7,6 @@ import 'package:letter_mobile/features/onboarding/domain/onboarding_profile.dart
 import 'package:letter_mobile/features/onboarding/presentation/privacy_protection_screen.dart';
 import 'package:letter_mobile/features/notifications/domain/local_notification_port.dart';
 import 'package:letter_mobile/features/privacy/data/secure_privacy_preferences_repository.dart';
-import 'package:letter_mobile/features/privacy/domain/device_authenticator.dart';
 import 'package:letter_mobile/features/privacy/domain/privacy_preferences.dart';
 
 void main() {
@@ -39,25 +38,43 @@ void main() {
       expect(client.config!.sendFeatureFlagEvents, isFalse);
       expect(client.config!.capturePushNotificationSubscriptions, isFalse);
       expect(client.config!.capturePushNotificationOpened, isFalse);
+      expect(client.config!.rageClickConfig.enabled, isFalse);
+      expect(client.config!.surveys, isFalse);
       expect(client.config!.personProfiles, PostHogPersonProfiles.never);
 
       await service.track(
         AnalyticsPayload(
-          event: const ExportCompletedEvent(),
+          event: const CareUsageBucketEvent(CareUsageBucket.twoToFive),
           timestamp: DateTime.utc(2026),
         ),
       );
-      await service.identifyAuthenticatedUser(
-        '550e8400-e29b-41d4-a716-446655440000',
-      );
-      await service.identifyAuthenticatedUser('not-an-email-or-uuid');
-      await service.clearAuthenticatedUser();
+      await service.disable();
 
-      expect(client.captured.single.eventName, 'export_completed');
-      expect(client.identifiers, ['550e8400-e29b-41d4-a716-446655440000']);
-      expect(client.resetCount, 1);
+      expect(client.captured.single.eventName, 'care_usage_30d');
+      expect(client.captured.single.properties, {
+        'event_name': 'care_usage_30d',
+        'schema_version': 1,
+        'usage_bucket': '2-5',
+      });
+      expect(client.shutdownOrder, ['disable', 'close', 'clear']);
+      expect(client.clearedProjectToken, 'project-token');
     },
   );
+
+  test('ordinary disposal preserves consented queued events', () async {
+    final client = FakePosthogClient();
+    final service = PosthogAnalyticsService(
+      projectToken: 'project-token',
+      host: 'https://example.test',
+      client: client,
+    );
+
+    await service.enable();
+    await service.dispose();
+
+    expect(client.shutdownOrder, ['close']);
+    expect(client.clearedProjectToken, isNull);
+  });
 
   test('privacy preferences migrate version 1 to unset analytics consent', () {
     final preferences = PrivacyPreferencesCodec.decode('''
@@ -65,7 +82,6 @@ void main() {
        "notification_permission_requested":true}
     ''');
 
-    expect(preferences.appLockEnabled, isTrue);
     expect(preferences.screenCoverEnabled, isTrue);
     expect(preferences.cycleCheckInEnabled, isFalse);
     expect(preferences.analyticsConsent, AnalyticsConsent.notSet);
@@ -75,12 +91,25 @@ void main() {
     const preferences = PrivacyPreferences(
       screenCoverEnabled: false,
       analyticsConsent: AnalyticsConsent.granted,
+      careCompanionName: 'Miso',
     );
     final decoded = PrivacyPreferencesCodec.decode(
       PrivacyPreferencesCodec.encode(preferences),
     );
 
     expect(decoded, preferences);
+  });
+
+  test('Care companion names normalize, enforce the rune limit, and clear', () {
+    final maxName = List<String>.filled(24, '🐈').join();
+    final tooLongName = List<String>.filled(25, '🐈').join();
+    expect(PrivacyPreferences.normalizeCareCompanionName('  Miso  '), 'Miso');
+    expect(PrivacyPreferences.normalizeCareCompanionName(maxName), maxName);
+    expect(PrivacyPreferences.normalizeCareCompanionName(tooLongName), isNull);
+
+    const named = PrivacyPreferences(careCompanionName: 'Miso');
+    expect(named.copyWith().careCompanionName, 'Miso');
+    expect(named.copyWith(careCompanionName: null).careCompanionName, isNull);
   });
 
   testWidgets('current release exposes only supported privacy controls', (
@@ -94,7 +123,6 @@ void main() {
           onProfileChanged: (_) async {},
           privacyPreferences: const PrivacyPreferences(),
           notificationAuthorization: NotificationAuthorization.granted,
-          deviceAuthenticator: const AllowingDeviceAuthenticator(),
           onPrivacyPreferencesChanged: (value) async => saved = value,
         ),
       ),
@@ -120,8 +148,8 @@ final class FakePosthogClient implements PosthogClient {
   PostHogConfig? config;
   bool configured = false;
   final captured = <({String eventName, Map<String, Object> properties})>[];
-  final identifiers = <String>[];
-  int resetCount = 0;
+  final shutdownOrder = <String>[];
+  String? clearedProjectToken;
 
   @override
   Future<void> setup(PostHogConfig config) async {
@@ -138,18 +166,17 @@ final class FakePosthogClient implements PosthogClient {
   }
 
   @override
-  Future<void> identify({required String userId}) async {
-    identifiers.add(userId);
-  }
-
-  @override
   Future<void> enable() async {}
 
   @override
-  Future<void> disable() async {}
+  Future<void> disable() async => shutdownOrder.add('disable');
 
   @override
-  Future<void> reset() async {
-    resetCount++;
+  Future<void> close() async => shutdownOrder.add('close');
+
+  @override
+  Future<void> clearPendingEvents(String projectToken) async {
+    shutdownOrder.add('clear');
+    clearedProjectToken = projectToken;
   }
 }

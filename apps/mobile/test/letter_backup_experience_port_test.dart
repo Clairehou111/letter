@@ -27,10 +27,10 @@ final class _FilePort implements LocalBackupFilePort {
   }
 
   @override
-  Future<String> shareEncryptedBackup(Uint8List bytes) async {
+  Future<LocalBackupShareOutcome> shareEncryptedBackup(Uint8List bytes) async {
     if (failShare) throw StateError('share unavailable');
     shared = bytes;
-    return 'backup.letter';
+    return LocalBackupShareOutcome.shared;
   }
 }
 

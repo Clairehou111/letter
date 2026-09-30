@@ -82,4 +82,65 @@ void main() {
     expect(second.severity, SymptomSeverity.extreme);
     expect(await repository.getAll(), hasLength(1));
   });
+
+  test(
+    'Drift rejects an edit that would collide with a daily symptom',
+    () async {
+      final database = LetterHealthDatabase(NativeDatabase.memory());
+      addTearDown(database.close);
+      var nextId = 0;
+      final repository = DriftHealthRecordRepository(
+        database,
+        closeDatabase: false,
+        clock: () => DateTime.utc(2026, 7, 28, 9),
+        idGenerator: () => 'drift-health-${nextId++}',
+      );
+      final cramps = await repository.create(
+        const HealthRecordDraft(
+          symptom: SymptomType.cramps,
+          severity: SymptomSeverity.mild,
+          experiencedDate: LocalDate(2026, 7, 28),
+          provenance: HealthRecordProvenance.sameDay,
+        ),
+      );
+      final crying = await repository.create(
+        const HealthRecordDraft(
+          symptom: SymptomType.crying,
+          severity: SymptomSeverity.severe,
+          experiencedDate: LocalDate(2026, 7, 28),
+          provenance: HealthRecordProvenance.sameDay,
+        ),
+      );
+
+      await expectLater(
+        repository.update(
+          crying.id,
+          const HealthRecordDraft(
+            symptom: SymptomType.cramps,
+            severity: SymptomSeverity.extreme,
+            experiencedDate: LocalDate(2026, 7, 28),
+            provenance: HealthRecordProvenance.sameDay,
+          ),
+        ),
+        throwsA(
+          isA<HealthRecordException>().having(
+            (error) => error.failure,
+            'failure',
+            HealthRecordFailure.duplicateForDay,
+          ),
+        ),
+      );
+
+      final stored = await repository.getAll();
+      expect(stored, hasLength(2));
+      expect(
+        stored.singleWhere((record) => record.id == cramps.id).severity,
+        SymptomSeverity.mild,
+      );
+      expect(
+        stored.singleWhere((record) => record.id == crying.id).symptom,
+        SymptomType.crying,
+      );
+    },
+  );
 }

@@ -3,10 +3,13 @@ import '../features/local_backup/domain/local_backup_models.dart';
 import '../features/privacy/domain/privacy_preferences.dart';
 import '../features/summary_export/domain/cycle_care_summary.dart';
 
-/// Presentation-facing operations for report creation and native file handoff.
+/// Presentation-facing operations for report data and paid file handoff.
 ///
 /// Implementations adapt the existing summary/PDF/CSV and dedicated Letter
 /// folder services. UI code must not build files, choose paths, or infer data.
+/// Every [export] format requires a freshly verified paid entitlement; a
+/// no-card Plus Preview is never sufficient. Implementations must enforce the
+/// boundary again before file bytes are generated, not rely on hidden UI.
 abstract interface class ReportExperiencePort {
   Future<SummaryExportInput> load();
 
@@ -17,7 +20,20 @@ abstract interface class ReportExperiencePort {
   });
 }
 
-enum ReportExportFormat { pdf, csv }
+enum ReportExportFormat {
+  /// Paid factual selected-range report without cross-cycle interpretation.
+  visitSummaryPdf,
+
+  /// Plus report with cross-cycle interpretation and pattern evidence.
+  patternReportPdf,
+
+  /// Paid source-record export.
+  rawCsv,
+
+  /// Legacy aliases kept for older callers and backup-era tests.
+  pdf,
+  csv,
+}
 
 enum ExperienceFileOutcome { shared, savedOnly, cancelled, failed }
 

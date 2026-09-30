@@ -500,7 +500,7 @@ class _EmberPrimaryButton extends StatelessWidget {
         color: Colors.transparent,
         child: Ink(
           decoration: BoxDecoration(
-            gradient: enabled ? ExperienceColors.emberGradient : null,
+            gradient: enabled ? ExperienceColors.emberActionGradient : null,
             color: enabled ? null : ExperienceColors.surfaceWarm,
             borderRadius: ExperienceRadius.chipRadius,
             boxShadow: enabled
@@ -523,7 +523,7 @@ class _EmberPrimaryButton extends StatelessWidget {
               child: Text(
                 label,
                 style: enabled
-                    ? ExperienceType.label(Colors.white)
+                    ? ExperienceType.label(ExperienceColors.onEmber)
                     : ExperienceType.label(
                         ExperienceColors.inkSoft.withValues(alpha: 0.7),
                       ),

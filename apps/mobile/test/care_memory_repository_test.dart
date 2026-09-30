@@ -89,6 +89,31 @@ void main() {
     expect(await repository.getReflections(), isEmpty);
   });
 
+  test('keeps long Care and cycle reflections without truncation', () async {
+    var id = 0;
+    final repository = InMemoryCareMemoryRepository(
+      clock: () => createdAt,
+      idGenerator: () => 'long-${id++}',
+    );
+    final record = await repository.saveOutcome(completion(), CareOutcome.same);
+    final longText = List<String>.filled(
+      180,
+      'I can put down everything this moment carried.',
+    ).join(' ');
+
+    final careReflection = await repository.saveReflection(
+      record.id,
+      CareReflectionDraft(observation: longText),
+    );
+    final cycleReflection = await repository.saveCycleReflection(
+      const LocalDate(2026, 7, 28).epochDay,
+      CycleReflectionDraft(futureSelfNote: longText),
+    );
+
+    expect(careReflection.observation, longText);
+    expect(cycleReflection.futureSelfNote, longText);
+  });
+
   test('saves, edits, and deletes one reflection per cycle', () async {
     var id = 0;
     final repository = InMemoryCareMemoryRepository(
@@ -161,7 +186,7 @@ void main() {
     },
   );
 
-  test('rejects invalid actions, empty reflections, and oversized text', () {
+  test('rejects invalid actions and empty reflections', () {
     final repository = InMemoryCareMemoryRepository(
       clock: () => createdAt,
       idGenerator: () => 'memory',

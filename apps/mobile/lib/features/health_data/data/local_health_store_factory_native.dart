@@ -4,6 +4,7 @@ import 'dart:math';
 import 'package:drift/drift.dart';
 import 'package:drift/native.dart';
 import 'package:flutter/foundation.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:path/path.dart' as path;
 import 'package:path_provider/path_provider.dart';
@@ -11,6 +12,8 @@ import 'package:path_provider/path_provider.dart';
 import '../../care/data/drift_care_memory_repository.dart';
 import '../../capture/data/drift_capture_note_store.dart';
 import '../../check_in/data/drift_moment_check_in_repository.dart';
+import '../../comfort_kit/data/drift_comfort_kit_repository.dart';
+import '../../comfort_window/data/comfort_reminder_preference_repositories.dart';
 import '../../cycle/data/drift_period_repository.dart';
 import '../../cycle/data/letter_health_database.dart';
 import '../../health_records/data/drift_health_record_repository.dart';
@@ -21,10 +24,12 @@ import 'local_health_store.dart';
 
 const _databaseKeyName = 'letter.health_database.key.v1';
 final _databaseKeyPattern = RegExp(r'^[0-9a-fA-F]{64}$');
+const _privacyChannel = MethodChannel('app.letterwithin/privacy');
 
 LocalHealthStore createDefaultLocalHealthStore() {
   final executor = LazyDatabase(() async {
     final directory = await getApplicationSupportDirectory();
+    await _protectHealthStorage(directory);
     final databaseFile = File(
       path.join(directory.path, 'letter-health.sqlite'),
     );
@@ -86,6 +91,9 @@ LocalHealthStore _buildLocalHealthStore(QueryExecutor executor) {
       closeDatabase: false,
     ),
     preparationRepository: DriftPreparationRepository(database),
+    comfortKitRepository: DriftComfortKitRepository(database),
+    comfortReminderPreferenceRepository:
+        DriftComfortReminderPreferenceRepository(database),
     readTransaction: _DriftLocalHealthReadTransaction(database),
     localBackupStore: DriftLocalBackupStore(database),
     closeStore: database.close,
@@ -109,14 +117,31 @@ Future<String> _loadOrCreateKey(Directory directory) async {
   if (Platform.isMacOS && kDebugMode) {
     return _loadOrCreateSandboxDatabaseKey(directory);
   }
-  const secureStorage = FlutterSecureStorage();
+  const secureStorage = FlutterSecureStorage(
+    iOptions: IOSOptions(
+      accessibility: KeychainAccessibility.first_unlock_this_device,
+    ),
+  );
   return loadOrCreateDatabaseKey(
     directory: directory,
     readSecureKey: () => secureStorage.read(key: _databaseKeyName),
     writeSecureKey: (key) =>
         secureStorage.write(key: _databaseKeyName, value: key),
+    migrateSecureKey: Platform.isIOS
+        ? () async =>
+              await _privacyChannel.invokeMethod<bool>(
+                'migrateHealthDatabaseKeyAccessibility',
+              ) ??
+              false
+        : null,
     allowSandboxFallback: _allowsSandboxKeyFallback,
   );
+}
+
+Future<void> _protectHealthStorage(Directory directory) async {
+  if (!Platform.isIOS) return;
+  await directory.create(recursive: true);
+  await _privacyChannel.invokeMethod<void>('protectHealthStorage');
 }
 
 @visibleForTesting
@@ -124,11 +149,18 @@ Future<String> loadOrCreateDatabaseKey({
   required Directory directory,
   required Future<String?> Function() readSecureKey,
   required Future<void> Function(String key) writeSecureKey,
+  Future<bool> Function()? migrateSecureKey,
   required bool allowSandboxFallback,
 }) async {
   // Primary: iOS Keychain / Android EncryptedSharedPreferences.
   try {
-    final existing = await readSecureKey();
+    var existing = await readSecureKey();
+    if ((existing == null || existing.isEmpty) && migrateSecureKey != null) {
+      final migrated = await migrateSecureKey();
+      if (migrated) {
+        existing = await readSecureKey();
+      }
+    }
     if (existing != null && existing.isNotEmpty) return existing;
 
     final newKey = _generateKey();

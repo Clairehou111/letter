@@ -4,6 +4,8 @@ import 'package:flutter/services.dart';
 
 import '../../clinical/presentation/twin_matrix_view_model.dart';
 import '../../cycle/domain/local_date.dart';
+import '../../comfort_window/domain/comfort_window.dart';
+import '../../patterns/domain/personal_pattern.dart';
 import 'cycle_care_summary.dart';
 import 'local_file_share_adapter.dart';
 
@@ -13,6 +15,7 @@ Future<LocalPdfFile> buildCycleAndCarePdf({
   required CycleAndCareSummary summary,
   required TwinMatrixViewModel matrix,
   required String generatedAt,
+  PatternReportEvidence evidence = const PatternReportEvidence(),
 }) async {
   final fontData = await rootBundle.load('assets/fonts/Newsreader.ttf');
   final reportFont = pw.Font.ttf(fontData);
@@ -67,6 +70,10 @@ Future<LocalPdfFile> buildCycleAndCarePdf({
         _notice(CycleAndCareSummary.nonDiagnosticDisclosure),
         pw.SizedBox(height: 5),
         _notice(CycleAndCareSummary.exclusionDisclosure),
+        pw.SizedBox(height: 14),
+        pw.Text('Personal pattern evidence', style: headingStyle),
+        pw.SizedBox(height: 5),
+        _patternEvidence(evidence, bodyStyle, mutedStyle),
         pw.SizedBox(height: 14),
         pw.Text('Cyclical symptom matrix', style: headingStyle),
         pw.SizedBox(height: 5),
@@ -142,6 +149,64 @@ Future<LocalPdfFile> buildCycleAndCarePdf({
     fileName:
         'letter-cycle-care-summary-${summary.range.start}-${summary.range.end}.pdf',
     bytes: await document.save(),
+  );
+}
+
+final class PatternReportEvidence {
+  const PatternReportEvidence({
+    this.comfortWindow,
+    this.supportActions = const [],
+  });
+
+  final ComfortWindowPrediction? comfortWindow;
+  final List<SupportActionPattern> supportActions;
+}
+
+pw.Widget _patternEvidence(
+  PatternReportEvidence evidence,
+  pw.TextStyle bodyStyle,
+  pw.TextStyle mutedStyle,
+) {
+  final window = evidence.comfortWindow;
+  final actions = evidence.supportActions;
+  return pw.Column(
+    crossAxisAlignment: pw.CrossAxisAlignment.start,
+    children: [
+      if (window == null)
+        pw.Text(
+          'No Comfort Window met the minimum local evidence rules.',
+          style: bodyStyle,
+        )
+      else ...[
+        pw.Text(
+          'Comfort Window: ${summaryDateLabel(window.forecastStart)} to '
+          '${summaryDateLabel(window.forecastEnd)} '
+          '(${window.confidence.name}; ${window.candidate.supportingCycleCount} '
+          'of ${window.candidate.votingCycleCount} voting cycles).',
+          style: bodyStyle,
+        ),
+        pw.SizedBox(height: 2),
+        pw.Text(
+          'Offsets ${window.candidate.offsetStart} to '
+          '${window.candidate.offsetEnd}; average lift '
+          '${(window.candidate.averageLift * 100).toStringAsFixed(0)}%; '
+          'algorithm v${window.algorithmVersion}.',
+          style: mutedStyle,
+        ),
+      ],
+      pw.SizedBox(height: 6),
+      if (actions.isEmpty)
+        pw.Text('No repeated What helped evidence yet.', style: bodyStyle)
+      else ...[
+        pw.Text('What helped (saved Care check-backs):', style: bodyStyle),
+        for (final action in actions.take(5))
+          pw.Text(
+            '• ${action.actionLabel}: ${action.betterCount} Better of '
+            '${action.count} saved check-backs${action.pinned ? '; pinned' : ''}',
+            style: bodyStyle,
+          ),
+      ],
+    ],
   );
 }
 

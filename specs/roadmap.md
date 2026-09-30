@@ -5,6 +5,18 @@ Status values: `proposed`, `specifying`, `approved`, `in_progress`,
 
 Only one product feature should normally be `in_progress`.
 
+## Release 2.0
+
+| Order | Feature | Status | Specification |
+| --- | --- | --- | --- |
+| 1 | Comfort Window, Comfort Kit, privacy analytics, and experience-system refresh | in_progress | `features/2026-09-25-release-2-0/` |
+
+Release 2.0 is isolated on `release/2.0`. It reuses the existing local record
+and pattern foundations, adds a deterministic harder-day forecast and a
+personal Comfort Kit, simplifies navigation to four destinations, revises the
+free/Plus report boundary, and completes a multi-screen visual-system pass.
+The original five Care motion scenes and their behavior remain authoritative.
+
 ## Active Superseding Feature
 
 | Order | Feature | Status | Specification |
@@ -68,8 +80,10 @@ same local period repository. The 2026-07-31 unified-record feature supersedes
 session-only quick states with timestamped, non-clinical moment check-ins that
 remain excluded from health reports.
 
-The validated onboarding persistence and privacy architecture remains. Its copy
-and goals require a separate revision after the Care-loop redesign is approved.
+The validated onboarding persistence and privacy architecture remains for
+release 2.0. Its goal choices stay optional and may be skipped entirely; the
+stored selections are not inputs to cycle prediction, Comfort Window, or
+Comfort Kit logic.
 
 ## Phase 2: Personal Care Memory
 
@@ -141,7 +155,7 @@ patterns, and reports are deterministic and on-device.
 | --- | --- | --- |
 | 1 | Encrypted local export and import | validated ([spec](features/2026-07-28-encrypted-local-export-import/)) |
 | 2 | Cycle and Care Summary export | proposed ([spec](features/2026-07-28-cycle-care-summary-export/)) |
-| 3 | Doctor Mode, prospective diary, and clinical report | in_progress (diary built; clinical report deferred) ([spec](features/2026-07-28-doctor-mode-prospective-diary/)) |
+| 3 | Doctor Mode, prospective diary, and clinical report | future capability (domain and in-memory test prototype only; production persistence, UI, report, and clinical review not implemented) ([spec](features/2026-07-28-doctor-mode-prospective-diary/)) |
 | 4 | Authentication and subscription entitlement | in_progress (mobile auth and bounded RevenueCat slice implemented; Supabase deployment, store configuration, and native billing validation remain) ([spec](features/2026-07-28-auth-subscription-entitlement/)) |
 | 5 | Privacy-safe operational analytics (PostHog Cloud) | validated (typed, consent-gated implementation; production project configuration and release review remain) ([spec](features/2026-07-28-privacy-safe-operational-analytics/)) |
 | 6 | Encrypted cloud backup (MVP) | deferred ([spec](features/2026-07-28-encrypted-backup-demand-test/)) |
@@ -149,7 +163,9 @@ patterns, and reports are deterministic and on-device.
 Local export/import is separate from optional cloud backup. Reports are
 generated from local, user-confirmed data. Doctor Mode cannot use DRSP wording
 or claim diagnostic equivalence until clinical review, wording, scoring, and
-licensing requirements are satisfied.
+licensing requirements are satisfied. It is a future capability and is not
+part of the current production app; ordinary logging, Patterns, and the current
+Reports exports remain separate supported capabilities.
 
 ## Phase 5: MVP Release Readiness
 

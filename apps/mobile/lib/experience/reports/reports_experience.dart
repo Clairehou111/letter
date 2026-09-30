@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 
 import '../../features/clinical/presentation/twin_matrix_view_model.dart';
 import '../../features/cycle/domain/local_date.dart';
+import '../../features/entitlement/domain/entitlement.dart';
+import '../../features/entitlement/presentation/entitlement_scope.dart';
 import '../../features/summary_export/domain/cycle_care_summary.dart';
 import '../../features/summary_export/presentation/twin_matrix_summary_adapter.dart';
 import '../experience_release_ports.dart';
@@ -9,16 +11,22 @@ import '../plus/plus_experience.dart';
 import '../theme/experience_foundation.dart';
 
 /// Reports route: the ledger. A deliberately-entered route hosting the real
-/// free artifact — tiered by completed-cycle count — with honest range
+/// limited free recent-three-month preview — tiered by completed-cycle count — with honest range
 /// handling, fixed disclosures, honest missingness, opt-in note selection,
 /// the factual boundary with two equal-weight actions, and entitlement-gated
-/// PDF/CSV export through [ReportExperiencePort] only.
+/// paid Visit Summary / raw CSV / Clinical Pattern Report export through
+/// [ReportExperiencePort] only.
 ///
 /// This surface never builds files, chooses paths, or infers data. The port
 /// owns loading and the native file handoff; the domain owns the summary
 /// composition. Presentation owns the range, the cycle-tier derivation, the
 /// note selection, the calm four-outcome receipt feedback, post-export
 /// continuity, and post-purchase continuation.
+///
+/// Layout: a centered reading column (max 480) carries every text section so
+/// the report keeps a calm measure on tablets; the two-cycle timelines and
+/// the Twin Matrix use a wider data column (max 720) so their day geometry
+/// stays readable on wide screens. Compact phones are the default case.
 ///
 /// Cycle tiers (presentation-side arithmetic over the loaded input): a
 /// completed cycle is the span between two consecutive recorded period
@@ -33,12 +41,16 @@ import '../theme/experience_foundation.dart';
 /// estimated future window never appears as a report's end date — and the
 /// "All records" start derives from the earliest actual record. The printed
 /// range is exactly the range handed to the preview and to the export port.
-/// Upper presets remain visible and tappable but are Plus-gated: tapping one
-/// without access opens the commitment sheet instead of switching.
+/// Upper presets stay visible and tappable in the range ledger but are
+/// Plus-gated: tapping one without access opens the commitment sheet instead
+/// of switching. Gated rows are marked, never disabled, so the path stays
+/// explained.
 ///
-/// Gating: reading local material here is free. Clinician-ready
-/// report generation (the export itself) requires the `clinicianReports`
-/// capability; after an entitlement lapse everything remains readable.
+/// Gating: only the limited recent-three-month factual preview is free.
+/// Longer/custom ranges and in-app Plus interpretation may be demonstrated by
+/// the no-card Preview. Every generated file requires freshly verified paid
+/// `clinicianReports` entitlement; after a lapse previously generated files
+/// remain untouched. The clinical matrix is never rendered without Plus depth.
 /// Contextual Plus acquisition is never shown or opened within 24 hours of
 /// the latest Care record; existing paid access remains usable.
 class ReportsExperience extends StatefulWidget {
@@ -49,6 +61,7 @@ class ReportsExperience extends StatefulWidget {
     this.onOpenPlus,
     this.onOpenPlusWithContext,
     this.onOpenSourceRecords,
+    this.onOpenCycle,
     this.now,
   });
 
@@ -82,6 +95,10 @@ class ReportsExperience extends StatefulWidget {
   /// report. Falls back to popping this route when not provided.
   final VoidCallback? onOpenSourceRecords;
 
+  /// Low-data recovery: leaves Reports and opens Cycle so the person can
+  /// record or review the dates this artifact needs.
+  final VoidCallback? onOpenCycle;
+
   /// Shell-provided current date/time used to clamp report ranges so no
   /// displayed or exported range ends in the future. Defaults to the device
   /// clock.
@@ -113,7 +130,7 @@ class _ReportsExperienceState extends State<ReportsExperience> {
   SummaryExportInput? _input;
   Object? _loadError;
 
-  /// Last 3 months is the default and the only free preset.
+  /// Last 3 months is the default and the only free range.
   _RangePreset _preset = _RangePreset.lastThreeMonths;
   SummaryDateRange? _customRange;
 
@@ -133,8 +150,43 @@ class _ReportsExperienceState extends State<ReportsExperience> {
   DateTime? _lastSuccessAt;
   ExperienceFileOutcome? _lastSuccessOutcome;
 
-  bool get _hasClinicianAccess =>
-      widget.canUseClinicianReports || _plusActivated;
+  /// Reading column: every text section keeps the shared reading measure.
+  static const double _readColumnWidth = 480;
+
+  /// Data column: timelines and the matrix get more room on wide screens so
+  /// their day geometry and score numerals stay readable.
+  static const double _dataColumnWidth = 720;
+
+  bool get _hasPlusDepthAccess {
+    final liveRepository = EntitlementScope.repositoryOf(context);
+    if (liveRepository != null) {
+      return EntitlementScope.canUse(
+        context,
+        LetterCapability.longitudinalComparisons,
+      );
+    }
+    return widget.canUseClinicianReports || _plusActivated;
+  }
+
+  bool get _hasPaidFileAccess {
+    final liveRepository = EntitlementScope.repositoryOf(context);
+    if (liveRepository != null) {
+      return EntitlementScope.canGenerateReportFiles(context);
+    }
+    return widget.canUseClinicianReports || _plusActivated;
+  }
+
+  Future<bool> _refreshPaidFileAccess() async {
+    final repository = EntitlementScope.repositoryOf(context);
+    if (repository == null) return _hasPaidFileAccess;
+    try {
+      final live = await repository.refresh();
+      return live.canUse(LetterCapability.clinicianReports);
+    } catch (_) {
+      // An unverifiable/offline state cannot authorize new file generation.
+      return false;
+    }
+  }
 
   @override
   void initState() {
@@ -314,33 +366,6 @@ class _ReportsExperienceState extends State<ReportsExperience> {
   // note selection all live underneath the sheet.
   // -------------------------------------------------------------------------
 
-  PlusOutcomeContext _rangeOutcomeFor(
-    _RangePreset preset,
-    int completedCycles,
-  ) {
-    final cycleWord = completedCycles == 1 ? 'cycle' : 'cycles';
-    return switch (preset) {
-      _RangePreset.lastSixMonths => const PlusOutcomeContext.seeAllCycles(
-        headline: 'Compare 6 months of cycle evidence',
-        rangeId: 'lastSixMonths',
-      ),
-      _RangePreset.lastYear => const PlusOutcomeContext.seeAllCycles(
-        headline: 'Compare a year of cycle evidence',
-        rangeId: 'lastYear',
-      ),
-      _RangePreset.custom => const PlusOutcomeContext.seeAllCycles(
-        headline: 'Choose a report range',
-        rangeId: 'custom',
-        opensDateRangePicker: true,
-      ),
-      _RangePreset.everything ||
-      _RangePreset.lastThreeMonths => PlusOutcomeContext.seeAllCycles(
-        headline: 'Compare all $completedCycles completed $cycleWord',
-        rangeId: 'everything',
-      ),
-    };
-  }
-
   _RangePreset? _presetFromRangeId(String? rangeId) {
     return switch (rangeId) {
       'lastSixMonths' => _RangePreset.lastSixMonths,
@@ -391,6 +416,16 @@ class _ReportsExperienceState extends State<ReportsExperience> {
     ReportExportFormat format,
   ) async {
     if (_exporting) return;
+    // Re-read the store-backed entitlement for every deliberate generation
+    // attempt. The Reports route may have stayed open through a lapse, and a
+    // no-card Preview must never authorize bytes on disk.
+    if (!await _refreshPaidFileAccess()) {
+      if (!mounted) return;
+      await _openCommitment(
+        const PlusOutcomeContext.export(headline: 'Generate a report file'),
+      );
+      return;
+    }
     setState(() {
       _exporting = true;
       _lastAttemptedFormat = format;
@@ -448,6 +483,22 @@ class _ReportsExperienceState extends State<ReportsExperience> {
     }
   }
 
+  /// Centered content column: text sections keep the shared reading measure;
+  /// data canvases may opt into the wider column on tablets and desktops.
+  Widget _framed(Widget child, {double maxWidth = _readColumnWidth}) {
+    return Center(
+      child: ConstrainedBox(
+        constraints: BoxConstraints(maxWidth: maxWidth),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(
+            horizontal: ExperienceSpacing.screenMargin,
+          ),
+          child: child,
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -484,19 +535,29 @@ class _ReportsExperienceState extends State<ReportsExperience> {
     final completedSpans = cycleEvidence.completedCycles;
     final completedCycles = cycleEvidence.completedCycleCount;
     final completedSpansInRange = completedSpans
-        .where((cycle) => cycle.overlaps(range))
+        .where(
+          (cycle) =>
+              !cycle.start.isBefore(range.start) &&
+              !cycle.end.isAfter(range.end),
+        )
         .toList(growable: false);
     final completedCyclesInRange = completedSpansInRange.length;
+    final hasInRangeFacts =
+        summary.periodDays.isNotEmpty ||
+        summary.predictions.isNotEmpty ||
+        summary.healthRows.isNotEmpty ||
+        summary.checkInRows.isNotEmpty ||
+        summary.careRows.isNotEmpty;
     final careAdjacent = _careAdjacent(input);
-    final hasAccess = _hasClinicianAccess;
-    // Contextual acquisition requires the artifact threshold (3+ completed
-    // cycles), no recent Care, and a Plus route to open.
+    final hasPlusDepthAccess = _hasPlusDepthAccess;
+    final hasPaidFileAccess = _hasPaidFileAccess;
+    // Contextual acquisition stays quiet near recent Care and requires a Plus
+    // route, while locked ranges remain visible and explained.
     final canAcquire =
-        completedCycles >= 3 &&
         !careAdjacent &&
         (widget.onOpenPlusWithContext != null || widget.onOpenPlus != null);
 
-    final twinMatrix = completedCyclesInRange >= 3
+    final twinMatrix = hasPlusDepthAccess && completedCyclesInRange >= 3
         ? TwinMatrixSummaryAdapter.fromSummary(
             summary: summary,
             exportTimestamp: summaryDateTimeLabel(_currentTime()),
@@ -516,193 +577,241 @@ class _ReportsExperienceState extends State<ReportsExperience> {
     final cycleWord = completedCycles == 1 ? 'cycle' : 'cycles';
 
     return ListView(
-      padding: const EdgeInsets.fromLTRB(
-        ExperienceSpacing.screenMargin,
-        ExperienceSpacing.sm,
-        ExperienceSpacing.screenMargin,
-        ExperienceSpacing.scrollBottomPadding,
+      padding: const EdgeInsets.only(
+        top: ExperienceSpacing.sm,
+        bottom: ExperienceSpacing.scrollBottomPadding,
       ),
       children: <Widget>[
-        Text(
-          'A plain summary of what you recorded.',
-          style: ExperienceType.title(ExperienceColors.ink),
-        ),
-        const SizedBox(height: ExperienceSpacing.xs),
-        Text(
-          'Choose a range, look through what is inside, then export on your '
-          'terms. Nothing here is a diagnosis.',
-          style: ExperienceType.bodySmall(ExperienceColors.inkSoft),
+        _framed(
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: <Widget>[
+              Text(
+                'A plain summary of what you recorded.',
+                style: ExperienceType.title(ExperienceColors.ink),
+              ),
+              const SizedBox(height: ExperienceSpacing.xs),
+              Text(
+                'Choose a range, look through what is inside, then export on '
+                'your terms. Nothing here is a diagnosis.',
+                style: ExperienceType.bodySmall(ExperienceColors.inkSoft),
+              ),
+            ],
+          ),
         ),
         if (_lastSuccessAt != null) ...<Widget>[
           const SizedBox(height: ExperienceSpacing.md),
-          _ContinuityLine(
-            lastSuccessAt: _lastSuccessAt!,
-            outcome: _lastSuccessOutcome ?? ExperienceFileOutcome.savedOnly,
-            onBackToRecords: _backToRecords,
+          _framed(
+            _ContinuityLine(
+              lastSuccessAt: _lastSuccessAt!,
+              outcome: _lastSuccessOutcome ?? ExperienceFileOutcome.savedOnly,
+              onBackToRecords: _backToRecords,
+            ),
           ),
         ],
         const SizedBox(height: ExperienceSpacing.lg),
         if (completedCycles == 0)
-          // No range chips at zero completed cycles — the resolved range is
+          // No range ledger at zero completed cycles — the resolved range is
           // informational only.
-          Semantics(
-            label: 'Report range ${range.label}',
-            child: Text(
-              range.label,
-              style: ExperienceType.data(
-                ExperienceColors.inkSoft,
-                size: 14,
-                weight: FontWeight.w500,
+          _framed(
+            Semantics(
+              label: 'Report range ${range.label}',
+              child: Text(
+                range.label,
+                style: ExperienceType.data(
+                  ExperienceColors.inkSoft,
+                  size: 14,
+                  weight: FontWeight.w500,
+                ),
               ),
             ),
           )
         else
-          _RangeSection(
-            preset: _preset,
-            customRange: _customRange,
-            rangeLabel: range.label,
-            gated: (preset) =>
-                !hasAccess && preset != _RangePreset.lastThreeMonths,
-            onSelect: (preset) async {
-              if (!hasAccess && preset != _RangePreset.lastThreeMonths) {
-                // Gated presets stay tappable but never switch the range;
-                // below the artifact threshold or near Care they stay quiet.
-                if (!canAcquire) return;
-                await _openCommitment(
-                  _rangeOutcomeFor(preset, completedCycles),
-                );
-                return;
-              }
-              if (preset == _RangePreset.custom) {
-                await _pickCustomRange(bounds);
-                return;
-              }
-              await ExperienceHaptics.pick();
-              setState(() => _preset = preset);
-            },
+          _framed(
+            _RangeSection(
+              preset: _preset,
+              customRange: _customRange,
+              rangeLabel: range.label,
+              gated: (preset) =>
+                  preset != _RangePreset.lastThreeMonths && !hasPlusDepthAccess,
+              onSelect: (preset) async {
+                if (preset != _RangePreset.lastThreeMonths &&
+                    !hasPlusDepthAccess) {
+                  if (!canAcquire) return;
+                  await _openCommitment(
+                    PlusOutcomeContext.seeAllCycles(
+                      headline: switch (preset) {
+                        _RangePreset.lastSixMonths =>
+                          'Review the last 6 months',
+                        _RangePreset.lastYear => 'Review the last year',
+                        _RangePreset.everything => 'Review all records',
+                        _RangePreset.custom => 'Choose a custom report range',
+                        _RangePreset.lastThreeMonths =>
+                          'Review the last 3 months',
+                      },
+                      rangeId: preset.name,
+                      opensDateRangePicker: preset == _RangePreset.custom,
+                    ),
+                  );
+                  return;
+                }
+                if (preset == _RangePreset.custom) {
+                  await _pickCustomRange(bounds);
+                  return;
+                }
+                setState(() => _preset = preset);
+                // Selection is local state and must never wait on a platform
+                // haptics channel that may be unavailable or slow.
+                await ExperienceHaptics.pick();
+              },
+            ),
           ),
         const SizedBox(height: ExperienceSpacing.md),
-        const _DisclosureCard(),
+        _framed(const _DisclosureCard()),
         const SizedBox(height: ExperienceSpacing.md),
         // The real artifact is tiered by completed cycles inside the exact
         // selected range. Older cycles cannot inflate a narrow-range claim.
         if (completedCyclesInRange == 0)
-          _NoCyclesCard(
-            recordedDays: _recordedDays(input),
-            hasCompletedCyclesOutsideRange: completedCycles > 0,
+          _framed(
+            _NoCyclesCard(
+              recordedDays: _recordedDays(input),
+              hasCompletedCyclesOutsideRange: completedCycles > 0,
+              onOpenCycle: widget.onOpenCycle,
+            ),
           )
         else if (completedCyclesInRange == 1) ...<Widget>[
-          _PreviewSections(summary: summary),
-          Semantics(
-            container: true,
-            child: Text(
-              'One cycle cannot show recurrence.',
-              style: ExperienceType.bodySmall(ExperienceColors.inkSoft),
+          _framed(_PreviewSections(summary: summary)),
+          _framed(
+            Semantics(
+              container: true,
+              child: Text(
+                'One cycle cannot show recurrence.',
+                style: ExperienceType.bodySmall(ExperienceColors.inkSoft),
+              ),
             ),
           ),
         ] else if (completedCyclesInRange == 2) ...<Widget>[
-          _TwoCycleComparison(
-            spans: completedSpansInRange,
-            summary: buildCycleAndCareSummary(
-              input: input,
-              range: SummaryDateRange(
-                start: completedSpansInRange.first.start,
-                end: completedSpansInRange.last.end,
-              ),
-              selectedNoteIds: const <String>{},
-            ),
+          _framed(
+            _TwoCycleComparison(spans: completedSpansInRange, summary: summary),
+            maxWidth: _dataColumnWidth,
           ),
           const SizedBox(height: ExperienceSpacing.unit),
-          Semantics(
-            container: true,
-            child: Text(
-              'A third completed cycle in this range enables comparison.',
-              textAlign: TextAlign.center,
-              style: ExperienceType.caption(ExperienceColors.inkFaint),
+          _framed(
+            Semantics(
+              container: true,
+              child: Text(
+                'A third completed cycle in this range enables comparison.',
+                textAlign: TextAlign.center,
+                style: ExperienceType.caption(ExperienceColors.inkFaint),
+              ),
             ),
           ),
-        ] else ...<Widget>[
-          const _CertaintyLegend(),
+        ] else if (hasPlusDepthAccess) ...<Widget>[
+          _framed(const _CertaintyLegend(), maxWidth: _dataColumnWidth),
           const SizedBox(height: ExperienceSpacing.sm),
-          _TwinMatrixSection(viewModel: twinMatrix!),
-        ],
-        // The boundary: immediately after the artifact, before notes,
-        // auxiliary preview sections, and export details.
-        if (completedCyclesInRange >= 3 &&
-            !hasAccess &&
-            canAcquire) ...<Widget>[
-          const SizedBox(height: ExperienceSpacing.lg),
-          _BoundaryBlock(
-            rangePresetLabel: _presetLabel,
-            completedCyclesInRange: completedCyclesInRange,
-            totalCompletedCycles: completedCycles,
-            onSeeAllCycles: () => _openCommitment(
-              PlusOutcomeContext.seeAllCycles(
-                headline: 'Compare all $completedCycles completed $cycleWord',
-                rangeId: 'everything',
-              ),
-            ),
-            onExport: () => _openCommitment(
-              const PlusOutcomeContext.export(
-                headline: 'Export as PDF for a clinician',
-              ),
-            ),
+          _framed(
+            _TwinMatrixSection(viewModel: twinMatrix!),
+            maxWidth: _dataColumnWidth,
           ),
         ],
         if (completedCyclesInRange >= 1 && missingness.isNotEmpty) ...<Widget>[
           const SizedBox(height: ExperienceSpacing.md),
-          _MissingnessCard(missingness: missingness),
+          _framed(_MissingnessCard(missingness: missingness)),
         ],
         if (completedCyclesInRange >= 2) ...<Widget>[
           const SizedBox(height: ExperienceSpacing.md),
-          _PreviewSections(summary: summary),
+          _framed(_PreviewSections(summary: summary)),
+        ],
+        if (completedCyclesInRange == 0 && hasInRangeFacts) ...<Widget>[
+          const SizedBox(height: ExperienceSpacing.md),
+          _framed(_PreviewSections(summary: summary)),
         ],
         const SizedBox(height: ExperienceSpacing.md),
-        _NoteSelection(
-          notes: inRangeNotes,
-          totalNoteCount: input.notes.length,
-          selectedNoteIds: _selectedNoteIds,
-          onToggle: (noteId, selected) async {
-            await ExperienceHaptics.pick();
-            setState(() {
-              if (selected) {
-                _selectedNoteIds.add(noteId);
-              } else {
-                _selectedNoteIds.remove(noteId);
-              }
-            });
-          },
+        _framed(
+          _NoteSelection(
+            notes: inRangeNotes,
+            totalNoteCount: input.notes.length,
+            selectedNoteIds: _selectedNoteIds,
+            onToggle: (noteId, selected) async {
+              await ExperienceHaptics.pick();
+              setState(() {
+                if (selected) {
+                  _selectedNoteIds.add(noteId);
+                } else {
+                  _selectedNoteIds.remove(noteId);
+                }
+              });
+            },
+          ),
         ),
         const SizedBox(height: ExperienceSpacing.lg),
-        if (hasAccess)
-          _ExportPanel(
+        _framed(
+          _ReportFileExportPanel(
             exporting: _exporting,
+            hasPaidAccess: hasPaidFileAccess,
             onExport: (format) => _export(range, format),
           ),
+        ),
+        if (completedCyclesInRange >= 3 &&
+            !hasPlusDepthAccess &&
+            canAcquire) ...<Widget>[
+          const SizedBox(height: ExperienceSpacing.lg),
+          _framed(
+            _BoundaryBlock(
+              rangePresetLabel: _presetLabel,
+              completedCyclesInRange: completedCyclesInRange,
+              totalCompletedCycles: completedCycles,
+              onSeeAllCycles: () => _openCommitment(
+                PlusOutcomeContext.seeAllCycles(
+                  headline: 'Compare all $completedCycles completed $cycleWord',
+                  rangeId: 'everything',
+                ),
+              ),
+              onExport: () => _openCommitment(
+                const PlusOutcomeContext.export(
+                  headline: 'Generate a report file',
+                ),
+              ),
+            ),
+          ),
+        ],
+        if (hasPlusDepthAccess) ...<Widget>[
+          const SizedBox(height: ExperienceSpacing.md),
+          _framed(
+            _ClinicalExportPanel(
+              exporting: _exporting,
+              onExport: () =>
+                  _export(range, ReportExportFormat.patternReportPdf),
+            ),
+          ),
+        ],
         if (_receipt != null) ...<Widget>[
           const SizedBox(height: ExperienceSpacing.md),
-          _ReceiptCard(
-            receipt: _receipt!,
-            onRetry: _receipt!.outcome == ExperienceFileOutcome.failed
-                ? () => _export(
-                    range,
-                    _lastAttemptedFormat ?? ReportExportFormat.pdf,
-                  )
-                : null,
+          _framed(
+            _ReceiptCard(
+              receipt: _receipt!,
+              onRetry: _receipt!.outcome == ExperienceFileOutcome.failed
+                  ? () => _export(
+                      range,
+                      _lastAttemptedFormat ??
+                          ReportExportFormat.visitSummaryPdf,
+                    )
+                  : null,
+            ),
           ),
         ],
         const SizedBox(height: ExperienceSpacing.sm),
-        SavedRhythmAckLine(line: _ackLine),
+        _framed(SavedRhythmAckLine(line: _ackLine)),
       ],
     );
   }
 }
 
 // ---------------------------------------------------------------------------
-// Range selection — the shared foundation selection treatment (warm fill,
-// ink hairline, weight change), never a local accent wash. Gated presets
-// stay tappable buttons with a "requires Plus" hint — never disabled, so the
-// path stays explained.
+// Range selection — a single ledger list, not a row of pills. Each preset is
+// one hairline-separated row: the selection reads as a warm fill with an ink
+// check, and gated presets stay tappable rows with a lock-and-"Plus" mark —
+// never disabled, so the path stays explained.
 // ---------------------------------------------------------------------------
 
 class _RangeSection extends StatelessWidget {
@@ -722,57 +831,44 @@ class _RangeSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    Widget chip(String label, _RangePreset value) {
-      final selected = preset == value;
-      final isGated = gated(value);
-      return Semantics(
-        hint: isGated ? 'Requires Letter Within Plus' : null,
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(
-            minHeight: ExperienceSpacing.minTouchTarget,
-          ),
-          child: ChoiceChip(
-            label: Text(label),
-            selected: selected,
-            onSelected: (_) => onSelect(value),
-            showCheckmark: false,
-            backgroundColor: ExperienceColors.surface,
-            selectedColor: ExperienceColors.surfaceWarm,
-            side: BorderSide(
-              color: selected
-                  ? ExperienceColors.inkSoft
-                  : ExperienceColors.hairline,
-              width: selected ? 1.2 : 1,
-            ),
-            labelStyle: selected
-                ? ExperienceType.label(ExperienceColors.ink)
-                : ExperienceType.bodySmall(ExperienceColors.inkSoft),
-            shape: const RoundedRectangleBorder(
-              borderRadius: ExperienceRadius.chipRadius,
-            ),
-          ),
-        ),
-      );
-    }
-
+    final items = <({String label, _RangePreset value})>[
+      (label: 'Last 3 months', value: _RangePreset.lastThreeMonths),
+      (label: 'Last 6 months', value: _RangePreset.lastSixMonths),
+      (label: 'Last year', value: _RangePreset.lastYear),
+      (label: 'All records', value: _RangePreset.everything),
+      (
+        label: customRange == null ? 'Custom…' : 'Custom range',
+        value: _RangePreset.custom,
+      ),
+    ];
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: <Widget>[
         Text('Range', style: ExperienceType.headline(ExperienceColors.ink)),
         const SizedBox(height: ExperienceSpacing.xs),
-        Wrap(
-          spacing: ExperienceSpacing.unit,
-          runSpacing: ExperienceSpacing.unit,
-          children: <Widget>[
-            chip('Last 3 months', _RangePreset.lastThreeMonths),
-            chip('Last 6 months', _RangePreset.lastSixMonths),
-            chip('Last year', _RangePreset.lastYear),
-            chip('All records', _RangePreset.everything),
-            chip(
-              customRange == null ? 'Custom…' : 'Custom range',
-              _RangePreset.custom,
+        Container(
+          decoration: BoxDecoration(
+            color: ExperienceColors.surface,
+            borderRadius: ExperienceRadius.cardRadius,
+            border: Border.all(color: ExperienceColors.hairline),
+          ),
+          child: ClipRRect(
+            borderRadius: ExperienceRadius.cardRadius,
+            child: Column(
+              children: <Widget>[
+                for (var index = 0; index < items.length; index++) ...<Widget>[
+                  if (index > 0)
+                    Container(height: 1, color: ExperienceColors.hairline),
+                  _RangeRow(
+                    label: items[index].label,
+                    selected: preset == items[index].value,
+                    isGated: gated(items[index].value),
+                    onTap: () => onSelect(items[index].value),
+                  ),
+                ],
+              ],
             ),
-          ],
+          ),
         ),
         const SizedBox(height: ExperienceSpacing.unit),
         Semantics(
@@ -791,6 +887,77 @@ class _RangeSection extends StatelessWidget {
   }
 }
 
+class _RangeRow extends StatelessWidget {
+  const _RangeRow({
+    required this.label,
+    required this.selected,
+    required this.isGated,
+    required this.onTap,
+  });
+
+  final String label;
+  final bool selected;
+  final bool isGated;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Semantics(
+      button: true,
+      selected: selected,
+      hint: isGated ? 'Requires Letter Within Plus' : null,
+      child: Material(
+        color: selected
+            ? ExperienceColors.surfaceWarm
+            : ExperienceColors.surface,
+        child: InkWell(
+          onTap: onTap,
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(
+              minHeight: ExperienceSpacing.minTouchTarget,
+            ),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(
+                horizontal: ExperienceSpacing.md,
+                vertical: ExperienceSpacing.sm,
+              ),
+              child: Row(
+                children: <Widget>[
+                  Expanded(
+                    child: Text(
+                      label,
+                      style: selected
+                          ? ExperienceType.label(ExperienceColors.ink)
+                          : ExperienceType.body(ExperienceColors.ink),
+                    ),
+                  ),
+                  if (isGated) ...<Widget>[
+                    const Icon(
+                      Icons.lock_outline,
+                      size: 15,
+                      color: ExperienceColors.inkFaint,
+                    ),
+                    const SizedBox(width: 6),
+                    Text(
+                      'Plus',
+                      style: ExperienceType.caption(ExperienceColors.inkFaint),
+                    ),
+                  ] else if (selected)
+                    const Icon(
+                      Icons.check,
+                      size: 18,
+                      color: ExperienceColors.ink,
+                    ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 // ---------------------------------------------------------------------------
 // Cycle tiers 0 and 1 — literal coverage, missingness stays missing. The
 // word "pattern" never appears here.
@@ -800,10 +967,12 @@ class _NoCyclesCard extends StatelessWidget {
   const _NoCyclesCard({
     required this.recordedDays,
     required this.hasCompletedCyclesOutsideRange,
+    this.onOpenCycle,
   });
 
   final int recordedDays;
   final bool hasCompletedCyclesOutsideRange;
+  final VoidCallback? onOpenCycle;
 
   @override
   Widget build(BuildContext context) {
@@ -815,7 +984,7 @@ class _NoCyclesCard extends StatelessWidget {
               'before this report can show timing.';
     return Semantics(
       container: true,
-      label: message,
+      explicitChildNodes: true,
       child: Container(
         width: double.infinity,
         padding: const EdgeInsets.all(ExperienceSpacing.md),
@@ -825,11 +994,28 @@ class _NoCyclesCard extends StatelessWidget {
           border: Border.all(color: ExperienceColors.hairline),
           boxShadow: ExperienceShadows.card,
         ),
-        child: ExcludeSemantics(
-          child: Text(
-            message,
-            style: ExperienceType.body(ExperienceColors.ink),
-          ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: <Widget>[
+            Text(message, style: ExperienceType.body(ExperienceColors.ink)),
+            if (onOpenCycle != null && !hasCompletedCyclesOutsideRange) ...[
+              const SizedBox(height: ExperienceSpacing.sm),
+              OutlinedButton.icon(
+                key: const Key('reports-empty-open-cycle'),
+                onPressed: onOpenCycle,
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: ExperienceColors.emberBright,
+                  minimumSize: const Size(0, 48),
+                  side: const BorderSide(color: ExperienceColors.ember),
+                  shape: const RoundedRectangleBorder(
+                    borderRadius: ExperienceRadius.chipRadius,
+                  ),
+                ),
+                icon: const Icon(Icons.water_drop_outlined, size: 18),
+                label: const Text('Open Cycle'),
+              ),
+            ],
+          ],
         ),
       ),
     );
@@ -861,8 +1047,8 @@ class _TwoCycleComparison extends StatelessWidget {
 
   final List<SummaryCompletedCycle> spans;
 
-  /// Summary built over the exact window covering both cycles, so each
-  /// timeline shows its full real contents rather than a range-clipped view.
+  /// The same selected-range summary used by every other preview. A cycle
+  /// comparison must never pull observations from outside the visible range.
   final CycleAndCareSummary summary;
 
   List<_CycleTimelineEntry> _entriesFor(SummaryCompletedCycle span) {
@@ -1328,8 +1514,12 @@ class _TwinMatrixSection extends StatelessWidget {
           LayoutBuilder(
             builder: (context, constraints) {
               final textScale = MediaQuery.textScalerOf(context).scale(1);
+              final matrixScale = textScale.clamp(1.0, 2.0);
               var width = constraints.maxWidth;
-              var labelWidth = (width * 0.22).clamp(74.0, 124.0);
+              var labelWidth = (width * 0.22).clamp(
+                74.0 * matrixScale,
+                124.0 * matrixScale,
+              );
               var dayWidth = (width - labelWidth) / 28;
               // Panning keeps the canvas at a readable fixed width when text
               // is scaled up or the available width would crush the day
@@ -1338,19 +1528,23 @@ class _TwinMatrixSection extends StatelessWidget {
                   (textScale > 1.3 || dayWidth < 7.5) &&
                   constraints.maxWidth < _scrollCanvasWidth;
               if (panning) {
-                width = _scrollCanvasWidth;
-                labelWidth = (width * 0.22).clamp(74.0, 124.0);
+                width = _scrollCanvasWidth * matrixScale;
+                labelWidth = (width * 0.22).clamp(
+                  74.0 * matrixScale,
+                  124.0 * matrixScale,
+                );
                 dayWidth = (width - labelWidth) / 28;
               }
               // Score numerals drop below readability on narrow widths;
               // bar heights against the shelf line remain, and cells stay
               // blank-honest.
-              final paintScores = dayWidth >= 13;
+              final paintScores = dayWidth >= 13 * matrixScale;
               final height =
-                  _TwinMatrixCanvasPainter.axisHeight +
+                  _TwinMatrixCanvasPainter.axisHeight * matrixScale +
                   _TwinMatrixCanvasPainter.rowHeight *
+                      matrixScale *
                       (vm.clusters.isEmpty ? 1 : vm.clusters.length) +
-                  _TwinMatrixCanvasPainter.laneHeight;
+                  _TwinMatrixCanvasPainter.laneHeight * matrixScale;
               final canvasAndCaptions = SizedBox(
                 width: width,
                 child: Column(
@@ -1362,6 +1556,7 @@ class _TwinMatrixSection extends StatelessWidget {
                           viewModel: vm,
                           labelWidth: labelWidth,
                           paintScores: paintScores,
+                          textScale: matrixScale,
                         ),
                         size: Size(width, height),
                       ),
@@ -1415,7 +1610,7 @@ class _TwinMatrixSection extends StatelessWidget {
               style: ExperienceType.caption(ExperienceColors.inkSoft),
             ),
             const SizedBox(height: ExperienceSpacing.unit),
-            for (final marker in vm.qualitativeCheckIns)
+            for (final marker in vm.qualitativeCheckIns.take(8))
               Padding(
                 padding: const EdgeInsets.only(bottom: ExperienceSpacing.xs),
                 child: Row(
@@ -1445,6 +1640,16 @@ class _TwinMatrixSection extends StatelessWidget {
                       ),
                     ),
                   ],
+                ),
+              ),
+            if (vm.qualitativeCheckIns.length > 8)
+              Padding(
+                padding: const EdgeInsets.only(top: ExperienceSpacing.unit),
+                child: Text(
+                  '+ ${vm.qualitativeCheckIns.length - 8} more difficult '
+                  'check-ins in this range. Generated reports keep all of '
+                  'them.',
+                  style: ExperienceType.caption(ExperienceColors.inkFaint),
                 ),
               ),
           ],
@@ -1508,6 +1713,7 @@ class _TwinMatrixCanvasPainter extends CustomPainter {
     required this.viewModel,
     required this.labelWidth,
     this.paintScores = true,
+    this.textScale = 1,
   });
 
   final TwinMatrixViewModel viewModel;
@@ -1520,20 +1726,77 @@ class _TwinMatrixCanvasPainter extends CustomPainter {
   /// readable; bars still render against the shelf line and blanks stay
   /// blank.
   final bool paintScores;
+  final double textScale;
 
   static const double axisHeight = 20;
   static const double rowHeight = 46;
   static const double laneHeight = 22;
+  static const List<Color> _clusterColors = <Color>[
+    ExperienceColors.phasePeriod,
+    ExperienceColors.phaseFollicular,
+    ExperienceColors.phaseLuteal,
+    ExperienceColors.phaseOvulation,
+    ExperienceColors.accentTwin,
+  ];
+
+  static Color _clusterColor(int row) =>
+      _clusterColors[row % _clusterColors.length];
+
+  static void _drawClusterMarker(
+    Canvas canvas,
+    int row,
+    Offset center,
+    Paint paint,
+  ) {
+    switch (row % _clusterColors.length) {
+      case 0:
+        canvas.drawCircle(center, 3.3, paint);
+      case 1:
+        canvas.drawRect(
+          Rect.fromCenter(center: center, width: 6.2, height: 6.2),
+          paint,
+        );
+      case 2:
+        canvas.drawPath(
+          Path()
+            ..moveTo(center.dx, center.dy - 4)
+            ..lineTo(center.dx + 3.8, center.dy + 3)
+            ..lineTo(center.dx - 3.8, center.dy + 3)
+            ..close(),
+          paint,
+        );
+      case 3:
+        canvas.drawPath(
+          Path()
+            ..moveTo(center.dx, center.dy - 4)
+            ..lineTo(center.dx + 4, center.dy)
+            ..lineTo(center.dx, center.dy + 4)
+            ..lineTo(center.dx - 4, center.dy)
+            ..close(),
+          paint,
+        );
+      case 4:
+        canvas.drawRRect(
+          RRect.fromRectAndRadius(
+            Rect.fromCenter(center: center, width: 8, height: 3),
+            const Radius.circular(1.5),
+          ),
+          paint,
+        );
+    }
+  }
 
   @override
   void paint(Canvas canvas, Size size) {
     final clusters = viewModel.clusters;
     final rowCount = clusters.isEmpty ? 1 : clusters.length;
-    final rowsHeight = size.height - axisHeight - laneHeight;
+    final scaledAxisHeight = axisHeight * textScale;
+    final scaledLaneHeight = laneHeight * textScale;
+    final rowsHeight = size.height - scaledAxisHeight - scaledLaneHeight;
     final perRow = rowsHeight / rowCount;
     final halfWidth = (size.width - labelWidth) / 2;
     final dayWidth = halfWidth / 14;
-    final rowsBottom = axisHeight + rowsHeight;
+    final rowsBottom = scaledAxisHeight + rowsHeight;
 
     const barGap = 4.0;
     final barMaxHeight = perRow * 0.56;
@@ -1550,7 +1813,7 @@ class _TwinMatrixCanvasPainter extends CustomPainter {
     for (var row = 0; row < clusters.length; row++) {
       if (row.isOdd) {
         canvas.drawRect(
-          Rect.fromLTWH(0, axisHeight + row * perRow, size.width, perRow),
+          Rect.fromLTWH(0, scaledAxisHeight + row * perRow, size.width, perRow),
           altPaint,
         );
       }
@@ -1563,7 +1826,7 @@ class _TwinMatrixCanvasPainter extends CustomPainter {
       ..color = ExperienceColors.hairline.withValues(alpha: 0.65)
       ..strokeWidth = 0.5;
     for (var row = 0; row < rowCount; row++) {
-      final baseline = axisHeight + (row + 1) * perRow;
+      final baseline = scaledAxisHeight + (row + 1) * perRow;
       canvas.drawLine(
         Offset(labelWidth + 1, baseline - barGap - barMaxHeight),
         Offset(size.width - 1, baseline - barGap - barMaxHeight),
@@ -1586,14 +1849,14 @@ class _TwinMatrixCanvasPainter extends CustomPainter {
       ]) {
         if (day.isEven) {
           canvas.drawLine(
-            Offset(x, axisHeight),
+            Offset(x, scaledAxisHeight),
             Offset(x, rowsBottom),
             fineHairline,
           );
         } else {
           canvas.drawLine(
             Offset(x, axisHeight),
-            Offset(x, axisHeight + 3),
+            Offset(x, scaledAxisHeight + 3 * textScale),
             fineHairline,
           );
         }
@@ -1603,12 +1866,12 @@ class _TwinMatrixCanvasPainter extends CustomPainter {
     // Frame: label gutter edge, top edge beneath the axis numerals, and the
     // right edge closing the day region.
     canvas.drawLine(
-      Offset(labelWidth, axisHeight),
+      Offset(labelWidth, scaledAxisHeight),
       Offset(labelWidth, rowsBottom),
       hairline,
     );
     canvas.drawLine(
-      Offset(labelWidth, axisHeight),
+      Offset(labelWidth, scaledAxisHeight),
       Offset(size.width, axisHeight),
       hairline,
     );
@@ -1622,6 +1885,7 @@ class _TwinMatrixCanvasPainter extends CustomPainter {
       final painter = TextPainter(
         text: TextSpan(text: text, style: style),
         textDirection: TextDirection.ltr,
+        textScaler: TextScaler.linear(textScale),
       )..layout();
       painter.paint(canvas, Offset(x - painter.width / 2, y));
     }
@@ -1646,10 +1910,14 @@ class _TwinMatrixCanvasPainter extends CustomPainter {
       ExperienceColors.ink,
     ).copyWith(fontWeight: FontWeight.w600, fontSize: 11.5, height: 1.25);
     final scoreStyle = ExperienceType.data(ExperienceColors.ink, size: 8.5);
-    final barPaint = Paint()..color = ExperienceColors.ink;
     final barWidth = (dayWidth * 0.58).clamp(3.0, 10.0);
 
-    void drawCell(TwinMatrixCell cell, double x, double barBottom) {
+    void drawCell(
+      TwinMatrixCell cell,
+      double x,
+      double barBottom,
+      Color color,
+    ) {
       final severity = cell.severity;
       if (severity == null) return;
       final height = (severity / 5.0).clamp(0.05, 1.0) * barMaxHeight;
@@ -1664,12 +1932,13 @@ class _TwinMatrixCanvasPainter extends CustomPainter {
           topLeft: const Radius.circular(1.5),
           topRight: const Radius.circular(1.5),
         ),
-        barPaint,
+        Paint()..color = color,
       );
       if (!paintScores) return;
       final score = TextPainter(
         text: TextSpan(text: severity.toStringAsFixed(1), style: scoreStyle),
         textDirection: TextDirection.ltr,
+        textScaler: TextScaler.linear(textScale),
       )..layout();
       score.paint(
         canvas,
@@ -1679,28 +1948,39 @@ class _TwinMatrixCanvasPainter extends CustomPainter {
 
     for (var row = 0; row < clusters.length; row++) {
       final cluster = clusters[row];
-      final centerY = axisHeight + row * perRow + perRow / 2;
-      final barBottom = axisHeight + (row + 1) * perRow - barGap;
+      final clusterColor = _clusterColor(row);
+      final centerY = scaledAxisHeight + row * perRow + perRow / 2;
+      final barBottom =
+          scaledAxisHeight + (row + 1) * perRow - barGap * textScale;
       final label = TextPainter(
         text: TextSpan(
           text: _matrixLabelText(cluster.label),
           style: labelStyle,
         ),
         textDirection: TextDirection.ltr,
+        textScaler: TextScaler.linear(textScale),
         maxLines: 3,
         ellipsis: '…',
-      )..layout(maxWidth: labelWidth - 14);
-      label.paint(canvas, Offset(4, centerY - label.height / 2));
+      )..layout(maxWidth: labelWidth - 25);
+      _drawClusterMarker(
+        canvas,
+        row,
+        Offset(8, centerY),
+        Paint()..color = clusterColor,
+      );
+      label.paint(canvas, Offset(16, centerY - label.height / 2));
       for (var index = 0; index < 14; index++) {
         drawCell(
           cluster.beforePeriodCells[index],
           labelWidth + index * dayWidth + dayWidth / 2,
           barBottom,
+          clusterColor,
         );
         drawCell(
           cluster.cycleCells[index],
           labelWidth + halfWidth + index * dayWidth + dayWidth / 2,
           barBottom,
+          clusterColor,
         );
       }
     }
@@ -1712,8 +1992,8 @@ class _TwinMatrixCanvasPainter extends CustomPainter {
     final boundaryPaint = Paint()
       ..color = ExperienceColors.ink
       ..strokeWidth = 1.4;
-    const boundaryTop = axisHeight - 4;
-    final boundaryBottom = rowsBottom + laneHeight - 3;
+    final boundaryTop = scaledAxisHeight - 4 * textScale;
+    final boundaryBottom = rowsBottom + scaledLaneHeight - 3 * textScale;
     canvas.drawLine(
       Offset(centerX, boundaryTop),
       Offset(centerX, boundaryBottom),
@@ -1733,7 +2013,7 @@ class _TwinMatrixCanvasPainter extends CustomPainter {
     // Check-in lane: open rings, one per difficult Today check-in, all in the
     // same neutral ink. No numbers, no fills, no state color — position on
     // the shared axis is the whole message.
-    final laneCenterY = rowsBottom + laneHeight / 2;
+    final laneCenterY = rowsBottom + scaledLaneHeight / 2;
     final ringPaint = Paint()
       ..color = ExperienceColors.inkSoft
       ..style = PaintingStyle.stroke
@@ -1755,7 +2035,8 @@ class _TwinMatrixCanvasPainter extends CustomPainter {
   bool shouldRepaint(_TwinMatrixCanvasPainter oldDelegate) =>
       viewModel != oldDelegate.viewModel ||
       paintScores != oldDelegate.paintScores ||
-      labelWidth != oldDelegate.labelWidth;
+      labelWidth != oldDelegate.labelWidth ||
+      textScale != oldDelegate.textScale;
 }
 
 // ---------------------------------------------------------------------------
@@ -1969,6 +2250,25 @@ class _PreviewSections extends StatelessWidget {
     );
   }
 
+  Widget _checkInRow(SummaryCheckInRow row) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: ExperienceSpacing.xs),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          Text(
+            '${summaryDateLabel(row.date)} · ${row.state.label}',
+            style: ExperienceType.bodySmall(ExperienceColors.ink),
+          ),
+          Text(
+            row.sourceLabel,
+            style: ExperienceType.caption(ExperienceColors.inkFaint),
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _noteRow(SummarySelectableNote note) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: ExperienceSpacing.xs),
@@ -2015,6 +2315,13 @@ class _PreviewSections extends StatelessWidget {
           unit: 'records',
           emptySemantics: 'Missing — no confirmed health records in this range',
           rows: _capped(summary.healthRows, _healthRow, 'records'),
+        ),
+        _section(
+          title: 'Check-ins',
+          count: summary.checkInRows.length,
+          unit: 'moments',
+          emptySemantics: 'Missing — no check-ins in this range',
+          rows: _capped(summary.checkInRows, _checkInRow, 'check-ins'),
         ),
         _section(
           title: 'Care events',
@@ -2177,12 +2484,14 @@ class _NoteTile extends StatelessWidget {
 }
 
 // ---------------------------------------------------------------------------
-// The boundary — the seam between free and Plus. One factual ledger rule in
-// tabular numerals between hairlines, then two equal-weight outlined
-// actions (identical style, identical height, no ember on either; the ember
-// lives only on the commitment sheet's primary CTA), then one quiet
-// reassurance line. Rendered only at three or more completed cycles for
-// users without access, away from Care.
+// The boundary — the seam between free and Plus, unmistakable and without
+// pressure. One factual ledger rule in tabular numerals beside a small PLUS
+// tag, then a two-group ledger stating plainly what is included free and
+// what paid Plus adds, then two equal-weight outlined actions (identical style,
+// identical height, no ember on either; the ember lives only on the
+// commitment sheet's primary CTA), then one quiet reassurance line. Rendered
+// only at three or more completed cycles for users without access, away
+// from Care.
 // ---------------------------------------------------------------------------
 
 class _BoundaryBlock extends StatelessWidget {
@@ -2210,6 +2519,46 @@ class _BoundaryBlock extends StatelessWidget {
     textStyle: ExperienceType.label(ExperienceColors.ink),
   );
 
+  Widget _ledgerGroup(String heading, List<String> lines) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: ExperienceSpacing.md),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          Text(heading, style: ExperienceType.label(ExperienceColors.ink)),
+          const SizedBox(height: ExperienceSpacing.unit),
+          for (final line in lines)
+            Padding(
+              padding: const EdgeInsets.only(bottom: ExperienceSpacing.xs),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: <Widget>[
+                  Padding(
+                    padding: const EdgeInsets.only(top: 7),
+                    child: Container(
+                      width: 5,
+                      height: 5,
+                      decoration: const BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: ExperienceColors.inkFaint,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: ExperienceSpacing.unit),
+                  Expanded(
+                    child: Text(
+                      line,
+                      style: ExperienceType.bodySmall(ExperienceColors.inkSoft),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final inRangeWord = completedCyclesInRange == 1 ? 'cycle' : 'cycles';
@@ -2217,71 +2566,145 @@ class _BoundaryBlock extends StatelessWidget {
     final ruleLine =
         'Showing $rangePresetLabel · $completedCyclesInRange completed '
         '$inRangeWord in range';
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: <Widget>[
-        Container(height: 1, color: ExperienceColors.hairline),
-        Padding(
-          padding: const EdgeInsets.symmetric(vertical: ExperienceSpacing.sm),
-          child: Semantics(
-            container: true,
-            label:
-                'Showing $rangePresetLabel, $completedCyclesInRange completed '
-                '$inRangeWord in range',
-            child: ExcludeSemantics(
-              child: Text(
-                ruleLine,
-                textAlign: TextAlign.center,
-                style: ExperienceType.data(
-                  ExperienceColors.ink,
-                  size: 15,
-                  weight: FontWeight.w600,
+    return Container(
+      decoration: BoxDecoration(
+        color: ExperienceColors.surface,
+        borderRadius: ExperienceRadius.cardRadius,
+        border: Border.all(color: ExperienceColors.hairline),
+        boxShadow: ExperienceShadows.card,
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: <Widget>[
+          const SizedBox(height: ExperienceSpacing.sm),
+          Padding(
+            padding: const EdgeInsets.symmetric(
+              horizontal: ExperienceSpacing.md,
+            ),
+            child: Row(
+              children: <Widget>[
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: ExperienceSpacing.unit,
+                    vertical: 3,
+                  ),
+                  decoration: BoxDecoration(
+                    borderRadius: ExperienceRadius.chipRadius,
+                    border: Border.all(color: ExperienceColors.hairline),
+                  ),
+                  child: Text(
+                    'PLUS',
+                    style: ExperienceType.caption(ExperienceColors.inkSoft)
+                        .copyWith(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w700,
+                          letterSpacing: 2,
+                        ),
+                  ),
+                ),
+                const SizedBox(width: ExperienceSpacing.unit),
+                Expanded(
+                  child: Semantics(
+                    container: true,
+                    label:
+                        'Showing $rangePresetLabel, $completedCyclesInRange '
+                        'completed $inRangeWord in range',
+                    child: ExcludeSemantics(
+                      child: Text(
+                        ruleLine,
+                        style: ExperienceType.data(
+                          ExperienceColors.ink,
+                          size: 14,
+                          weight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: ExperienceSpacing.sm),
+          Container(height: 1, color: ExperienceColors.hairline),
+          const SizedBox(height: ExperienceSpacing.sm),
+          _ledgerGroup('Included free', const <String>[
+            'Recent three-month facts on this page',
+          ]),
+          const SizedBox(height: ExperienceSpacing.unit),
+          Padding(
+            padding: const EdgeInsets.symmetric(
+              horizontal: ExperienceSpacing.md,
+            ),
+            child: Container(height: 1, color: ExperienceColors.hairline),
+          ),
+          const SizedBox(height: ExperienceSpacing.unit),
+          _ledgerGroup('Added with Plus', <String>[
+            'Comparison across all $totalCompletedCycles completed $totalWord',
+            '6-month, 1-year, all-record, and custom ranges',
+            'Visit Summary PDF and raw CSV',
+            'Clinical Pattern Report PDF',
+          ]),
+          const SizedBox(height: ExperienceSpacing.md),
+          Padding(
+            padding: const EdgeInsets.symmetric(
+              horizontal: ExperienceSpacing.md,
+            ),
+            child: Semantics(
+              button: true,
+              child: OutlinedButton(
+                onPressed: onSeeAllCycles,
+                style: _actionStyle,
+                child: Text(
+                  'Compare all $totalCompletedCycles completed $totalWord',
                 ),
               ),
             ),
           ),
-        ),
-        Container(height: 1, color: ExperienceColors.hairline),
-        const SizedBox(height: ExperienceSpacing.sm),
-        Semantics(
-          button: true,
-          child: OutlinedButton(
-            onPressed: onSeeAllCycles,
-            style: _actionStyle,
-            child: Text(
-              'Compare all $totalCompletedCycles completed $totalWord',
+          const SizedBox(height: ExperienceSpacing.unit),
+          Padding(
+            padding: const EdgeInsets.symmetric(
+              horizontal: ExperienceSpacing.md,
+            ),
+            child: Semantics(
+              button: true,
+              child: OutlinedButton(
+                onPressed: onExport,
+                style: _actionStyle,
+                child: const Text('Export this report — included with Plus'),
+              ),
             ),
           ),
-        ),
-        const SizedBox(height: ExperienceSpacing.unit),
-        Semantics(
-          button: true,
-          child: OutlinedButton(
-            onPressed: onExport,
-            style: _actionStyle,
-            child: const Text('Export this report — included with Plus'),
+          const SizedBox(height: ExperienceSpacing.sm),
+          Text(
+            'The recent three-month factual preview stays free.',
+            textAlign: TextAlign.center,
+            style: ExperienceType.caption(ExperienceColors.inkSoft),
           ),
-        ),
-        const SizedBox(height: ExperienceSpacing.sm),
-        Text(
-          'Reading your records here is free.',
-          textAlign: TextAlign.center,
-          style: ExperienceType.caption(ExperienceColors.inkSoft),
-        ),
-      ],
+          const SizedBox(height: ExperienceSpacing.sm),
+        ],
+      ),
     );
   }
 }
 
 // ---------------------------------------------------------------------------
-// Export — the Letter-folder save is explained before the share sheet opens.
-// Entitlement gates generation only; reading local material is free.
+// Export — every generated file requires paid Plus. The three export actions
+// are visually distinct by
+// role: the Visit Summary is the one filled primary (the document you bring
+// somewhere), the raw CSV is a quiet ledger row (the data you keep), and the
+// Clinical Pattern Report is a separate accent-ruled panel (the interpreted
+// artifact). Every successful receipt shows the saved path.
 // ---------------------------------------------------------------------------
 
-class _ExportPanel extends StatelessWidget {
-  const _ExportPanel({required this.exporting, required this.onExport});
+class _ReportFileExportPanel extends StatelessWidget {
+  const _ReportFileExportPanel({
+    required this.exporting,
+    required this.hasPaidAccess,
+    required this.onExport,
+  });
 
   final bool exporting;
+  final bool hasPaidAccess;
   final ValueChanged<ReportExportFormat> onExport;
 
   @override
@@ -2298,16 +2721,23 @@ class _ExportPanel extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: <Widget>[
           Text(
-            'Export this report',
+            'Report files · Plus',
             style: ExperienceType.headline(ExperienceColors.ink),
           ),
           const SizedBox(height: ExperienceSpacing.xs),
           Text(
-            'Exporting first saves a copy to your Letter folder on this '
-            'device, then opens the share sheet — you decide where it goes '
-            'from there.',
+            'Visit Summary PDF and raw CSV generation require paid Plus. '
+            'Letter first saves a local copy, then opens the share sheet. '
+            'Files you already generated remain yours if access later ends.',
             style: ExperienceType.bodySmall(ExperienceColors.inkSoft),
           ),
+          if (!hasPaidAccess) ...<Widget>[
+            const SizedBox(height: ExperienceSpacing.xs),
+            Text(
+              'No-card Preview does not include file generation.',
+              style: ExperienceType.caption(ExperienceColors.inkFaint),
+            ),
+          ],
           const SizedBox(height: ExperienceSpacing.md),
           if (exporting)
             const Center(
@@ -2320,15 +2750,79 @@ class _ExportPanel extends StatelessWidget {
             )
           else ...<Widget>[
             FilledButton.icon(
-              onPressed: () => onExport(ReportExportFormat.pdf),
+              onPressed: () => onExport(ReportExportFormat.visitSummaryPdf),
               icon: const Icon(Icons.picture_as_pdf_outlined),
-              label: const Text('Export PDF'),
+              label: const Text('Export Visit Summary'),
+              style: FilledButton.styleFrom(
+                minimumSize: const Size.fromHeight(
+                  ExperienceSpacing.degreeTarget,
+                ),
+                shape: const RoundedRectangleBorder(
+                  borderRadius: ExperienceRadius.chipRadius,
+                ),
+              ),
             ),
-            const SizedBox(height: ExperienceSpacing.unit),
-            OutlinedButton.icon(
-              onPressed: () => onExport(ReportExportFormat.csv),
-              icon: const Icon(Icons.table_chart_outlined),
-              label: const Text('Export CSV'),
+            const SizedBox(height: ExperienceSpacing.sm),
+            Semantics(
+              button: true,
+              label: 'Export raw CSV',
+              child: ExcludeSemantics(
+                child: Material(
+                  color: ExperienceColors.surface,
+                  borderRadius: ExperienceRadius.chipRadius,
+                  child: InkWell(
+                    borderRadius: ExperienceRadius.chipRadius,
+                    onTap: () => onExport(ReportExportFormat.rawCsv),
+                    child: Container(
+                      constraints: const BoxConstraints(
+                        minHeight: ExperienceSpacing.degreeTarget,
+                      ),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: ExperienceSpacing.sm,
+                        vertical: ExperienceSpacing.unit,
+                      ),
+                      decoration: BoxDecoration(
+                        borderRadius: ExperienceRadius.chipRadius,
+                        border: Border.all(color: ExperienceColors.hairline),
+                      ),
+                      child: Row(
+                        children: <Widget>[
+                          const Icon(
+                            Icons.table_chart_outlined,
+                            size: 20,
+                            color: ExperienceColors.inkSoft,
+                          ),
+                          const SizedBox(width: ExperienceSpacing.sm),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: <Widget>[
+                                Text(
+                                  'Export raw CSV',
+                                  style: ExperienceType.label(
+                                    ExperienceColors.ink,
+                                  ),
+                                ),
+                                Text(
+                                  'Confirmed source records included in this export.',
+                                  style: ExperienceType.caption(
+                                    ExperienceColors.inkFaint,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          const Icon(
+                            Icons.file_download_outlined,
+                            size: 18,
+                            color: ExperienceColors.inkFaint,
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              ),
             ),
           ],
         ],
@@ -2337,8 +2831,91 @@ class _ExportPanel extends StatelessWidget {
   }
 }
 
+class _ClinicalExportPanel extends StatelessWidget {
+  const _ClinicalExportPanel({required this.exporting, required this.onExport});
+
+  final bool exporting;
+  final VoidCallback onExport;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(ExperienceSpacing.md),
+      decoration: BoxDecoration(
+        color: ExperienceColors.surface,
+        borderRadius: ExperienceRadius.cardRadius,
+        border: Border.all(
+          color: ExperienceColors.accentGravity.withValues(alpha: 0.45),
+        ),
+        boxShadow: ExperienceShadows.card,
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: <Widget>[
+          Row(
+            children: <Widget>[
+              Container(
+                width: 34,
+                height: 34,
+                decoration: BoxDecoration(
+                  color: ExperienceColors.accentGravity.withValues(alpha: 0.10),
+                  borderRadius: ExperienceRadius.chipRadius,
+                  border: Border.all(
+                    color: ExperienceColors.accentGravity.withValues(
+                      alpha: 0.35,
+                    ),
+                  ),
+                ),
+                child: const Icon(
+                  Icons.medical_information_outlined,
+                  size: 18,
+                  color: ExperienceColors.accentGravity,
+                ),
+              ),
+              const SizedBox(width: ExperienceSpacing.sm),
+              Expanded(
+                child: Text(
+                  'Clinical Pattern Report',
+                  style: ExperienceType.headline(ExperienceColors.ink),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: ExperienceSpacing.xs),
+          Text(
+            'The clinician-ready PDF adds cross-cycle pattern evidence and '
+            'the cyclical symptom matrix. Included with Plus.',
+            style: ExperienceType.bodySmall(ExperienceColors.inkSoft),
+          ),
+          const SizedBox(height: ExperienceSpacing.md),
+          OutlinedButton.icon(
+            onPressed: exporting ? null : onExport,
+            icon: const Icon(Icons.medical_information_outlined),
+            label: const Text('Export Clinical Pattern Report'),
+            style: OutlinedButton.styleFrom(
+              foregroundColor: ExperienceColors.accentGravity,
+              side: BorderSide(
+                color: ExperienceColors.accentGravity.withValues(alpha: 0.6),
+              ),
+              minimumSize: const Size.fromHeight(
+                ExperienceSpacing.degreeTarget,
+              ),
+              shape: const RoundedRectangleBorder(
+                borderRadius: ExperienceRadius.chipRadius,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 // ---------------------------------------------------------------------------
 // Receipt — four outcomes, four distinct calm feedbacks. Retry on failure.
+// The saved path stays selectable inside its own inset, and the shared
+// outcome states plainly that the system share-sheet destination is
+// separate from the local copy.
 // ---------------------------------------------------------------------------
 
 class _ReceiptCard extends StatelessWidget {
@@ -2377,6 +2954,7 @@ class _ReceiptCard extends StatelessWidget {
             'You can try again — your records are safe on this device.',
       ),
     };
+    final savedPath = receipt.localPath?.trim();
 
     return Semantics(
       liveRegion: true,
@@ -2406,6 +2984,43 @@ class _ReceiptCard extends StatelessWidget {
                     body,
                     style: ExperienceType.bodySmall(ExperienceColors.inkSoft),
                   ),
+                  if (savedPath != null && savedPath.isNotEmpty) ...<Widget>[
+                    const SizedBox(height: ExperienceSpacing.sm),
+                    Text(
+                      'Saved locally at',
+                      style: ExperienceType.caption(ExperienceColors.inkFaint),
+                    ),
+                    const SizedBox(height: ExperienceSpacing.xs),
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: ExperienceSpacing.sm,
+                        vertical: ExperienceSpacing.unit,
+                      ),
+                      decoration: BoxDecoration(
+                        color: ExperienceColors.surfaceWarm,
+                        borderRadius: ExperienceRadius.chipRadius,
+                        border: Border.all(color: ExperienceColors.hairline),
+                      ),
+                      child: SelectableText(
+                        savedPath,
+                        style: ExperienceType.data(
+                          ExperienceColors.ink,
+                          size: 12,
+                          weight: FontWeight.w500,
+                        ),
+                      ),
+                    ),
+                    if (receipt.outcome ==
+                        ExperienceFileOutcome.shared) ...<Widget>[
+                      const SizedBox(height: ExperienceSpacing.xs),
+                      Text(
+                        'The shared copy is wherever you chose in the system '
+                        'sheet.',
+                        style: ExperienceType.caption(ExperienceColors.inkSoft),
+                      ),
+                    ],
+                  ],
                   if (onRetry != null)
                     TextButton(
                       onPressed: onRetry,

@@ -5,6 +5,8 @@ import 'package:flutter/services.dart';
 
 import '../../features/entitlement/domain/entitlement.dart';
 import '../../features/entitlement/domain/entitlement_repository.dart';
+import '../../features/analytics/domain/analytics_service.dart' as analytics;
+import '../../features/analytics/presentation/analytics_scope.dart';
 import '../theme/experience_foundation.dart';
 
 /// The intent a Reports boundary action carried into Plus.
@@ -139,6 +141,7 @@ class _PlusExperienceState extends State<PlusExperience> {
   bool _purchaseInFlight = false;
   bool _restoreInFlight = false;
   bool _completing = false;
+  bool _trackedView = false;
 
   /// One calm feedback line at a time — acknowledgments and honest failures.
   /// Errors are visual + textual only; errors never haptic.
@@ -148,6 +151,51 @@ class _PlusExperienceState extends State<PlusExperience> {
   Uri? _managementUrl;
 
   EntitlementRepository get _repository => widget.entitlementRepository;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (_trackedView) return;
+    _trackedView = true;
+    _track(
+      analytics.PaywallViewedEvent(switch (widget.outcomeContext?.kind) {
+        PlusOutcomeIntentKind.export => analytics.PaywallContext.patternReport,
+        PlusOutcomeIntentKind.seeAllCycles =>
+          analytics.PaywallContext.patternReport,
+        null => analytics.PaywallContext.settings,
+      }),
+    );
+  }
+
+  void _track(analytics.AnalyticsEvent event) {
+    final service = AnalyticsScope.maybeOf(context);
+    if (service == null) return;
+    unawaited(
+      service
+          .track(
+            analytics.AnalyticsPayload(
+              event: event,
+              timestamp: DateTime.now().toUtc(),
+            ),
+          )
+          .catchError((Object _) {}),
+    );
+  }
+
+  analytics.PurchaseOffer _offerFor(String planId) => switch (planId) {
+    'letter_monthly' => analytics.PurchaseOffer.monthly,
+    'letter_lifetime' => analytics.PurchaseOffer.lifetime,
+    _ => analytics.PurchaseOffer.annual,
+  };
+
+  void _trackPurchase(String planId, analytics.PurchaseOutcome outcome) {
+    _track(
+      analytics.PurchaseFlowOutcomeEvent(
+        offer: _offerFor(planId),
+        outcome: outcome,
+      ),
+    );
+  }
 
   @override
   void initState() {
@@ -265,17 +313,21 @@ class _PlusExperienceState extends State<PlusExperience> {
       setState(() => _entitlement = result.state);
       switch (result.outcome) {
         case PurchaseOutcome.activated:
+          _trackPurchase(planId, analytics.PurchaseOutcome.completed);
           await _completeActivated();
         case PurchaseOutcome.pending:
+          _trackPurchase(planId, analytics.PurchaseOutcome.pending);
           _setFeedback(
             'The store is confirming your purchase. '
             'Nothing else is needed right now.',
             isError: false,
           );
         case PurchaseOutcome.cancelled:
+          _trackPurchase(planId, analytics.PurchaseOutcome.cancelled);
           // Cancellation never becomes failure and never grants access.
           _setFeedback('No charge was made. Nothing changed.', isError: false);
         case PurchaseOutcome.failed:
+          _trackPurchase(planId, analytics.PurchaseOutcome.failed);
           _setFeedback(
             result.message ??
                 'The purchase could not be completed. '
@@ -283,6 +335,7 @@ class _PlusExperienceState extends State<PlusExperience> {
             isError: true,
           );
         case PurchaseOutcome.unavailable:
+          _trackPurchase(planId, analytics.PurchaseOutcome.failed);
           _setFeedback(
             result.message ??
                 'This needs a connection. '
@@ -291,11 +344,13 @@ class _PlusExperienceState extends State<PlusExperience> {
           );
       }
     } on EntitlementException catch (error) {
+      _trackPurchase(planId, analytics.PurchaseOutcome.failed);
       if (!mounted) {
         return;
       }
       _setFeedback(error.message, isError: true);
     } catch (_) {
+      _trackPurchase(planId, analytics.PurchaseOutcome.failed);
       if (!mounted) {
         return;
       }
@@ -686,7 +741,7 @@ class _PlusExperienceState extends State<PlusExperience> {
             child: Ink(
               decoration: BoxDecoration(
                 gradient: enabled || _purchaseInFlight
-                    ? ExperienceColors.emberGradient
+                    ? ExperienceColors.emberActionGradient
                     : null,
                 color: enabled || _purchaseInFlight
                     ? null
@@ -714,7 +769,9 @@ class _PlusExperienceState extends State<PlusExperience> {
                                 child: Text(
                                   label,
                                   textAlign: TextAlign.center,
-                                  style: ExperienceType.label(Colors.white),
+                                  style: ExperienceType.label(
+                                    ExperienceColors.onEmber,
+                                  ),
                                 ),
                               ),
                             ],
@@ -726,7 +783,7 @@ class _PlusExperienceState extends State<PlusExperience> {
                                   text: label,
                                   style: ExperienceType.label(
                                     enabled
-                                        ? Colors.white
+                                        ? ExperienceColors.onEmber
                                         : ExperienceColors.inkSoft,
                                   ),
                                 ),
@@ -1008,15 +1065,19 @@ class _PlanCard extends StatelessWidget {
                                   vertical: 3,
                                 ),
                                 decoration: BoxDecoration(
-                                  color: ExperienceColors.emberSoft.withValues(
-                                    alpha: 0.35,
+                                  color: ExperienceColors.ember.withValues(
+                                    alpha: 0.08,
                                   ),
                                   borderRadius: ExperienceRadius.chipRadius,
+                                  border: Border.all(
+                                    color: ExperienceColors.emberSoft
+                                        .withValues(alpha: 0.7),
+                                  ),
                                 ),
                                 child: Text(
                                   plan.highlight!,
                                   style: ExperienceType.caption(
-                                    ExperienceColors.emberDeep,
+                                    ExperienceColors.emberSoft,
                                   ),
                                 ),
                               ),
