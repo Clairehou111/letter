@@ -1,12 +1,10 @@
 import 'care_memory.dart';
 
-const careMemoryTextMaximumCharacters = 280;
 const careActionLabelMaximumCharacters = 120;
 
 enum CareMemoryFailure {
   invalidAction,
   emptyReflection,
-  invalidText,
   notFound,
   storageUnavailable,
 }
@@ -21,8 +19,6 @@ final class CareMemoryException implements Exception {
       'Letter Within could not recognize this Care action.',
     CareMemoryFailure.emptyReflection =>
       'Add one thought before saving this reflection.',
-    CareMemoryFailure.invalidText =>
-      'Keep each reflection answer within 280 characters.',
     CareMemoryFailure.notFound =>
       'This Care memory is no longer available. Refresh and try again.',
     CareMemoryFailure.storageUnavailable =>
@@ -96,9 +92,6 @@ CareReflectionDraft validateCareReflection(CareReflectionDraft draft) {
     final trimmed = value?.trim();
     if (trimmed == null || trimmed.isEmpty) {
       return null;
-    }
-    if (trimmed.length > careMemoryTextMaximumCharacters) {
-      throw const CareMemoryException(CareMemoryFailure.invalidText);
     }
     return trimmed;
   }

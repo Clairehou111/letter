@@ -39,7 +39,6 @@ dependencies:
   flutter_secure_storage: ^10.3.1
   flutter_local_notifications: ^22.2.0
   flutter_timezone: ^5.1.0
-  local_auth: ^3.0.2
   timezone: ^0.11.1
   http: ^1.6.0
   crypto: ^3.0.7
@@ -96,6 +95,7 @@ flutter:
     - assets/audio/care/prototype/voice-in.mp3
     - assets/audio/care/prototype/voice-out.mp3
     - assets/audio/care/prototype/voice-settle.mp3
+    - assets/images/care/editorial/
     - assets/images/letter-within-app-icon.png
 
   fonts:

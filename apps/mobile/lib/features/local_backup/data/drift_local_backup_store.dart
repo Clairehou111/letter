@@ -6,6 +6,7 @@ import '../../care/domain/care_memory.dart';
 import '../../care/domain/care_mode.dart';
 import '../../capture/domain/capture_models.dart';
 import '../../check_in/domain/moment_check_in.dart';
+import '../../comfort_kit/domain/comfort_kit.dart';
 import '../../cycle/data/letter_health_database.dart';
 import '../../health_records/domain/health_record.dart';
 import '../domain/local_backup_import.dart';
@@ -53,6 +54,12 @@ final class DriftLocalBackupStore implements LocalBackupStore {
             .get();
         final preparationDismissals = await _database
             .select(_database.preparationDismissalRows)
+            .get();
+        final comfortKitOverrides = await _database
+            .select(_database.comfortKitOverrideRows)
+            .get();
+        final comfortReminderPreferences = await _database
+            .select(_database.comfortReminderPreferenceRows)
             .get();
         return LocalBackupSnapshot(
           createdAt: _clock().toUtc(),
@@ -151,13 +158,23 @@ final class DriftLocalBackupStore implements LocalBackupStore {
             ),
             LocalBackupCollection(
               name: _captureNotes,
-              schemaVersion: 1,
+              schemaVersion: 2,
               records: captureNotes.map(
-                (row) => _record(row.id, row.createdAtMillis, {
-                  'content': row.content,
-                  'source': row.source,
-                  'createdAtMillis': row.createdAtMillis,
-                }),
+                (row) => _record(
+                  row.id,
+                  row.updatedAtMillis == 0
+                      ? row.createdAtMillis
+                      : row.updatedAtMillis,
+                  {
+                    'content': row.content,
+                    'source': row.source,
+                    'createdAtMillis': row.createdAtMillis,
+                    'updatedAtMillis': row.updatedAtMillis == 0
+                        ? row.createdAtMillis
+                        : row.updatedAtMillis,
+                    'keepInComfortKit': row.keepInComfortKit,
+                  },
+                ),
               ),
             ),
             LocalBackupCollection(
@@ -203,6 +220,30 @@ final class DriftLocalBackupStore implements LocalBackupStore {
                 }),
               ),
             ),
+            LocalBackupCollection(
+              name: _comfortKitOverrides,
+              schemaVersion: 1,
+              records: comfortKitOverrides.map(
+                (row) => _record(row.sourceId, row.updatedAtMillis, {
+                  'action': row.action,
+                  'sourceVersion': row.sourceVersion,
+                  'updatedAtMillis': row.updatedAtMillis,
+                }),
+              ),
+            ),
+            LocalBackupCollection(
+              name: _comfortReminderPreferences,
+              schemaVersion: 1,
+              records: comfortReminderPreferences.map(
+                (row) => _record(row.id, row.updatedAtMillis, {
+                  'enabled': row.enabled,
+                  'leadDays': row.leadDays,
+                  'hour': row.hour,
+                  'minute': row.minute,
+                  'updatedAtMillis': row.updatedAtMillis,
+                }),
+              ),
+            ),
           ],
         );
       });
@@ -240,6 +281,8 @@ const _captureNotes = 'capture_notes';
 const _momentCheckIns = 'moment_check_ins';
 const _preparationPlans = 'preparation_plans';
 const _preparationDismissals = 'preparation_dismissals';
+const _comfortKitOverrides = 'comfort_kit_overrides';
+const _comfortReminderPreferences = 'comfort_reminder_preferences';
 const _requiredCollections = {
   _periods,
   _careRecords,
@@ -254,6 +297,8 @@ const _supportedCollections = {
   _momentCheckIns,
   _preparationPlans,
   _preparationDismissals,
+  _comfortKitOverrides,
+  _comfortReminderPreferences,
 };
 
 LocalBackupRecord _record(
@@ -278,6 +323,8 @@ final class _ParsedSnapshot {
     required this.momentCheckIns,
     required this.preparationPlans,
     required this.preparationDismissals,
+    required this.comfortKitOverrides,
+    required this.comfortReminderPreferences,
   });
 
   final List<PeriodRowsCompanion> periods;
@@ -290,6 +337,8 @@ final class _ParsedSnapshot {
   final List<MomentCheckInRowsCompanion> momentCheckIns;
   final List<PreparationPlanRowsCompanion> preparationPlans;
   final List<PreparationDismissalRowsCompanion> preparationDismissals;
+  final List<ComfortKitOverrideRowsCompanion> comfortKitOverrides;
+  final List<ComfortReminderPreferenceRowsCompanion> comfortReminderPreferences;
 
   factory _ParsedSnapshot.fromSnapshot(LocalBackupSnapshot snapshot) {
     validateLocalBackupReferentialIntegrity(snapshot);
@@ -302,6 +351,7 @@ final class _ParsedSnapshot {
         byName.values.any((collection) => !_supportsSchema(collection))) {
       throw const LocalBackupException(LocalBackupFailure.unsupportedFormat);
     }
+    _validatePeriodRanges(byName);
     _validatePeriodFlowContainment(byName);
     return _ParsedSnapshot(
       periods: byName[_periods]!.records.map(_period).toList(growable: false),
@@ -333,7 +383,10 @@ final class _ParsedSnapshot {
           .map(_healthRecord)
           .toList(growable: false),
       captureNotes: byName[_captureNotes]!.records
-          .map(_captureNote)
+          .map(
+            (record) =>
+                _captureNote(record, byName[_captureNotes]!.schemaVersion),
+          )
           .toList(growable: false),
       momentCheckIns:
           byName[_momentCheckIns]?.records
@@ -353,6 +406,16 @@ final class _ParsedSnapshot {
       preparationDismissals:
           byName[_preparationDismissals]?.records
               .map(_preparationDismissal)
+              .toList(growable: false) ??
+          const [],
+      comfortKitOverrides:
+          byName[_comfortKitOverrides]?.records
+              .map(_comfortKitOverride)
+              .toList(growable: false) ??
+          const [],
+      comfortReminderPreferences:
+          byName[_comfortReminderPreferences]?.records
+              .map(_comfortReminderPreference)
               .toList(growable: false) ??
           const [],
     );
@@ -390,6 +453,8 @@ final class _DriftStagedLocalBackupImport implements StagedLocalBackupImport {
         await database.delete(database.periodFlowRows).go();
         await database.delete(database.preparationDismissalRows).go();
         await database.delete(database.preparationPlanRows).go();
+        await database.delete(database.comfortKitOverrideRows).go();
+        await database.delete(database.comfortReminderPreferenceRows).go();
         await database.delete(database.periodRows).go();
         await database.batch((batch) {
           batch.insertAll(database.periodRows, parsed.periods);
@@ -411,6 +476,14 @@ final class _DriftStagedLocalBackupImport implements StagedLocalBackupImport {
             database.preparationDismissalRows,
             parsed.preparationDismissals,
           );
+          batch.insertAll(
+            database.comfortKitOverrideRows,
+            parsed.comfortKitOverrides,
+          );
+          batch.insertAll(
+            database.comfortReminderPreferenceRows,
+            parsed.comfortReminderPreferences,
+          );
         });
         await database.normalizeContinuousPeriods();
       });
@@ -425,6 +498,34 @@ final class _DriftStagedLocalBackupImport implements StagedLocalBackupImport {
   @override
   Future<void> discard() async {
     _used = true;
+  }
+}
+
+void _validatePeriodRanges(Map<String, LocalBackupCollection> collections) {
+  final ranges = <({String id, int start, int? end})>[];
+  for (final record in collections[_periods]!.records) {
+    final data = _data(record, {
+      'startDay',
+      'endDay',
+      'createdAtMillis',
+      'updatedAtMillis',
+    });
+    ranges.add((
+      id: record.id,
+      start: _int(data, 'startDay'),
+      end: _nullableInt(data, 'endDay'),
+    ));
+  }
+  ranges.sort((left, right) {
+    final byStart = left.start.compareTo(right.start);
+    return byStart != 0 ? byStart : left.id.compareTo(right.id);
+  });
+  for (var index = 1; index < ranges.length; index++) {
+    final previous = ranges[index - 1];
+    final current = ranges[index];
+    if (previous.end == null || current.start <= previous.end!) {
+      throw const LocalBackupException(LocalBackupFailure.malformedPayload);
+    }
   }
 }
 
@@ -701,14 +802,25 @@ HealthRecordRowsCompanion _healthRecord(LocalBackupRecord record) {
   );
 }
 
-CaptureNoteRowsCompanion _captureNote(LocalBackupRecord record) {
-  final data = _data(record, {'content', 'source', 'createdAtMillis'});
+CaptureNoteRowsCompanion _captureNote(
+  LocalBackupRecord record,
+  int schemaVersion,
+) {
+  final data = _data(record, {
+    'content',
+    'source',
+    'createdAtMillis',
+    if (schemaVersion >= 2) 'updatedAtMillis',
+    if (schemaVersion >= 2) 'keepInComfortKit',
+  });
   final created = _int(data, 'createdAtMillis');
+  final updated = schemaVersion >= 2 ? _int(data, 'updatedAtMillis') : created;
   final content = _string(data, 'content');
   final source = _string(data, 'source');
-  _matchesUpdatedAt(record, created);
+  _matchesUpdatedAt(record, updated);
   if (content.length > captureTextLimit ||
-      !CaptureSource.values.map((value) => value.name).contains(source)) {
+      !CaptureSource.values.map((value) => value.name).contains(source) ||
+      created > updated) {
     throw const LocalBackupException(LocalBackupFailure.malformedPayload);
   }
   return CaptureNoteRowsCompanion.insert(
@@ -716,6 +828,62 @@ CaptureNoteRowsCompanion _captureNote(LocalBackupRecord record) {
     content: content,
     source: source,
     createdAtMillis: created,
+    updatedAtMillis: Value(updated),
+    keepInComfortKit: Value(
+      schemaVersion >= 2 ? _bool(data, 'keepInComfortKit') : false,
+    ),
+  );
+}
+
+ComfortKitOverrideRowsCompanion _comfortKitOverride(LocalBackupRecord record) {
+  final data = _data(record, {'action', 'sourceVersion', 'updatedAtMillis'});
+  final action = _string(data, 'action');
+  final updated = _int(data, 'updatedAtMillis');
+  _matchesUpdatedAt(record, updated);
+  if (!ComfortKitOverrideAction.values
+      .map((value) => value.name)
+      .contains(action)) {
+    throw const LocalBackupException(LocalBackupFailure.malformedPayload);
+  }
+  return ComfortKitOverrideRowsCompanion.insert(
+    sourceId: record.id,
+    action: action,
+    sourceVersion: Value(_nullableString(data, 'sourceVersion')),
+    updatedAtMillis: updated,
+  );
+}
+
+ComfortReminderPreferenceRowsCompanion _comfortReminderPreference(
+  LocalBackupRecord record,
+) {
+  final data = _data(record, {
+    'enabled',
+    'leadDays',
+    'hour',
+    'minute',
+    'updatedAtMillis',
+  });
+  final leadDays = _int(data, 'leadDays');
+  final hour = _int(data, 'hour');
+  final minute = _int(data, 'minute');
+  final updated = _int(data, 'updatedAtMillis');
+  _matchesUpdatedAt(record, updated);
+  if (record.id != 'active' ||
+      leadDays < 0 ||
+      leadDays > 2 ||
+      hour < 0 ||
+      hour > 23 ||
+      minute < 0 ||
+      minute > 59) {
+    throw const LocalBackupException(LocalBackupFailure.malformedPayload);
+  }
+  return ComfortReminderPreferenceRowsCompanion.insert(
+    id: record.id,
+    enabled: Value(_bool(data, 'enabled')),
+    leadDays: Value(leadDays),
+    hour: Value(hour),
+    minute: Value(minute),
+    updatedAtMillis: updated,
   );
 }
 
@@ -808,6 +976,9 @@ PreparationPlanRowsCompanion _preparationPlan(
 }
 
 bool _supportsSchema(LocalBackupCollection collection) {
+  if (collection.name == _captureNotes) {
+    return collection.schemaVersion == 1 || collection.schemaVersion == 2;
+  }
   if (collection.name == _periodFlows) {
     return collection.schemaVersion == 1 || collection.schemaVersion == 2;
   }

@@ -97,11 +97,26 @@ Future<void> enterScene(WidgetTester tester, CareMode mode) async {
   }
 }
 
+Future<void> openSceneMenu(WidgetTester tester) async {
+  if (find.byKey(const Key('care-scene-adjust')).evaluate().isNotEmpty ||
+      find.byKey(const Key('care-break-sound')).evaluate().isNotEmpty) {
+    return;
+  }
+  await tester.tap(find.byKey(const Key('care-scene-menu')));
+  await tester.pump();
+}
+
 Future<void> finishScene(WidgetTester tester) async {
   final directFinish = find.byKey(const Key('care-break-complete'));
   if (directFinish.evaluate().isNotEmpty) {
     await tester.tap(directFinish);
     await tester.pumpAndSettle();
+    return;
+  }
+  await openSceneMenu(tester);
+  if (find.byKey(const Key('care-break-explode')).evaluate().isNotEmpty) {
+    await tester.tap(directFinish);
+    await tester.pump();
     return;
   }
   await tester.tap(find.byKey(const Key('care-scene-adjust')));
@@ -164,7 +179,8 @@ void main() {
         findsOneWidget,
       );
       expect(find.byKey(const Key('care-motion-line')), findsOneWidget);
-      expect(find.byKey(const Key('care-scene-adjust')), findsOneWidget);
+      expect(find.byKey(const Key('care-scene-menu')), findsOneWidget);
+      expect(find.byKey(const Key('care-scene-adjust')), findsNothing);
       expect(find.byKey(const Key('care-path-touch')), findsNothing);
       expect(find.byType(TextField), findsNothing);
 
@@ -207,6 +223,7 @@ void main() {
   ) async {
     final sound = _FakeCareSoundEngine();
     await pumpBreak(tester, CareMode.heavy, soundEngine: sound);
+    await openSceneMenu(tester);
     await tester.tap(find.byKey(const Key('care-break-sound')));
     await tester.pump();
 
@@ -219,6 +236,58 @@ void main() {
     expect(find.byKey(const Key('care-check-in-when-ready')), findsOneWidget);
     expect(sound.stopCount, 0);
     expect(sound.sceneProgressValues.last, 1);
+  });
+
+  testWidgets(
+    'physical care holds beyond its guide and controller ceiling until ended',
+    (tester) async {
+      var completed = 0;
+      await pumpBreak(
+        tester,
+        CareMode.physical,
+        sceneSeconds: 30,
+        onCompleted: () => completed += 1,
+      );
+      await tester.tap(find.byKey(const Key('care-context-cramps')));
+      await tester.pump();
+
+      await tester.pump(const Duration(seconds: 31));
+      expect(find.byKey(const Key('care-check-in-when-ready')), findsNothing);
+      expect(find.text('Done for now'), findsNothing);
+      expect(completed, 0);
+
+      await tester.pump(const Duration(seconds: 600));
+      expect(find.byKey(const Key('care-check-in-when-ready')), findsNothing);
+      expect(find.byKey(const Key('care-scene-menu')), findsOneWidget);
+      expect(completed, 0);
+
+      await tester.tap(find.byKey(const Key('care-scene-menu')));
+      await tester.pump();
+      await tester.tap(find.byKey(const Key('care-break-complete')));
+      await tester.pumpAndSettle();
+      expect(find.byKey(const Key('care-check-in-when-ready')), findsOneWidget);
+      expect(completed, 0);
+    },
+  );
+
+  testWidgets('headache with reduced motion never auto-finishes', (
+    tester,
+  ) async {
+    var completed = 0;
+    await pumpBreak(
+      tester,
+      CareMode.physical,
+      sceneSeconds: 30,
+      disableAnimations: true,
+      onCompleted: () => completed += 1,
+    );
+    await tester.tap(find.byKey(const Key('care-context-headache')));
+    await tester.pump();
+    await tester.pump(const Duration(seconds: 601));
+
+    expect(find.byKey(const Key('care-check-in-when-ready')), findsNothing);
+    expect(find.byKey(const Key('care-break-complete')), findsOneWidget);
+    expect(completed, 0);
   });
 
   testWidgets('heavy touch creates an optional local scene response', (
@@ -244,10 +313,12 @@ void main() {
   ) async {
     await pumpBreak(tester, CareMode.heavy);
 
-    expect(find.byKey(const Key('care-scene-adjust')), findsOneWidget);
+    expect(find.byKey(const Key('care-scene-adjust')), findsNothing);
     expect(find.byKey(const Key('care-motion-intensity')), findsNothing);
     expect(find.text('Breath guide'), findsNothing);
 
+    await openSceneMenu(tester);
+    expect(find.byKey(const Key('care-scene-adjust')), findsOneWidget);
     await tester.tap(find.byKey(const Key('care-scene-adjust')));
     await tester.pumpAndSettle();
     expect(find.byKey(const Key('care-motion-intensity')), findsOneWidget);
@@ -304,10 +375,12 @@ void main() {
       onSafety: () => opened = true,
     );
 
-    expect(find.byKey(const Key('care-break-safety')), findsOneWidget);
-    expect(find.byKey(const Key('care-scene-adjust')), findsOneWidget);
-    expect(find.byKey(const Key('care-break-complete')), findsOneWidget);
+    expect(find.byKey(const Key('care-break-safety')), findsNothing);
+    expect(find.byKey(const Key('care-scene-adjust')), findsNothing);
+    expect(find.byKey(const Key('care-break-complete')), findsNothing);
 
+    await openSceneMenu(tester);
+    expect(find.byKey(const Key('care-break-safety')), findsOneWidget);
     await tester.tap(find.byKey(const Key('care-break-safety')));
     expect(opened, isTrue);
     expect(tester.takeException(), isNull);
@@ -577,6 +650,15 @@ void main() {
     expect(find.text('dim, still, and quiet'), findsOneWidget);
 
     await tester.pump(const Duration(seconds: 73));
+    expect(find.byKey(const Key('care-check-in-when-ready')), findsNothing);
+    expect(
+      find.byKey(const Key('care-break-complete')),
+      findsOneWidget,
+      reason: 'Headache care stays immersive until the person ends it.',
+    );
+
+    await tester.tap(find.byKey(const Key('care-break-complete')));
+    await tester.pumpAndSettle();
     expect(find.byKey(const Key('care-check-in-when-ready')), findsOneWidget);
     expect(
       find.text('Stay with the quiet, or leave when you need'),
@@ -590,6 +672,8 @@ void main() {
     final sound = _FakeCareSoundEngine();
     await pumpBreak(tester, CareMode.explode, soundEngine: sound);
 
+    expect(find.text('Sound off'), findsNothing);
+    await openSceneMenu(tester);
     expect(find.byIcon(Icons.volume_off_rounded), findsOneWidget);
     expect(find.text('Sound off'), findsOneWidget);
     await tester.tap(find.byKey(const Key('care-break-sound')));
@@ -609,6 +693,7 @@ void main() {
     final sound = _FakeCareSoundEngine();
     await pumpBreak(tester, CareMode.space, soundEngine: sound);
 
+    await openSceneMenu(tester);
     await tester.tap(find.byKey(const Key('care-break-sound')));
     await tester.pump();
     await tester.pump(const Duration(seconds: 12));
@@ -623,6 +708,7 @@ void main() {
     final sound = _FakeCareSoundEngine();
     await pumpBreak(tester, CareMode.heavy, soundEngine: sound);
 
+    await openSceneMenu(tester);
     await tester.tap(find.byKey(const Key('care-break-sound')));
     await tester.pump();
     await tester.pump(const Duration(seconds: 30));
@@ -657,11 +743,15 @@ void main() {
       soundEngine: _FakeCareSoundEngine(starts: false),
     );
 
+    await openSceneMenu(tester);
     await tester.tap(find.byKey(const Key('care-break-sound')));
     await tester.pump();
 
     expect(find.byIcon(Icons.volume_off_rounded), findsOneWidget);
-    expect(find.textContaining('Sound could not start'), findsOneWidget);
+    expect(
+      find.text('Sound stayed off — the scene is complete without it.'),
+      findsOneWidget,
+    );
   });
 
   testWidgets('explicit in-scene check-in completes the activity', (

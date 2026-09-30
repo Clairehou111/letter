@@ -8,41 +8,27 @@ DateTime _t() => DateTime.utc(2026);
 
 void main() {
   group('AnalyticsService schema validation', () {
-    test('serializes only the closed app-startup schema', () {
+    test('serializes only the closed settings-action schema', () {
       final payload = AnalyticsPayload(
-        event: const AppStartupEvent(
-          appVersion: '1.0.0',
-          platform: AnalyticsPlatform.ios,
-          result: StartupResult.completed,
-        ),
+        event: const SettingsActionEvent(SettingsAction.opened),
         timestamp: _t(),
       );
       expect(payload.toRecord(), {
-        'event_name': 'app_startup',
+        'event_name': 'settings_action',
         'schema_version': 1,
-        'app_version': '1.0.0',
-        'platform': 'ios',
-        'startup_result': 'completed',
+        'action': 'opened',
       });
     });
 
-    test('serializes route failures with typed values only', () {
+    test('serializes paywall views with typed values only', () {
       final payload = AnalyticsPayload(
-        event: const RouteLoadFailureEvent(
-          appVersion: '1.0.0',
-          platform: AnalyticsPlatform.android,
-          route: AnalyticsRoute.settings,
-          failureCode: RouteFailureCode.timeout,
-        ),
+        event: const PaywallViewedEvent(PaywallContext.patternReport),
         timestamp: _t(),
       );
       expect(payload.toRecord(), {
-        'event_name': 'route_load_failed',
+        'event_name': 'paywall_viewed',
         'schema_version': 1,
-        'app_version': '1.0.0',
-        'platform': 'android',
-        'route_id': 'settings',
-        'failure_code': 'timeout',
+        'context': 'patternReport',
       });
     });
 
@@ -72,15 +58,6 @@ void main() {
       await service.enable();
       await service.track(_startupPayload());
       expect(service.isEnabled, isTrue);
-    });
-
-    test('does not retain an authenticated identifier', () async {
-      final service = DevAnalyticsService();
-      await service.enable();
-      await service.identifyAuthenticatedUser(
-        '550e8400-e29b-41d4-a716-446655440000',
-      );
-      await service.clearAuthenticatedUser();
     });
 
     test('disable stops future events', () async {
@@ -164,10 +141,6 @@ void main() {
 }
 
 AnalyticsPayload _startupPayload() => AnalyticsPayload(
-  event: const AppStartupEvent(
-    appVersion: '1.0.0',
-    platform: AnalyticsPlatform.ios,
-    result: StartupResult.completed,
-  ),
+  event: const SettingsActionEvent(SettingsAction.opened),
   timestamp: _t(),
 );

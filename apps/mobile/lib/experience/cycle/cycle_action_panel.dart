@@ -60,7 +60,7 @@ class CycleActionPanel extends StatelessWidget {
         );
         final editDates = _EditDatesAction(
           onPressed: onEditDates,
-          height: isWide ? 52 : 48,
+          minHeight: isWide ? 52 : 48,
         );
 
         final backfill = _TertiaryAction(
@@ -139,6 +139,115 @@ class CycleActionPanel extends StatelessWidget {
           ),
         );
       },
+    );
+  }
+}
+
+/// A completed cycle entry that keeps its date range and duration readable
+/// when the viewport is narrow or accessibility text is enlarged.
+class CycleRecentRow extends StatelessWidget {
+  const CycleRecentRow({
+    super.key,
+    required this.cycleNumber,
+    required this.dateRange,
+    required this.cycleLengthDays,
+    required this.onPressed,
+  });
+
+  final int cycleNumber;
+  final String dateRange;
+  final int cycleLengthDays;
+  final VoidCallback onPressed;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: ExperienceSpacing.xs * 2),
+      child: Semantics(
+        button: true,
+        label:
+            'Cycle $cycleNumber: $dateRange, '
+            '$cycleLengthDays-day cycle. Activate for details, letter, and editing.',
+        child: Material(
+          color: ExperienceColors.surface,
+          borderRadius: ExperienceRadius.chipRadius,
+          child: InkWell(
+            borderRadius: ExperienceRadius.chipRadius,
+            onTap: onPressed,
+            child: Container(
+              constraints: const BoxConstraints(
+                minHeight: ExperienceSpacing.minTouchTarget,
+              ),
+              padding: const EdgeInsets.symmetric(
+                horizontal: ExperienceSpacing.sm,
+                vertical: 12,
+              ),
+              decoration: BoxDecoration(
+                borderRadius: ExperienceRadius.chipRadius,
+                border: Border.all(color: ExperienceColors.hairline),
+              ),
+              child: LayoutBuilder(
+                builder: (context, constraints) {
+                  final textScale = MediaQuery.textScalerOf(context).scale(1);
+                  final stackDetails =
+                      constraints.maxWidth < 360 || textScale > 1.3;
+                  final dateLabel = Text(
+                    dateRange,
+                    style: ExperienceType.body(ExperienceColors.ink),
+                  );
+                  final lengthLabel = Text(
+                    '$cycleLengthDays-day cycle',
+                    style: ExperienceType.bodyStrong(ExperienceColors.ink),
+                  );
+
+                  return Row(
+                    crossAxisAlignment: stackDetails
+                        ? CrossAxisAlignment.start
+                        : CrossAxisAlignment.center,
+                    children: <Widget>[
+                      Padding(
+                        padding: EdgeInsets.only(top: stackDetails ? 6 : 0),
+                        child: Container(
+                          width: 10,
+                          height: 10,
+                          decoration: const BoxDecoration(
+                            shape: BoxShape.circle,
+                            color: ExperienceColors.phasePeriod,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: ExperienceSpacing.sm),
+                      Expanded(
+                        child: stackDetails
+                            ? Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                mainAxisSize: MainAxisSize.min,
+                                children: <Widget>[
+                                  dateLabel,
+                                  const SizedBox(height: ExperienceSpacing.xs),
+                                  lengthLabel,
+                                ],
+                              )
+                            : dateLabel,
+                      ),
+                      if (!stackDetails) lengthLabel,
+                      const SizedBox(width: ExperienceSpacing.xs),
+                      const Padding(
+                        padding: EdgeInsets.only(top: 2),
+                        child: Icon(
+                          Icons.chevron_right,
+                          size: 18,
+                          color: ExperienceColors.inkFaint,
+                        ),
+                      ),
+                    ],
+                  );
+                },
+              ),
+            ),
+          ),
+        ),
+      ),
     );
   }
 }
@@ -231,9 +340,8 @@ class _PrimaryAction extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return SizedBox(
-      height: 52,
-      width: double.infinity,
+    return ConstrainedBox(
+      constraints: const BoxConstraints(minHeight: 52),
       child: FilledButton(
         onPressed: onPressed,
         style: FilledButton.styleFrom(
@@ -245,8 +353,12 @@ class _PrimaryAction extends StatelessWidget {
           textStyle: ExperienceType.body(
             ExperienceColors.surface,
           ).copyWith(fontSize: 16, fontWeight: FontWeight.w700),
+          padding: const EdgeInsets.symmetric(
+            horizontal: ExperienceSpacing.md,
+            vertical: ExperienceSpacing.sm,
+          ),
         ),
-        child: Text(label, maxLines: 1, overflow: TextOverflow.ellipsis),
+        child: Text(label, maxLines: 2, textAlign: TextAlign.center),
       ),
     );
   }
@@ -254,16 +366,15 @@ class _PrimaryAction extends StatelessWidget {
 
 /// The available-but-secondary date edit for the current period.
 class _EditDatesAction extends StatelessWidget {
-  const _EditDatesAction({required this.onPressed, required this.height});
+  const _EditDatesAction({required this.onPressed, required this.minHeight});
 
   final VoidCallback onPressed;
-  final double height;
+  final double minHeight;
 
   @override
   Widget build(BuildContext context) {
-    return SizedBox(
-      height: height,
-      width: double.infinity,
+    return ConstrainedBox(
+      constraints: BoxConstraints(minHeight: minHeight),
       child: OutlinedButton(
         onPressed: onPressed,
         style: OutlinedButton.styleFrom(
@@ -275,11 +386,15 @@ class _EditDatesAction extends StatelessWidget {
           textStyle: ExperienceType.body(
             ExperienceColors.ink,
           ).copyWith(fontSize: 15, fontWeight: FontWeight.w600),
+          padding: const EdgeInsets.symmetric(
+            horizontal: ExperienceSpacing.md,
+            vertical: ExperienceSpacing.sm,
+          ),
         ),
         child: const Text(
           'Edit dates',
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
+          maxLines: 2,
+          textAlign: TextAlign.center,
         ),
       ),
     );

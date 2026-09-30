@@ -107,7 +107,7 @@ class _LeaveCareButton extends StatelessWidget {
         color: Colors.transparent,
         child: Ink(
           decoration: BoxDecoration(
-            gradient: ExperienceColors.emberGradient,
+            gradient: ExperienceColors.emberActionGradient,
             borderRadius: ExperienceRadius.chipRadius,
             boxShadow: const <BoxShadow>[
               BoxShadow(
@@ -126,7 +126,7 @@ class _LeaveCareButton extends StatelessWidget {
               alignment: Alignment.center,
               child: Text(
                 'Leave Care',
-                style: ExperienceType.label(Colors.white),
+                style: ExperienceType.label(ExperienceColors.onEmber),
               ),
             ),
           ),

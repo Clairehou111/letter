@@ -6,6 +6,10 @@ import 'package:letter_mobile/features/auth/presentation/auth_screen.dart';
 import 'package:letter_mobile/features/cycle/data/in_memory_period_repository.dart';
 import 'package:letter_mobile/features/onboarding/data/onboarding_repository.dart';
 import 'package:letter_mobile/features/onboarding/domain/onboarding_profile.dart';
+import 'package:letter_mobile/features/onboarding/presentation/onboarding_flow.dart';
+import 'package:letter_mobile/experience/letter_experience_shell.dart';
+
+import 'support/widget_test_pump.dart';
 
 final class _AuthGateOnboardingRepository implements OnboardingRepository {
   _AuthGateOnboardingRepository({this.profile});
@@ -34,7 +38,7 @@ void main() {
         onboardingRepository: _AuthGateOnboardingRepository(),
       ),
     );
-    await tester.pumpAndSettle();
+    await pumpUntilFound(tester, find.byType(AuthScreen));
 
     expect(find.byType(AuthScreen), findsOneWidget);
     expect(find.text("Read your body's letter."), findsNothing);
@@ -56,12 +60,11 @@ void main() {
         onboardingRepository: _AuthGateOnboardingRepository(),
       ),
     );
-    await tester.pump();
-    await tester.pump(const Duration(seconds: 1));
+    await pumpUntilFound(tester, find.byType(OnboardingFlow));
 
     expect(find.byType(AuthScreen), findsNothing);
     await auth.signOut();
-    await tester.pumpAndSettle();
+    await pumpUntilFound(tester, find.byType(AuthScreen));
 
     expect(find.byType(AuthScreen), findsOneWidget);
   });
@@ -86,8 +89,7 @@ void main() {
         ),
       ),
     );
-    await tester.pump();
-    await tester.pump(const Duration(seconds: 1));
+    await pumpUntilFound(tester, find.byType(LetterExperienceShell));
 
     expect(find.byType(AuthScreen), findsNothing);
   });
@@ -111,8 +113,7 @@ void main() {
         ),
       ),
     );
-    await tester.pump();
-    await tester.pump(const Duration(seconds: 1));
+    await pumpUntilFound(tester, find.byType(LetterExperienceShell));
 
     expect(find.byType(AuthScreen), findsNothing);
   });

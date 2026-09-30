@@ -31,8 +31,11 @@ class LetterBrandMark extends StatelessWidget {
 }
 
 /// The folded-letter mark beside the "Letter Within" wordmark, set in the
-/// daylight foundation's Georgia serif and plum ink — the same voice as the
-/// Today screen's display type, so thresholds never leave the room.
+/// Quiet Dusk Georgia serif (Times New Roman/serif fallback) and the global
+/// dusk ink — the same voice as the Today screen's display type, so
+/// thresholds never leave the room. The wordmark ink resolves through
+/// [ExperienceColors.ink] so the lockup always reads correctly on plum
+/// chrome; there is no daylight variant left to fall out of step with.
 class LetterBrandLockup extends StatelessWidget {
   const LetterBrandLockup({super.key, this.compact = false});
 

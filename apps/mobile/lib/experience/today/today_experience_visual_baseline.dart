@@ -5,13 +5,16 @@ import 'package:flutter/material.dart';
 import 'package:flutter/semantics.dart' show SemanticsService;
 import 'package:flutter/services.dart' show HapticFeedback;
 
+import '../../features/capture/domain/capture_models.dart';
 import '../../features/check_in/domain/moment_check_in.dart';
 import '../../features/cycle/domain/bleeding_flow.dart';
 import '../../features/cycle/domain/local_date.dart';
 import '../../features/health_records/domain/health_record.dart';
 import '../../features/health_records/domain/observation_catalog.dart';
 import '../../features/today/today_cycle_context.dart';
+import '../comfort/comfort_reminder_sheet.dart';
 import '../degree/degree_graphics.dart';
+import '../theme/experience_foundation.dart';
 import 'today_visual_port.dart';
 
 /// Letter Within — Today.
@@ -23,6 +26,11 @@ import 'today_visual_port.dart';
 /// visual legend, period start/end, and an optional private note.
 /// No forms, no page-level save — every selection acknowledges itself
 /// immediately, both visibly and audibly.
+///
+/// Quiet Dusk: the whole surface lives inside the plum sky — deep warm
+/// canvas, lifted plum surfaces, warm off-white ink — with the ember as
+/// the single warm light source reserved for actions, memory, and the
+/// "you are here" marks. Nothing here renders a daylight world.
 class TodayExperienceVisual extends StatefulWidget {
   const TodayExperienceVisual({
     super.key,
@@ -38,18 +46,29 @@ class TodayExperienceVisual extends StatefulWidget {
 }
 
 // ---------------------------------------------------------------------------
-// Palette & type — quiet editorial tokens
+// Palette & type — Quiet Dusk tokens
+//
+// One plum sky at one depth for this screen: a deep warm-plum canvas, a
+// surface one step up, and a single raised surface reserved for the hero —
+// the one focal object per viewport. Ink is the warm off-white care family.
+// The ember family is the only saturated warm hue: actions, memory, and the
+// ember itself. Errors borrow a warm desaturated red, never the light.
 // ---------------------------------------------------------------------------
 
-const Color _bg = Color(0xFFF5F1E8); // warm off-white
-const Color _paper = Color(0xFFFFFCF7); // paper white
-const Color _ink = Color(0xFF181713); // ink
-const Color _inkSoft = Color(0xFF6E675C);
-const Color _plum = Color(0xFF3E2A3C); // deep plum display type
-const Color _terra = Color(0xFFC95D3A); // terracotta accent
-const Color _terraDeep = Color(0xFFA8482C);
-const Color _terraTint = Color(0xFFF6E4D8);
-const Color _hairline = Color(0xFFE7DFD0);
+const Color _canvas = ExperienceColors.canvas;
+const Color _surface = ExperienceColors.surface;
+const Color _surfaceRaised = ExperienceColors.surfaceWarm;
+const Color _ink = ExperienceColors.ink;
+const Color _inkSoft = ExperienceColors.inkSoft;
+const Color _inkFaint = ExperienceColors.inkFaint;
+const Color _hairline = ExperienceColors.careGlassBorder;
+
+const Color _ember = ExperienceColors.ember;
+const Color _emberBright = ExperienceColors.emberBright;
+const Color _emberDeep = ExperienceColors.emberDeep;
+const Color _emberSoft = Color(0x24E4573D);
+
+const Color _error = ExperienceColors.error;
 
 /// Minimum accessible touch target. Chips keep their visible size and grow
 /// only an invisible hit area to reach it.
@@ -63,7 +82,7 @@ const double _headerStackMinWidth = 380;
 
 TextStyle _serif(
   double size, {
-  Color color = _plum,
+  Color color = _ink,
   FontWeight weight = FontWeight.w700,
   double height = 1.12,
   bool italic = false,
@@ -94,23 +113,26 @@ TextStyle _sans(
   );
 }
 
-TextStyle _kicker({Color color = _terra}) =>
+TextStyle _kicker({Color color = _emberBright}) =>
     _sans(11, color: color, weight: FontWeight.w700, spacing: 2.4);
 
-BoxDecoration _cardDecoration({Color color = _paper, bool shadow = true}) {
+/// Ordinary surfaces in dusk are flat: a lifted plum fill and a translucent
+/// warm hairline. Shadows deepen rather than lighten, and the single focal
+/// shadow of the viewport belongs to the hero alone.
+BoxDecoration _cardDecoration({Color color = _surface}) {
   return BoxDecoration(
     color: color,
-    borderRadius: BorderRadius.circular(16),
+    borderRadius: BorderRadius.circular(20),
     border: Border.all(color: _hairline),
-    boxShadow: shadow
-        ? [
-            BoxShadow(
-              color: const Color(0xFF3A2A1E).withValues(alpha: 0.07),
-              blurRadius: 24,
-              offset: const Offset(0, 10),
-            ),
-          ]
-        : null,
+  );
+}
+
+/// The quiet ember underline — a short gradient settling from the ember to
+/// its deepest note. Used for the masthead rule and the saved-note spine.
+BoxDecoration _emberRuleDecoration({double radius = 2}) {
+  return BoxDecoration(
+    gradient: const LinearGradient(colors: <Color>[_ember, _emberDeep]),
+    borderRadius: BorderRadius.circular(radius),
   );
 }
 
@@ -118,7 +140,7 @@ BoxDecoration _cardDecoration({Color color = _paper, bool shadow = true}) {
 /// set, every animated surface on Today degrades to an instant, composed
 /// transition with identical copy and controls.
 Duration _motion(BuildContext context, Duration duration) =>
-    MediaQuery.disableAnimationsOf(context) ? Duration.zero : duration;
+    ExperienceMotion.reducedMotion(context) ? Duration.zero : duration;
 
 /// Keeps authored masthead words intact at extreme text scale: the line is
 /// laid out as one unbroken word sequence and scaled down to fit, never
@@ -264,9 +286,18 @@ class _TodayExperienceVisualState extends State<TodayExperienceVisual> {
   // summarized, rewritten, or inferred. Null means intentional silence.
   String? _rememberedHelpLine;
 
-  // Optional note to self.
+  // Comfort Window is already reliability-gated by the non-visual port.
+  // Null means intentional silence, never a loading placeholder.
+  TodayComfortWindowState? _comfortWindow;
+  bool _comfortWindowSaveInFlight = false;
+
+  // Optional Quick notes. The local row identity survives edits so Reports
+  // and Comfort Kit never retain a stale duplicate after a correction.
   bool _noteOpen = false;
   String? _note;
+  final List<CaptureNote> _quickNotes = <CaptureNote>[];
+  String? _editingNoteId;
+  bool _keepNoteInComfortKit = false;
   final TextEditingController _noteController = TextEditingController();
 
   // Acknowledgement toast.
@@ -277,14 +308,14 @@ class _TodayExperienceVisualState extends State<TodayExperienceVisual> {
     MomentCheckInState.good,
     MomentCheckInState.calm,
     MomentCheckInState.steady,
-    MomentCheckInState.energized,
     MomentCheckInState.low,
     MomentCheckInState.irritable,
     MomentCheckInState.anxious,
-    MomentCheckInState.tender,
   ];
 
   static const List<MomentCheckInState> _moreMoods = <MomentCheckInState>[
+    MomentCheckInState.energized,
+    MomentCheckInState.tender,
     MomentCheckInState.hopeful,
     MomentCheckInState.overwhelmed,
     MomentCheckInState.exhausted,
@@ -362,7 +393,7 @@ class _TodayExperienceVisualState extends State<TodayExperienceVisual> {
       ];
 
   /// Warm ramp for the severity legend — five steps from a whisper of
-  /// terracotta to its deepest note.
+  /// warmth to its deepest note.
   static const List<Color> _severityRamp = DegreeGraphics.severityRamp;
 
   bool get _moodSaveInFlight => _moodSavesInFlight > 0;
@@ -514,7 +545,11 @@ class _TodayExperienceVisualState extends State<TodayExperienceVisual> {
       _periodActive = snapshot.canEndPeriod;
       _canRecordFlow = snapshot.canRecordFlow;
       _note = snapshot.note;
+      _quickNotes
+        ..clear()
+        ..addAll(snapshot.quickNotes);
       _rememberedHelpLine = snapshot.rememberedHelpLine;
+      _comfortWindow = snapshot.comfortWindow;
       _cycleContext = snapshot.cycleContext;
       _view = _cycleViewFor(snapshot.cycleContext);
     });
@@ -533,10 +568,10 @@ class _TodayExperienceVisualState extends State<TodayExperienceVisual> {
     final MomentCheckInState? picked =
         await showModalBottomSheet<MomentCheckInState>(
           context: context,
-          backgroundColor: _paper,
+          backgroundColor: _surface,
           isScrollControlled: true,
           shape: const RoundedRectangleBorder(
-            borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+            borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
           ),
           builder: (BuildContext ctx) {
             return SafeArea(
@@ -580,6 +615,50 @@ class _TodayExperienceVisualState extends State<TodayExperienceVisual> {
   /// The optional Care route — opened only by the user, never automatically.
   Future<void> _openCare() => widget.port.openCare();
 
+  Future<void> _saveComfortReminder({
+    required bool enabled,
+    required int leadDays,
+  }) async {
+    if (_comfortWindowSaveInFlight) return;
+    setState(() => _comfortWindowSaveInFlight = true);
+    try {
+      final snapshot = await widget.port.saveComfortReminder(
+        enabled: enabled,
+        leadDays: leadDays,
+      );
+      if (!mounted) return;
+      await _reloadFrom(snapshot);
+      _acknowledge(
+        enabled
+            ? 'Reminder preference saved — ${comfortReminderLeadLabel(leadDays)} at 09:00'
+            : 'Comfort reminder is off',
+        saved: true,
+      );
+    } on Object {
+      if (mounted) {
+        _acknowledge("Letter Within couldn't save that reminder. Try again.");
+      }
+    } finally {
+      if (mounted) setState(() => _comfortWindowSaveInFlight = false);
+    }
+  }
+
+  Future<void> _chooseComfortReminder() async {
+    final comfort = _comfortWindow;
+    if (comfort == null) return;
+    final result = await showComfortReminderSheet(
+      context,
+      enabled: comfort.reminderEnabled,
+      configured: comfort.reminderConfigured,
+      leadDays: comfort.reminderLeadDays,
+    );
+    if (!mounted || result == null) return;
+    await _saveComfortReminder(
+      enabled: result.enabled,
+      leadDays: result.leadDays,
+    );
+  }
+
   // -------------------------------------------------------------------------
   // Bleeding — with an explicit period-start decision
   // -------------------------------------------------------------------------
@@ -611,9 +690,9 @@ class _TodayExperienceVisualState extends State<TodayExperienceVisual> {
   Future<void> _askPeriodStart(BleedingFlow flow) async {
     final bool? started = await showModalBottomSheet<bool>(
       context: context,
-      backgroundColor: _paper,
+      backgroundColor: _surface,
       shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
       ),
       builder: (BuildContext ctx) {
         return SafeArea(
@@ -639,8 +718,8 @@ class _TodayExperienceVisualState extends State<TodayExperienceVisual> {
                   child: TextButton(
                     onPressed: () => Navigator.of(ctx).pop(true),
                     style: TextButton.styleFrom(
-                      foregroundColor: Colors.white,
-                      backgroundColor: _terra,
+                      foregroundColor: _canvas,
+                      backgroundColor: _ember,
                       padding: const EdgeInsets.symmetric(vertical: 14),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12),
@@ -719,10 +798,10 @@ class _TodayExperienceVisualState extends State<TodayExperienceVisual> {
     final ObservationDefinition? symptom =
         await showModalBottomSheet<ObservationDefinition>(
           context: context,
-          backgroundColor: _paper,
+          backgroundColor: _surface,
           isScrollControlled: true,
           shape: const RoundedRectangleBorder(
-            borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+            borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
           ),
           builder: (BuildContext ctx) {
             return _SymptomBrowserSheet(groups: _symptomGroups);
@@ -805,10 +884,10 @@ class _TodayExperienceVisualState extends State<TodayExperienceVisual> {
   }) {
     return showModalBottomSheet<SymptomSeverity>(
       context: context,
-      backgroundColor: _paper,
+      backgroundColor: _surface,
       isScrollControlled: true,
       shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
       ),
       builder: (BuildContext ctx) {
         final MediaQueryData media = MediaQuery.of(ctx);
@@ -892,9 +971,9 @@ class _TodayExperienceVisualState extends State<TodayExperienceVisual> {
       context: context,
       builder: (BuildContext ctx) {
         return AlertDialog(
-          backgroundColor: _paper,
+          backgroundColor: _surface,
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(18),
+            borderRadius: BorderRadius.circular(20),
           ),
           title: Text('End this period?', style: _serif(20)),
           content: Text(
@@ -914,14 +993,14 @@ class _TodayExperienceVisualState extends State<TodayExperienceVisual> {
             TextButton(
               onPressed: () => Navigator.of(ctx).pop(true),
               style: TextButton.styleFrom(
-                foregroundColor: Colors.white,
-                backgroundColor: _terra,
+                foregroundColor: _canvas,
+                backgroundColor: _ember,
                 padding: const EdgeInsets.symmetric(
                   horizontal: 16,
                   vertical: 10,
                 ),
                 shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(10),
+                  borderRadius: BorderRadius.circular(12),
                 ),
               ),
               child: Text(
@@ -949,24 +1028,108 @@ class _TodayExperienceVisualState extends State<TodayExperienceVisual> {
   }
 
   // -------------------------------------------------------------------------
-  // Note to self
+  // Quick notes
   // -------------------------------------------------------------------------
+
+  void _beginNewNote() {
+    _noteController.clear();
+    setState(() {
+      _editingNoteId = null;
+      _keepNoteInComfortKit = false;
+      _noteOpen = true;
+    });
+  }
+
+  void _beginEditingNote(CaptureNote note) {
+    _noteController.text = note.text;
+    setState(() {
+      _editingNoteId = note.id;
+      _keepNoteInComfortKit = note.keepInComfortKit;
+      _noteOpen = true;
+    });
+  }
+
+  void _cancelNoteEditing() {
+    _noteController.clear();
+    setState(() {
+      _noteOpen = false;
+      _editingNoteId = null;
+      _keepNoteInComfortKit = false;
+    });
+  }
 
   Future<void> _saveNote() async {
     final String text = _noteController.text.trim();
     if (text.isEmpty) {
-      setState(() => _noteOpen = false);
+      _cancelNoteEditing();
       return;
     }
     try {
-      final snapshot = await widget.port.saveNote(text);
+      final editingId = _editingNoteId;
+      final snapshot = editingId == null
+          ? await widget.port.saveQuickNote(
+              text,
+              keepInComfortKit: _keepNoteInComfortKit,
+            )
+          : await widget.port.updateQuickNote(
+              editingId,
+              text: text,
+              keepInComfortKit: _keepNoteInComfortKit,
+            );
       if (!mounted) return;
       await _reloadFrom(snapshot);
-      setState(() => _noteOpen = false);
-      _acknowledge('Note kept — only you can read it', saved: true);
+      _noteController.clear();
+      setState(() {
+        _noteOpen = false;
+        _editingNoteId = null;
+        _keepNoteInComfortKit = false;
+      });
+      _acknowledge(
+        editingId == null
+            ? 'Quick note kept — only you can read it'
+            : 'Quick note updated',
+        saved: true,
+      );
     } on Object {
       if (mounted) {
         _acknowledge("Letter Within couldn't save that. Try again.");
+      }
+    }
+  }
+
+  Future<void> _deleteNote(CaptureNote note) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        backgroundColor: _surface,
+        title: Text('Delete this quick note?', style: _serif(20)),
+        content: Text(
+          'It will also leave your Comfort Kit and future reports.',
+          style: _sans(14, color: _inkSoft, height: 1.5),
+        ),
+        actions: <Widget>[
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(false),
+            child: const Text('Keep note'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(true),
+            style: TextButton.styleFrom(foregroundColor: _error),
+            child: const Text('Delete'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true || !mounted) return;
+    try {
+      final snapshot = await widget.port.deleteQuickNote(note.id);
+      if (!mounted) return;
+      await _reloadFrom(snapshot);
+      if (_editingNoteId == note.id) _cancelNoteEditing();
+      _acknowledge('Quick note deleted', saved: true);
+    } on Object {
+      if (mounted) {
+        _acknowledge("Letter Within couldn't delete that. Try again.");
       }
     }
   }
@@ -978,10 +1141,11 @@ class _TodayExperienceVisualState extends State<TodayExperienceVisual> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: _bg,
+      backgroundColor: _canvas,
       body: SafeArea(
         child: Stack(
           children: <Widget>[
+            const _DuskAmbient(),
             LayoutBuilder(
               builder: (BuildContext context, BoxConstraints constraints) {
                 final bool wide = constraints.maxWidth >= 760;
@@ -1021,16 +1185,20 @@ class _TodayExperienceVisualState extends State<TodayExperienceVisual> {
           const SizedBox(height: 14),
           _buildRecordedTodayStrip(),
         ],
-        const SizedBox(height: 32),
+        if (_showComfortWindow) ...<Widget>[
+          const SizedBox(height: 18),
+          _buildComfortWindow(),
+        ],
+        const SizedBox(height: 30),
         _buildMoodSection(),
         _buildRememberedHelpLine(),
-        const SizedBox(height: 32),
+        const SizedBox(height: 38),
         _buildBleedingSection(),
-        const SizedBox(height: 32),
+        const SizedBox(height: 38),
         _buildSymptomsSection(),
-        const SizedBox(height: 32),
+        const SizedBox(height: 38),
         _buildNoteSection(),
-        const SizedBox(height: 28),
+        const SizedBox(height: 34),
         _buildFooter(),
       ],
     );
@@ -1057,7 +1225,11 @@ class _TodayExperienceVisualState extends State<TodayExperienceVisual> {
                     const SizedBox(height: 14),
                     _buildRecordedTodayStrip(),
                   ],
-                  const SizedBox(height: 32),
+                  if (_showComfortWindow) ...<Widget>[
+                    const SizedBox(height: 18),
+                    _buildComfortWindow(),
+                  ],
+                  const SizedBox(height: 30),
                   _buildMoodSection(),
                   _buildRememberedHelpLine(),
                 ],
@@ -1070,11 +1242,11 @@ class _TodayExperienceVisualState extends State<TodayExperienceVisual> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: <Widget>[
                   _buildBleedingSection(),
-                  const SizedBox(height: 32),
+                  const SizedBox(height: 38),
                   _buildSymptomsSection(),
-                  const SizedBox(height: 32),
+                  const SizedBox(height: 38),
                   _buildNoteSection(),
-                  const SizedBox(height: 28),
+                  const SizedBox(height: 34),
                   _buildFooter(),
                 ],
               ),
@@ -1104,7 +1276,7 @@ class _TodayExperienceVisualState extends State<TodayExperienceVisual> {
     );
     final Text title = Text(
       'Letter Within',
-      style: _serif(34),
+      style: _serif(30, weight: FontWeight.w600, height: 1.15),
       maxLines: 1,
       softWrap: false,
     );
@@ -1112,10 +1284,10 @@ class _TodayExperienceVisualState extends State<TodayExperienceVisual> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: <Widget>[
         compact ? _fitMastheadLine(kicker) : kicker,
-        const SizedBox(height: 6),
+        const SizedBox(height: 7),
         compact ? _fitMastheadLine(title) : title,
-        const SizedBox(height: 8),
-        Container(width: 34, height: 2, color: _terra),
+        const SizedBox(height: 9),
+        Container(width: 30, height: 2, decoration: _emberRuleDecoration()),
       ],
     );
   }
@@ -1163,7 +1335,7 @@ class _TodayExperienceVisualState extends State<TodayExperienceVisual> {
   }
 
   // -------------------------------------------------------------------------
-  // Cycle-context hero — coral, honest states, no cycle ring
+  // Cycle-context hero — the raised focal surface, honest states
   // -------------------------------------------------------------------------
 
   Widget _buildHero() {
@@ -1185,8 +1357,8 @@ class _TodayExperienceVisualState extends State<TodayExperienceVisual> {
             ? TextButton(
                 onPressed: _confirmEndPeriod,
                 style: TextButton.styleFrom(
-                  foregroundColor: Colors.white,
-                  side: BorderSide(color: Colors.white.withValues(alpha: 0.65)),
+                  foregroundColor: _emberBright,
+                  side: BorderSide(color: _ember.withValues(alpha: 0.7)),
                   padding: const EdgeInsets.symmetric(
                     horizontal: 14,
                     vertical: 9,
@@ -1194,7 +1366,7 @@ class _TodayExperienceVisualState extends State<TodayExperienceVisual> {
                   minimumSize: Size.zero,
                   tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                   shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(10),
+                    borderRadius: BorderRadius.circular(12),
                   ),
                 ),
                 child: Text(
@@ -1212,29 +1384,21 @@ class _TodayExperienceVisualState extends State<TodayExperienceVisual> {
         middle: Text(
           'A few days logged so far. Each note today helps this space '
           'become more yours.',
-          style: _sans(
-            14.5,
-            color: Colors.white.withValues(alpha: 0.92),
-            height: 1.45,
-          ),
+          style: _sans(14.5, color: _ink.withValues(alpha: 0.88), height: 1.45),
         ),
       ),
       _CycleView.empty => _StatusCard(
         key: const ValueKey<String>('empty'),
         kicker: 'NO HISTORY YET',
         title: 'A quiet beginning',
-        footnote: 'Private by default. Always yours.',
+        footnote: 'Private on this device.',
         middle: Text(
           _note == null
               ? 'No notes yet — and nothing to catch up on. Begin with how '
                     'this moment feels.'
               : 'Your note is here — and there is nothing else to catch up '
                     'on. Begin with how this moment feels.',
-          style: _sans(
-            14.5,
-            color: Colors.white.withValues(alpha: 0.92),
-            height: 1.45,
-          ),
+          style: _sans(14.5, color: _ink.withValues(alpha: 0.88), height: 1.45),
         ),
       ),
       _CycleView.error => _StatusErrorCard(
@@ -1251,10 +1415,10 @@ class _TodayExperienceVisualState extends State<TodayExperienceVisual> {
     final Widget startButton = OutlinedButton(
       onPressed: _startPeriodFromStrip,
       style: OutlinedButton.styleFrom(
-        foregroundColor: _terraDeep,
-        side: const BorderSide(color: _terra, width: 1.3),
+        foregroundColor: _emberBright,
+        side: const BorderSide(color: _ember, width: 1.3),
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 11),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(11)),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       ),
       child: Text(
         'Start period',
@@ -1277,7 +1441,7 @@ class _TodayExperienceVisualState extends State<TodayExperienceVisual> {
       ],
     );
     return Container(
-      decoration: _cardDecoration(shadow: false),
+      decoration: _cardDecoration(),
       padding: const EdgeInsets.fromLTRB(18, 14, 14, 14),
       child: LayoutBuilder(
         builder: (BuildContext context, BoxConstraints constraints) {
@@ -1311,7 +1475,7 @@ class _TodayExperienceVisualState extends State<TodayExperienceVisual> {
   /// editable. Starting another period would necessarily overlap it.
   Widget _buildRecordedTodayStrip() {
     return Container(
-      decoration: _cardDecoration(shadow: false),
+      decoration: _cardDecoration(),
       padding: const EdgeInsets.fromLTRB(18, 14, 14, 14),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -1348,7 +1512,7 @@ class _TodayExperienceVisualState extends State<TodayExperienceVisual> {
           kicker: 'One tap — no wrong answers',
           title: 'How is this moment?',
         ),
-        const SizedBox(height: 14),
+        const SizedBox(height: 16),
         Wrap(
           spacing: 10,
           runSpacing: 10,
@@ -1394,15 +1558,18 @@ class _TodayExperienceVisualState extends State<TodayExperienceVisual> {
     final Widget icon = Container(
       width: 34,
       height: 34,
-      decoration: const BoxDecoration(color: _paper, shape: BoxShape.circle),
-      child: const Icon(Icons.favorite_rounded, size: 16, color: _terra),
+      decoration: const BoxDecoration(
+        color: _surfaceRaised,
+        shape: BoxShape.circle,
+      ),
+      child: const Icon(Icons.favorite_rounded, size: 16, color: _ember),
     );
     final Widget copy = Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: <Widget>[
         Text(
           'This one sounds heavy.',
-          style: _sans(14, weight: FontWeight.w700, color: _terraDeep),
+          style: _sans(14, weight: FontWeight.w700, color: _emberBright),
         ),
         const SizedBox(height: 2),
         Text(
@@ -1414,7 +1581,7 @@ class _TodayExperienceVisualState extends State<TodayExperienceVisual> {
     final TextButton action = TextButton(
       onPressed: _openCare,
       style: TextButton.styleFrom(
-        foregroundColor: _terraDeep,
+        foregroundColor: _emberBright,
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
         minimumSize: Size.zero,
         tapTargetSize: MaterialTapTargetSize.shrinkWrap,
@@ -1430,9 +1597,9 @@ class _TodayExperienceVisualState extends State<TodayExperienceVisual> {
     );
     return Container(
       decoration: BoxDecoration(
-        color: _terraTint.withValues(alpha: 0.55),
+        color: _emberSoft,
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: _terra.withValues(alpha: 0.35)),
+        border: Border.all(color: _ember.withValues(alpha: 0.4)),
       ),
       padding: const EdgeInsets.fromLTRB(16, 14, 12, 14),
       child: LayoutBuilder(
@@ -1498,7 +1665,7 @@ class _TodayExperienceVisualState extends State<TodayExperienceVisual> {
                     decoration: BoxDecoration(
                       border: Border(
                         left: BorderSide(
-                          color: _terra.withValues(alpha: 0.45),
+                          color: _ember.withValues(alpha: 0.5),
                           width: 2,
                         ),
                       ),
@@ -1511,7 +1678,7 @@ class _TodayExperienceVisualState extends State<TodayExperienceVisual> {
                           'REMEMBERED',
                           style: _sans(
                             10,
-                            color: _inkSoft.withValues(alpha: 0.85),
+                            color: _inkFaint,
                             weight: FontWeight.w700,
                             spacing: 2.2,
                           ),
@@ -1542,6 +1709,239 @@ class _TodayExperienceVisualState extends State<TodayExperienceVisual> {
           child: FadeTransition(opacity: anim, child: child),
         );
       },
+    );
+  }
+
+  bool get _showComfortWindow {
+    final comfort = _comfortWindow;
+    return comfort != null &&
+        (comfort.preparationVisible || comfort.reminderInvitationVisible);
+  }
+
+  Widget _buildComfortWindow() {
+    final comfort = _comfortWindow!;
+    if (!comfort.preparationVisible) {
+      return _buildComfortReminderInvitation(comfort);
+    }
+    final range = _dateRangeLabel(comfort.forecastStart, comfort.forecastEnd);
+    final reminderLine = comfort.reminderEnabled
+        ? 'Reminder preference · ${comfortReminderLeadLabel(comfort.reminderLeadDays)} at 09:00'
+        : 'Reminder is off';
+    return Semantics(
+      container: true,
+      label:
+          'Comfort Window. Estimated harder days $range. ${comfort.kitFormed ? 'Your Comfort Kit is ready.' : 'Care is available.'} $reminderLine.',
+      child: Container(
+        key: const ValueKey<String>('comfort-window-preparation'),
+        decoration: _cardDecoration(color: _surfaceRaised),
+        padding: const EdgeInsets.fromLTRB(18, 18, 16, 16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: <Widget>[
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: <Widget>[
+                Container(
+                  width: 40,
+                  height: 40,
+                  decoration: BoxDecoration(
+                    color: _ember.withValues(alpha: 0.12),
+                    borderRadius: BorderRadius.circular(13),
+                  ),
+                  child: const Icon(
+                    Icons.nightlight_round,
+                    color: _emberBright,
+                    size: 20,
+                  ),
+                ),
+                const SizedBox(width: 13),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: <Widget>[
+                      Text(
+                        'A gentler plan for these days',
+                        style: _serif(18, weight: FontWeight.w600),
+                      ),
+                      const SizedBox(height: 5),
+                      Text(
+                        'Estimated harder days · $range',
+                        style: _sans(
+                          13,
+                          color: _emberBright,
+                          weight: FontWeight.w700,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 14),
+            Text(
+              'Your local pattern suggests this may be a harder stretch. '
+              'It is an estimate, not a diagnosis.',
+              style: _sans(13.5, color: _inkSoft, height: 1.5),
+            ),
+            const SizedBox(height: 12),
+            Text(
+              comfort.kitFormed
+                  ? 'Your Comfort Kit is ready when you want it.'
+                  : 'Care is here if a little company would help.',
+              style: _sans(13.5, color: _ink, weight: FontWeight.w600),
+            ),
+            const SizedBox(height: 14),
+            LayoutBuilder(
+              builder: (BuildContext context, BoxConstraints constraints) {
+                final compact =
+                    constraints.maxWidth < 340 ||
+                    MediaQuery.textScalerOf(context).scale(1) > 1.35;
+                final careAction = OutlinedButton.icon(
+                  onPressed: _openCare,
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: _emberBright,
+                    minimumSize: const Size(0, _minTouchTarget),
+                    side: BorderSide(color: _ember.withValues(alpha: 0.55)),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                  ),
+                  icon: Icon(
+                    comfort.kitFormed
+                        ? Icons.inventory_2_outlined
+                        : Icons.favorite_border_rounded,
+                    size: 18,
+                  ),
+                  label: Text(
+                    comfort.kitFormed ? 'Open Comfort Kit' : 'Open Care',
+                    style: _sans(13.5, weight: FontWeight.w700),
+                  ),
+                );
+                if (compact) {
+                  return SizedBox(width: double.infinity, child: careAction);
+                }
+                return Align(
+                  alignment: Alignment.centerLeft,
+                  child: careAction,
+                );
+              },
+            ),
+            const SizedBox(height: 10),
+            const Divider(height: 1, color: _hairline),
+            const SizedBox(height: 4),
+            LayoutBuilder(
+              builder: (BuildContext context, BoxConstraints constraints) {
+                final reminderAction = TextButton(
+                  onPressed: _comfortWindowSaveInFlight
+                      ? null
+                      : _chooseComfortReminder,
+                  style: TextButton.styleFrom(
+                    foregroundColor: _inkSoft,
+                    minimumSize: const Size(0, _minTouchTarget),
+                    padding: const EdgeInsets.symmetric(horizontal: 8),
+                  ),
+                  child: Text(
+                    comfort.reminderEnabled
+                        ? 'Change reminder'
+                        : comfort.reminderConfigured
+                        ? 'Reminder options'
+                        : 'Choose reminder',
+                    style: _sans(13, weight: FontWeight.w600),
+                  ),
+                );
+                final compact =
+                    constraints.maxWidth < 300 ||
+                    MediaQuery.textScalerOf(context).scale(1) > 1.35;
+                if (compact) {
+                  return Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: <Widget>[
+                      Padding(
+                        padding: const EdgeInsets.only(top: 8),
+                        child: Text(
+                          reminderLine,
+                          style: _sans(11.5, color: _inkFaint),
+                        ),
+                      ),
+                      reminderAction,
+                    ],
+                  );
+                }
+                return Row(
+                  children: <Widget>[
+                    Expanded(
+                      child: Text(
+                        reminderLine,
+                        style: _sans(11.5, color: _inkFaint),
+                      ),
+                    ),
+                    reminderAction,
+                  ],
+                );
+              },
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildComfortReminderInvitation(TodayComfortWindowState comfort) {
+    final cycleCount = comfort.sourceCycleCount;
+    return Container(
+      key: const ValueKey<String>('comfort-reminder-invitation'),
+      decoration: _cardDecoration(),
+      padding: const EdgeInsets.fromLTRB(18, 16, 14, 14),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          Text('A pattern is ready', style: _serif(17.5)),
+          const SizedBox(height: 7),
+          Text(
+            'Your records show a clearer recurring window across '
+            '$cycleCount ${cycleCount == 1 ? 'cycle' : 'cycles'}. Choose '
+            'whether one quiet reminder would help.',
+            style: _sans(13.5, color: _inkSoft, height: 1.5),
+          ),
+          const SizedBox(height: 10),
+          Wrap(
+            spacing: 6,
+            runSpacing: 4,
+            crossAxisAlignment: WrapCrossAlignment.center,
+            children: <Widget>[
+              TextButton(
+                onPressed: _comfortWindowSaveInFlight
+                    ? null
+                    : _chooseComfortReminder,
+                style: TextButton.styleFrom(
+                  foregroundColor: _emberBright,
+                  minimumSize: const Size(0, _minTouchTarget),
+                ),
+                child: Text(
+                  'Choose reminder',
+                  style: _sans(13.5, weight: FontWeight.w700),
+                ),
+              ),
+              TextButton(
+                onPressed: _comfortWindowSaveInFlight
+                    ? null
+                    : () => _saveComfortReminder(
+                        enabled: false,
+                        leadDays: comfort.reminderLeadDays,
+                      ),
+                style: TextButton.styleFrom(
+                  foregroundColor: _inkSoft,
+                  minimumSize: const Size(0, _minTouchTarget),
+                ),
+                child: Text(
+                  'Not now',
+                  style: _sans(13.5, weight: FontWeight.w600),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
     );
   }
 
@@ -1672,8 +2072,8 @@ class _TodayExperienceVisualState extends State<TodayExperienceVisual> {
                   icon: const Icon(Icons.add_rounded, size: 18),
                   label: const Text('Add a symptom'),
                   style: OutlinedButton.styleFrom(
-                    foregroundColor: _terraDeep,
-                    side: const BorderSide(color: _hairline),
+                    foregroundColor: _emberBright,
+                    side: BorderSide(color: _ember.withValues(alpha: 0.45)),
                     padding: const EdgeInsets.symmetric(vertical: 13),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12),
@@ -1690,16 +2090,14 @@ class _TodayExperienceVisualState extends State<TodayExperienceVisual> {
   }
 
   // -------------------------------------------------------------------------
-  // Note to self — optional, low priority
+  // Quick note — optional, low priority
   // -------------------------------------------------------------------------
 
   Widget _buildNoteSection() {
     final bool reduced = MediaQuery.disableAnimationsOf(context);
     final Widget firstChild = InkWell(
-      onTap: () {
-        if (_note != null) _noteController.text = _note!;
-        setState(() => _noteOpen = true);
-      },
+      key: const ValueKey<String>('quick-note-add'),
+      onTap: _beginNewNote,
       child: Padding(
         padding: const EdgeInsets.symmetric(vertical: 14),
         child: Row(
@@ -1708,9 +2106,9 @@ class _TodayExperienceVisualState extends State<TodayExperienceVisual> {
             const SizedBox(width: 10),
             Expanded(
               child: Text(
-                _note == null
+                _quickNotes.isEmpty
                     ? 'Write a line for future you'
-                    : 'Add another line',
+                    : 'Add another quick note',
                 style: _sans(14, color: _inkSoft),
               ),
             ),
@@ -1722,13 +2120,15 @@ class _TodayExperienceVisualState extends State<TodayExperienceVisual> {
     final Widget secondChild = Padding(
       padding: const EdgeInsets.only(top: 10, bottom: 12),
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.end,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: <Widget>[
           TextField(
+            key: const ValueKey<String>('quick-note-field'),
             controller: _noteController,
             autofocus: true,
-            maxLines: 3,
+            maxLines: 6,
             minLines: 2,
+            cursorColor: _ember,
             style: _serif(
               15,
               color: _ink,
@@ -1740,7 +2140,7 @@ class _TodayExperienceVisualState extends State<TodayExperienceVisual> {
               hintText: 'Whatever you want to remember…',
               hintStyle: _serif(
                 15,
-                color: _inkSoft.withValues(alpha: 0.6),
+                color: _inkFaint,
                 weight: FontWeight.w400,
                 italic: true,
               ),
@@ -1749,11 +2149,31 @@ class _TodayExperienceVisualState extends State<TodayExperienceVisual> {
             ),
           ),
           const SizedBox(height: 8),
+          Material(
+            color: Colors.transparent,
+            child: SwitchListTile.adaptive(
+              key: const ValueKey<String>('quick-note-comfort-kit-toggle'),
+              contentPadding: EdgeInsets.zero,
+              value: _keepNoteInComfortKit,
+              activeTrackColor: _ember,
+              onChanged: (value) =>
+                  setState(() => _keepNoteInComfortKit = value),
+              title: Text(
+                'Keep in Comfort Kit',
+                style: _sans(14, weight: FontWeight.w600),
+              ),
+              subtitle: Text(
+                'Make this line easy to find when you need care.',
+                style: _sans(12.5, color: _inkSoft),
+              ),
+            ),
+          ),
+          const SizedBox(height: 4),
           Row(
             mainAxisAlignment: MainAxisAlignment.end,
             children: <Widget>[
               TextButton(
-                onPressed: () => setState(() => _noteOpen = false),
+                onPressed: _cancelNoteEditing,
                 style: TextButton.styleFrom(foregroundColor: _inkSoft),
                 child: Text(
                   'Not now',
@@ -1764,18 +2184,18 @@ class _TodayExperienceVisualState extends State<TodayExperienceVisual> {
               TextButton(
                 onPressed: _saveNote,
                 style: TextButton.styleFrom(
-                  foregroundColor: Colors.white,
-                  backgroundColor: _terra,
+                  foregroundColor: _canvas,
+                  backgroundColor: _ember,
                   padding: const EdgeInsets.symmetric(
                     horizontal: 16,
                     vertical: 10,
                   ),
                   shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(10),
+                    borderRadius: BorderRadius.circular(12),
                   ),
                 ),
                 child: Text(
-                  'Keep note',
+                  _editingNoteId == null ? 'Keep note' : 'Update note',
                   style: _sans(13.5, weight: FontWeight.w700),
                 ),
               ),
@@ -1787,55 +2207,34 @@ class _TodayExperienceVisualState extends State<TodayExperienceVisual> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: <Widget>[
-        const _SectionHeader(kicker: 'Optional', title: 'A note to self'),
+        const _SectionHeader(kicker: 'Optional', title: 'Quick note'),
         const SizedBox(height: 14),
         Container(
-          decoration: _cardDecoration(shadow: false),
+          decoration: _cardDecoration(),
           padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 4),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: <Widget>[
-              if (_note != null && !_noteOpen)
-                InkWell(
-                  onTap: () {
-                    _noteController.text = _note!;
-                    setState(() => _noteOpen = true);
-                  },
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 14),
-                    child: Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: <Widget>[
-                        Container(
-                          width: 3,
-                          height: 40,
-                          decoration: BoxDecoration(
-                            color: _terra,
-                            borderRadius: BorderRadius.circular(2),
-                          ),
-                        ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: Text(
-                            _note!,
-                            style: _serif(
-                              14.5,
-                              color: _ink,
-                              weight: FontWeight.w500,
-                              italic: true,
-                              height: 1.45,
-                            ),
-                          ),
-                        ),
-                        const Icon(
-                          Icons.edit_outlined,
-                          size: 16,
-                          color: _inkSoft,
-                        ),
-                      ],
-                    ),
+              if (_quickNotes.isNotEmpty && !_noteOpen) ...<Widget>[
+                Padding(
+                  padding: const EdgeInsets.only(top: 12, bottom: 4),
+                  child: Text(
+                    '${_quickNotes.length} saved ${_quickNotes.length == 1 ? 'note' : 'notes'}',
+                    style: _sans(12.5, color: _inkSoft),
                   ),
                 ),
+                for (var index = 0; index < _quickNotes.length; index++) ...[
+                  if (index > 0) const Divider(color: _hairline, height: 1),
+                  _QuickNoteRow(
+                    key: ValueKey<String>(
+                      'quick-note-${_quickNotes[index].id}',
+                    ),
+                    note: _quickNotes[index],
+                    onEdit: () => _beginEditingNote(_quickNotes[index]),
+                    onDelete: () => _deleteNote(_quickNotes[index]),
+                  ),
+                ],
+              ],
               if (reduced)
                 (_noteOpen ? secondChild : firstChild)
               else
@@ -1864,7 +2263,7 @@ class _TodayExperienceVisualState extends State<TodayExperienceVisual> {
         'Everything here stays on this device.',
         style: _serif(
           12.5,
-          color: _inkSoft.withValues(alpha: 0.8),
+          color: _inkFaint,
           weight: FontWeight.w500,
           italic: true,
         ),
@@ -1876,11 +2275,12 @@ class _TodayExperienceVisualState extends State<TodayExperienceVisual> {
     final Widget toast = Container(
       padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
       decoration: BoxDecoration(
-        color: _ink.withValues(alpha: 0.94),
+        color: _surfaceRaised,
         borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: _hairline),
         boxShadow: <BoxShadow>[
           BoxShadow(
-            color: _ink.withValues(alpha: 0.25),
+            color: Colors.black.withValues(alpha: 0.5),
             blurRadius: 20,
             offset: const Offset(0, 8),
           ),
@@ -1893,7 +2293,7 @@ class _TodayExperienceVisualState extends State<TodayExperienceVisual> {
             width: 8,
             height: 8,
             decoration: const BoxDecoration(
-              color: _terra,
+              color: _ember,
               shape: BoxShape.circle,
             ),
           ),
@@ -1901,7 +2301,7 @@ class _TodayExperienceVisualState extends State<TodayExperienceVisual> {
           Flexible(
             child: Text(
               _ack ?? '',
-              style: _sans(13.5, color: _paper, weight: FontWeight.w600),
+              style: _sans(13.5, color: _ink, weight: FontWeight.w600),
             ),
           ),
         ],
@@ -1935,6 +2335,44 @@ class _TodayExperienceVisualState extends State<TodayExperienceVisual> {
 }
 
 // ---------------------------------------------------------------------------
+// Ambient field — static, non-semantic, and anchored behind cycle context.
+// ---------------------------------------------------------------------------
+
+class _DuskAmbient extends StatelessWidget {
+  const _DuskAmbient();
+
+  @override
+  Widget build(BuildContext context) {
+    return Positioned.fill(
+      child: IgnorePointer(
+        child: ExcludeSemantics(
+          child: Stack(
+            children: <Widget>[
+              Positioned(
+                top: 105,
+                left: -155,
+                width: 440,
+                height: 440,
+                child: DecoratedBox(
+                  decoration: BoxDecoration(
+                    gradient: RadialGradient(
+                      colors: <Color>[
+                        _ember.withValues(alpha: 0.075),
+                        _canvas.withValues(alpha: 0),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+// ---------------------------------------------------------------------------
 // Section header — kicker + editorial serif question
 // ---------------------------------------------------------------------------
 
@@ -1950,8 +2388,8 @@ class _SectionHeader extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: <Widget>[
         Text(kicker.toUpperCase(), style: _kicker()),
-        const SizedBox(height: 6),
-        Text(title, style: _serif(22)),
+        const SizedBox(height: 7),
+        Text(title, style: _serif(21, weight: FontWeight.w600, height: 1.24)),
       ],
     );
   }
@@ -1985,18 +2423,21 @@ class _StatusCard extends StatelessWidget {
         gradient: const LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
-          colors: <Color>[Color(0xFFE0703F), Color(0xFFC3432C)],
+          colors: <Color>[_surfaceRaised, _surface],
         ),
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(28),
+        border: Border.all(color: _hairline),
+        // The viewport's single focal shadow: plum-black, low and warm —
+        // in dusk, shadows deepen rather than lighten.
         boxShadow: <BoxShadow>[
           BoxShadow(
-            color: const Color(0xFFC3432C).withValues(alpha: 0.32),
-            blurRadius: 30,
+            color: Colors.black.withValues(alpha: 0.34),
+            blurRadius: 36,
             offset: const Offset(0, 14),
           ),
         ],
       ),
-      padding: const EdgeInsets.fromLTRB(24, 22, 24, 20),
+      padding: const EdgeInsets.fromLTRB(24, 20, 24, 22),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
@@ -2004,7 +2445,7 @@ class _StatusCard extends StatelessWidget {
             kicker,
             style: _sans(
               10.5,
-              color: Colors.white.withValues(alpha: 0.75),
+              color: _emberBright.withValues(alpha: 0.85),
               weight: FontWeight.w700,
               spacing: 2.2,
             ),
@@ -2016,7 +2457,12 @@ class _StatusCard extends StatelessWidget {
           // viewport on its own. Normal-scale rendering is unchanged.
           _DisplayTitle(
             title,
-            style: _serif(30, color: Colors.white, height: 1.05),
+            style: _serif(
+              29,
+              color: _ink,
+              weight: FontWeight.w600,
+              height: 1.12,
+            ),
             maxLines: 3,
           ),
           const SizedBox(height: 12),
@@ -2028,11 +2474,7 @@ class _StatusCard extends StatelessWidget {
               Expanded(
                 child: Text(
                   footnote,
-                  style: _sans(
-                    12.5,
-                    color: Colors.white.withValues(alpha: 0.8),
-                    height: 1.4,
-                  ),
+                  style: _sans(12.5, color: _inkSoft, height: 1.4),
                 ),
               ),
               if (action != null) ...<Widget>[
@@ -2048,7 +2490,7 @@ class _StatusCard extends StatelessWidget {
 }
 
 /// The honest load-failure state. A failed read is never dressed up as a
-/// lifecycle state: this calm paper card says plainly that today's notes
+/// lifecycle state: this calm plum card says plainly that today's notes
 /// could not be read, reassures that nothing written is lost, and offers a
 /// single quiet retry.
 class _StatusErrorCard extends StatelessWidget {
@@ -2070,7 +2512,7 @@ class _StatusErrorCard extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: <Widget>[
-              Text('A QUIET PAUSE', style: _kicker()),
+              Text('A QUIET PAUSE', style: _kicker(color: _error)),
               const SizedBox(height: 8),
               _DisplayTitle(
                 "We couldn’t read today’s notes",
@@ -2086,14 +2528,14 @@ class _StatusErrorCard extends StatelessWidget {
               OutlinedButton(
                 onPressed: onRetry,
                 style: OutlinedButton.styleFrom(
-                  foregroundColor: _terraDeep,
-                  side: const BorderSide(color: _terra, width: 1.3),
+                  foregroundColor: _emberBright,
+                  side: const BorderSide(color: _ember, width: 1.3),
                   padding: const EdgeInsets.symmetric(
                     horizontal: 18,
                     vertical: 12,
                   ),
                   shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(11),
+                    borderRadius: BorderRadius.circular(12),
                   ),
                 ),
                 child: Text(
@@ -2145,15 +2587,11 @@ class _KnownCycleMiddle extends StatelessWidget {
             children: <TextSpan>[
               TextSpan(
                 text: lead,
-                style: _serif(22, color: Colors.white),
+                style: _serif(22, color: _ink),
               ),
               TextSpan(
                 text: rest,
-                style: _sans(
-                  14.5,
-                  color: Colors.white.withValues(alpha: 0.88),
-                  weight: FontWeight.w600,
-                ),
+                style: _sans(14.5, color: _inkSoft, weight: FontWeight.w600),
               ),
             ],
           ),
@@ -2165,16 +2603,13 @@ class _KnownCycleMiddle extends StatelessWidget {
             child: LinearProgressIndicator(
               value: progress,
               minHeight: 4,
-              backgroundColor: Colors.white.withValues(alpha: 0.28),
-              valueColor: const AlwaysStoppedAnimation<Color>(Colors.white),
+              backgroundColor: _ink.withValues(alpha: 0.14),
+              valueColor: const AlwaysStoppedAnimation<Color>(_ember),
             ),
           ),
         ],
         const SizedBox(height: 6),
-        Text(
-          caption,
-          style: _sans(11.5, color: Colors.white.withValues(alpha: 0.72)),
-        ),
+        Text(caption, style: _sans(11.5, color: _inkSoft)),
       ],
     );
   }
@@ -2255,7 +2690,7 @@ class _StatusLoadingCardState extends State<_StatusLoadingCard>
       width: width,
       height: height,
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: _ink,
         borderRadius: BorderRadius.circular(6),
       ),
     );
@@ -2278,21 +2713,15 @@ class _StatusLoadingCardState extends State<_StatusLoadingCard>
     return Container(
       width: double.infinity,
       decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: <Color>[
-            const Color(0xFFE0703F).withValues(alpha: 0.85),
-            const Color(0xFFC3432C).withValues(alpha: 0.85),
-          ],
-        ),
-        borderRadius: BorderRadius.circular(20),
+        color: _surfaceRaised,
+        borderRadius: BorderRadius.circular(28),
+        border: Border.all(color: _hairline),
       ),
       padding: const EdgeInsets.fromLTRB(24, 26, 24, 24),
       child: _reducedMotion
-          ? Opacity(opacity: 0.55, child: bars)
+          ? Opacity(opacity: 0.4, child: bars)
           : FadeTransition(
-              opacity: Tween<double>(begin: 0.3, end: 0.75).animate(
+              opacity: Tween<double>(begin: 0.2, end: 0.55).animate(
                 CurvedAnimation(parent: _controller, curve: Curves.easeInOut),
               ),
               child: bars,
@@ -2347,7 +2776,7 @@ class _Chip extends StatelessWidget {
                   const Icon(
                     Icons.check_rounded,
                     size: 15,
-                    color: Colors.white,
+                    color: _emberBright,
                   ),
                   const SizedBox(width: 6),
                 ] else if (icon != null) ...<Widget>[
@@ -2358,35 +2787,26 @@ class _Chip extends StatelessWidget {
                   child: Text(
                     label,
                     textAlign: TextAlign.center,
-                    style: _sans(
-                      15,
-                      weight: FontWeight.w600,
-                      color: selected ? Colors.white : _ink,
-                    ),
+                    style: _sans(15, weight: FontWeight.w600, color: _ink),
                   ),
                 ),
               ],
             );
             final BoxDecoration decoration = BoxDecoration(
-              color: selected ? _terra : _paper,
-              borderRadius: BorderRadius.circular(12),
+              color: selected
+                  ? _ember.withValues(alpha: 0.17)
+                  : _surface.withValues(alpha: 0.82),
+              borderRadius: BorderRadius.circular(999),
               border: Border.all(
-                color: selected ? _terra : _hairline,
-                width: selected ? 1.4 : 1,
+                color: selected
+                    ? _ember.withValues(alpha: 0.8)
+                    : _ink.withValues(alpha: 0.16),
+                width: selected ? 1.2 : 1,
               ),
-              boxShadow: selected
-                  ? <BoxShadow>[
-                      BoxShadow(
-                        color: _terra.withValues(alpha: 0.28),
-                        blurRadius: 14,
-                        offset: const Offset(0, 6),
-                      ),
-                    ]
-                  : null,
             );
             const EdgeInsets padding = EdgeInsets.symmetric(
-              horizontal: 16,
-              vertical: 10,
+              horizontal: 17,
+              vertical: 11,
             );
             final Widget chip = reduced
                 ? Container(
@@ -2468,7 +2888,7 @@ class _SymptomBrowserSheetState extends State<_SymptomBrowserSheet> {
                 const Icon(
                   Icons.chevron_right_rounded,
                   size: 18,
-                  color: _inkSoft,
+                  color: _inkFaint,
                 ),
               ],
             ),
@@ -2554,7 +2974,7 @@ class _SeverityLegend extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       decoration: BoxDecoration(
-        color: _bg,
+        color: _canvas,
         borderRadius: BorderRadius.circular(14),
         border: Border.all(color: _hairline),
       ),
@@ -2595,7 +3015,7 @@ class _SeverityLegend extends StatelessWidget {
                           style: _sans(
                             10,
                             weight: FontWeight.w600,
-                            color: i == 4 ? _terraDeep : _inkSoft,
+                            color: i == 4 ? _emberBright : _inkSoft,
                           ),
                         ),
                       ),
@@ -2647,10 +3067,10 @@ class _SeverityChoice extends StatelessWidget {
   Widget build(BuildContext context) {
     final bool reduced = MediaQuery.disableAnimationsOf(context);
     final BoxDecoration decoration = BoxDecoration(
-      color: selected ? _terraTint : Colors.transparent,
+      color: selected ? _emberSoft : Colors.transparent,
       borderRadius: BorderRadius.circular(12),
       border: Border.all(
-        color: selected ? _terra : _hairline,
+        color: selected ? _ember : _hairline,
         width: selected ? 1.4 : 1,
       ),
     );
@@ -2671,7 +3091,7 @@ class _SeverityChoice extends StatelessWidget {
                     width: 4,
                     height: 4 + (p * 1.5),
                     decoration: BoxDecoration(
-                      color: p <= index ? color : _hairline,
+                      color: p <= index ? color : _ink.withValues(alpha: 0.14),
                       borderRadius: BorderRadius.circular(1.5),
                     ),
                   ),
@@ -2689,14 +3109,14 @@ class _SeverityChoice extends StatelessWidget {
                 style: _sans(
                   15,
                   weight: FontWeight.w600,
-                  color: selected ? _terraDeep : _ink,
+                  color: selected ? _emberBright : _ink,
                 ),
               ),
               Text(desc, style: _sans(12.5, color: _inkSoft)),
             ],
           ),
         ),
-        if (selected) const Icon(Icons.check_rounded, size: 18, color: _terra),
+        if (selected) const Icon(Icons.check_rounded, size: 18, color: _ember),
       ],
     );
     return Semantics(
@@ -2714,6 +3134,85 @@ class _SeverityChoice extends StatelessWidget {
                 decoration: decoration,
                 child: body,
               ),
+      ),
+    );
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Quick note history row — stable identity, explicit edit/delete controls
+// ---------------------------------------------------------------------------
+
+class _QuickNoteRow extends StatelessWidget {
+  const _QuickNoteRow({
+    super.key,
+    required this.note,
+    required this.onEdit,
+    required this.onDelete,
+  });
+
+  final CaptureNote note;
+  final VoidCallback onEdit;
+  final VoidCallback onDelete;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 10),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: <Widget>[
+                Text(
+                  note.text,
+                  style: _serif(
+                    14.5,
+                    color: _ink,
+                    weight: FontWeight.w500,
+                    italic: true,
+                    height: 1.45,
+                  ),
+                ),
+                if (note.keepInComfortKit) ...<Widget>[
+                  const SizedBox(height: 6),
+                  Text(
+                    'In Comfort Kit',
+                    style: _sans(
+                      12,
+                      color: _emberBright,
+                      weight: FontWeight.w700,
+                    ),
+                  ),
+                ],
+              ],
+            ),
+          ),
+          IconButton(
+            key: ValueKey<String>('quick-note-edit-${note.id}'),
+            onPressed: onEdit,
+            tooltip: 'Edit quick note',
+            constraints: const BoxConstraints(
+              minWidth: _minTouchTarget,
+              minHeight: _minTouchTarget,
+            ),
+            icon: const Icon(Icons.edit_outlined, size: 19),
+            color: _inkSoft,
+          ),
+          IconButton(
+            key: ValueKey<String>('quick-note-delete-${note.id}'),
+            onPressed: onDelete,
+            tooltip: 'Delete quick note',
+            constraints: const BoxConstraints(
+              minWidth: _minTouchTarget,
+              minHeight: _minTouchTarget,
+            ),
+            icon: const Icon(Icons.delete_outline_rounded, size: 19),
+            color: _inkSoft,
+          ),
+        ],
       ),
     );
   }
@@ -2756,7 +3255,7 @@ class _SymptomRow extends StatelessWidget {
                     entry.severity.label,
                     style: _serif(
                       13,
-                      color: _terraDeep,
+                      color: _emberBright,
                       weight: FontWeight.w600,
                       italic: true,
                     ),
@@ -2764,7 +3263,7 @@ class _SymptomRow extends StatelessWidget {
                 ],
               ),
             ),
-            const Icon(Icons.edit_outlined, size: 16, color: _inkSoft),
+            const Icon(Icons.edit_outlined, size: 16, color: _inkFaint),
             const SizedBox(width: 4),
             IconButton(
               onPressed: onRemove,
@@ -2798,7 +3297,7 @@ class _SheetHandle extends StatelessWidget {
         width: 36,
         height: 4,
         decoration: BoxDecoration(
-          color: _ink.withValues(alpha: 0.14),
+          color: _ink.withValues(alpha: 0.22),
           borderRadius: BorderRadius.circular(2),
         ),
       ),

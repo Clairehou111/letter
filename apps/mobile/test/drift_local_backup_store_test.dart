@@ -453,6 +453,36 @@ void main() {
     },
   );
 
+  test('rejects overlapping period rows during staging', () async {
+    final database = LetterHealthDatabase(NativeDatabase.memory());
+    addTearDown(database.close);
+
+    LocalBackupRecord period(String id, int start, int end) => _record(id, {
+      'startDay': start,
+      'endDay': end,
+      'createdAtMillis': 1,
+      'updatedAtMillis': 2,
+    });
+
+    await expectLater(
+      DriftLocalBackupStore(database).stage(
+        _plan(
+          _snapshot(
+            collections: [
+              _collection('periods', [
+                period('first', 20400, 20404),
+                period('overlap', 20403, 20407),
+              ]),
+            ],
+          ),
+        ),
+      ),
+      throwsA(_malformedPayload),
+    );
+
+    expect(await database.select(database.periodRows).get(), isEmpty);
+  });
+
   test('rejects health rows that domain repositories cannot decode', () async {
     final database = LetterHealthDatabase(NativeDatabase.memory());
     addTearDown(database.close);
@@ -506,7 +536,7 @@ LocalBackupSnapshot _snapshot({
     _collection('periods'),
     _collection('care_records'),
     _collection('care_reflections'),
-    _collection('health_records'),
+    _collection('health_records', const [], 2),
     _collection('capture_notes'),
   ];
   final byName = {

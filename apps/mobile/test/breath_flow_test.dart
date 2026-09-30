@@ -58,7 +58,52 @@ void expectAccessibleControl(WidgetTester tester, Key key) {
   expect(finder.hitTestable(), findsOneWidget);
 }
 
+Future<void> openBreathMenu(WidgetTester tester) async {
+  await tester.tap(find.byKey(const Key('breath-menu')));
+  await tester.pump();
+}
+
 void main() {
+  testWidgets('phase cue is a stable live region that changes by phase', (
+    tester,
+  ) async {
+    final semantics = tester.ensureSemantics();
+    try {
+      await pumpBreath(tester);
+
+      const phaseCueKey = Key('breath-phase-cue');
+      final phaseCue = find.byKey(phaseCueKey);
+      expect(phaseCue, findsOneWidget);
+      final initialNode = tester.getSemantics(phaseCue);
+      final semanticsNodeId = initialNode.id;
+      expect(
+        initialNode,
+        matchesSemantics(label: 'Breathe in', isLiveRegion: true),
+      );
+
+      await tester.pump(const Duration(seconds: 1));
+      final withinPhaseNode = tester.getSemantics(phaseCue);
+      expect(withinPhaseNode.id, semanticsNodeId);
+      expect(
+        withinPhaseNode,
+        matchesSemantics(label: 'Breathe in', isLiveRegion: true),
+      );
+
+      await tester.pump(const Duration(milliseconds: 4600));
+      final nextPhaseNode = tester.getSemantics(phaseCue);
+      expect(nextPhaseNode.id, semanticsNodeId);
+      expect(
+        nextPhaseNode,
+        matchesSemantics(label: 'Breathe out', isLiveRegion: true),
+      );
+
+      await openBreathMenu(tester);
+      expect(find.text('Sound: off'), findsOneWidget);
+    } finally {
+      semantics.dispose();
+    }
+  });
+
   testWidgets('controls remain accessible at 320 wide with 2x text', (
     tester,
   ) async {
@@ -71,12 +116,21 @@ void main() {
     );
 
     expectAccessibleControl(tester, const Key('breath-back'));
-    expectAccessibleControl(tester, const Key('breath-options'));
-    expect(find.byKey(const Key('breath-done')), findsNothing);
+    expectAccessibleControl(tester, const Key('breath-menu'));
+    expect(find.byKey(const Key('breath-pattern-coherent')), findsNothing);
+    expect(find.byKey(const Key('breath-sound')), findsNothing);
 
-    await tester.tap(find.byKey(const Key('breath-options')));
-    await tester.pump();
+    await openBreathMenu(tester);
+    expectAccessibleControl(tester, const Key('breath-pattern-coherent'));
+    await tester.scrollUntilVisible(
+      find.byKey(const Key('breath-sound')),
+      160,
+      scrollable: find.byType(Scrollable).last,
+    );
+    expectAccessibleControl(tester, const Key('breath-sound'));
     expect(find.text('Four corners'), findsOneWidget);
+    expect(find.text('Adjust'), findsNothing);
+    expect(find.text('Enough for now'), findsNothing);
     expect(tester.takeException(), isNull);
 
     await tester.tap(find.byKey(const Key('breath-back')));
@@ -95,8 +149,9 @@ void main() {
       await tester.pump(const Duration(milliseconds: 100));
 
       expectAccessibleControl(tester, const Key('breath-back'));
-      expectAccessibleControl(tester, const Key('breath-options'));
-      expect(find.byKey(const Key('breath-done')), findsNothing);
+      expectAccessibleControl(tester, const Key('breath-menu'));
+      expect(find.byKey(const Key('breath-pattern-coherent')), findsNothing);
+      expect(find.byKey(const Key('breath-sound')), findsNothing);
       expect(tester.takeException(), isNull);
     },
   );
@@ -112,8 +167,7 @@ void main() {
         },
       );
 
-      await tester.tap(find.byKey(const Key('breath-options')));
-      await tester.pump();
+      await openBreathMenu(tester);
       await tester.tap(find.text('Sound: off'));
       await tester.pump();
 
@@ -133,8 +187,7 @@ void main() {
       audioStarter: (asset, {gain = 0.3, rate = 0.97}) => started.future,
     );
 
-    await tester.tap(find.byKey(const Key('breath-options')));
-    await tester.pump();
+    await openBreathMenu(tester);
     await tester.tap(find.text('Sound: off'));
     await tester.pump();
     await tester.tap(find.text('Sound: a voice'));
@@ -144,6 +197,6 @@ void main() {
     started.complete(audio);
     await tester.pump();
     expect(audio.stopCount, greaterThanOrEqualTo(1));
-    expect(find.textContaining('sound off'), findsOneWidget);
+    expect(find.text('Sound: off'), findsOneWidget);
   });
 }

@@ -1,6 +1,10 @@
 # Doctor Mode Prospective Diary Validation
 
-Status: proposed; clinical gate required
+Status: future capability; no production validation claim
+
+The current in-memory domain tests do not satisfy this validation plan. Run the
+checks below only after encrypted persistence, production UI wiring, and the
+prospective report exist.
 
 - A user can understand the difference between ordinary logging, later recall,
   and prospective diary entry.

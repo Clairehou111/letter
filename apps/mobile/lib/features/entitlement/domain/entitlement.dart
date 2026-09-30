@@ -61,6 +61,16 @@ bool isPremiumCapability(LetterCapability capability) {
   };
 }
 
+/// Whether the no-card Plus Preview may demonstrate this capability in-app.
+///
+/// Generated report files are a paid-Plus boundary even while an in-app
+/// preview is active. Keep this policy beside the capability model so every
+/// scope and shell applies the same distinction.
+bool isPlusPreviewCapability(LetterCapability capability) {
+  return isPremiumCapability(capability) &&
+      capability != LetterCapability.clinicianReports;
+}
+
 class EntitlementState {
   const EntitlementState({required this.status, this.planId, this.message});
 
@@ -112,24 +122,24 @@ const letterPlans = [
   LetterPlan(
     id: 'letter_yearly',
     title: 'Yearly',
-    priceLabel: '\$29.99 / year',
-    effectiveMonthlyLabel: '\$2.50 / mo',
-    referencePriceLabel: '\$29.99 / year',
+    priceLabel: '\$39.99 / year',
+    effectiveMonthlyLabel: '\$3.33 / mo',
+    referencePriceLabel: '\$39.99 / year',
     highlight: 'Best for learning your pattern',
   ),
   LetterPlan(
     id: 'letter_monthly',
     title: 'Monthly',
-    priceLabel: '\$6.99 / month',
-    effectiveMonthlyLabel: '\$6.99 / mo',
-    referencePriceLabel: '\$6.99 / month',
+    priceLabel: '\$7.99 / month',
+    effectiveMonthlyLabel: '\$7.99 / mo',
+    referencePriceLabel: '\$7.99 / month',
   ),
   LetterPlan(
     id: 'letter_lifetime',
     title: 'Lifetime',
-    priceLabel: '\$79.99 once',
+    priceLabel: '\$99.99 once',
     effectiveMonthlyLabel: 'One payment',
-    referencePriceLabel: '\$79.99 once',
+    referencePriceLabel: '\$99.99 once',
     highlight: 'One payment, keeps working offline',
   ),
 ];

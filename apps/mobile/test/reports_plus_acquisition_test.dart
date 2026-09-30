@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:letter_mobile/experience/experience_release_ports.dart';
 import 'package:letter_mobile/experience/plus/plus_experience.dart';
@@ -8,8 +9,14 @@ import 'package:letter_mobile/features/care/domain/care_memory.dart';
 import 'package:letter_mobile/features/care/domain/care_mode.dart';
 import 'package:letter_mobile/features/check_in/domain/moment_check_in.dart';
 import 'package:letter_mobile/features/cycle/domain/local_date.dart';
+import 'package:letter_mobile/features/analytics/domain/analytics_service.dart';
+import 'package:letter_mobile/features/analytics/presentation/analytics_scope.dart';
 import 'package:letter_mobile/features/entitlement/data/local_entitlement_repository.dart';
 import 'package:letter_mobile/features/entitlement/data/revenue_cat_entitlement_repository.dart';
+import 'package:letter_mobile/features/entitlement/domain/entitlement.dart';
+import 'package:letter_mobile/features/entitlement/domain/entitlement_repository.dart';
+import 'package:letter_mobile/features/entitlement/presentation/entitlement_scope.dart';
+import 'package:letter_mobile/features/health_records/domain/health_record.dart';
 import 'package:letter_mobile/features/summary_export/domain/cycle_care_summary.dart';
 
 void main() {
@@ -17,18 +24,32 @@ void main() {
     WidgetTester tester,
     SummaryExportInput input, {
     Future<PlusCommitResult?> Function(PlusOutcomeContext)? onOpenPlus,
+    ReportExperiencePort? port,
+    VoidCallback? onOpenCycle,
+    bool canUseClinicianReports = false,
+    EntitlementRepository? entitlementRepository,
+    bool hasPlusPreviewAccess = false,
   }) async {
     tester.view.physicalSize = const Size(390, 844);
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.reset);
+    final report = ReportsExperience(
+      port: port ?? _Port(input),
+      now: () => DateTime(2026, 8, 14, 12),
+      onOpenPlusWithContext: onOpenPlus,
+      onOpenCycle: onOpenCycle,
+      canUseClinicianReports: canUseClinicianReports,
+    );
     await tester.pumpWidget(
       MaterialApp(
         theme: ExperienceFoundation.lightTheme(),
-        home: ReportsExperience(
-          port: _Port(input),
-          now: () => DateTime(2026, 8, 14, 12),
-          onOpenPlusWithContext: onOpenPlus,
-        ),
+        home: entitlementRepository == null
+            ? report
+            : EntitlementScope(
+                repository: entitlementRepository,
+                hasPlusPreviewAccess: hasPlusPreviewAccess,
+                child: report,
+              ),
       ),
     );
     await tester.pumpAndSettle();
@@ -37,13 +58,57 @@ void main() {
   testWidgets('zero completed cycles has no matrix or acquisition', (
     tester,
   ) async {
-    await pumpReport(tester, _input(0));
+    var cycleOpened = false;
+    await pumpReport(tester, _input(0), onOpenCycle: () => cycleOpened = true);
     expect(
       find.textContaining('One completed cycle is needed'),
       findsOneWidget,
     );
     expect(find.text('Cyclical symptom matrix'), findsNothing);
     expect(find.text('Export this report — included with Plus'), findsNothing);
+    final openCycle = find.byKey(const Key('reports-empty-open-cycle'));
+    await _reveal(tester, openCycle);
+    await tester.tap(openCycle);
+    expect(cycleOpened, isTrue);
+  });
+
+  testWidgets('zero completed cycles still shows recorded in-range facts', (
+    tester,
+  ) async {
+    final recordedAt = DateTime.utc(2026, 8, 10, 12);
+    await pumpReport(
+      tester,
+      _input(
+        1,
+        healthRecords: <HealthRecord>[
+          HealthRecord(
+            id: 'crying',
+            symptom: SymptomType.crying,
+            severity: SymptomSeverity.severe,
+            functionalImpacts: const <FunctionalImpact>{},
+            experiencedDate: const LocalDate(2026, 8, 10),
+            recordedAt: recordedAt,
+            updatedAt: recordedAt,
+            provenance: HealthRecordProvenance.sameDay,
+            userConfirmed: true,
+            vocabularyVersion: healthRecordVocabularyVersion,
+          ),
+        ],
+        checkIns: <MomentCheckIn>[
+          MomentCheckIn(
+            id: 'overwhelmed',
+            state: MomentCheckInState.overwhelmed,
+            occurredAt: recordedAt,
+            createdAt: recordedAt,
+          ),
+        ],
+      ),
+    );
+
+    await _reveal(tester, find.textContaining('Crying · Severe'));
+    expect(find.textContaining('Crying · Severe'), findsOneWidget);
+    await _reveal(tester, find.textContaining('Overwhelmed'));
+    expect(find.textContaining('Overwhelmed'), findsOneWidget);
   });
 
   testWidgets('report readiness counts period days, not unrelated check-ins', (
@@ -115,13 +180,12 @@ void main() {
     expect(find.text('Export this report — included with Plus'), findsNothing);
   });
 
-  testWidgets('three completed cycles show real matrix and boundary', (
+  testWidgets('three completed cycles hide clinical matrix behind boundary', (
     tester,
   ) async {
     await pumpReport(tester, _input(4), onOpenPlus: (_) async => null);
-    await _reveal(tester, find.text('Cyclical symptom matrix'));
-    expect(find.text('Cyclical symptom matrix'), findsOneWidget);
     await _reveal(tester, find.text('Export this report — included with Plus'));
+    expect(find.text('Cyclical symptom matrix'), findsNothing);
     expect(
       find.text('Showing Last 3 months · 3 completed cycles in range'),
       findsOneWidget,
@@ -133,6 +197,49 @@ void main() {
     );
   });
 
+  testWidgets('unlocked in-app matrix keeps its report hierarchy', (
+    tester,
+  ) async {
+    await pumpReport(tester, _input(4), canUseClinicianReports: true);
+
+    final matrix = find.text('Cyclical symptom matrix');
+    await _reveal(tester, matrix);
+    expect(matrix, findsOneWidget);
+    await expectLater(
+      find.byType(Scaffold),
+      matchesGoldenFile('goldens/reports_twin_matrix_in_app_390x844.png'),
+    );
+  });
+
+  testWidgets('ninety daily check-ins stay bounded in the in-app report', (
+    tester,
+  ) async {
+    final checkIns = <MomentCheckIn>[
+      for (var day = 0; day < 90; day += 1)
+        MomentCheckIn(
+          id: 'daily-$day',
+          state: MomentCheckInState.overwhelmed,
+          occurredAt: DateTime(2026, 5, 17 + day, 12),
+          createdAt: DateTime(2026, 5, 17 + day, 12),
+        ),
+    ];
+    await pumpReport(
+      tester,
+      _input(4, checkIns: checkIns),
+      canUseClinicianReports: true,
+    );
+
+    await _reveal(
+      tester,
+      find.textContaining('more difficult check-ins in this range'),
+    );
+    expect(
+      find.textContaining('Generated reports keep all of them'),
+      findsOneWidget,
+    );
+    expect(tester.takeException(), isNull);
+  });
+
   testWidgets('artifact tier uses completed cycles inside selected range', (
     tester,
   ) async {
@@ -142,13 +249,50 @@ void main() {
       onOpenPlus: (_) async => null,
     );
 
-    await _reveal(tester, find.text('Two completed cycles in this range'));
-    expect(find.text('Two completed cycles in this range'), findsOneWidget);
+    await _reveal(tester, find.text('One cycle cannot show recurrence.'));
+    expect(find.text('One cycle cannot show recurrence.'), findsOneWidget);
+    expect(find.text('Two completed cycles in this range'), findsNothing);
     expect(find.text('Cyclical symptom matrix'), findsNothing);
     expect(find.text('Export this report — included with Plus'), findsNothing);
   });
 
-  testWidgets('locked range keeps free range and round-trips exact intent', (
+  testWidgets('free preview never shows facts before its selected range', (
+    tester,
+  ) async {
+    final recordedAt = DateTime.utc(2026, 5, 20, 12);
+    HealthRecord record(String id, SymptomType symptom, LocalDate date) =>
+        HealthRecord(
+          id: id,
+          symptom: symptom,
+          severity: SymptomSeverity.moderate,
+          functionalImpacts: const <FunctionalImpact>{},
+          experiencedDate: date,
+          recordedAt: recordedAt,
+          updatedAt: recordedAt,
+          provenance: HealthRecordProvenance.sameDay,
+          userConfirmed: true,
+          vocabularyVersion: healthRecordVocabularyVersion,
+        );
+    await pumpReport(
+      tester,
+      _input(
+        4,
+        first: const LocalDate(2026, 4, 1),
+        intervalDays: 30,
+        healthRecords: <HealthRecord>[
+          record('before', SymptomType.cramps, const LocalDate(2026, 5, 10)),
+          record('inside', SymptomType.crying, const LocalDate(2026, 5, 20)),
+        ],
+      ),
+    );
+
+    await _reveal(tester, find.textContaining('Crying · Moderate'));
+    expect(find.textContaining('Crying · Moderate'), findsOneWidget);
+    expect(find.textContaining('Cramps · Moderate'), findsNothing);
+    expect(find.textContaining('5/10/2026'), findsNothing);
+  });
+
+  testWidgets('ranges beyond three months open Plus and preserve selection', (
     tester,
   ) async {
     PlusOutcomeContext? captured;
@@ -161,11 +305,18 @@ void main() {
       },
     );
     expect(find.text('5/14/2026 to 8/14/2026'), findsOneWidget);
-    await tester.tap(find.text('Last 6 months'));
+    await _reveal(tester, find.text('Last 6 months'));
+    final sixMonthRow = find.ancestor(
+      of: find.text('Last 6 months'),
+      matching: find.byType(InkWell),
+    );
+    tester.widget<InkWell>(sixMonthRow).onTap!();
     await tester.pumpAndSettle();
+    await _returnToTop(tester);
+    expect(captured?.kind, PlusOutcomeIntentKind.seeAllCycles);
     expect(captured?.rangeId, 'lastSixMonths');
-    expect(captured?.headline, 'Compare 6 months of cycle evidence');
     expect(find.text('5/14/2026 to 8/14/2026'), findsOneWidget);
+    expect(find.text('2/12/2026 to 8/14/2026'), findsNothing);
   });
 
   testWidgets('activation applies requested range and unlocks export', (
@@ -176,12 +327,167 @@ void main() {
       _input(4),
       onOpenPlus: (context) async => PlusCommitResult.activated(context),
     );
-    await tester.tap(find.text('Last year'));
+    await _reveal(tester, find.text('Last year'));
+    final yearRow = find.ancestor(
+      of: find.text('Last year'),
+      matching: find.byType(InkWell),
+    );
+    tester.widget<InkWell>(yearRow).onTap!();
     await tester.pumpAndSettle();
+    await _returnToTop(tester);
     expect(find.text('8/14/2025 to 8/14/2026'), findsOneWidget);
-    await _reveal(tester, find.text('Export PDF'));
-    expect(find.text('Export PDF'), findsOneWidget);
+    await _reveal(tester, find.text('Cyclical symptom matrix'));
+    expect(find.text('Cyclical symptom matrix'), findsOneWidget);
+    await _reveal(tester, find.text('Export Clinical Pattern Report'));
+    expect(find.text('Export Clinical Pattern Report'), findsOneWidget);
   });
+
+  testWidgets('paid exports use factual formats and show the saved path', (
+    tester,
+  ) async {
+    final messenger =
+        TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger;
+    messenger.setMockMethodCallHandler(SystemChannels.platform, (_) async {
+      return null;
+    });
+    addTearDown(
+      () => messenger.setMockMethodCallHandler(SystemChannels.platform, null),
+    );
+    final port = _RecordingExportPort(_input(1));
+    await pumpReport(
+      tester,
+      port.input,
+      port: port,
+      canUseClinicianReports: true,
+    );
+
+    await _reveal(tester, find.text('Export Visit Summary'));
+    await tester.tap(find.text('Export Visit Summary'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 400));
+    expect(port.lastFormat, ReportExportFormat.visitSummaryPdf);
+    await _reveal(tester, find.text('Saved locally at'));
+    expect(
+      find.byWidgetPredicate(
+        (widget) =>
+            widget is SelectableText &&
+            widget.data == '/Documents/letter/visit-summary.pdf',
+      ),
+      findsOneWidget,
+    );
+
+    await _reveal(tester, find.text('Export raw CSV'));
+    await tester.tap(find.text('Export raw CSV'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 400));
+    expect(port.lastFormat, ReportExportFormat.rawCsv);
+    await _reveal(tester, find.text('Saved locally at'));
+    expect(
+      find.byWidgetPredicate(
+        (widget) =>
+            widget is SelectableText &&
+            widget.data == '/Documents/letter/records.csv',
+      ),
+      findsOneWidget,
+    );
+  });
+
+  testWidgets('free users open Plus without invoking the file export port', (
+    tester,
+  ) async {
+    PlusOutcomeContext? captured;
+    final port = _RecordingExportPort(_input(2));
+    await pumpReport(
+      tester,
+      port.input,
+      port: port,
+      onOpenPlus: (context) async {
+        captured = context;
+        return const PlusCommitResult.dismissed();
+      },
+    );
+
+    await _reveal(tester, find.text('Export Visit Summary'));
+    await tester.tap(find.text('Export Visit Summary'));
+    await tester.pumpAndSettle();
+    expect(captured?.kind, PlusOutcomeIntentKind.export);
+    expect(port.lastFormat, isNull);
+
+    captured = null;
+    await _reveal(tester, find.text('Export raw CSV'));
+    await tester.tap(find.text('Export raw CSV'));
+    await tester.pumpAndSettle();
+    expect(captured?.kind, PlusOutcomeIntentKind.export);
+    expect(port.lastFormat, isNull);
+  });
+
+  testWidgets('no-card Preview unlocks in-app depth but not file generation', (
+    tester,
+  ) async {
+    final repository = LocalEntitlementRepository();
+    addTearDown(repository.dispose);
+    PlusOutcomeContext? captured;
+    final port = _RecordingExportPort(_input(4));
+    await pumpReport(
+      tester,
+      port.input,
+      port: port,
+      entitlementRepository: repository,
+      hasPlusPreviewAccess: true,
+      onOpenPlus: (context) async {
+        captured = context;
+        return const PlusCommitResult.dismissed();
+      },
+    );
+
+    await _reveal(tester, find.text('Cyclical symptom matrix'));
+    expect(find.text('Cyclical symptom matrix'), findsOneWidget);
+    await _returnToTop(tester);
+    await tester.tap(find.text('Last 6 months'));
+    await tester.pumpAndSettle();
+    await _returnToTop(tester);
+    expect(find.text('2/12/2026 to 8/14/2026'), findsOneWidget);
+
+    await _reveal(tester, find.text('Export Visit Summary'));
+    await tester.tap(find.text('Export Visit Summary'));
+    await tester.pumpAndSettle();
+    expect(captured?.kind, PlusOutcomeIntentKind.export);
+    expect(port.lastFormat, isNull);
+  });
+
+  for (final status in <EntitlementStatus>[
+    EntitlementStatus.lapsed,
+    EntitlementStatus.offlineUnknown,
+  ]) {
+    testWidgets(
+      'live ${status.name} blocks generation while Reports stays open',
+      (tester) async {
+        final repository = _RefreshEntitlementRepository(
+          refreshState: EntitlementState(status: status),
+        );
+        addTearDown(repository.dispose);
+        PlusOutcomeContext? captured;
+        final port = _RecordingExportPort(_input(2));
+        await pumpReport(
+          tester,
+          port.input,
+          port: port,
+          entitlementRepository: repository,
+          onOpenPlus: (context) async {
+            captured = context;
+            return const PlusCommitResult.dismissed();
+          },
+        );
+
+        await _reveal(tester, find.text('Export Visit Summary'));
+        await tester.tap(find.text('Export Visit Summary'));
+        await tester.pumpAndSettle();
+        expect(repository.refreshCalls, 1);
+        expect(captured?.kind, PlusOutcomeIntentKind.export);
+        expect(port.lastFormat, isNull);
+      },
+    );
+  }
 
   testWidgets('recent Care suppresses contextual acquisition', (tester) async {
     var opened = false;
@@ -218,6 +524,13 @@ void main() {
     );
     await tester.pumpAndSettle();
     expect(find.text('Export as PDF for a clinician'), findsOneWidget);
+    expect(
+      tester
+          .widget<Text>(find.text('Best for learning your pattern'))
+          .style
+          ?.color,
+      ExperienceColors.emberSoft,
+    );
     expect(find.textContaining('PREVIEW'), findsNothing);
     expect(find.textContaining('What Plus'), findsNothing);
     expect(find.textContaining('Remembered help'), findsNothing);
@@ -228,6 +541,35 @@ void main() {
     expect(yearlyTop, lessThan(monthlyTop));
     expect(monthlyTop, lessThan(lifetimeTop));
   });
+
+  testWidgets(
+    'locked report ranges keep the pattern report analytics context',
+    (tester) async {
+      final analytics = _RecordingAnalyticsService();
+      await tester.pumpWidget(
+        AnalyticsScope(
+          service: analytics,
+          child: MaterialApp(
+            theme: ExperienceFoundation.lightTheme(),
+            home: PlusExperience(
+              entitlementRepository: LocalEntitlementRepository(),
+              outcomeContext: const PlusOutcomeContext.seeAllCycles(
+                headline: 'Compare 6 months of cycle evidence',
+                rangeId: 'lastSixMonths',
+              ),
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(analytics.events, hasLength(1));
+      expect(analytics.events.single.event, isA<PaywallViewedEvent>());
+      expect(analytics.events.single.event.toProperties(), const {
+        'context': 'patternReport',
+      });
+    },
+  );
 
   testWidgets('desktop Plus explains store support without claiming offline', (
     tester,
@@ -274,11 +616,74 @@ class _Port implements ReportExperiencePort {
       const ExperienceFileReceipt(outcome: ExperienceFileOutcome.savedOnly);
 }
 
+class _RecordingExportPort implements ReportExperiencePort {
+  _RecordingExportPort(this.input);
+
+  final SummaryExportInput input;
+  ReportExportFormat? lastFormat;
+
+  @override
+  Future<SummaryExportInput> load() async => input;
+
+  @override
+  Future<ExperienceFileReceipt> export({
+    required SummaryDateRange range,
+    required Set<String> selectedNoteIds,
+    required ReportExportFormat format,
+  }) async {
+    lastFormat = format;
+    final fileName = format == ReportExportFormat.rawCsv
+        ? 'records.csv'
+        : 'visit-summary.pdf';
+    return ExperienceFileReceipt(
+      outcome: ExperienceFileOutcome.savedOnly,
+      localPath: '/Documents/letter/$fileName',
+    );
+  }
+}
+
+final class _RefreshEntitlementRepository extends LocalEntitlementRepository {
+  _RefreshEntitlementRepository({required this.refreshState})
+    : super(
+        initial: const EntitlementState(status: EntitlementStatus.activePaid),
+      );
+
+  final EntitlementState refreshState;
+  int refreshCalls = 0;
+
+  @override
+  Future<EntitlementState> refresh() async {
+    refreshCalls += 1;
+    return refreshState;
+  }
+}
+
+final class _RecordingAnalyticsService implements AnalyticsService {
+  final List<AnalyticsPayload> events = <AnalyticsPayload>[];
+
+  @override
+  bool get isEnabled => true;
+
+  @override
+  Future<void> track(AnalyticsPayload payload) async => events.add(payload);
+
+  @override
+  Future<void> enable() async {}
+
+  @override
+  Future<void> disable() async {}
+
+  @override
+  Future<void> dispose() async {}
+}
+
 SummaryExportInput _input(
   int starts, {
   bool recentCare = false,
-  LocalDate first = const LocalDate(2026, 4, 20),
+  LocalDate first = const LocalDate(2026, 5, 18),
   int intervalDays = 28,
+  List<HealthRecord> healthRecords = const <HealthRecord>[],
+  List<MomentCheckIn> checkIns = const <MomentCheckIn>[],
 }) {
   final periodDays = <SummaryPeriodDay>[
     for (var cycle = 0; cycle < starts; cycle++)
@@ -288,8 +693,8 @@ SummaryExportInput _input(
   return SummaryExportInput(
     periodDays: periodDays,
     predictions: const [],
-    healthRecords: const [],
-    checkIns: const [],
+    healthRecords: healthRecords,
+    checkIns: checkIns,
     careRecords: recentCare
         ? <CareRecord>[
             CareRecord(
@@ -322,5 +727,16 @@ Future<void> _reveal(WidgetTester tester, Finder target) async {
   }
   expect(target, findsOneWidget);
   await tester.ensureVisible(target);
+  await tester.pumpAndSettle();
+}
+
+Future<void> _returnToTop(WidgetTester tester) async {
+  final scrollable = find
+      .byWidgetPredicate(
+        (widget) =>
+            widget is Scrollable && widget.axisDirection == AxisDirection.down,
+      )
+      .first;
+  tester.state<ScrollableState>(scrollable).position.jumpTo(0);
   await tester.pumpAndSettle();
 }

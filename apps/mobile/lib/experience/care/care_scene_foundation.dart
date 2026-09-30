@@ -347,7 +347,7 @@ class _CareSceneShellState extends State<_CareSceneShell> {
                     ),
                     const SizedBox(height: ExperienceSpacing.sm),
                     FocusTraversalOrder(
-                      order: const NumericFocusOrder(5),
+                      order: const NumericFocusOrder(4),
                       child: _CareSafetyLine(
                         line: widget.safetyLine,
                         onTap: widget.onSafety,
@@ -355,7 +355,7 @@ class _CareSceneShellState extends State<_CareSceneShell> {
                     ),
                     const SizedBox(height: ExperienceSpacing.sm),
                     FocusTraversalOrder(
-                      order: const NumericFocusOrder(4),
+                      order: const NumericFocusOrder(5),
                       child: _CareExitPill(
                         label: widget.exitLabel,
                         onPressed: _handleExit,
@@ -589,7 +589,7 @@ class _CarePrimaryAction extends StatelessWidget {
         ),
         child: DecoratedBox(
           decoration: BoxDecoration(
-            gradient: ExperienceColors.emberGradient,
+            gradient: ExperienceColors.emberActionGradient,
             borderRadius: ExperienceRadius.heroRadius,
             boxShadow: <BoxShadow>[
               BoxShadow(
@@ -611,7 +611,7 @@ class _CarePrimaryAction extends StatelessWidget {
                 ),
                 child: Text(
                   label,
-                  style: ExperienceType.label(Colors.white),
+                  style: ExperienceType.label(ExperienceColors.onEmber),
                   textAlign: TextAlign.center,
                 ),
               ),
@@ -670,6 +670,10 @@ class _CareSafetyLine extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final minimumTargetHeight =
+        Theme.of(context).platform == TargetPlatform.android
+        ? ExperienceSpacing.degreeTarget
+        : ExperienceSpacing.minTouchTarget;
     final text = Text(
       line,
       style: ExperienceType.caption(ExperienceColors.careInkSoft),
@@ -684,26 +688,29 @@ class _CareSafetyLine extends StatelessWidget {
     return Semantics(
       button: true,
       label: line,
-      child: InkWell(
-        borderRadius: ExperienceRadius.chipRadius,
-        onTap: onTap,
-        child: Padding(
-          padding: const EdgeInsets.symmetric(
-            horizontal: ExperienceSpacing.sm,
-            vertical: ExperienceSpacing.xs,
-          ),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            mainAxisSize: MainAxisSize.min,
-            children: <Widget>[
-              const Icon(
-                Icons.favorite_border,
-                size: 14,
-                color: ExperienceColors.careInkSoft,
-              ),
-              const SizedBox(width: ExperienceSpacing.xs),
-              Flexible(child: text),
-            ],
+      child: ConstrainedBox(
+        constraints: BoxConstraints(minHeight: minimumTargetHeight),
+        child: InkWell(
+          borderRadius: ExperienceRadius.chipRadius,
+          onTap: onTap,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(
+              horizontal: ExperienceSpacing.sm,
+              vertical: ExperienceSpacing.xs,
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              mainAxisSize: MainAxisSize.min,
+              children: <Widget>[
+                const Icon(
+                  Icons.favorite_border,
+                  size: 14,
+                  color: ExperienceColors.careInkSoft,
+                ),
+                const SizedBox(width: ExperienceSpacing.xs),
+                Flexible(child: text),
+              ],
+            ),
           ),
         ),
       ),

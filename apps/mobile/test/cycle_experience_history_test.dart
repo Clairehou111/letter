@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:letter_mobile/experience/cycle/cycle_action_panel.dart';
 import 'package:letter_mobile/experience/cycle/cycle_experience.dart';
 import 'package:letter_mobile/experience/records/observation_picker.dart';
 import 'package:letter_mobile/features/care/data/in_memory_care_memory_repository.dart';
@@ -200,6 +201,105 @@ void main() {
     expect(find.text('What this day affected'), findsNothing);
   });
 
+  testWidgets('a browse-only symptom opens exactly one degree editor', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(390, 844);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.reset);
+
+    await tester.pumpWidget(
+      const MaterialApp(
+        home: Scaffold(
+          body: SingleChildScrollView(
+            child: ObservationPicker(
+              experiencedDate: LocalDate(2026, 7, 15),
+              provenance: HealthRecordProvenance.sameDay,
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    final constipation = find.text('Constipation');
+    await tester.scrollUntilVisible(
+      constipation,
+      300,
+      scrollable: find.byType(Scrollable).first,
+    );
+    await tester.tap(constipation);
+    await tester.pumpAndSettle();
+
+    expect(find.text('How strong is it'), findsOneWidget);
+    expect(
+      find.bySemanticsLabel('Constipation, Severity: Mild, 2 of 5'),
+      findsOneWidget,
+    );
+  });
+
+  testWidgets('cycle letter keeps a persistent saved state until edited', (
+    tester,
+  ) async {
+    await tester.binding.setSurfaceSize(const Size(390, 1200));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+    final periods = <PeriodRecord>[
+      _period('june', 6, 1),
+      _period('july', 7, 1),
+    ];
+    final careMemoryRepository = InMemoryCareMemoryRepository();
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: CycleExperience(
+          periodRepository: InMemoryPeriodRepository(seed: periods),
+          healthRecordRepository: InMemoryHealthRecordRepository(),
+          careMemoryRepository: careMemoryRepository,
+          onCycleDataChanged: () {},
+          now: DateTime(2026, 7, 15, 12),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.textContaining('6/1/2026').first);
+    await tester.pumpAndSettle();
+    final detailScroll = find.byType(Scrollable).at(1);
+    await tester.scrollUntilVisible(
+      find.text('Letter to future you'),
+      400,
+      scrollable: detailScroll,
+    );
+    final futureField = find.byWidgetPredicate(
+      (widget) =>
+          widget is TextField &&
+          widget.decoration?.labelText == 'A note to future you',
+    );
+    await tester.scrollUntilVisible(futureField, 300, scrollable: detailScroll);
+    await tester.enterText(futureField, 'Hard days will pass.');
+    await tester.pump();
+    final saveButton = find.widgetWithText(FilledButton, 'Save letter');
+    expect(saveButton, findsOneWidget);
+
+    tester.testTextInput.hide();
+    await tester.pumpAndSettle();
+    await tester.scrollUntilVisible(saveButton, 200, scrollable: detailScroll);
+    await tester.tap(saveButton);
+    await tester.pumpAndSettle();
+    expect(
+      await careMemoryRepository.getCycleReflection(
+        periods.first.startDate.epochDay,
+        startingPeriodId: periods.first.id,
+      ),
+      isNotNull,
+    );
+    expect(find.text('Saved'), findsOneWidget);
+
+    await tester.enterText(futureField, 'Hard days pass, one at a time.');
+    await tester.pump();
+    expect(find.widgetWithText(FilledButton, 'Save letter'), findsOneWidget);
+  });
+
   testWidgets('day editor updates symptom history without reopening', (
     tester,
   ) async {
@@ -264,6 +364,13 @@ void main() {
     await tester.tap(mildDegree);
     await tester.pumpAndSettle();
     expect(find.text('On record for this day'), findsOneWidget);
+    expect(
+      find.byTooltip('Edit daily impact for Cramps'),
+      findsOneWidget,
+      reason:
+          'A record saved while the sheet is open must expose the same edit '
+          'action as a record that existed before opening it.',
+    );
 
     await tester.ensureVisible(mildDegree);
     await tester.pumpAndSettle();
@@ -276,6 +383,7 @@ void main() {
     await tester.tap(mildDegree);
     await tester.pumpAndSettle();
     expect(find.text('On record for this day'), findsOneWidget);
+    expect(find.byTooltip('Edit daily impact for Cramps'), findsOneWidget);
 
     final removeCramps = find.byTooltip('Remove Cramps from this day');
     await tester.ensureVisible(removeCramps);
@@ -520,4 +628,142 @@ void main() {
     expect(find.textContaining('rough estimate'), findsNothing);
     expect(find.text(' est.'), findsNothing);
   });
+
+  for (final textScale in <double>[2, 3.2]) {
+    testWidgets('Cycle remains readable at 320px and ${textScale}x text', (
+      tester,
+    ) async {
+      await tester.binding.setSurfaceSize(const Size(320, 1200));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: MediaQuery(
+            data: MediaQueryData(
+              size: const Size(320, 1200),
+              textScaler: TextScaler.linear(textScale),
+              disableAnimations: true,
+            ),
+            child: Scaffold(
+              body: SingleChildScrollView(
+                child: Padding(
+                  padding: const EdgeInsets.all(24),
+                  child: Column(
+                    children: <Widget>[
+                      CycleActionPanel(
+                        bleedingLine: 'Current cycle',
+                        startedLabel: 'Bleeding recorded · started 7/21/2026.',
+                        primaryLabel: 'Fill in days',
+                        onOpenDetails: () {},
+                        onPrimary: () {},
+                        onEditDates: () {},
+                        onRecordNewPeriodStart: () {},
+                        onBackfillPastPeriod: () {},
+                      ),
+                      const SizedBox(height: 24),
+                      CycleRecentRow(
+                        cycleNumber: 2,
+                        dateRange: '6/19/2026 – 6/23/2026',
+                        cycleLengthDays: 32,
+                        onPressed: () {},
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      final primaryAction = find.widgetWithText(FilledButton, 'Fill in days');
+      await tester.scrollUntilVisible(primaryAction, 300);
+      expect(tester.getSize(primaryAction).height, greaterThan(52));
+      expect(
+        tester.widget<Text>(find.text('Fill in days')).maxLines,
+        equals(2),
+      );
+
+      final editDates = find.widgetWithText(OutlinedButton, 'Edit dates');
+      expect(tester.getSize(editDates).height, greaterThan(48));
+      expect(tester.widget<Text>(find.text('Edit dates')).maxLines, equals(2));
+
+      final dateRange = find.text('6/19/2026 – 6/23/2026');
+      await tester.scrollUntilVisible(dateRange, 400);
+      final cycleLength = find.text('32-day cycle');
+      expect(dateRange, findsOneWidget);
+      expect(cycleLength, findsOneWidget);
+
+      final dateRect = tester.getRect(dateRange);
+      final lengthRect = tester.getRect(cycleLength);
+      expect(lengthRect.top, greaterThan(dateRect.top));
+      expect(dateRect.left, greaterThanOrEqualTo(0));
+      expect(dateRect.right, lessThanOrEqualTo(320));
+      expect(lengthRect.left, greaterThanOrEqualTo(0));
+      expect(lengthRect.right, lessThanOrEqualTo(320));
+    });
+
+    testWidgets(
+      'full Cycle page has no overflow at 320px and ${textScale}x text',
+      (tester) async {
+        await tester.binding.setSurfaceSize(const Size(320, 1200));
+        addTearDown(() => tester.binding.setSurfaceSize(null));
+        final flutterErrors = <FlutterErrorDetails>[];
+        final previousOnError = FlutterError.onError;
+        FlutterError.onError = flutterErrors.add;
+        addTearDown(() => FlutterError.onError = previousOnError);
+
+        final records = <PeriodRecord>[
+          _period('may-20-full-page', 5, 20),
+          _period('june-19-full-page', 6, 19),
+          _period('july-21-full-page', 7, 21),
+        ];
+        const today = LocalDate(2026, 7, 25);
+
+        await tester.pumpWidget(
+          MaterialApp(
+            home: MediaQuery(
+              data: MediaQueryData(
+                size: const Size(320, 1200),
+                textScaler: TextScaler.linear(textScale),
+                disableAnimations: true,
+              ),
+              child: CycleExperience(
+                periodRepository: InMemoryPeriodRepository(seed: records),
+                healthRecordRepository: InMemoryHealthRecordRepository(),
+                careMemoryRepository: InMemoryCareMemoryRepository(),
+                onCycleDataChanged: () {},
+                ringModel: TodayCycleRingModel.fromRecords(
+                  records: records,
+                  today: today,
+                ),
+                now: DateTime(2026, 7, 25, 12),
+              ),
+            ),
+          ),
+        );
+        await tester.pumpAndSettle();
+
+        expect(find.text('Cycle'), findsOneWidget);
+        expect(find.text('Observed'), findsOneWidget);
+        expect(find.text('Estimated'), findsOneWidget);
+        await tester.scrollUntilVisible(
+          find.text('No flow recorded for this period yet.'),
+          600,
+        );
+        await tester.pumpAndSettle();
+
+        FlutterError.onError = previousOnError;
+        expect(
+          flutterErrors,
+          isEmpty,
+          reason: flutterErrors
+              .map((error) => error.exceptionAsString())
+              .join('\n\n'),
+        );
+        expect(tester.takeException(), isNull);
+      },
+    );
+  }
 }

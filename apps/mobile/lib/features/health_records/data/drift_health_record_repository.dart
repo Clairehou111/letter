@@ -75,6 +75,17 @@ final class DriftHealthRecordRepository implements HealthRecordRepository {
     final valid = validateHealthRecordDraft(draft);
     return _guardStorage(() async {
       final previous = await _findRecord(id);
+      final duplicate =
+          await (_database.select(_database.healthRecordRows)..where(
+                (row) =>
+                    row.id.equals(id).not() &
+                    row.symptom.equals(valid.symptom.name) &
+                    row.experiencedDay.equals(valid.experiencedDate.epochDay),
+              ))
+              .getSingleOrNull();
+      if (duplicate != null) {
+        throw const HealthRecordException(HealthRecordFailure.duplicateForDay);
+      }
       final updated = previous.copyWith(
         draft: valid,
         updatedAt: _clock().toUtc(),

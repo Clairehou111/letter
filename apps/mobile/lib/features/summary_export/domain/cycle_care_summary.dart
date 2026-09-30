@@ -1,6 +1,7 @@
 import '../../care/domain/care_memory.dart';
 import '../../check_in/domain/moment_check_in.dart';
 import '../../cycle/domain/local_date.dart';
+import '../../cycle/domain/bleeding_flow.dart';
 import '../../health_records/domain/health_record.dart';
 
 enum SummaryRecordProvenance {
@@ -26,9 +27,10 @@ final class SummaryDateRange {
 
 /// A factual period day. It is not a prediction or inferred phase marker.
 final class SummaryPeriodDay {
-  const SummaryPeriodDay(this.date);
+  const SummaryPeriodDay(this.date, {this.flow});
 
   final LocalDate date;
+  final BleedingFlow? flow;
 }
 
 /// A contiguous run of observed period dates for compact display and export.
@@ -433,7 +435,17 @@ CycleAndCareSummary buildCycleAndCareSummary({
               : left.id.compareTo(right.id);
         });
 
+  final observedEpochDays = <int>{
+    for (final day in periodDays) day.date.epochDay,
+    for (final row in healthRows) row.date.epochDay,
+    for (final row in checkInRows) row.date.epochDay,
+    for (final row in careRows) row.date.epochDay,
+  };
+  final rangeDayCount = range.end.epochDay - range.start.epochDay + 1;
   final missingness = <String>[
+    'Recorded observations appear on ${observedEpochDays.length} of '
+        '$rangeDayCount calendar days in this range. Blank days are unknown, '
+        'not symptom-free.',
     if (periodDays.isEmpty) 'No observed period days in this date range.',
     if (predictions.isEmpty) 'No prediction ranges included.',
     if (healthRows.isEmpty) 'No confirmed health records in this date range.',
@@ -483,13 +495,5 @@ String summaryDateTimeLabel(DateTime value) {
 String _dateLabel(LocalDate date) => '${date.month}/${date.day}/${date.year}';
 
 extension on MomentCheckInState {
-  bool get isDifficult => switch (this) {
-    MomentCheckInState.low ||
-    MomentCheckInState.irritable ||
-    MomentCheckInState.anxious ||
-    MomentCheckInState.overwhelmed ||
-    MomentCheckInState.exhausted ||
-    MomentCheckInState.physical => true,
-    _ => false,
-  };
+  bool get isDifficult => isHarderDaySignal;
 }

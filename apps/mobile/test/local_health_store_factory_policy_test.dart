@@ -112,6 +112,33 @@ void main() {
       },
     );
 
+    test('re-reads the existing key after an in-place migration', () async {
+      final directory = await Directory.systemTemp.createTemp(
+        'letter-database-key-migration-test-',
+      );
+      addTearDown(() => directory.delete(recursive: true));
+
+      const existingKey =
+          '00112233445566778899aabbccddeeff'
+          '00112233445566778899aabbccddeeff';
+      var migrated = false;
+      var writes = 0;
+
+      final key = await loadOrCreateDatabaseKey(
+        directory: directory,
+        readSecureKey: () async => migrated ? existingKey : null,
+        writeSecureKey: (_) async => writes += 1,
+        migrateSecureKey: () async {
+          migrated = true;
+          return true;
+        },
+        allowSandboxFallback: false,
+      );
+
+      expect(key, existingKey);
+      expect(writes, 0);
+    });
+
     test('fails closed when secure storage fails without permission', () async {
       final directory = await Directory.systemTemp.createTemp(
         'letter-database-key-test-',

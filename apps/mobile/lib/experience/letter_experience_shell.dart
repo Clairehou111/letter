@@ -1,10 +1,14 @@
 import 'dart:async';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 import '../features/care/domain/care_memory_repository.dart';
 import '../features/capture/domain/capture_models.dart';
 import '../features/check_in/domain/moment_check_in_repository.dart';
+import '../features/comfort_kit/domain/comfort_kit_repository.dart';
+import '../features/comfort_kit/application/comfort_experience_controller.dart';
+import '../features/comfort_window/domain/comfort_reminder_preference.dart';
 import '../features/cycle/domain/cycle_prediction.dart';
 import '../features/cycle/domain/local_date.dart';
 import '../features/cycle/domain/period_record.dart';
@@ -37,28 +41,51 @@ import 'you/you_experience.dart';
 
 export 'experience_contract_context.dart';
 
+enum LetterDestination { today, cycle, care, patterns }
+
 /// Public integration boundary for the approved Letter Within Experience
-/// System.
+/// System — Quiet Dusk: one ember in one plum sky.
 ///
-/// The shell owns five persistent destinations — Today, Cycle, Care,
-/// Patterns, and You — plus the orchestration between them:
+/// The shell owns exactly four persistent destinations — **Today, Cycle,
+/// Care, and Patterns** — plus the orchestration between them:
 ///
-///  * **Routing.** Plus is a route (from locked depth or You), Reports is a
-///    route (from Patterns and You); neither ever becomes a tab.
-///  * **World crossing.** Moving between the daylight world and the dark
-///    Care world is the signature emissive crossfade; under the platform
-///    reduced-motion setting it degrades to a short plain fade. The Care
-///    tab is an immersive full-screen world: the tab bar slides away while
-///    Care is active, and Care's own persistent exit pill ("Return to
-///    daylight") is the way back.
-///  * **Chrome honesty.** The tab bar is fully opaque with a hairline top
-///    edge, and every daylight destination's viewport is inset from the
-///    bottom by the bar's total height (bar + system navigation inset), so
-///    no interactive or textual content ever renders beneath the bar — the
-///    clipped-content defect is prohibited at the shell level, not left to
-///    each destination's scroll padding. Destinations keep their own
-///    scroll-bottom padding on top of this reserve, so primary actions rest
-///    above the inset even at 200% dynamic type.
+///  * **Routing.** Settings (the former You content: account, protection &
+///    preferences including the screen-cover toggle, backup & restore, Plus
+///    and Reports entry points) is a full-screen **pushed route above the
+///    shell**, never a tab. It is one tap from each non-Care top-level
+///    destination via the shell-rendered gear affordance in a stable
+///    top-trailing slot; the bottom tab bar is not visible while Settings
+///    is open, and a visible, semantic ≥44px Back affordance (or system
+///    back) returns to the originating tab with all shell state intact.
+///    Settings is absent from immersive Care. Plus is a route (from locked
+///    depth or Settings), Reports is a route (from Patterns and Settings);
+///    neither ever becomes a tab.
+///  * **One sky, two depths.** The entire product renders inside the single
+///    Quiet Dusk environment: Today, Cycle, and Patterns live at the
+///    everyday dusk depth; Care is the same plum sky taken to its floor
+///    value — not a second theme. Warm paper appears only as an inset
+///    reading/writing material (letters, in-app report preview) owned by
+///    those surfaces. There is no daylight world, no theme toggle, no
+///    system switching, no time-based dimming.
+///  * **World crossing.** Same-sky switches crossfade in 280 ms (150 ms
+///    reduced); crossings to or from Care take the 450 ms signature
+///    (250 ms reduced) via `_previousIndex` detection — a dimming of the
+///    same room, not a trip to a foreign world. The Care tab is immersive:
+///    the tab bar slides away while Care is active, and Care's own
+///    persistent exit pill ("Return to daylight") is the way back.
+///    Re-tapping the active tab is an explicit no-op; selection fires
+///    [ExperienceHaptics.pick].
+///  * **Chrome honesty.** The tab bar is a fully opaque deep-plum slab with
+///    a 1px translucent hairline top edge, and every non-Care destination's
+///    viewport is inset from the bottom by the bar's total height (bar +
+///    system navigation inset), so no interactive or textual content ever
+///    renders beneath the bar — the clipped-content defect is prohibited at
+///    the shell level, not left to each destination's scroll padding.
+///    Destinations keep their own scroll-bottom padding on top of this
+///    reserve, so primary actions rest above the inset even at 200%
+///    dynamic type. The soft-ember selected pill is composited at a
+///    measured ≥3.0:1 against the bar (see [_selectedTabIndicatorColor]),
+///    honoring the large-graphic contrast floor.
 ///  * **Data coherence.** [onCycleDataChanged] is invoked after any
 ///    period/flow mutation reported by any destination — including
 ///    whole-cycle backfill and committed backup imports — and the shell
@@ -75,13 +102,16 @@ export 'experience_contract_context.dart';
 ///    [PreparationPlan] — never fabricated.
 ///  * **Port wiring.** The [CareAnimationPort] seam uses Letter Within's
 ///    original native five-scene motion system. The current Care journey,
-///    persistence, safety, and completion flow remain outside that renderer.
-///    The optional RecoveryReceipt writes through the same health-record
-///    repository used by Today, Cycle, Patterns, and reports.
+///    persistence, safety, and completion flow remain outside that
+///    renderer. The optional RecoveryReceipt writes through the same
+///    health-record repository used by Today, Cycle, Patterns, and reports.
 ///  * **Privacy.** When screen cover is enabled in privacy preferences,
-///    the shell blanks all content behind an opaque cover whenever the app
-///    leaves the foreground (app switcher privacy). Reduced-motion
-///    resolution follows the platform accessibility setting only.
+///    the shell blanks all content behind an opaque deep-plum cover with
+///    the resting 72px ember whenever the app leaves the foreground (app
+///    switcher privacy). In Quiet Dusk the cover *is* the environment with
+///    the light turned down to one ember — the product's privacy signature.
+///    Reduced-motion resolution follows the platform accessibility setting
+///    only.
 ///
 /// Existing persistence, prediction, aggregation, entitlement, privacy, and
 /// safety implementations remain outside this presentation shell. The shell
@@ -94,12 +124,18 @@ class LetterExperienceShell extends StatefulWidget {
     required this.captureNoteStore,
     required this.momentCheckInRepository,
     required this.preparationRepository,
+    required this.comfortKitRepository,
+    required this.comfortReminderPreferenceRepository,
+    required this.comfortExperienceController,
     required this.entitlementRepository,
     required this.reportPort,
     required this.youPort,
     required this.onCycleDataChanged,
     super.key,
     this.backupPort,
+    this.navigationRequest,
+    this.hasPlusPreviewAccess = false,
+    this.onCareUsed,
     this.now,
     this.readTransaction = const PassthroughLocalHealthReadTransaction(),
   });
@@ -110,12 +146,18 @@ class LetterExperienceShell extends StatefulWidget {
   final CaptureNoteStore captureNoteStore;
   final MomentCheckInRepository momentCheckInRepository;
   final PreparationRepository preparationRepository;
+  final ComfortKitRepository comfortKitRepository;
+  final ComfortReminderPreferenceRepository comfortReminderPreferenceRepository;
+  final ComfortExperienceController comfortExperienceController;
   final EntitlementRepository entitlementRepository;
   final ReportExperiencePort reportPort;
   final BackupExperiencePort? backupPort;
   final YouExperiencePort youPort;
+  final ValueListenable<LetterDestination?>? navigationRequest;
+  final bool hasPlusPreviewAccess;
 
   final Future<void> Function() onCycleDataChanged;
+  final Future<void> Function()? onCareUsed;
   final DateTime Function()? now;
   final LocalHealthReadTransaction readTransaction;
 
@@ -125,18 +167,29 @@ class LetterExperienceShell extends StatefulWidget {
 
 class _LetterExperienceShellState extends State<LetterExperienceShell>
     with WidgetsBindingObserver {
-  // Destination indices — five persistent destinations, in tab order.
+  // Destination identities — four persistent destinations, in tab order.
+  // Read revisions and crossing detection key off these identities, never
+  // off array position alone, so the four-tab structure stays honest.
   static const int _todayIndex = 0;
   static const int _cycleIndex = 1;
   static const int _careIndex = 2;
   static const int _patternsIndex = 3;
-  static const int _youIndex = 4;
 
   /// The tab bar's fixed content height. Declared once here and applied to
-  /// the [NavigationBar] itself, so the reserve subtracted from every
-  /// daylight viewport always matches the bar's real footprint — content
-  /// can never slide beneath an under-measured chrome area.
+  /// the [NavigationBar] itself, so the reserve subtracted from every dusk
+  /// viewport always matches the bar's real footprint — content can never
+  /// slide beneath an under-measured chrome area.
   static const double _tabBarContentHeight = 80;
+
+  /// The soft-ember selected-tab pill, composited over the bar's surface
+  /// color. emberSoft at 55% alpha over [ExperienceColors.surface]
+  /// measures ≈3.5:1 — clearing the declared 3.0:1 large-graphic floor for
+  /// the "you are here" indicator with headroom — while still reading as a
+  /// soft wash rather than a solid action fill (ember coral stays scarce:
+  /// the pill marks location; labels carry selection semantically). The
+  /// earlier 45% composite measured 2.76:1 and was rejected at audit.
+  static final Color _selectedTabIndicatorColor = ExperienceColors.emberSoft
+      .withValues(alpha: 0.55);
 
   int _index = _todayIndex;
   int _previousIndex = _todayIndex;
@@ -152,6 +205,11 @@ class _LetterExperienceShellState extends State<LetterExperienceShell>
   // shared with Cycle, the chart view models for Patterns, the factual
   // pattern analysis feeding every memory surface, and the preparation
   // loop kind feeding the single memory gate.
+  //
+  // `_derivedError` stays write-only at the shell level (owner constraint
+  // 12): its careful copy is composed here, but Patterns' own rendering
+  // remains the sole visible surface. No new shell-level error surface is
+  // added in this visual session.
   String? _derivedError;
   TodayCycleRingModel? _ringModel;
   GravityHorizonViewModel? _gravity;
@@ -187,12 +245,29 @@ class _LetterExperienceShellState extends State<LetterExperienceShell>
         // core; the last known state simply stays on screen.
       },
     );
+    widget.navigationRequest?.addListener(_handleNavigationRequest);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _handleNavigationRequest();
+    });
     _loadDerived();
+  }
+
+  @override
+  void didUpdateWidget(covariant LetterExperienceShell oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.navigationRequest != widget.navigationRequest) {
+      oldWidget.navigationRequest?.removeListener(_handleNavigationRequest);
+      widget.navigationRequest?.addListener(_handleNavigationRequest);
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _handleNavigationRequest();
+      });
+    }
   }
 
   @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
+    widget.navigationRequest?.removeListener(_handleNavigationRequest);
     _entitlementSubscription?.cancel();
     super.dispose();
   }
@@ -200,7 +275,7 @@ class _LetterExperienceShellState extends State<LetterExperienceShell>
   // -------------------------------------------------------------------------
   // Screen cover — when enabled, blanks content in the app switcher. The
   // current persisted preference is read at the moment the app leaves the
-  // foreground, so a change in You takes effect immediately.
+  // foreground, so a change in Settings takes effect immediately.
   // -------------------------------------------------------------------------
 
   bool _screenCoverEnabled() {
@@ -392,15 +467,20 @@ class _LetterExperienceShellState extends State<LetterExperienceShell>
   // Navigation orchestration.
   // -------------------------------------------------------------------------
 
-  void _selectDestination(int index) {
+  void _handleNavigationRequest() {
+    if (!mounted) return;
+    final destination = widget.navigationRequest?.value;
+    if (destination == null) return;
+    final index = switch (destination) {
+      LetterDestination.today => _todayIndex,
+      LetterDestination.cycle => _cycleIndex,
+      LetterDestination.care => _careIndex,
+      LetterDestination.patterns => _patternsIndex,
+    };
     if (index == _index) return;
-    ExperienceHaptics.pick();
     setState(() {
       _previousIndex = _index;
       _index = index;
-      // Destinations remain mounted to preserve navigation context, but their
-      // facts always come from local storage. Re-entering Today or Cycle
-      // therefore advances a read revision and makes that destination reload.
       if (index == _todayIndex) {
         _todayReadRevision += 1;
       } else if (index == _cycleIndex) {
@@ -414,7 +494,33 @@ class _LetterExperienceShellState extends State<LetterExperienceShell>
     });
   }
 
-  /// The inline distress doorway on Today crosses into the dark world as a
+  void _selectDestination(int index) {
+    // Active-tab re-tap is an explicit no-op (owner constraint 3): no
+    // re-tap-to-scroll is implemented.
+    if (index == _index) return;
+    ExperienceHaptics.pick();
+    setState(() {
+      _previousIndex = _index;
+      _index = index;
+      // Destinations remain mounted to preserve navigation context, but their
+      // facts always come from local storage. Re-entering Today, Cycle, or
+      // Patterns therefore advances that destination's own read revision —
+      // keyed to destination identity, not array position — and makes it
+      // reload.
+      if (index == _todayIndex) {
+        _todayReadRevision += 1;
+      } else if (index == _cycleIndex) {
+        _cycleReadRevision += 1;
+      } else if (index == _patternsIndex) {
+        _patternsReadRevision += 1;
+      }
+      if (index == _careIndex) {
+        _careEntrySource = CareEntrySource.tab;
+      }
+    });
+  }
+
+  /// The inline distress doorway on Today crosses into the deep world as a
   /// doorway entry — the landing acknowledges it with one quiet line.
   void _openCareFromDoorway() {
     setState(() {
@@ -439,7 +545,8 @@ class _LetterExperienceShellState extends State<LetterExperienceShell>
 
   bool _canUse(LetterCapability capability) {
     try {
-      return _entitlement.canUse(capability);
+      return _entitlement.canUse(capability) ||
+          (widget.hasPlusPreviewAccess && isPlusPreviewCapability(capability));
     } catch (_) {
       return false;
     }
@@ -470,7 +577,56 @@ class _LetterExperienceShellState extends State<LetterExperienceShell>
           canUseClinicianReports: _canUse(LetterCapability.clinicianReports),
           onOpenPlusWithContext: _openPlusWithContext,
           onOpenSourceRecords: () => Navigator.of(routeContext).maybePop(),
+          onOpenCycle: () {
+            _selectDestination(_cycleIndex);
+            Navigator.of(routeContext).popUntil((route) => route.isFirst);
+          },
           now: widget.now,
+        ),
+      ),
+    );
+  }
+
+  /// Settings is a full-screen pushed route **above the shell** — a room
+  /// off the house, not a world. The route sits on the same navigator stack
+  /// that contains the shell, so the bottom tab bar is not visible while
+  /// Settings is open, and the route's own back affordance (or system back)
+  /// returns to the originating tab with every shell layer — scroll
+  /// positions, in-progress edits, read revisions, and the derived models —
+  /// intact. The transition is the standard neutral platform slide, not
+  /// the world crossing.
+  ///
+  /// The route is built on a dusk [Scaffold], so every control You hosts —
+  /// toggles included — resolves a valid Material ancestor inside the Quiet
+  /// Dusk theme. A shell-rendered Back affordance occupies a stable
+  /// top-leading slot at ≥44px, visible and announced, ahead of You's own
+  /// content.
+  ///
+  /// Settings inherits everything You currently hosts, behaviorally
+  /// unchanged: account, protection & preferences (including the
+  /// screen-cover toggle), backup & restore, and the Plus and Reports
+  /// entry points.
+  void _openSettings() {
+    ExperienceHaptics.pick();
+    Navigator.of(context).push(
+      MaterialPageRoute<void>(
+        builder: (routeContext) => Theme(
+          data: ExperienceFoundation.lightTheme(),
+          child: Scaffold(
+            backgroundColor: ExperienceColors.canvas,
+            body: SafeArea(
+              bottom: false,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: <Widget>[
+                  _SettingsBackSlot(
+                    onBack: () => Navigator.of(routeContext).maybePop(),
+                  ),
+                  Expanded(child: _buildYou()),
+                ],
+              ),
+            ),
+          ),
         ),
       ),
     );
@@ -493,10 +649,10 @@ class _LetterExperienceShellState extends State<LetterExperienceShell>
               : const Duration(milliseconds: 280));
 
     // The total footprint of the bottom chrome: the bar's declared content
-    // height plus the system navigation inset it sits above. Every daylight
-    // destination viewport is inset from the bottom by exactly this amount,
-    // so no control, chip, or caption can ever rest beneath the bar —
-    // shell-wide, at any text scale.
+    // height plus the system navigation inset it sits above. Every
+    // non-Care destination viewport is inset from the bottom by exactly
+    // this amount, so no control, chip, or caption can ever rest beneath
+    // the bar — shell-wide, at any text scale.
     final systemBottomInset = MediaQuery.viewPaddingOf(context).bottom;
     final chromeReserve = _tabBarContentHeight + systemBottomInset;
 
@@ -509,26 +665,23 @@ class _LetterExperienceShellState extends State<LetterExperienceShell>
           children: <Widget>[
             _worldLayer(
               _todayIndex,
-              _wrapLight(_buildToday(), chromeReserve),
+              _wrapDusk(_buildToday(), chromeReserve),
               crossing,
             ),
             _worldLayer(
               _cycleIndex,
-              _wrapLight(_buildCycle(), chromeReserve),
+              _wrapDusk(_buildCycle(), chromeReserve),
               crossing,
             ),
-            // Care is the immersive world: the tab bar slides away while it
-            // is active, and Care's own SafeArea + pinned exit pill own its
-            // bottom rhythm. No chrome reserve is applied here.
+            // Care is the immersive deep-dusk world: the tab bar slides
+            // away while it is active, and Care's own SafeArea + pinned
+            // exit pill own its bottom rhythm. No chrome reserve — and no
+            // Settings affordance — is applied here (owner constraints
+            // 2 and 16).
             _worldLayer(_careIndex, _buildCare(), crossing),
             _worldLayer(
               _patternsIndex,
-              _wrapLight(_buildPatterns(), chromeReserve),
-              crossing,
-            ),
-            _worldLayer(
-              _youIndex,
-              _wrapLight(_buildYou(), chromeReserve),
+              _wrapDusk(_buildPatterns(), chromeReserve),
               crossing,
             ),
             // Persistent navigation — slides away while the immersive Care
@@ -539,7 +692,8 @@ class _LetterExperienceShellState extends State<LetterExperienceShell>
               bottom: 0,
               child: _buildTabBar(context),
             ),
-            // Screen cover: a real blank over everything, including chrome.
+            // Screen cover: a real blank over everything, including chrome —
+            // the same plum sky with the light turned down to one ember.
             if (_screenCoverActive)
               const Positioned.fill(child: _ScreenCover()),
           ],
@@ -567,18 +721,33 @@ class _LetterExperienceShellState extends State<LetterExperienceShell>
     );
   }
 
-  /// Daylight destination frame: the opaque canvas, top safe area, and —
-  /// critically — a bottom viewport reserve equal to the tab bar's total
+  /// Dusk destination frame: the opaque plum canvas, top safe area, the
+  /// shell-owned Settings affordance in its reserved top-trailing slot, and
+  /// — critically — a bottom viewport reserve equal to the tab bar's total
   /// footprint. The bar itself is opaque, but this reserve guarantees that
   /// destination content never even travels beneath the chrome area, so no
   /// interactive element or label can be clipped by or rest under the bar.
   /// Destinations keep their own scroll-bottom padding inside this frame.
-  Widget _wrapLight(Widget child, double chromeReserve) {
+  ///
+  /// The gear lives in a shell-rendered header strip above the destination
+  /// body (owner constraint 16): the strip reserves the full top-trailing
+  /// slot at the shell level, so the affordance can never overlap
+  /// destination titles, dates, or controls, and it crossfades with its
+  /// destination layer like the rest of the chrome.
+  Widget _wrapDusk(Widget child, double chromeReserve) {
     return Padding(
       padding: EdgeInsets.only(bottom: chromeReserve),
       child: ColoredBox(
         color: ExperienceColors.canvas,
-        child: SafeArea(bottom: false, child: child),
+        child: SafeArea(
+          bottom: false,
+          child: Column(
+            children: <Widget>[
+              _SettingsGearSlot(onOpenSettings: _openSettings),
+              Expanded(child: child),
+            ],
+          ),
+        ),
       ),
     );
   }
@@ -619,36 +788,35 @@ class _LetterExperienceShellState extends State<LetterExperienceShell>
                     backgroundColor: ExperienceColors.surface,
                     surfaceTintColor: Colors.transparent,
                     elevation: 0,
-                    indicatorColor: ExperienceColors.emberSoft.withValues(
-                      alpha: 0.45,
-                    ),
+                    // The soft-ember pill marks "you are here" at a measured
+                    // ≈3.5:1 against the bar (≥3.0:1 large-graphic floor);
+                    // labels carry selection semantically.
+                    indicatorColor: _selectedTabIndicatorColor,
                     selectedIndex: _index,
                     onDestinationSelected: _selectDestination,
                     destinations: const <Widget>[
                       NavigationDestination(
                         icon: Icon(Icons.water_drop_outlined),
-                        selectedIcon: Icon(Icons.water_drop),
+                        selectedIcon: Icon(Icons.water_drop, size: 20),
                         label: 'Today',
                       ),
                       NavigationDestination(
                         icon: Icon(Icons.radio_button_unchecked),
-                        selectedIcon: Icon(Icons.radio_button_checked),
+                        selectedIcon: Icon(
+                          Icons.radio_button_checked,
+                          size: 20,
+                        ),
                         label: 'Cycle',
                       ),
                       NavigationDestination(
                         icon: Icon(Icons.favorite_border),
-                        selectedIcon: Icon(Icons.favorite),
+                        selectedIcon: Icon(Icons.favorite, size: 20),
                         label: 'Care',
                       ),
                       NavigationDestination(
                         icon: Icon(Icons.bar_chart),
-                        selectedIcon: Icon(Icons.bar_chart),
+                        selectedIcon: Icon(Icons.bar_chart, size: 20),
                         label: 'Patterns',
-                      ),
-                      NavigationDestination(
-                        icon: Icon(Icons.person_outline),
-                        selectedIcon: Icon(Icons.person),
-                        label: 'You',
                       ),
                     ],
                   ),
@@ -672,6 +840,7 @@ class _LetterExperienceShellState extends State<LetterExperienceShell>
       checkInRepository: widget.momentCheckInRepository,
       healthRecordRepository: widget.healthRecordRepository,
       captureNoteStore: widget.captureNoteStore,
+      comfortExperienceController: widget.comfortExperienceController,
       today: () => LocalDate.fromDateTime(_now().toLocal()),
       now: widget.now,
       loadSupportActionPatterns: () async => _analysis.supportActions,
@@ -713,6 +882,7 @@ class _LetterExperienceShellState extends State<LetterExperienceShell>
       // Keep the current landing, safety, interruption, and completion
       // journey while restoring the original five native motion scenes.
       animationPort: const OriginalCareAnimationPort(),
+      comfortExperienceController: widget.comfortExperienceController,
       loopKind: _loopKind,
       memoryEvidence: _analysis.supportActions,
       // Let the safety route resolve US/Canada from the device locale and use
@@ -725,6 +895,14 @@ class _LetterExperienceShellState extends State<LetterExperienceShell>
       // setting only; no jank override is asserted at this layer.
       performanceConstrained: false,
       now: widget.now,
+      onCareUsed: widget.onCareUsed,
+      onRecordsChanged: () async => _handleCycleDataChanged(),
+      careCompanionName: widget.youPort.privacy.careCompanionName,
+      onCareCompanionNameSaved: (name) {
+        return widget.youPort.savePrivacy(
+          widget.youPort.privacy.copyWith(careCompanionName: name),
+        );
+      },
     );
   }
 
@@ -745,9 +923,14 @@ class _LetterExperienceShellState extends State<LetterExperienceShell>
       ),
       preparationRepository: widget.preparationRepository,
       now: _now,
+      onOpenCycle: () => _selectDestination(_cycleIndex),
     );
   }
 
+  /// The former You destination, now hosted exclusively inside the pushed
+  /// Settings route. All content — account, protection & preferences
+  /// (including the screen-cover toggle), backup & restore, Plus and
+  /// Reports entry points — is behaviorally unchanged.
   Widget _buildYou() {
     return YouExperience(
       key: const ValueKey<String>('destination-you'),
@@ -756,15 +939,117 @@ class _LetterExperienceShellState extends State<LetterExperienceShell>
       onOpenPlus: _openPlus,
       onOpenReports: _openReports,
       onCycleDataChanged: _handleCycleDataChanged,
+      loadComfortExperience: widget.comfortExperienceController.load,
+      saveComfortReminder: ({required bool enabled, required int leadDays}) =>
+          widget.comfortExperienceController.saveReminder(
+            enabled: enabled,
+            leadDays: leadDays,
+          ),
       now: widget.now,
     );
   }
 }
 
 // ---------------------------------------------------------------------------
-// Screen cover — an opaque plum blank with the ember at rest, shown over all
-// content and chrome while the app is out of the foreground. Excluded from
-// the accessibility tree: there is nothing to read behind a privacy blank.
+// Settings gear slot — the shell-owned header affordance (owner constraint
+// 16). Rendered by the shell itself on Today, Cycle, and Patterns in a
+// stable top-trailing position, inside a reserved strip so it can never
+// overlap destination titles, dates, or controls. Absent from immersive
+// Care entirely: Care never passes through `_wrapDusk`.
+//
+// The slot is pinned above the destination body, so it stays put while the
+// destination scrolls, and it inherits the destination layer's world
+// crossfade, TickerMode freeze, semantics exclusion, and pointer gating —
+// hidden layers never expose a tappable gear.
+// ---------------------------------------------------------------------------
+
+class _SettingsGearSlot extends StatelessWidget {
+  const _SettingsGearSlot({required this.onOpenSettings});
+
+  final VoidCallback onOpenSettings;
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      height: ExperienceSpacing.minTouchTarget,
+      child: Align(
+        alignment: Alignment.centerRight,
+        child: Padding(
+          padding: const EdgeInsets.only(
+            right: ExperienceSpacing.screenMargin - 12,
+          ),
+          child: IconButton(
+            onPressed: onOpenSettings,
+            icon: const Icon(Icons.settings_outlined),
+            color: ExperienceColors.inkSoft,
+            tooltip: 'Settings',
+            constraints: const BoxConstraints(
+              minWidth: ExperienceSpacing.minTouchTarget,
+              minHeight: ExperienceSpacing.minTouchTarget,
+            ),
+            padding: EdgeInsets.zero,
+            visualDensity: VisualDensity.compact,
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Settings back slot — the shell-owned return affordance on the pushed
+// Settings route. A visible, semantic back chevron in a stable top-leading
+// slot at the 44px touch floor; tapping it pops the route and lands back on
+// the originating tab with every shell layer — scroll positions,
+// in-progress edits, read revisions, and the derived models — intact. The
+// strip reserves its own height above You's content, so the affordance can
+// never overlap destination titles or controls.
+// ---------------------------------------------------------------------------
+
+class _SettingsBackSlot extends StatelessWidget {
+  const _SettingsBackSlot({required this.onBack});
+
+  final VoidCallback onBack;
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      height: ExperienceSpacing.minTouchTarget,
+      child: Align(
+        alignment: Alignment.centerLeft,
+        child: Padding(
+          padding: const EdgeInsets.only(
+            left: ExperienceSpacing.screenMargin - 12,
+          ),
+          child: Semantics(
+            button: true,
+            label: 'Back',
+            child: IconButton(
+              onPressed: onBack,
+              icon: const Icon(Icons.arrow_back_ios_new),
+              color: ExperienceColors.inkSoft,
+              tooltip: 'Back',
+              constraints: const BoxConstraints(
+                minWidth: ExperienceSpacing.minTouchTarget,
+                minHeight: ExperienceSpacing.minTouchTarget,
+              ),
+              padding: EdgeInsets.zero,
+              visualDensity: VisualDensity.compact,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Screen cover — an opaque deep-plum blank with the ember at rest, shown
+// over all content and chrome while the app is out of the foreground. In
+// Quiet Dusk this is no longer a palette leak: the cover IS the environment
+// with the light turned down to one ember — the product's privacy
+// signature. Excluded from the accessibility tree: there is nothing to
+// read behind a privacy blank.
 // ---------------------------------------------------------------------------
 
 class _ScreenCover extends StatelessWidget {
@@ -783,9 +1068,9 @@ class _ScreenCover extends StatelessWidget {
 
 // ---------------------------------------------------------------------------
 // Backup fallback. The shell's backup port is optional; when the host does
-// not provide one, You still opens and every other capability works — the
-// backup flow itself reports an honest unavailable state and never pretends
-// a backup ran. Local records are untouched either way.
+// not provide one, Settings still opens and every other capability works —
+// the backup flow itself reports an honest unavailable state and never
+// pretends a backup ran. Local records are untouched either way.
 // ---------------------------------------------------------------------------
 
 final class _UnavailableBackupPort implements BackupExperiencePort {

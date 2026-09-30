@@ -6,22 +6,28 @@ import 'package:timezone/timezone.dart' as tz;
 
 import '../domain/local_notification_port.dart';
 
-final class FlutterLocalNotificationPort implements LocalNotificationPort {
+final class FlutterLocalNotificationPort
+    implements LocalNotificationPort, ComfortNotificationPort {
   FlutterLocalNotificationPort({FlutterLocalNotificationsPlugin? plugin})
     : _plugin = plugin ?? FlutterLocalNotificationsPlugin();
 
   static const _notificationId = 51001;
+  static const _comfortNotificationId = 51002;
   static const _channelId = 'letter_cycle_check_in';
 
   final FlutterLocalNotificationsPlugin _plugin;
   bool _ready = false;
 
+  Future<void> _refreshLocalTimezone() async {
+    final localTimezone = await FlutterTimezone.getLocalTimezone();
+    tz.setLocalLocation(tz.getLocation(localTimezone.identifier));
+  }
+
   @override
   Future<void> initialize(NotificationTapHandler onTap) async {
     try {
       tz_data.initializeTimeZones();
-      final localTimezone = await FlutterTimezone.getLocalTimezone();
-      tz.setLocalLocation(tz.getLocation(localTimezone.identifier));
+      await _refreshLocalTimezone();
 
       const settings = InitializationSettings(
         android: AndroidInitializationSettings('ic_notification'),
@@ -138,6 +144,10 @@ final class FlutterLocalNotificationPort implements LocalNotificationPort {
     required String payload,
   }) async {
     if (!_ready) return;
+    // `tz.local` is process-global and otherwise keeps the zone captured at
+    // app launch. Refresh it so travel or a manual zone change cannot leave a
+    // newly reconciled reminder attached to the old local clock.
+    await _refreshLocalTimezone();
     await _plugin.zonedSchedule(
       id: _notificationId,
       title: title,
@@ -180,5 +190,58 @@ final class FlutterLocalNotificationPort implements LocalNotificationPort {
   Future<void> cancelCycleCheckIn() async {
     if (!_ready) return;
     await _plugin.cancel(id: _notificationId);
+  }
+
+  @override
+  Future<void> scheduleComfortReminder({
+    required DateTime scheduledAt,
+    required String title,
+    required String body,
+    required String payload,
+  }) async {
+    if (!_ready) return;
+    await _refreshLocalTimezone();
+    await _plugin.zonedSchedule(
+      id: _comfortNotificationId,
+      title: title,
+      body: body,
+      payload: payload,
+      scheduledDate: tz.TZDateTime(
+        tz.local,
+        scheduledAt.year,
+        scheduledAt.month,
+        scheduledAt.day,
+        scheduledAt.hour,
+        scheduledAt.minute,
+      ),
+      notificationDetails: const NotificationDetails(
+        android: AndroidNotificationDetails(
+          _channelId,
+          'Letter reminders',
+          channelDescription: 'Private reminders from Letter Within.',
+          playSound: false,
+          enableVibration: false,
+          channelShowBadge: false,
+          visibility: NotificationVisibility.private,
+        ),
+        iOS: DarwinNotificationDetails(
+          presentAlert: true,
+          presentBadge: false,
+          presentSound: false,
+        ),
+        macOS: DarwinNotificationDetails(
+          presentAlert: true,
+          presentBadge: false,
+          presentSound: false,
+        ),
+      ),
+      androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
+    );
+  }
+
+  @override
+  Future<void> cancelComfortReminder() async {
+    if (!_ready) return;
+    await _plugin.cancel(id: _comfortNotificationId);
   }
 }

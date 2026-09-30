@@ -10,6 +10,8 @@ import 'package:letter_mobile/features/onboarding/data/onboarding_repository.dar
 import 'package:letter_mobile/features/onboarding/domain/onboarding_profile.dart';
 import 'package:letter_mobile/features/onboarding/presentation/onboarding_flow.dart';
 
+import 'support/widget_test_pump.dart';
+
 final class FakeOnboardingRepository implements OnboardingRepository {
   FakeOnboardingRepository({this.profile});
 
@@ -56,6 +58,7 @@ Future<void> pumpLetter(
   Size size = const Size(390, 844),
   double textScale = 1,
   PeriodRepository? periodRepository,
+  Finder? readyFinder,
 }) async {
   tester.view.devicePixelRatio = 1;
   tester.view.physicalSize = size;
@@ -74,7 +77,10 @@ Future<void> pumpLetter(
       ),
     ),
   );
-  await tester.pumpAndSettle();
+  await pumpUntilFound(
+    tester,
+    readyFinder ?? find.byKey(const Key('onboarding-continue')),
+  );
 }
 
 Future<void> reachGoalsStep(WidgetTester tester) async {
@@ -117,7 +123,7 @@ void main() {
     expect(find.text("Read your body's letter."), findsNothing);
 
     repository.pendingLoad!.complete(null);
-    await tester.pumpAndSettle();
+    await pumpUntilFound(tester, find.byType(OnboardingFlow));
 
     expect(find.text("Read your body's letter."), findsOneWidget);
   });
@@ -153,7 +159,7 @@ void main() {
     await tester.tap(find.byKey(const Key('onboarding-continue')));
     await tester.pumpAndSettle();
     await tester.tap(find.byKey(const Key('onboarding-continue')));
-    await tester.pumpAndSettle();
+    await pumpUntilFound(tester, find.byType(LetterExperienceShell));
 
     expect(repository.profile!.selectedGoals, isEmpty);
   });
@@ -203,7 +209,7 @@ void main() {
     await tester.tap(find.byKey(const Key('onboarding-continue')));
     await tester.pumpAndSettle();
     await tester.tap(find.byKey(const Key('onboarding-continue')));
-    await tester.pumpAndSettle();
+    await pumpUntilFound(tester, find.byType(LetterExperienceShell));
   });
 
   testWidgets('failed save stays in onboarding and can retry', (tester) async {
@@ -220,20 +226,29 @@ void main() {
 
     repository.failSave = false;
     await tester.tap(find.byKey(const Key('onboarding-continue')));
-    await tester.pumpAndSettle();
+    await pumpUntilFound(tester, find.byType(LetterExperienceShell));
     expect(find.byType(LetterExperienceShell), findsOneWidget);
   });
 
   testWidgets('load failure is explicit and retryable', (tester) async {
     final repository = FakeOnboardingRepository()..failNextLoad = true;
-    await pumpLetter(tester, repository);
+    await pumpLetter(
+      tester,
+      repository,
+      readyFinder: find.text(
+        'Letter Within could not open secure storage.',
+      ),
+    );
 
     expect(
       find.text('Letter Within could not open secure storage.'),
       findsOneWidget,
     );
     await tester.tap(find.byKey(const Key('retry-onboarding-load')));
-    await tester.pumpAndSettle();
+    await pumpUntilFound(
+      tester,
+      find.byKey(const Key('onboarding-continue')),
+    );
     expect(find.text("Read your body's letter."), findsOneWidget);
   });
 

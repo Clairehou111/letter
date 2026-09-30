@@ -60,6 +60,7 @@ final class RecoveryReceiptDraft {
     required this.severity,
     this.functionalImpacts = const {},
     this.additionalPhysicalSignals = const {},
+    this.additionalPhysicalSignalSeverities = const {},
   });
 
   final String careRecordId;
@@ -67,6 +68,11 @@ final class RecoveryReceiptDraft {
   final SymptomSeverity severity;
   final Set<FunctionalImpact> functionalImpacts;
   final Set<SymptomType> additionalPhysicalSignals;
+
+  /// Per-symptom overrides for additional physical signals. An omitted entry
+  /// deliberately inherits [severity]; the presentation must disclose that
+  /// default and offer a change control before saving.
+  final Map<SymptomType, SymptomSeverity> additionalPhysicalSignalSeverities;
 }
 
 final class RecoveryReceiptResult {
@@ -121,6 +127,16 @@ RecoveryReceiptDraft validateRecoveryReceiptDraft(RecoveryReceiptDraft draft) {
       RecoveryReceiptFailure.invalidAdditionalSignal,
     );
   }
+  if (draft.additionalPhysicalSignalSeverities.keys.any(
+    (signal) =>
+        !draft.additionalPhysicalSignals.contains(signal) ||
+        signal.category != SymptomCategory.physical ||
+        signal == draft.symptom,
+  )) {
+    throw const RecoveryReceiptException(
+      RecoveryReceiptFailure.invalidAdditionalSignal,
+    );
+  }
   return RecoveryReceiptDraft(
     careRecordId: draft.careRecordId.trim(),
     symptom: draft.symptom,
@@ -128,6 +144,9 @@ RecoveryReceiptDraft validateRecoveryReceiptDraft(RecoveryReceiptDraft draft) {
     functionalImpacts: Set.unmodifiable(draft.functionalImpacts),
     additionalPhysicalSignals: Set.unmodifiable(
       draft.additionalPhysicalSignals,
+    ),
+    additionalPhysicalSignalSeverities: Map.unmodifiable(
+      draft.additionalPhysicalSignalSeverities,
     ),
   );
 }

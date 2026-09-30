@@ -1,7 +1,6 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
-import 'package:flutter/foundation.dart';
 
 import '../design_system/letter_theme.dart';
 import '../experience/letter_experience_shell.dart';
@@ -12,17 +11,28 @@ import '../features/auth/data/dev_auth_service.dart';
 import '../features/auth/domain/auth_service.dart';
 import '../features/auth/presentation/auth_screen.dart';
 import '../features/analytics/data/dev_analytics_service.dart';
+import '../features/analytics/data/secure_care_usage_aggregate_store.dart';
 import '../features/analytics/domain/analytics_service.dart';
+import '../features/analytics/domain/care_usage_aggregate.dart';
 import '../features/analytics/presentation/analytics_scope.dart';
 import '../features/check_in/data/in_memory_moment_check_in_repository.dart';
+import '../features/comfort_kit/data/in_memory_comfort_kit_repository.dart';
+import '../features/comfort_kit/application/comfort_experience_controller.dart';
+import '../features/comfort_kit/domain/comfort_kit_repository.dart';
+import '../features/comfort_window/data/comfort_reminder_preference_repositories.dart';
+import '../features/comfort_window/domain/comfort_reminder_preference.dart';
 import '../features/cycle/data/in_memory_period_repository.dart';
 import '../features/entitlement/data/local_entitlement_repository.dart';
+import '../features/entitlement/data/plus_preview_repositories.dart';
+import '../features/entitlement/domain/plus_preview.dart';
+import '../features/entitlement/domain/plus_preview_evidence.dart';
 import '../features/entitlement/presentation/entitlement_scope.dart';
 import '../features/health_data/data/local_health_store.dart';
 import '../features/health_data/data/local_health_store_factory.dart';
 import '../features/health_data/domain/local_health_read_transaction.dart';
 import '../features/health_records/data/in_memory_health_record_repository.dart';
 import '../features/notifications/application/cycle_check_in_scheduler.dart';
+import '../features/notifications/application/comfort_window_scheduler.dart';
 import '../features/notifications/application/notifying_period_repository.dart';
 import '../features/notifications/data/flutter_local_notification_port.dart';
 import '../features/notifications/domain/local_notification_port.dart';
@@ -30,10 +40,8 @@ import '../features/onboarding/data/onboarding_repository.dart';
 import '../features/onboarding/data/onboarding_repository_factory.dart';
 import '../features/onboarding/domain/onboarding_profile.dart';
 import '../features/onboarding/presentation/onboarding_flow.dart';
-import '../features/privacy/data/local_device_authenticator.dart';
 import '../features/privacy/data/native_privacy_bridge.dart';
 import '../features/privacy/data/privacy_preferences_repository_factory.dart';
-import '../features/privacy/domain/device_authenticator.dart';
 import '../features/privacy/domain/privacy_preferences.dart';
 import '../features/privacy/domain/privacy_preferences_repository.dart';
 import '../features/privacy/presentation/privacy_shell.dart';
@@ -41,6 +49,7 @@ import '../features/local_backup/data/secure_local_backup_credential_store.dart'
 import '../features/local_backup/domain/local_backup_import.dart';
 import '../experience/backup/letter_backup_experience_port.dart';
 import '../features/preparation/data/in_memory_preparation_repository.dart';
+import '../features/patterns/data/repository_pattern_source.dart';
 
 class LetterApp extends StatefulWidget {
   const LetterApp({
@@ -52,21 +61,27 @@ class LetterApp extends StatefulWidget {
     this.captureNoteStore,
     this.momentCheckInRepository,
     this.preparationRepository,
+    this.comfortKitRepository,
+    this.comfortReminderPreferenceRepository,
     this.entitlementRepository,
+    this.plusPreviewGrantRepository,
     this.authService,
     this.analyticsService,
+    this.careUsageAggregateStore,
     this.requireAuthentication = false,
     this.appleSignInEnabled = false,
     this.privacyPreferencesRepository,
-    this.deviceAuthenticator,
     this.notificationPort,
+    this.comfortNotificationPort,
     this.now,
   });
 
   final OnboardingRepository? onboardingRepository;
   final EntitlementRepository? entitlementRepository;
+  final PlusPreviewGrantRepository? plusPreviewGrantRepository;
   final AuthService? authService;
   final AnalyticsService? analyticsService;
+  final CareUsageAggregateStore? careUsageAggregateStore;
   final bool requireAuthentication;
   final bool appleSignInEnabled;
   final PeriodRepository? periodRepository;
@@ -75,9 +90,12 @@ class LetterApp extends StatefulWidget {
   final CaptureNoteStore? captureNoteStore;
   final MomentCheckInRepository? momentCheckInRepository;
   final PreparationRepository? preparationRepository;
+  final ComfortKitRepository? comfortKitRepository;
+  final ComfortReminderPreferenceRepository?
+  comfortReminderPreferenceRepository;
   final PrivacyPreferencesRepository? privacyPreferencesRepository;
-  final DeviceAuthenticator? deviceAuthenticator;
   final LocalNotificationPort? notificationPort;
+  final ComfortNotificationPort? comfortNotificationPort;
   final DateTime Function()? now;
 
   @override
@@ -87,12 +105,17 @@ class LetterApp extends StatefulWidget {
 class _LetterAppState extends State<LetterApp> with WidgetsBindingObserver {
   late final AuthService _authService;
   late final AnalyticsService _analyticsService;
+  late final CareUsageAnalytics _careUsageAnalytics;
   late final StreamSubscription<AuthState> _authSubscription;
   late final StreamSubscription<EntitlementState> _entitlementSubscription;
   AuthState _authState = const AuthState(status: AuthStatus.signedOut);
   bool _authLoaded = false;
   late final OnboardingRepository _repository;
   late final EntitlementRepository _entitlementRepository;
+  late final PlusPreviewController _plusPreviewController;
+  PlusPreviewDecision _plusPreview = const PlusPreviewDecision(
+    PlusPreviewAccess.notEligible,
+  );
   EntitlementState _entitlementState = const EntitlementState(
     status: EntitlementStatus.freeOrUnknown,
   );
@@ -103,14 +126,25 @@ class _LetterAppState extends State<LetterApp> with WidgetsBindingObserver {
   late final CaptureNoteStore _captureNoteStore;
   late final MomentCheckInRepository _momentCheckInRepository;
   late final PreparationRepository _preparationRepository;
+  late final ComfortKitRepository _comfortKitRepository;
+  late final ComfortReminderPreferenceRepository
+  _comfortReminderPreferenceRepository;
   late final PrivacyPreferencesRepository _privacyPreferencesRepository;
-  late final DeviceAuthenticator _deviceAuthenticator;
   late final LocalNotificationPort _notificationPort;
+  late final ComfortNotificationPort _comfortNotificationPort;
   late final CycleCheckInScheduler _cycleCheckInScheduler;
-  final ValueNotifier<int> _navigationRequest = ValueNotifier<int>(0);
+  late final ComfortWindowScheduler _comfortWindowScheduler;
+  late final ComfortExperienceController _comfortExperienceController;
+  final ValueNotifier<LetterDestination?> _navigationRequest =
+      ValueNotifier<LetterDestination?>(null);
+  final ValueNotifier<int> _rootContentRevision = ValueNotifier<int>(0);
+  final GlobalKey<NavigatorState> _navigatorKey = GlobalKey<NavigatorState>();
+  final _NotificationNavigationObserver _navigationObserver =
+      _NotificationNavigationObserver();
   LocalHealthStore? _ownedHealthStore;
   LocalBackupStore? _localBackupStore;
   late final LocalHealthReadTransaction _healthReadTransaction;
+  late final RepositoryPatternSource _patternSource;
   OnboardingProfile? _profile;
   PrivacyPreferences _privacyPreferences = const PrivacyPreferences();
   bool _loaded = false;
@@ -129,6 +163,11 @@ class _LetterAppState extends State<LetterApp> with WidgetsBindingObserver {
           ),
         );
     _analyticsService = widget.analyticsService ?? DevAnalyticsService();
+    _careUsageAnalytics = CareUsageAnalytics(
+      analytics: _analyticsService,
+      store: widget.careUsageAggregateStore ?? SecureCareUsageAggregateStore(),
+      now: widget.now,
+    );
     _authState = _authService.current;
     _repository =
         widget.onboardingRepository ?? createDefaultOnboardingRepository();
@@ -136,18 +175,24 @@ class _LetterAppState extends State<LetterApp> with WidgetsBindingObserver {
         widget.entitlementRepository ?? LocalEntitlementRepository();
     _entitlementState = _entitlementRepository.current;
     _authSubscription = _authService.watch().listen((state) {
-      if (mounted) setState(() => _authState = state);
+      if (mounted) {
+        setState(() => _authState = state);
+        _rootContentRevision.value += 1;
+      }
       unawaited(_syncAccountBoundServices(state));
     });
     _entitlementSubscription = _entitlementRepository.watch().listen((state) {
       if (mounted) setState(() => _entitlementState = state);
+      if (_loaded) unawaited(_refreshPlusPreview());
     });
     if (widget.periodRepository == null &&
         widget.careMemoryRepository == null &&
         widget.healthRecordRepository == null &&
         widget.captureNoteStore == null &&
         widget.momentCheckInRepository == null &&
-        widget.preparationRepository == null) {
+        widget.preparationRepository == null &&
+        widget.comfortKitRepository == null &&
+        widget.comfortReminderPreferenceRepository == null) {
       final healthStore = createDefaultLocalHealthStore();
       _ownedHealthStore = healthStore;
       _localBackupStore = healthStore.localBackupStore;
@@ -157,6 +202,9 @@ class _LetterAppState extends State<LetterApp> with WidgetsBindingObserver {
       _captureNoteStore = healthStore.captureNoteStore;
       _momentCheckInRepository = healthStore.momentCheckInRepository;
       _preparationRepository = healthStore.preparationRepository;
+      _comfortKitRepository = healthStore.comfortKitRepository;
+      _comfortReminderPreferenceRepository =
+          healthStore.comfortReminderPreferenceRepository;
       _healthReadTransaction = healthStore.readTransaction;
     } else {
       _basePeriodRepository =
@@ -173,29 +221,64 @@ class _LetterAppState extends State<LetterApp> with WidgetsBindingObserver {
           InMemoryMomentCheckInRepository(clock: widget.now);
       _preparationRepository =
           widget.preparationRepository ?? InMemoryPreparationRepository();
+      _comfortKitRepository =
+          widget.comfortKitRepository ?? InMemoryComfortKitRepository();
+      _comfortReminderPreferenceRepository =
+          widget.comfortReminderPreferenceRepository ??
+          InMemoryComfortReminderPreferenceRepository();
       _healthReadTransaction = const PassthroughLocalHealthReadTransaction();
     }
     final useProductionAdapters =
         widget.onboardingRepository == null && widget.periodRepository == null;
+    _plusPreviewController = PlusPreviewController(
+      widget.plusPreviewGrantRepository ??
+          (useProductionAdapters
+              ? SecurePlusPreviewGrantRepository()
+              : InMemoryPlusPreviewGrantRepository()),
+    );
     _privacyPreferencesRepository =
         widget.privacyPreferencesRepository ??
         (useProductionAdapters
             ? createDefaultPrivacyPreferencesRepository()
             : InMemoryPrivacyPreferencesRepository());
-    _deviceAuthenticator =
-        widget.deviceAuthenticator ??
-        (useProductionAdapters
-            ? LocalDeviceAuthenticator()
-            : const AllowingDeviceAuthenticator());
     _notificationPort =
         widget.notificationPort ??
         (useProductionAdapters
             ? FlutterLocalNotificationPort()
             : const DisabledLocalNotificationPort());
+    _comfortNotificationPort =
+        widget.comfortNotificationPort ??
+        (_notificationPort is ComfortNotificationPort
+            ? _notificationPort as ComfortNotificationPort
+            : const DisabledLocalNotificationPort());
     _cycleCheckInScheduler = CycleCheckInScheduler(
       _basePeriodRepository,
       _privacyPreferencesRepository,
       _notificationPort,
+      now: widget.now,
+    );
+    _patternSource = RepositoryPatternSource(
+      healthRecords: _healthRecordRepository,
+      careMemory: _careMemoryRepository,
+      periods: _basePeriodRepository,
+      momentCheckIns: _momentCheckInRepository,
+      now: widget.now,
+      readTransaction: _healthReadTransaction,
+    );
+    _comfortWindowScheduler = ComfortWindowScheduler(
+      _basePeriodRepository,
+      _patternSource,
+      _comfortReminderPreferenceRepository,
+      _comfortNotificationPort,
+      now: widget.now,
+    );
+    _comfortExperienceController = ComfortExperienceController(
+      patternSource: _patternSource,
+      careMemory: _careMemoryRepository,
+      quickNotes: _captureNoteStore,
+      kitRepository: _comfortKitRepository,
+      reminderRepository: _comfortReminderPreferenceRepository,
+      onReminderChanged: () => _reconcileComfortWindow(requestPermission: true),
       now: widget.now,
     );
     _periodRepository = NotifyingPeriodRepository(
@@ -214,6 +297,7 @@ class _LetterAppState extends State<LetterApp> with WidgetsBindingObserver {
     unawaited(_analyticsService.dispose());
     unawaited(_entitlementRepository.dispose());
     _navigationRequest.dispose();
+    _rootContentRevision.dispose();
     _ownedHealthStore?.close();
     super.dispose();
   }
@@ -222,6 +306,12 @@ class _LetterAppState extends State<LetterApp> with WidgetsBindingObserver {
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.resumed) {
       unawaited(_refreshEntitlement());
+      // A background interval may cross midnight or include a device time-zone
+      // change. Rebuild the local forecast before trusting the pending
+      // reminder's calendar time; this never asks for notification permission.
+      if (_loaded) {
+        unawaited(_reconcileComfortWindow(requestPermission: false));
+      }
     }
   }
 
@@ -238,6 +328,7 @@ class _LetterAppState extends State<LetterApp> with WidgetsBindingObserver {
       _loaded = false;
       _loadFailed = false;
     });
+    _rootContentRevision.value += 1;
     try {
       await _notificationPort.initialize(_handleNotificationTap);
       final results = await Future.wait<Object?>([
@@ -248,15 +339,7 @@ class _LetterAppState extends State<LetterApp> with WidgetsBindingObserver {
       final authState = results[0] as AuthState;
       final profile = results[1] as OnboardingProfile?;
       final loadedPrivacyPreferences = results[2] as PrivacyPreferences;
-      // App Lock and product analytics are not part of this release. Clear
-      // any pre-release toggles so a hidden control cannot remain active.
-      final privacyPreferences = loadedPrivacyPreferences.copyWith(
-        appLockEnabled: false,
-        analyticsConsent: AnalyticsConsent.optedOut,
-      );
-      if (privacyPreferences != loadedPrivacyPreferences) {
-        await _privacyPreferencesRepository.save(privacyPreferences);
-      }
+      final privacyPreferences = loadedPrivacyPreferences;
       await NativePrivacyBridge.setScreenCoverEnabled(
         privacyPreferences.screenCoverEnabled,
       );
@@ -270,19 +353,12 @@ class _LetterAppState extends State<LetterApp> with WidgetsBindingObserver {
         _privacyPreferences = privacyPreferences;
         _loaded = true;
       });
+      _rootContentRevision.value += 1;
       await _applyAnalyticsPreference(privacyPreferences);
       await _syncEntitlementForAccount(authState);
-      await _trackOperationally(
-        AppStartupEvent(
-          appVersion: const String.fromEnvironment(
-            'FLUTTER_BUILD_NAME',
-            defaultValue: 'development',
-          ),
-          platform: _analyticsPlatform,
-          result: StartupResult.completed,
-        ),
-      );
+      await _refreshPlusPreview();
       await _reconcileCycleCheckIn(requestPermission: profile != null);
+      await _reconcileComfortWindow(requestPermission: false);
     } on Object {
       if (!mounted) {
         return;
@@ -292,6 +368,7 @@ class _LetterAppState extends State<LetterApp> with WidgetsBindingObserver {
         _loaded = true;
         _loadFailed = true;
       });
+      _rootContentRevision.value += 1;
     }
   }
 
@@ -301,13 +378,41 @@ class _LetterAppState extends State<LetterApp> with WidgetsBindingObserver {
       return;
     }
     setState(() => _profile = profile);
+    _rootContentRevision.value += 1;
     await _trackOperationally(const OnboardingCompletedEvent());
     await _reconcileCycleCheckIn(requestPermission: true);
   }
 
   void _handleNotificationTap(String payload) {
-    if (payload != CycleCheckInScheduler.notificationPayload) return;
-    _navigationRequest.value = 2;
+    final destination = switch (payload) {
+      CycleCheckInScheduler.notificationPayload => LetterDestination.cycle,
+      ComfortWindowScheduler.notificationPayload => LetterDestination.care,
+      _ => null,
+    };
+    if (destination != null) {
+      unawaited(_showNotificationDestination(destination));
+    }
+  }
+
+  Future<void> _showNotificationDestination(
+    LetterDestination destination,
+  ) async {
+    final navigator = _navigatorKey.currentState;
+
+    // A notification is an external navigation request. Dismiss every
+    // presented route (including sheets) through maybePop so PopScope and
+    // unsaved-draft guards retain authority. If a route declines the pop,
+    // leave both it and the tab beneath it unchanged.
+    while (navigator?.canPop() ?? false) {
+      final popRevision = _navigationObserver.popRevision;
+      await navigator!.maybePop();
+      await WidgetsBinding.instance.endOfFrame;
+      if (!mounted) return;
+      if (_navigationObserver.popRevision == popRevision) return;
+    }
+
+    _navigationRequest.value = null;
+    _navigationRequest.value = destination;
   }
 
   Future<void> _reconcileCycleCheckIn({required bool requestPermission}) async {
@@ -325,20 +430,69 @@ class _LetterAppState extends State<LetterApp> with WidgetsBindingObserver {
     }
   }
 
+  Future<void> _reconcileComfortWindow({
+    required bool requestPermission,
+  }) async {
+    try {
+      await _comfortWindowScheduler.reconcile(
+        requestPermission: requestPermission,
+      );
+    } on Object {
+      // Forecasts and local records remain available if reminders fail.
+    }
+  }
+
+  Future<void> _reconcileLocalPredictions() async {
+    await Future.wait<void>([
+      _reconcileCycleCheckIn(requestPermission: true),
+      _reconcileComfortWindow(requestPermission: false),
+      _refreshPlusPreview(),
+    ]);
+  }
+
+  Future<void> _refreshPlusPreview() async {
+    try {
+      final now = (widget.now ?? DateTime.now)();
+      final today = LocalDate.fromDateTime(now.toLocal());
+      final source = (await _patternSource.read()).through(today);
+      final analysis = const PersonalPatternEngine().analyze(source);
+      final decision = await _plusPreviewController.resolve(
+        hasPaidAccess: _entitlementState.hasPremiumAccess,
+        hasPlusGradeEvidence: PlusPreviewEvidencePolicy.isEligible(
+          periods: source.periods,
+          analysis: analysis,
+        ),
+        periods: source.periods,
+        now: now,
+      );
+      if (!mounted) return;
+      setState(() => _plusPreview = decision);
+    } on Object {
+      // Preview availability never blocks local records or paid access.
+    }
+  }
+
   Future<void> _updatePrivacyPreferences(PrivacyPreferences preferences) async {
-    final supportedPreferences = preferences.copyWith(
-      appLockEnabled: false,
-      analyticsConsent: AnalyticsConsent.optedOut,
-    );
-    await _privacyPreferencesRepository.save(supportedPreferences);
+    final previous = _privacyPreferences;
+    await _privacyPreferencesRepository.save(preferences);
     await NativePrivacyBridge.setScreenCoverEnabled(
-      supportedPreferences.screenCoverEnabled,
+      preferences.screenCoverEnabled,
     );
     if (!mounted) return;
-    setState(() => _privacyPreferences = supportedPreferences);
-    await _applyAnalyticsPreference(supportedPreferences);
+    setState(() => _privacyPreferences = preferences);
+    await _applyAnalyticsPreference(preferences);
+    if (previous.analyticsConsent != preferences.analyticsConsent &&
+        preferences.analyticsConsent == AnalyticsConsent.granted) {
+      await _trackOperationally(
+        const SettingsActionEvent(SettingsAction.analyticsEnabled),
+      );
+    } else if (previous.screenCoverEnabled != preferences.screenCoverEnabled) {
+      await _trackOperationally(
+        const SettingsActionEvent(SettingsAction.screenCoverChanged),
+      );
+    }
     await _reconcileCycleCheckIn(
-      requestPermission: supportedPreferences.cycleCheckInEnabled,
+      requestPermission: preferences.cycleCheckInEnabled,
     );
   }
 
@@ -346,39 +500,17 @@ class _LetterAppState extends State<LetterApp> with WidgetsBindingObserver {
     try {
       if (preferences.analyticsConsent == AnalyticsConsent.granted) {
         await _analyticsService.enable();
-        await _identifyForAnalytics(_authState);
+        await _careUsageAnalytics.flushIfReady();
       } else {
         await _analyticsService.disable();
+        await _careUsageAnalytics.clearPending();
       }
     } on Object {
       // Optional operational analytics never blocks local health features.
     }
   }
 
-  Future<void> _identifyForAnalytics(AuthState state) async {
-    if (_privacyPreferences.analyticsConsent != AnalyticsConsent.granted) {
-      return;
-    }
-    final userId = state.userId;
-    if (state.isAuthenticated && userId != null) {
-      try {
-        await _analyticsService.identifyAuthenticatedUser(userId);
-      } on Object {
-        // Identity for optional analytics is non-critical.
-      }
-    }
-  }
-
   Future<void> _syncAccountBoundServices(AuthState state) async {
-    if (state.isAuthenticated) {
-      await _identifyForAnalytics(state);
-    } else {
-      try {
-        await _analyticsService.clearAuthenticatedUser();
-      } on Object {
-        // Identity cleanup is retried on the next account-state transition.
-      }
-    }
     await _syncEntitlementForAccount(state);
   }
 
@@ -405,16 +537,7 @@ class _LetterAppState extends State<LetterApp> with WidgetsBindingObserver {
     }
   }
 
-  AnalyticsPlatform get _analyticsPlatform {
-    if (kIsWeb) return AnalyticsPlatform.web;
-    return switch (defaultTargetPlatform) {
-      TargetPlatform.iOS || TargetPlatform.macOS => AnalyticsPlatform.ios,
-      _ => AnalyticsPlatform.android,
-    };
-  }
-
-  @override
-  Widget build(BuildContext context) {
+  Widget _buildRootContent() {
     final Widget? accountGate =
         widget.requireAuthentication && (!_authLoaded || !_loaded)
         ? const _OnboardingLoadingScreen()
@@ -441,6 +564,12 @@ class _LetterAppState extends State<LetterApp> with WidgetsBindingObserver {
         momentCheckInRepository: _momentCheckInRepository,
         captureNoteStore: _captureNoteStore,
         preparationRepository: _preparationRepository,
+        comfortKitRepository: _comfortKitRepository,
+        comfortReminderPreferenceRepository:
+            _comfortReminderPreferenceRepository,
+        comfortExperienceController: _comfortExperienceController,
+        navigationRequest: _navigationRequest,
+        hasPlusPreviewAccess: _plusPreview.canUsePlusDepth,
         entitlementRepository: _entitlementRepository,
         reportPort: LetterReportExperiencePort(
           periodRepository: _periodRepository,
@@ -448,6 +577,7 @@ class _LetterAppState extends State<LetterApp> with WidgetsBindingObserver {
           healthRecordRepository: _healthRecordRepository,
           momentCheckInRepository: _momentCheckInRepository,
           captureNoteStore: _captureNoteStore,
+          entitlementRepository: _entitlementRepository,
           readTransaction: _healthReadTransaction,
           now: widget.now,
         ),
@@ -462,30 +592,56 @@ class _LetterAppState extends State<LetterApp> with WidgetsBindingObserver {
           readPrivacy: () => _privacyPreferences,
           persistPrivacy: _updatePrivacyPreferences,
         ),
-        onCycleDataChanged: () =>
-            _reconcileCycleCheckIn(requestPermission: true),
+        onCycleDataChanged: _reconcileLocalPredictions,
+        onCareUsed: _careUsageAnalytics.recordCareUse,
         readTransaction: _healthReadTransaction,
         now: widget.now,
       );
     }
+    return content;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final rootContent = ListenableBuilder(
+      listenable: _rootContentRevision,
+      builder: (context, _) => _buildRootContent(),
+    );
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       title: 'Letter Within',
       theme: ExperienceFoundation.lightTheme(),
-      home: AnalyticsScope(
-        service: _analyticsService,
-        child: PrivacyShell(
-          preferences: _privacyPreferences,
-          ready: _loaded && !_loadFailed,
-          authenticator: _deviceAuthenticator,
-          child: EntitlementScope(
-            repository: _entitlementRepository,
-            initialState: _entitlementState,
-            child: content,
+      navigatorKey: _navigatorKey,
+      navigatorObservers: <NavigatorObserver>[_navigationObserver],
+      builder: (context, navigator) {
+        return AnalyticsScope(
+          service: _analyticsService,
+          child: PrivacyShell(
+            preferences: _privacyPreferences,
+            child: EntitlementScope(
+              repository: _entitlementRepository,
+              initialState: _entitlementState,
+              hasPlusPreviewAccess: _plusPreview.canUsePlusDepth,
+              child: navigator ?? const SizedBox.shrink(),
+            ),
           ),
-        ),
-      ),
+        );
+      },
+      // The builder-level scopes wrap the Navigator itself, so they cover
+      // home, pushed routes, and modal routes without duplicate subscriptions
+      // or conflicting inherited state inside home.
+      home: rootContent,
     );
+  }
+}
+
+final class _NotificationNavigationObserver extends NavigatorObserver {
+  int popRevision = 0;
+
+  @override
+  void didPop(Route<dynamic> route, Route<dynamic>? previousRoute) {
+    popRevision += 1;
+    super.didPop(route, previousRoute);
   }
 }
 

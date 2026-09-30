@@ -183,7 +183,7 @@ HealthRecordDraft validateHealthRecordDraft(HealthRecordDraft draft) {
   );
 }
 
-enum HealthRecordFailure { notFound, storageUnavailable }
+enum HealthRecordFailure { notFound, duplicateForDay, storageUnavailable }
 
 final class HealthRecordException implements Exception {
   const HealthRecordException(this.failure);
@@ -193,6 +193,8 @@ final class HealthRecordException implements Exception {
   String get userMessage => switch (failure) {
     HealthRecordFailure.notFound =>
       'This health record is no longer available. Refresh and try again.',
+    HealthRecordFailure.duplicateForDay =>
+      'That symptom is already recorded for this day. Edit or delete the existing entry first.',
     HealthRecordFailure.storageUnavailable =>
       'Letter Within could not update your private health record. Try again.',
   };

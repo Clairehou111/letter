@@ -588,27 +588,50 @@ final class _CertaintyLegend extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: <Widget>[
-        const _LegendSample(
+    return Wrap(
+      alignment: WrapAlignment.center,
+      crossAxisAlignment: WrapCrossAlignment.center,
+      spacing: ExperienceSpacing.sm,
+      runSpacing: ExperienceSpacing.xs,
+      children: const <Widget>[
+        _LegendItem(
           dashed: false,
           semanticsLabel: 'Solid line sample meaning observed',
+          label: 'Observed',
         ),
-        const SizedBox(width: 6),
-        Text(
-          'Observed',
-          style: ExperienceType.caption(ExperienceColors.inkSoft),
-        ),
-        const SizedBox(width: ExperienceSpacing.sm),
-        const _LegendSample(
+        _LegendItem(
           dashed: true,
           semanticsLabel: 'Dashed line sample meaning estimated',
+          label: 'Estimated',
         ),
+      ],
+    );
+  }
+}
+
+final class _LegendItem extends StatelessWidget {
+  const _LegendItem({
+    required this.dashed,
+    required this.semanticsLabel,
+    required this.label,
+  });
+
+  final bool dashed;
+  final String semanticsLabel;
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: <Widget>[
+        _LegendSample(dashed: dashed, semanticsLabel: semanticsLabel),
         const SizedBox(width: 6),
-        Text(
-          'Estimated',
-          style: ExperienceType.caption(ExperienceColors.inkSoft),
+        Flexible(
+          child: Text(
+            label,
+            style: ExperienceType.caption(ExperienceColors.inkSoft),
+          ),
         ),
       ],
     );

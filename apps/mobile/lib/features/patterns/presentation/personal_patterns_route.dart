@@ -28,6 +28,7 @@ class PersonalPatternsRoute extends StatefulWidget {
     this.previewRepository,
     this.now,
     this.showBack = true,
+    this.onOpenCycle,
     super.key,
   });
 
@@ -36,6 +37,7 @@ class PersonalPatternsRoute extends StatefulWidget {
   final PersonalPatternPreviewRepository? previewRepository;
   final DateTime Function()? now;
   final bool showBack;
+  final VoidCallback? onOpenCycle;
 
   @override
   State<PersonalPatternsRoute> createState() => _PersonalPatternsRouteState();
@@ -216,6 +218,7 @@ class _PersonalPatternsRouteState extends State<PersonalPatternsRoute> {
         return PatternsExperienceScreen(
           data: data,
           onBack: _onBack,
+          onOpenCycle: widget.onOpenCycle,
           onEditHealthRecord: (sourceId) => _editHealthRecord(sourceId),
         );
       },
@@ -387,7 +390,7 @@ class _EmberPrimaryAction extends StatelessWidget {
             onTap: onPressed,
             child: Ink(
               decoration: BoxDecoration(
-                gradient: enabled ? ExperienceColors.emberGradient : null,
+                gradient: enabled ? ExperienceColors.emberActionGradient : null,
                 color: enabled ? null : ExperienceColors.surfaceWarm,
                 borderRadius: ExperienceRadius.chipRadius,
                 boxShadow: enabled
@@ -420,7 +423,9 @@ class _EmberPrimaryAction extends StatelessWidget {
                           label,
                           textAlign: TextAlign.center,
                           style: ExperienceType.label(
-                            enabled ? Colors.white : ExperienceColors.inkSoft,
+                            enabled
+                                ? ExperienceColors.onEmber
+                                : ExperienceColors.inkSoft,
                           ),
                         ),
                       ),

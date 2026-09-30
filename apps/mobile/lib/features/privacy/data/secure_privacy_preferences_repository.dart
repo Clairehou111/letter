@@ -33,12 +33,12 @@ final class SecurePrivacyPreferencesRepository
 abstract final class PrivacyPreferencesCodec {
   static String encode(PrivacyPreferences preferences) => jsonEncode({
     'version': PrivacyPreferences.schemaVersion,
-    'app_lock': preferences.appLockEnabled,
     'screen_cover': preferences.screenCoverEnabled,
     'cycle_check_in': preferences.cycleCheckInEnabled,
     'notification_permission_requested':
         preferences.notificationPermissionRequested,
     'analytics_consent': _encodeConsent(preferences.analyticsConsent),
+    'care_companion_name': preferences.careCompanionName,
   });
 
   static PrivacyPreferences decode(String encoded) {
@@ -49,18 +49,28 @@ abstract final class PrivacyPreferencesCodec {
     final version = value['version'];
     if (version != 1 &&
         version != 2 &&
+        version != 3 &&
         version != PrivacyPreferences.schemaVersion) {
       throw const FormatException('Unsupported privacy preferences');
     }
     return PrivacyPreferences(
-      appLockEnabled: value['app_lock'] == true,
-      screenCoverEnabled: version == 3 ? value['screen_cover'] != false : true,
+      screenCoverEnabled:
+          version == 3 || version == PrivacyPreferences.schemaVersion
+          ? value['screen_cover'] != false
+          : true,
       cycleCheckInEnabled: value['cycle_check_in'] != false,
       notificationPermissionRequested:
           value['notification_permission_requested'] == true,
       analyticsConsent: version == 1
           ? AnalyticsConsent.notSet
           : _decodeConsent(value['analytics_consent']),
+      careCompanionName: version == PrivacyPreferences.schemaVersion
+          ? PrivacyPreferences.normalizeCareCompanionName(
+              value['care_companion_name'] is String
+                  ? value['care_companion_name'] as String
+                  : null,
+            )
+          : null,
     );
   }
 

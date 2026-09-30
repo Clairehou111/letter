@@ -62,7 +62,15 @@ final class LetterBackupExperiencePort implements BackupExperiencePort {
       }
     }
     try {
-      await filePort.shareEncryptedBackup(data);
+      final share = await filePort.shareEncryptedBackup(data);
+      if (share != LocalBackupShareOutcome.shared) {
+        return ExperienceFileReceipt(
+          outcome: ExperienceFileOutcome.savedOnly,
+          localPath: savedPath,
+          message:
+              'Saved in your Letter folder. No share destination was selected.',
+        );
+      }
       return ExperienceFileReceipt(
         outcome: ExperienceFileOutcome.shared,
         localPath: savedPath,

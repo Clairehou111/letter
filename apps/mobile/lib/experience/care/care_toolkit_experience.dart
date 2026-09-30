@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 
 import '../../features/care/domain/care_memory.dart';
@@ -6,21 +8,10 @@ import '../../features/patterns/domain/personal_pattern.dart';
 import '../../features/preparation/domain/preparation_loop_state.dart';
 import '../theme/experience_foundation.dart';
 import 'care_animation_port.dart';
+import 'care_editorial_art.dart';
 import 'care_scene_foundation.dart';
 
-/// Everyday-care guided rituals for stable users.
-///
-/// The toolkit is deliberately not a list of advice cards: each ritual is a
-/// paced, interruptible scene on the shared Care runtime. Finishing the final
-/// step creates one deliberate [CareActionCompletion] and hands it to the
-/// owner through [onRitualCompleted], which is where the shared completion
-/// flow (soft landing, optional outcome, separately dismissible receipt
-/// opt-in) takes over. Leaving a ritual early records nothing.
-///
-/// Remembered-help copy is rendered only through
-/// [ExperienceFoundation.gateMemoryEvidence] and the foundation memory copy
-/// helpers. Warmth rituals carry a concise burn-safety reminder; warm drinks
-/// and soaks are framed as comfort rituals, never treatments.
+/// Everyday-care practices for stable users.
 final class CareToolkitExperience extends StatefulWidget {
   const CareToolkitExperience({
     super.key,
@@ -30,27 +21,23 @@ final class CareToolkitExperience extends StatefulWidget {
     this.loopKind,
     this.memoryEvidence = const <SupportActionPattern>[],
     this.now,
+    this.companionName,
+    this.onCompanionNameSaved,
   });
 
-  /// Receives the deliberate completion record exactly once, when the person
-  /// presses the ritual's final primary action. The owning Care experience
-  /// routes this into the same completion flow used by the five modes.
   final Future<void> Function(CareActionCompletion completion)
   onRitualCompleted;
-
-  /// Leaves the toolkit / Care world. Exit remains available and unlocked.
   final VoidCallback? onExit;
-
-  /// Routes to the deterministic safety surface owned by the Care experience.
   final VoidCallback? onSafety;
-
-  /// Evidence inputs for the single shared memory gate. The toolkit never
-  /// composes remembered-help copy outside the foundation helpers.
   final PreparationLoopKind? loopKind;
   final List<SupportActionPattern> memoryEvidence;
-
-  /// Injectable clock for deterministic completion timestamps.
   final DateTime Function()? now;
+
+  /// The saved device-local name. Naming and editing belong to Settings.
+  final String? companionName;
+
+  /// Retained for assembly compatibility; this scene never edits the name.
+  final Future<void> Function(String name)? onCompanionNameSaved;
 
   @override
   State<CareToolkitExperience> createState() => _CareToolkitExperienceState();
@@ -58,57 +45,67 @@ final class CareToolkitExperience extends StatefulWidget {
 
 class _CareToolkitExperienceState extends State<CareToolkitExperience> {
   _ToolkitRitual? _active;
+  late DateTime _chooserStartedAt;
+  DateTime? _ritualStartedAt;
   bool _memoryProposalDismissed = false;
   bool _completing = false;
 
   DateTime _now() => (widget.now ?? DateTime.now)();
 
-  void _openRitual(_ToolkitRitual ritual) {
+  @override
+  void initState() {
+    super.initState();
+    _chooserStartedAt = _now();
+  }
+
+  void _open(_ToolkitRitual ritual) {
     ExperienceHaptics.pick();
-    setState(() => _active = ritual);
+    setState(() {
+      _active = ritual;
+      _ritualStartedAt = _now();
+    });
   }
 
-  void _leaveActiveScene() {
-    // Interruption and exit are recoverable and record nothing. The deliberate
-    // completion path is the only route that writes.
-    if (!mounted) return;
-    setState(() => _active = null);
+  void _leaveRitual() {
+    setState(() {
+      _active = null;
+      _chooserStartedAt = _now();
+      _ritualStartedAt = null;
+    });
   }
 
-  Future<void> _completeRitual(_ToolkitRitual ritual) async {
+  Future<void> _complete(_ToolkitRitual ritual) async {
     if (_completing) return;
     setState(() => _completing = true);
-    final completion = CareActionCompletion(
-      mode: CareMode.physical,
-      actionId: ritual.id,
-      actionLabel: ritual.title,
-      occurredAt: _now(),
-    );
     try {
-      await widget.onRitualCompleted(completion);
+      await widget.onRitualCompleted(
+        CareActionCompletion(
+          mode: CareMode.physical,
+          actionId: ritual.id,
+          actionLabel: ritual.title,
+          occurredAt: _now(),
+        ),
+      );
       if (!mounted) return;
+      ExperienceHaptics.careStepCompleted();
       setState(() {
         _active = null;
+        _chooserStartedAt = _now();
+        _ritualStartedAt = null;
         _memoryProposalDismissed = false;
       });
     } catch (_) {
       if (!mounted) return;
-      // Errors are visual + textual only; never haptic. Persistence failures
-      // and their ready-made recovery copy are owned by the completion flow,
-      // so this stays deliberately plain and non-punishing.
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-            'That completion could not be handed off just now. '
-            'Nothing was lost.',
-            style: ExperienceType.bodySmall(ExperienceColors.careInk),
+            'That completion could not be saved just now. Try again when you are ready.',
+            style: ExperienceType.bodySmall(CareEditorialPalette.paper),
           ),
         ),
       );
     } finally {
-      if (mounted) {
-        setState(() => _completing = false);
-      }
+      if (mounted) setState(() => _completing = false);
     }
   }
 
@@ -116,193 +113,164 @@ class _CareToolkitExperienceState extends State<CareToolkitExperience> {
   Widget build(BuildContext context) {
     final motion = ExperienceFoundation.motionPreference(context);
     final active = _active;
+    final page = active == null
+        ? _ToolkitChooser(
+            motion: motion,
+            companionName: widget.companionName,
+            startedAt: _chooserStartedAt,
+            now: _now,
+            loopKind: widget.loopKind,
+            memoryEvidence: widget.memoryEvidence,
+            proposalDismissed: _memoryProposalDismissed,
+            onDismissProposal: () {
+              setState(() => _memoryProposalDismissed = true);
+            },
+            onOpen: _open,
+            onExit: widget.onExit,
+            onSafety: widget.onSafety,
+          )
+        : _PracticePage(
+            key: ValueKey<String>('toolkit-${active.id}'),
+            ritual: active,
+            motion: motion,
+            companionName: widget.companionName,
+            startedAt: _ritualStartedAt!,
+            now: _now,
+            completing: _completing,
+            onBack: _leaveRitual,
+            onSafety: widget.onSafety,
+            onComplete: () => _complete(active),
+          );
 
-    return Theme(
+    final body = Theme(
       data: ExperienceFoundation.careTheme(),
       child: Scaffold(
-        backgroundColor: ExperienceColors.careSkyBottom,
-        body: active == null
-            ? _ToolkitChooser(
-                motion: motion,
-                loopKind: widget.loopKind,
-                memoryEvidence: widget.memoryEvidence,
-                proposalDismissed: _memoryProposalDismissed,
-                onDismissProposal: () {
-                  setState(() => _memoryProposalDismissed = true);
-                },
-                onOpenRitual: _openRitual,
-                onExit: widget.onExit,
-                onSafety: widget.onSafety,
-              )
-            : _buildScene(active, motion),
+        backgroundColor: CareEditorialPalette.paper,
+        body: AnimatedSwitcher(
+          duration: motion == CareSceneMotionPreference.full
+              ? const Duration(milliseconds: 300)
+              : Duration.zero,
+          child: page,
+        ),
       ),
     );
-  }
-
-  Widget _buildScene(_ToolkitRitual ritual, CareSceneMotionPreference motion) {
-    final steps = <CareSceneStep>[
-      for (final spec in ritual.steps)
-        CareSceneStep(
-          id: spec.id,
-          title: spec.title,
-          text: spec.text,
-          primaryActionLabel: spec.isFinal
-              ? ritual.completionLabel
-              : spec.actionLabel,
-          semanticsLabel: spec.semanticsLabel,
-          advances: !spec.isFinal,
-          onPrimaryAction: spec.isFinal
-              ? () {
-                  // Hand completion to the shared flow. The scene foundation
-                  // has already emitted primaryInteraction; this final step
-                  // intentionally does not auto-advance.
-                  _completeRitual(ritual);
-                }
-              : null,
-        ),
-    ];
-
-    return CareSceneFoundation.scene(
-      key: ValueKey<String>('toolkit-${ritual.id}'),
-      mode: CareMode.physical,
-      eyebrow: ritual.eyebrow,
-      title: ritual.title,
-      steps: steps,
-      motionPreference: motion,
-      onSignal: _handleSceneSignal,
-      onExit: _leaveActiveScene,
-      onSafety: widget.onSafety,
-      exitLabel: 'Back to everyday care',
-      safetyLine: CareSceneFoundation.defaultSafetyLine,
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, result) {
+        if (didPop) return;
+        if (_active != null) {
+          _leaveRitual();
+        } else {
+          widget.onExit?.call();
+        }
+      },
+      child: body,
     );
-  }
-
-  void _handleSceneSignal(CareSceneSignal signal) {
-    // The scene foundation already owns haptics, focus movement, pacing, and
-    // requestedExit dispatch. The toolkit keeps this seam open so the future
-    // animation port can observe the same shared signals without a journey
-    // change.
-    switch (signal) {
-      case CareSceneSignal.ready:
-      case CareSceneSignal.primaryInteraction:
-      case CareSceneSignal.stepCompleted:
-      case CareSceneSignal.sceneCompleted:
-      case CareSceneSignal.sceneDismissed:
-      case CareSceneSignal.requestedSafety:
-      case CareSceneSignal.requestedExit:
-        break;
-    }
   }
 }
 
 class _ToolkitChooser extends StatelessWidget {
   const _ToolkitChooser({
     required this.motion,
+    required this.companionName,
+    required this.startedAt,
+    required this.now,
     required this.loopKind,
     required this.memoryEvidence,
     required this.proposalDismissed,
     required this.onDismissProposal,
-    required this.onOpenRitual,
+    required this.onOpen,
     required this.onExit,
     required this.onSafety,
   });
 
   final CareSceneMotionPreference motion;
+  final String? companionName;
+  final DateTime startedAt;
+  final DateTime Function() now;
   final PreparationLoopKind? loopKind;
   final List<SupportActionPattern> memoryEvidence;
   final bool proposalDismissed;
   final VoidCallback onDismissProposal;
-  final ValueChanged<_ToolkitRitual> onOpenRitual;
+  final ValueChanged<_ToolkitRitual> onOpen;
   final VoidCallback? onExit;
   final VoidCallback? onSafety;
 
   @override
   Widget build(BuildContext context) {
-    final memory = _resolveMemoryLine();
-
-    return DecoratedBox(
-      decoration: const BoxDecoration(gradient: ExperienceColors.careBackdrop),
-      child: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(
-            ExperienceSpacing.screenMargin,
-            ExperienceSpacing.md,
-            ExperienceSpacing.screenMargin,
-            ExperienceSpacing.md,
+    final memory = _resolveMemory();
+    final menuChildren = <Widget>[];
+    for (final group in _RitualEnergy.values) {
+      final rituals =
+          _ToolkitRitual.catalog
+              .where((ritual) => ritual.energy == group)
+              .toList()
+            ..sort((a, b) => a.menuOrder.compareTo(b.menuOrder));
+      menuChildren
+        ..add(
+          _RitualGroupHeader(
+            group: group,
+            first: group == _RitualEnergy.values.first,
           ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: <Widget>[
-              Semantics(
-                header: true,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: <Widget>[
-                    Text(
-                      'EVERYDAY CARE',
-                      style: ExperienceType.eyebrow(
-                        ExperienceColors.careInkSoft,
+        )
+        ..addAll(
+          rituals.map(
+            (ritual) => Padding(
+              padding: const EdgeInsets.only(bottom: 3),
+              child: _RitualRow(
+                ritual: ritual,
+                index: ritual.menuOrder,
+                onTap: () => onOpen(ritual),
+              ),
+            ),
+          ),
+        );
+    }
+    return CareEditorialPaper(
+      child: SafeArea(
+        child: Column(
+          children: <Widget>[
+            Expanded(
+              child: CustomScrollView(
+                physics: const ClampingScrollPhysics(),
+                slivers: <Widget>[
+                  SliverPadding(
+                    padding: const EdgeInsets.fromLTRB(24, 24, 24, 0),
+                    sliver: SliverToBoxAdapter(
+                      child: _ChooserHeader(
+                        memory: memory,
+                        motion: motion,
+                        companionName: companionName,
+                        startedAt: startedAt,
+                        now: now,
                       ),
                     ),
-                    const SizedBox(height: ExperienceSpacing.xs),
-                    Text(
-                      'Small rituals for a steadier body',
-                      style: ExperienceType.title(ExperienceColors.careInk),
+                  ),
+                  SliverPadding(
+                    padding: const EdgeInsets.fromLTRB(24, 12, 24, 36),
+                    sliver: SliverList(
+                      delegate: SliverChildListDelegate(menuChildren),
                     ),
-                    const SizedBox(height: ExperienceSpacing.sm),
-                    Text(
-                      'Pick one thing. It will guide you slowly, and you can '
-                      'leave whenever you need to.',
-                      style: ExperienceType.body(ExperienceColors.careInkSoft),
-                    ),
-                  ],
-                ),
+                  ),
+                ],
               ),
-              if (memory != null) ...<Widget>[
-                const SizedBox(height: ExperienceSpacing.md),
-                memory,
-              ],
-              const SizedBox(height: ExperienceSpacing.lg),
-              Expanded(
-                child: ListView.separated(
-                  physics: const ClampingScrollPhysics(),
-                  itemCount: _ToolkitRitual.catalog.length,
-                  separatorBuilder: (context, index) =>
-                      const SizedBox(height: ExperienceSpacing.sm),
-                  itemBuilder: (context, index) {
-                    final ritual = _ToolkitRitual.catalog[index];
-                    return _RitualCard(
-                      ritual: ritual,
-                      onTap: () => onOpenRitual(ritual),
-                    );
-                  },
-                ),
-              ),
-              const SizedBox(height: ExperienceSpacing.sm),
-              _ChooserSafetyLine(onTap: onSafety),
-              if (onExit != null) ...<Widget>[
-                const SizedBox(height: ExperienceSpacing.sm),
-                _ChooserExitButton(onPressed: onExit!),
-              ],
-            ],
-          ),
+            ),
+            _ChooserBottomBar(onSafety: onSafety, onExit: onExit),
+          ],
         ),
       ),
     );
   }
 
-  Widget? _resolveMemoryLine() {
+  Widget? _resolveMemory() {
     final verdict = ExperienceFoundation.gateMemoryEvidence(
       loopKind: loopKind,
       evidence: memoryEvidence,
     );
-
     String? line;
     var dismissible = false;
     switch (verdict) {
       case MemoryEvidenceVerdict.remembered:
-        // A loop may justify remembered copy while raw evidence is still
-        // empty; never fabricate a line in that case.
         line = ExperienceMemoryGate.rememberedLine(memoryEvidence);
         break;
       case MemoryEvidenceVerdict.accumulating:
@@ -318,9 +286,8 @@ class _ToolkitChooser extends StatelessWidget {
         line = null;
         break;
     }
-
     if (line == null) return null;
-    return _ToolkitMemoryLine(
+    return _MemoryNote(
       line: line,
       dismissible: dismissible,
       onDismiss: onDismissProposal,
@@ -328,8 +295,126 @@ class _ToolkitChooser extends StatelessWidget {
   }
 }
 
-class _ToolkitMemoryLine extends StatelessWidget {
-  const _ToolkitMemoryLine({
+enum _RitualEnergy {
+  restHere(
+    'REST HERE',
+    'Let the room grow quiet enough to hear what your body has been saying.',
+  ),
+  littleComfort(
+    'A LITTLE COMFORT',
+    'Listen quietly. Your body may answer with warmth, a deeper breath, or the wish to pause.',
+  ),
+  moveALittle(
+    'MOVE A LITTLE',
+    'Choose a small movement only when changing position feels welcome.',
+  );
+
+  const _RitualEnergy(this.label, this.invitation);
+
+  final String label;
+  final String invitation;
+}
+
+class _RitualGroupHeader extends StatelessWidget {
+  const _RitualGroupHeader({required this.group, this.first = false});
+
+  final _RitualEnergy group;
+  final bool first;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: EdgeInsets.fromLTRB(0, first ? 8 : 18, 0, 8),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          Semantics(
+            header: true,
+            child: Text(
+              group.label,
+              style: ExperienceType.eyebrow(CareEditorialPalette.coralText),
+            ),
+          ),
+          const SizedBox(height: 6),
+          Text(
+            group.invitation,
+            style: ExperienceType.bodySmall(CareEditorialPalette.inkSoft),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _ChooserHeader extends StatelessWidget {
+  const _ChooserHeader({
+    required this.memory,
+    required this.motion,
+    required this.companionName,
+    required this.startedAt,
+    required this.now,
+  });
+
+  final Widget? memory;
+  final CareSceneMotionPreference motion;
+  final String? companionName;
+  final DateTime startedAt;
+  final DateTime Function() now;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: <Widget>[
+        Row(
+          children: <Widget>[
+            const CareQuietRule(),
+            const SizedBox(width: 14),
+            Text(
+              'EVERYDAY CARE',
+              style: ExperienceType.eyebrow(CareEditorialPalette.inkSoft),
+            ),
+          ],
+        ),
+        const SizedBox(height: 14),
+        Semantics(
+          header: true,
+          child: Text(
+            'What would feel kind right now?',
+            style: ExperienceType.display(
+              CareEditorialPalette.ink,
+            ).copyWith(fontSize: 38, height: 1.05),
+          ),
+        ),
+        const SizedBox(height: 10),
+        ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 315),
+          child: Text(
+            'Choose one quiet ritual. Every page stays open for as long as '
+            'you need, with no pace to keep.',
+            style: ExperienceType.body(CareEditorialPalette.inkSoft),
+          ),
+        ),
+        const SizedBox(height: 14),
+        CareCompanionClock(
+          companionName: companionName,
+          startedAt: startedAt,
+          now: now,
+        ),
+        const SizedBox(height: 4),
+        CareInlineCat(
+          motion: motion,
+          setting: CareCompanionSetting.room,
+          compact: true,
+        ),
+        if (memory != null) ...<Widget>[const SizedBox(height: 14), memory!],
+      ],
+    );
+  }
+}
+
+class _MemoryNote extends StatelessWidget {
+  const _MemoryNote({
     required this.line,
     required this.dismissible,
     required this.onDismiss,
@@ -341,51 +426,610 @@ class _ToolkitMemoryLine extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Semantics(
-      container: true,
-      label: line,
-      child: DecoratedBox(
-        decoration: BoxDecoration(
-          color: ExperienceColors.careGlass,
-          borderRadius: ExperienceRadius.cardRadius,
-          border: Border.all(color: ExperienceColors.careGlassBorder),
-        ),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(
-            horizontal: ExperienceSpacing.md,
-            vertical: ExperienceSpacing.sm,
+    return Container(
+      padding: const EdgeInsets.fromLTRB(14, 12, 8, 12),
+      decoration: BoxDecoration(
+        color: CareEditorialPalette.saffron.withValues(alpha: 0.14),
+      ),
+      child: Row(
+        children: <Widget>[
+          Container(
+            width: 8,
+            height: 8,
+            decoration: const BoxDecoration(
+              color: CareEditorialPalette.saffron,
+              shape: BoxShape.circle,
+            ),
           ),
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: <Widget>[
-              const Padding(
-                padding: EdgeInsets.only(top: 2),
-                child: EmberOrb(size: 18),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Text(
+              line,
+              style: ExperienceType.bodySmall(CareEditorialPalette.ink),
+            ),
+          ),
+          if (dismissible)
+            SizedBox.square(
+              dimension: 44,
+              child: IconButton(
+                tooltip: 'Dismiss remembered help',
+                onPressed: onDismiss,
+                icon: const Icon(Icons.close_rounded, size: 18),
               ),
-              const SizedBox(width: ExperienceSpacing.sm),
-              Expanded(
-                child: Text(
-                  line,
-                  style: ExperienceType.bodySmall(ExperienceColors.careInk),
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+class _RitualRow extends StatelessWidget {
+  const _RitualRow({
+    required this.ritual,
+    required this.index,
+    required this.onTap,
+  });
+
+  final _ToolkitRitual ritual;
+  final int index;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Semantics(
+      button: true,
+      label: '${ritual.title}. ${ritual.intention}',
+      child: ExcludeSemantics(
+        child: Material(
+          color: index.isEven
+              ? CareEditorialPalette.paperDeep.withValues(alpha: 0.58)
+              : Colors.transparent,
+          child: InkWell(
+            onTap: onTap,
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(minHeight: 76),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 12,
                 ),
-              ),
-              if (dismissible) ...<Widget>[
-                const SizedBox(width: ExperienceSpacing.xs),
-                Semantics(
-                  button: true,
-                  label: 'Dismiss remembered help',
-                  child: InkWell(
-                    borderRadius: ExperienceRadius.chipRadius,
-                    onTap: onDismiss,
-                    child: const Padding(
-                      padding: EdgeInsets.all(ExperienceSpacing.xs),
-                      child: Icon(
-                        Icons.close,
-                        size: 18,
-                        color: ExperienceColors.careInkSoft,
+                child: Row(
+                  children: <Widget>[
+                    SizedBox.square(
+                      dimension: 42,
+                      child: CustomPaint(
+                        painter: _StepGlyphPainter(ritual.id, 0),
                       ),
                     ),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: <Widget>[
+                          Text(
+                            ritual.title,
+                            style: ExperienceType.bodyStrong(
+                              CareEditorialPalette.ink,
+                            ).copyWith(fontSize: 17),
+                          ),
+                          const SizedBox(height: 3),
+                          Text(
+                            ritual.intention,
+                            style: ExperienceType.bodySmall(
+                              CareEditorialPalette.inkSoft,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    const Icon(
+                      Icons.arrow_forward_rounded,
+                      color: CareEditorialPalette.ink,
+                      size: 20,
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _ChooserBottomBar extends StatelessWidget {
+  const _ChooserBottomBar({required this.onSafety, required this.onExit});
+
+  final VoidCallback? onSafety;
+  final VoidCallback? onExit;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.fromLTRB(18, 8, 18, 10),
+      decoration: const BoxDecoration(
+        color: CareEditorialPalette.paper,
+        border: Border(top: BorderSide(color: CareEditorialPalette.rule)),
+      ),
+      child: Row(
+        children: <Widget>[
+          Expanded(child: _SafetyAction(onPressed: onSafety)),
+          if (onExit != null)
+            _TextAction(label: 'Leave for now', onPressed: onExit!),
+        ],
+      ),
+    );
+  }
+}
+
+class _PracticePage extends StatelessWidget {
+  const _PracticePage({
+    super.key,
+    required this.ritual,
+    required this.motion,
+    required this.companionName,
+    required this.startedAt,
+    required this.now,
+    required this.completing,
+    required this.onBack,
+    required this.onSafety,
+    required this.onComplete,
+  });
+
+  final _ToolkitRitual ritual;
+  final CareSceneMotionPreference motion;
+  final String? companionName;
+  final DateTime startedAt;
+  final DateTime Function() now;
+  final bool completing;
+  final VoidCallback onBack;
+  final VoidCallback? onSafety;
+  final VoidCallback onComplete;
+
+  @override
+  Widget build(BuildContext context) {
+    final bodyRestingCat =
+        ritual.id == 'warmth' ||
+        ritual.id == 'warm-shower' ||
+        ritual.id == 'rest' ||
+        ritual.id == 'warm-drink';
+    final companionSetting = switch (ritual.id) {
+      'warm-drink' => CareCompanionSetting.tableSide,
+      'warm-shower' => CareCompanionSetting.bathMat,
+      'warmth' || 'rest' => CareCompanionSetting.footSide,
+      'lower-back-release' ||
+      'knees-to-chest' ||
+      'slow-hips' ||
+      'massage' => CareCompanionSetting.matEdge,
+      _ => CareCompanionSetting.room,
+    };
+    return CareEditorialPaper(
+      child: SafeArea(
+        child: Column(
+          children: <Widget>[
+            Padding(
+              padding: const EdgeInsets.fromLTRB(14, 8, 24, 0),
+              child: Row(
+                children: <Widget>[
+                  CareEditorialBackButton(onPressed: onBack),
+                  const Spacer(),
+                  Text(
+                    'CARE, AT YOUR PACE',
+                    style: ExperienceType.eyebrow(CareEditorialPalette.inkSoft),
                   ),
+                ],
+              ),
+            ),
+            Expanded(
+              child: ListView(
+                physics: const ClampingScrollPhysics(),
+                padding: const EdgeInsets.fromLTRB(24, 8, 24, 44),
+                children: <Widget>[
+                  _PracticeIntro(
+                    ritual: ritual,
+                    companionName: companionName,
+                    startedAt: startedAt,
+                    now: now,
+                  ),
+                  const SizedBox(height: 22),
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: <Widget>[
+                      _HeroIllustration(ritualId: ritual.id),
+                      if (!bodyRestingCat)
+                        Transform.translate(
+                          offset: const Offset(0, -14),
+                          child: Align(
+                            alignment: Alignment.centerRight,
+                            child: SizedBox(
+                              width: 180,
+                              child: CareInlineCat(
+                                motion: motion,
+                                setting: companionSetting,
+                                compact: true,
+                              ),
+                            ),
+                          ),
+                        ),
+                    ],
+                  ),
+                  const SizedBox(height: 28),
+                  Text(
+                    'A GENTLE FLOW',
+                    style: ExperienceType.eyebrow(CareEditorialPalette.inkSoft),
+                  ),
+                  const SizedBox(height: 4),
+                  for (
+                    var index = 0;
+                    index < ritual.steps.length;
+                    index++
+                  ) ...<Widget>[
+                    _StepSection(
+                      spec: ritual.steps[index],
+                      index: index,
+                      ritualId: ritual.id,
+                    ),
+                    if (ritual.id == 'warm-drink' && index == 0)
+                      const _DrinkPresentations(),
+                  ],
+                  if (bodyRestingCat || ritual.id == 'massage') ...<Widget>[
+                    const SizedBox(height: 8),
+                    CareInlineCat(motion: motion, setting: companionSetting),
+                  ],
+                  const SizedBox(height: 24),
+                  Text(
+                    'Stay as long as this feels good. Nothing ends '
+                    'automatically.',
+                    style: ExperienceType.body(CareEditorialPalette.inkSoft),
+                  ),
+                  const SizedBox(height: 20),
+                  CareCoralButton(
+                    label: "I'm done for now",
+                    loading: completing,
+                    onPressed: completing ? null : onComplete,
+                  ),
+                  const SizedBox(height: 8),
+                  _TextAction(
+                    label: 'Back to everyday care',
+                    onPressed: onBack,
+                  ),
+                  const SizedBox(height: 8),
+                  _SafetyAction(onPressed: onSafety),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _PracticeIntro extends StatelessWidget {
+  const _PracticeIntro({
+    required this.ritual,
+    required this.companionName,
+    required this.startedAt,
+    required this.now,
+  });
+
+  final _ToolkitRitual ritual;
+  final String? companionName;
+  final DateTime startedAt;
+  final DateTime Function() now;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: <Widget>[
+        Row(
+          children: <Widget>[
+            const CareQuietRule(),
+            const SizedBox(width: 14),
+            Flexible(
+              child: Text(
+                ritual.eyebrow,
+                style: ExperienceType.eyebrow(CareEditorialPalette.inkSoft),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 18),
+        Semantics(
+          header: true,
+          child: Text(
+            ritual.title,
+            style: ExperienceType.display(
+              CareEditorialPalette.ink,
+            ).copyWith(fontSize: 42, height: 1.01),
+          ),
+        ),
+        const SizedBox(height: 10),
+        Text(
+          ritual.intention,
+          style: ExperienceType.body(CareEditorialPalette.inkSoft),
+        ),
+        const SizedBox(height: 10),
+        Text(
+          ritual.encouragement,
+          style: ExperienceType.body(
+            CareEditorialPalette.ink,
+          ).copyWith(fontStyle: FontStyle.italic, height: 1.45),
+        ),
+        const SizedBox(height: 16),
+        Container(
+          width: double.infinity,
+          padding: const EdgeInsets.fromLTRB(14, 12, 14, 12),
+          decoration: BoxDecoration(
+            color: CareEditorialPalette.coral.withValues(alpha: 0.08),
+            border: const Border(
+              left: BorderSide(color: CareEditorialPalette.coral, width: 3),
+            ),
+          ),
+          child: CareCompanionClock(
+            companionName: companionName,
+            startedAt: startedAt,
+            now: now,
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _HeroIllustration extends StatelessWidget {
+  const _HeroIllustration({required this.ritualId});
+
+  final String ritualId;
+
+  @override
+  Widget build(BuildContext context) {
+    final label = switch (ritualId) {
+      'warmth' =>
+        'A warm pack over the lower belly with a cloth layer between heat and skin.',
+      'warm-shower' =>
+        'A person tests the shower water on the inside of their wrist while a cat stretches on a dry bath mat nearby.',
+      'massage' =>
+        'Two warm hands using broad, gentle strokes over a tense place.',
+      'warm-drink' =>
+        'A yellow ceramic cup of warm herbal tea steaming on a small wooden '
+            'table beside chamomile, rose petals, and ginger.',
+      'lower-back-release' =>
+        'A neutral body supported for a small lower-back release.',
+      'knees-to-chest' =>
+        'A neutral body holding the knees loosely toward the chest.',
+      'slow-hips' =>
+        'A neutral body using support for small, slow hip circles.',
+      _ =>
+        'A person resting on their back with support under the knees and a cat curled warmly across their thighs.',
+    };
+    final atlas = switch (ritualId) {
+      'warmth' => const _AtlasPanelSpec(
+        asset: CareEditorialAssets.guideWarmth,
+        columns: 2,
+        rows: 3,
+        atlasIndex: 2,
+        panelAspectRatio: 9 / 4,
+      ),
+      'lower-back-release' => const _AtlasPanelSpec(
+        asset: CareEditorialAssets.guideLowerBackRelease,
+        columns: 2,
+        rows: 2,
+        atlasIndex: 3,
+        panelAspectRatio: 1,
+      ),
+      'knees-to-chest' => const _AtlasPanelSpec(
+        asset: CareEditorialAssets.guideKneesToChest,
+        columns: 2,
+        rows: 2,
+        atlasIndex: 1,
+        panelAspectRatio: 3 / 2,
+      ),
+      'slow-hips' => const _AtlasPanelSpec(
+        asset: CareEditorialAssets.guideSlowHips,
+        columns: 2,
+        rows: 2,
+        atlasIndex: 0,
+        panelAspectRatio: 1,
+      ),
+      'massage' => const _AtlasPanelSpec(
+        asset: CareEditorialAssets.guideMassage,
+        columns: 5,
+        rows: 2,
+        atlasIndex: 0,
+        panelAspectRatio: 27 / 32,
+      ),
+      'rest' => const _AtlasPanelSpec(
+        asset: CareEditorialAssets.guideRest,
+        columns: 2,
+        rows: 2,
+        atlasIndex: 2,
+        panelAspectRatio: 1,
+      ),
+      _ => null,
+    };
+    if (atlas != null) {
+      return CareAtlasPanel(
+        atlas.asset,
+        label,
+        atlas.columns,
+        atlas.rows,
+        atlas.atlasIndex,
+        atlas.panelAspectRatio,
+      );
+    }
+    final asset = switch (ritualId) {
+      'warm-shower' => CareEditorialAssets.bodyWarmShowerWide,
+      'warm-drink' => CareEditorialAssets.warmDrinkStillLife,
+      _ => null,
+    };
+    if (asset != null) {
+      return CareIllustration(asset: asset, semanticsLabel: label, height: 224);
+    }
+    return Semantics(
+      image: true,
+      label: label,
+      child: ExcludeSemantics(
+        child: SizedBox(
+          width: double.infinity,
+          height: 196,
+          child: CustomPaint(painter: _RitualObjectPainter(ritualId)),
+        ),
+      ),
+    );
+  }
+}
+
+class _StepSection extends StatelessWidget {
+  const _StepSection({
+    required this.spec,
+    required this.index,
+    required this.ritualId,
+  });
+
+  final _ToolkitStepSpec spec;
+  final int index;
+  final String ritualId;
+
+  @override
+  Widget build(BuildContext context) {
+    final title = spec.title ?? 'Pause here';
+    final atlas = _atlasForStep();
+    final massagePair = _massageAtlasPairForStep();
+    final hasAtlas = atlas != null || massagePair != null;
+    final caution = _caution(spec);
+    final spokenDetail = spec.semanticsLabel ?? spec.text;
+    final spokenCaution = caution == null ? '' : ' Caution: $caution';
+    return Semantics(
+      container: true,
+      label: 'Step ${index + 1}. $title. $spokenDetail$spokenCaution',
+      child: ExcludeSemantics(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 15),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: <Widget>[
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: <Widget>[
+                  SizedBox(
+                    width: 44,
+                    child: Column(
+                      children: <Widget>[
+                        Text(
+                          '${index + 1}',
+                          style: ExperienceType.headline(
+                            CareEditorialPalette.coralText,
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        Container(
+                          width: 1,
+                          height: 52,
+                          color: CareEditorialPalette.rule,
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: <Widget>[
+                        Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: <Widget>[
+                            Expanded(
+                              child: Text(
+                                title,
+                                style: ExperienceType.headline(
+                                  CareEditorialPalette.ink,
+                                ).copyWith(fontSize: 22),
+                              ),
+                            ),
+                            if (!hasAtlas)
+                              SizedBox.square(
+                                dimension: 50,
+                                child: CustomPaint(
+                                  painter: _StepGlyphPainter(ritualId, index),
+                                ),
+                              ),
+                          ],
+                        ),
+                        const SizedBox(height: 6),
+                        Text(
+                          spec.text,
+                          style: ExperienceType.body(
+                            CareEditorialPalette.inkSoft,
+                          ),
+                        ),
+                        if (caution != null) ...<Widget>[
+                          const SizedBox(height: 10),
+                          Container(
+                            padding: const EdgeInsets.all(9),
+                            color: CareEditorialPalette.saffron.withValues(
+                              alpha: 0.16,
+                            ),
+                            child: Text(
+                              caution,
+                              style: ExperienceType.bodySmall(
+                                CareEditorialPalette.ink,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+              if (atlas != null) ...<Widget>[
+                const SizedBox(height: 14),
+                CareAtlasPanel(
+                  atlas.asset,
+                  '$title. ${spec.semanticsLabel ?? spec.text}',
+                  atlas.columns,
+                  atlas.rows,
+                  atlas.atlasIndex,
+                  atlas.panelAspectRatio,
+                ),
+              ] else if (massagePair != null) ...<Widget>[
+                const SizedBox(height: 14),
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: <Widget>[
+                    for (
+                      var pairIndex = 0;
+                      pairIndex < massagePair.length;
+                      pairIndex++
+                    ) ...<Widget>[
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: <Widget>[
+                            Text(
+                              pairIndex == 0 ? 'LOWER BELLY' : 'LOWER BACK',
+                              style: ExperienceType.eyebrow(
+                                CareEditorialPalette.coralText,
+                              ),
+                            ),
+                            const SizedBox(height: 4),
+                            CareAtlasPanel(
+                              CareEditorialAssets.guideMassage,
+                              '${pairIndex == 0 ? 'Lower-belly route' : 'Lower-back route'}. $title.',
+                              5,
+                              2,
+                              massagePair[pairIndex],
+                              27 / 32,
+                            ),
+                          ],
+                        ),
+                      ),
+                      if (pairIndex == 0) const SizedBox(width: 8),
+                    ],
+                  ],
                 ),
               ],
             ],
@@ -394,65 +1038,218 @@ class _ToolkitMemoryLine extends StatelessWidget {
       ),
     );
   }
+
+  _AtlasPanelSpec? _atlasForStep() {
+    if (ritualId == 'warmth' && index < 4) {
+      const atlasIndices = <int>[0, 1, 2, 4];
+      return _AtlasPanelSpec(
+        asset: CareEditorialAssets.guideWarmth,
+        columns: 2,
+        rows: 3,
+        atlasIndex: atlasIndices[index],
+        panelAspectRatio: 9 / 4,
+      );
+    }
+    if (ritualId == 'lower-back-release' && index < 4) {
+      return _AtlasPanelSpec(
+        asset: CareEditorialAssets.guideLowerBackRelease,
+        columns: 2,
+        rows: 2,
+        atlasIndex: index,
+        panelAspectRatio: 1,
+      );
+    }
+    if (ritualId == 'knees-to-chest' && index < 4) {
+      return _AtlasPanelSpec(
+        asset: CareEditorialAssets.guideKneesToChest,
+        columns: 2,
+        rows: 2,
+        atlasIndex: index,
+        panelAspectRatio: 3 / 2,
+      );
+    }
+    if (ritualId == 'slow-hips' && index < 4) {
+      return _AtlasPanelSpec(
+        asset: CareEditorialAssets.guideSlowHips,
+        columns: 2,
+        rows: 2,
+        atlasIndex: index,
+        panelAspectRatio: 1,
+      );
+    }
+    if (ritualId == 'massage' && index == 0) {
+      return _AtlasPanelSpec(
+        asset: CareEditorialAssets.guideMassage,
+        columns: 5,
+        rows: 2,
+        atlasIndex: 0,
+        panelAspectRatio: 27 / 32,
+      );
+    }
+    if (ritualId == 'rest' && index < 4) {
+      return _AtlasPanelSpec(
+        asset: CareEditorialAssets.guideRest,
+        columns: 2,
+        rows: 2,
+        atlasIndex: index,
+        panelAspectRatio: 1,
+      );
+    }
+    return null;
+  }
+
+  List<int>? _massageAtlasPairForStep() {
+    if (ritualId != 'massage' || index == 0) return null;
+    return switch (index) {
+      1 => const <int>[1, 2],
+      2 => const <int>[3, 4],
+      3 => const <int>[5, 6],
+      _ => const <int>[7, 8],
+    };
+  }
+
+  String? _caution(_ToolkitStepSpec step) {
+    if (ritualId == 'warmth' && step.id == 'warm-not-hot') {
+      return 'Warm, never hot. Remove it if skin feels numb or uncomfortable.';
+    }
+    if (ritualId == 'warm-shower' && step.id == 'temperature') {
+      return 'If you feel lightheaded, sit down or step out and cool the water.';
+    }
+    if (ritualId == 'massage' && step.id == 'press-and-breathe') {
+      return 'Stop before any sharp pain.';
+    }
+    return null;
+  }
 }
 
-class _RitualCard extends StatelessWidget {
-  const _RitualCard({required this.ritual, required this.onTap});
+class _AtlasPanelSpec {
+  const _AtlasPanelSpec({
+    required this.asset,
+    required this.columns,
+    required this.rows,
+    required this.atlasIndex,
+    required this.panelAspectRatio,
+  });
 
-  final _ToolkitRitual ritual;
+  final String asset;
+  final int columns;
+  final int rows;
+  final int atlasIndex;
+  final double panelAspectRatio;
+}
+
+class _DrinkPresentations extends StatefulWidget {
+  const _DrinkPresentations();
+
+  @override
+  State<_DrinkPresentations> createState() => _DrinkPresentationsState();
+}
+
+class _DrinkPresentationsState extends State<_DrinkPresentations> {
+  String _selected = 'golden';
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(54, 0, 0, 12),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          Text(
+            'CHOOSE A CUP',
+            style: ExperienceType.eyebrow(CareEditorialPalette.inkSoft),
+          ),
+          const SizedBox(height: 8),
+          _DrinkChoice(
+            title: 'Ginger-Turmeric / Golden Milk',
+            body: 'Warm ginger and turmeric with the milk you already enjoy.',
+            selected: _selected == 'golden',
+            color: CareEditorialPalette.saffron,
+            onTap: () => setState(() => _selected = 'golden'),
+          ),
+          const SizedBox(height: 8),
+          _DrinkChoice(
+            title: 'Rose-Chamomile',
+            body: 'A soft floral steep for a slower evening ritual.',
+            selected: _selected == 'rose',
+            color: CareEditorialPalette.coral,
+            onTap: () => setState(() => _selected = 'rose'),
+          ),
+          const SizedBox(height: 6),
+          Text(
+            'Choose familiar ingredients that already suit you. This is a '
+            'comfort ritual, not a treatment or a promise about hormones.',
+            style: ExperienceType.caption(CareEditorialPalette.inkSoft),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _DrinkChoice extends StatelessWidget {
+  const _DrinkChoice({
+    required this.title,
+    required this.body,
+    required this.selected,
+    required this.color,
+    required this.onTap,
+  });
+
+  final String title;
+  final String body;
+  final bool selected;
+  final Color color;
   final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
     return Semantics(
       button: true,
-      label: '${ritual.title}. ${ritual.intention}',
-      child: ConstrainedBox(
-        constraints: const BoxConstraints(
-          minHeight: ExperienceSpacing.minTouchTarget,
-        ),
-        child: DecoratedBox(
-          decoration: BoxDecoration(
-            color: ExperienceColors.careGlass,
-            borderRadius: ExperienceRadius.cardRadius,
-            border: Border.all(color: ExperienceColors.careGlassBorder),
-          ),
-          child: Material(
-            color: Colors.transparent,
-            child: InkWell(
-              borderRadius: ExperienceRadius.cardRadius,
-              onTap: onTap,
+      selected: selected,
+      label: '$title. $body',
+      child: ExcludeSemantics(
+        child: Material(
+          color: selected ? color.withValues(alpha: 0.16) : Colors.transparent,
+          child: InkWell(
+            onTap: onTap,
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(minHeight: 64),
               child: Padding(
-                padding: const EdgeInsets.all(ExperienceSpacing.md),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 9,
+                ),
                 child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: <Widget>[
+                    Container(
+                      width: 12,
+                      height: 12,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: selected ? color : Colors.transparent,
+                        border: Border.all(color: color, width: 1.5),
+                      ),
+                    ),
+                    const SizedBox(width: 10),
                     Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: <Widget>[
                           Text(
-                            ritual.title,
-                            style: ExperienceType.label(
-                              ExperienceColors.careInk,
+                            title,
+                            style: ExperienceType.bodyStrong(
+                              CareEditorialPalette.ink,
                             ),
                           ),
-                          const SizedBox(height: ExperienceSpacing.xs),
+                          const SizedBox(height: 2),
                           Text(
-                            ritual.intention,
+                            body,
                             style: ExperienceType.bodySmall(
-                              ExperienceColors.careInkSoft,
+                              CareEditorialPalette.inkSoft,
                             ),
                           ),
                         ],
-                      ),
-                    ),
-                    const SizedBox(width: ExperienceSpacing.sm),
-                    const Padding(
-                      padding: EdgeInsets.only(top: 2),
-                      child: Icon(
-                        Icons.chevron_right,
-                        color: ExperienceColors.careInkSoft,
                       ),
                     ),
                   ],
@@ -466,97 +1263,273 @@ class _RitualCard extends StatelessWidget {
   }
 }
 
-class _ChooserSafetyLine extends StatelessWidget {
-  const _ChooserSafetyLine({required this.onTap});
+class _SafetyAction extends StatelessWidget {
+  const _SafetyAction({required this.onPressed});
 
-  final VoidCallback? onTap;
+  final VoidCallback? onPressed;
 
   @override
   Widget build(BuildContext context) {
-    final text = Text(
-      CareSceneFoundation.defaultSafetyLine,
-      style: ExperienceType.caption(ExperienceColors.careInkSoft),
-      textAlign: TextAlign.center,
-    );
-    if (onTap == null) {
-      return Padding(
-        padding: const EdgeInsets.symmetric(vertical: ExperienceSpacing.xs),
-        child: text,
+    final label = CareSceneFoundation.defaultSafetyLine;
+    if (onPressed == null) {
+      return Text(
+        label,
+        style: ExperienceType.caption(CareEditorialPalette.inkSoft),
       );
     }
-    return Semantics(
-      button: true,
-      label: CareSceneFoundation.defaultSafetyLine,
-      child: InkWell(
-        borderRadius: ExperienceRadius.chipRadius,
-        onTap: onTap,
-        child: Padding(
-          padding: const EdgeInsets.symmetric(
-            horizontal: ExperienceSpacing.sm,
-            vertical: ExperienceSpacing.xs,
-          ),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            mainAxisSize: MainAxisSize.min,
-            children: <Widget>[
-              const Icon(
-                Icons.favorite_border,
-                size: 14,
-                color: ExperienceColors.careInkSoft,
-              ),
-              const SizedBox(width: ExperienceSpacing.xs),
-              Flexible(child: text),
-            ],
-          ),
-        ),
+    return TextButton.icon(
+      onPressed: onPressed,
+      icon: const Icon(Icons.favorite_border_rounded, size: 17),
+      label: Text(label),
+      style: TextButton.styleFrom(
+        minimumSize: const Size(48, 48),
+        foregroundColor: CareEditorialPalette.inkSoft,
+        textStyle: ExperienceType.caption(CareEditorialPalette.inkSoft),
       ),
     );
   }
 }
 
-class _ChooserExitButton extends StatelessWidget {
-  const _ChooserExitButton({required this.onPressed});
+class _TextAction extends StatelessWidget {
+  const _TextAction({required this.label, required this.onPressed});
 
+  final String label;
   final VoidCallback onPressed;
 
   @override
   Widget build(BuildContext context) {
-    return Semantics(
-      button: true,
-      label: 'Leave everyday care. Exit is always available.',
-      child: ConstrainedBox(
-        constraints: const BoxConstraints(
-          minHeight: ExperienceSpacing.minTouchTarget,
-        ),
-        child: Material(
-          color: ExperienceColors.careInk,
-          borderRadius: ExperienceRadius.heroRadius,
-          child: InkWell(
-            borderRadius: ExperienceRadius.heroRadius,
-            onTap: onPressed,
-            child: Padding(
-              padding: const EdgeInsets.symmetric(
-                horizontal: ExperienceSpacing.lg,
-                vertical: ExperienceSpacing.sm,
-              ),
-              child: Text(
-                'Leave for now',
-                style: ExperienceType.label(ExperienceColors.careSkyBottom),
-                textAlign: TextAlign.center,
-              ),
-            ),
-          ),
-        ),
+    return TextButton(
+      onPressed: onPressed,
+      style: TextButton.styleFrom(
+        minimumSize: const Size(48, 48),
+        foregroundColor: CareEditorialPalette.ink,
+        textStyle: ExperienceType.bodyStrong(CareEditorialPalette.ink),
       ),
+      child: Text(label),
     );
   }
+}
+
+class _RitualObjectPainter extends CustomPainter {
+  const _RitualObjectPainter(this.id);
+
+  final String id;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final scale = math.min(size.width / 340, size.height / 196);
+    canvas.save();
+    canvas.translate((size.width - 340 * scale) / 2, 0);
+    canvas.scale(scale);
+    final line = Paint()
+      ..color = CareEditorialPalette.ink
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 2
+      ..strokeCap = StrokeCap.round
+      ..strokeJoin = StrokeJoin.round;
+    final saffron = Paint()
+      ..color = CareEditorialPalette.saffron.withValues(alpha: 0.72);
+    final coral = Paint()
+      ..color = CareEditorialPalette.coral.withValues(alpha: 0.76);
+    final cyan = Paint()
+      ..color = CareEditorialPalette.cyan.withValues(alpha: 0.62);
+
+    canvas.drawPath(
+      Path()
+        ..moveTo(18, 174)
+        ..quadraticBezierTo(166, 166, 322, 175),
+      line..color = CareEditorialPalette.rule,
+    );
+    line.color = CareEditorialPalette.ink;
+
+    if (id == 'warmth') {
+      canvas.drawRRect(
+        RRect.fromRectAndRadius(
+          const Rect.fromLTWH(38, 95, 225, 63),
+          const Radius.circular(31),
+        ),
+        cyan,
+      );
+      canvas.drawOval(const Rect.fromLTWH(46, 72, 53, 61), saffron);
+      canvas.drawOval(const Rect.fromLTWH(46, 72, 53, 61), line);
+      final body = Path()
+        ..moveTo(94, 101)
+        ..quadraticBezierTo(159, 80, 255, 120)
+        ..quadraticBezierTo(203, 159, 106, 146)
+        ..close();
+      canvas.drawPath(body, saffron);
+      canvas.drawPath(body, line);
+      canvas.drawRRect(
+        RRect.fromRectAndRadius(
+          const Rect.fromLTWH(148, 112, 61, 34),
+          const Radius.circular(8),
+        ),
+        coral,
+      );
+      canvas.drawRRect(
+        RRect.fromRectAndRadius(
+          const Rect.fromLTWH(148, 112, 61, 34),
+          const Radius.circular(8),
+        ),
+        line,
+      );
+    } else if (id == 'warm-shower') {
+      canvas.drawArc(
+        const Rect.fromLTWH(90, 28, 124, 95),
+        math.pi,
+        math.pi / 2,
+        false,
+        line..strokeWidth = 7,
+      );
+      line.strokeWidth = 2;
+      canvas.drawRRect(
+        RRect.fromRectAndRadius(
+          const Rect.fromLTWH(185, 58, 58, 24),
+          const Radius.circular(12),
+        ),
+        saffron,
+      );
+      canvas.drawRRect(
+        RRect.fromRectAndRadius(
+          const Rect.fromLTWH(185, 58, 58, 24),
+          const Radius.circular(12),
+        ),
+        line,
+      );
+      for (var i = 0; i < 7; i++) {
+        final x = 190.0 + i * 7;
+        canvas.drawLine(
+          Offset(x, 89),
+          Offset(x - 13, 151),
+          line..color = CareEditorialPalette.cyan,
+        );
+      }
+    } else if (id == 'massage') {
+      canvas.drawOval(const Rect.fromLTWH(62, 51, 82, 117), saffron);
+      canvas.drawOval(const Rect.fromLTWH(62, 51, 82, 117), line);
+      canvas.drawOval(const Rect.fromLTWH(194, 51, 82, 117), saffron);
+      canvas.drawOval(const Rect.fromLTWH(194, 51, 82, 117), line);
+      canvas.drawArc(
+        const Rect.fromLTWH(125, 79, 90, 63),
+        math.pi * 0.25,
+        math.pi * 1.5,
+        false,
+        line..color = CareEditorialPalette.coral,
+      );
+    } else {
+      canvas.drawRRect(
+        RRect.fromRectAndRadius(
+          const Rect.fromLTWH(103, 72, 112, 90),
+          const Radius.circular(20),
+        ),
+        saffron,
+      );
+      canvas.drawRRect(
+        RRect.fromRectAndRadius(
+          const Rect.fromLTWH(103, 72, 112, 90),
+          const Radius.circular(20),
+        ),
+        line,
+      );
+      canvas.drawArc(
+        const Rect.fromLTWH(197, 90, 68, 55),
+        -math.pi / 2,
+        math.pi,
+        false,
+        line..strokeWidth = 5,
+      );
+      line.strokeWidth = 2;
+      for (var i = 0; i < 3; i++) {
+        final x = 130.0 + i * 29;
+        canvas.drawPath(
+          Path()
+            ..moveTo(x, 62)
+            ..quadraticBezierTo(x - 8, 48, x + 2, 33),
+          line..color = CareEditorialPalette.cyan,
+        );
+      }
+    }
+    canvas.restore();
+  }
+
+  @override
+  bool shouldRepaint(_RitualObjectPainter oldDelegate) => oldDelegate.id != id;
+}
+
+class _StepGlyphPainter extends CustomPainter {
+  const _StepGlyphPainter(this.ritualId, this.index);
+
+  final String ritualId;
+  final int index;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final center = size.center(Offset.zero);
+    final line = Paint()
+      ..color = CareEditorialPalette.ink
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1.7
+      ..strokeCap = StrokeCap.round;
+    canvas.drawCircle(
+      center,
+      20,
+      Paint()
+        ..color =
+            (index.isEven
+                    ? CareEditorialPalette.cyan
+                    : CareEditorialPalette.saffron)
+                .withValues(alpha: 0.42),
+    );
+    if (ritualId == 'warm-drink') {
+      canvas.drawRRect(
+        RRect.fromRectAndRadius(
+          Rect.fromCenter(center: center, width: 22, height: 19),
+          const Radius.circular(4),
+        ),
+        line,
+      );
+      canvas.drawArc(
+        Rect.fromCenter(
+          center: center + const Offset(12, 0),
+          width: 10,
+          height: 11,
+        ),
+        -math.pi / 2,
+        math.pi,
+        false,
+        line,
+      );
+    } else if (ritualId == 'warm-shower') {
+      for (var i = 0; i < 3; i++) {
+        canvas.drawLine(
+          Offset(center.dx - 8 + i * 8, center.dy - 12),
+          Offset(center.dx - 12 + i * 8, center.dy + 12),
+          line,
+        );
+      }
+    } else {
+      canvas.drawArc(
+        Rect.fromCenter(center: center, width: 27, height: 27),
+        -math.pi / 2,
+        math.pi * 1.5,
+        false,
+        line,
+      );
+      final tip = center + const Offset(-13, -5);
+      canvas.drawLine(tip, tip + const Offset(7, 0), line);
+      canvas.drawLine(tip, tip + const Offset(4, 7), line);
+    }
+  }
+
+  @override
+  bool shouldRepaint(_StepGlyphPainter oldDelegate) =>
+      oldDelegate.ritualId != ritualId || oldDelegate.index != index;
 }
 
 class _ToolkitStepSpec {
   const _ToolkitStepSpec({
     required this.id,
     required this.text,
-    required this.actionLabel,
     this.title,
     this.semanticsLabel,
     this.isFinal = false,
@@ -565,7 +1538,6 @@ class _ToolkitStepSpec {
   final String id;
   final String? title;
   final String text;
-  final String actionLabel;
   final String? semanticsLabel;
   final bool isFinal;
 }
@@ -575,16 +1547,20 @@ class _ToolkitRitual {
     required this.id,
     required this.title,
     required this.intention,
+    required this.encouragement,
+    required this.energy,
+    required this.menuOrder,
     required this.eyebrow,
-    required this.completionLabel,
     required this.steps,
   });
 
   final String id;
   final String title;
   final String intention;
+  final String encouragement;
+  final _RitualEnergy energy;
+  final int menuOrder;
   final String eyebrow;
-  final String completionLabel;
   final List<_ToolkitStepSpec> steps;
 
   /// The everyday toolkit. Copy is presentation-authored inside existing mode
@@ -592,10 +1568,13 @@ class _ToolkitRitual {
   static const List<_ToolkitRitual> catalog = <_ToolkitRitual>[
     _ToolkitRitual(
       id: 'warmth',
-      title: 'Warmth on the cramping place',
+      title: "Warmth where you're cramping",
       intention: 'A heating pad or warm pack, placed with care.',
+      encouragement:
+          'Let the warmth arrive gently. Your body can receive care without explaining anything.',
+      energy: _RitualEnergy.restHere,
+      menuOrder: 2,
       eyebrow: 'EVERYDAY CARE · WARMTH',
-      completionLabel: 'Complete warmth ritual',
       steps: <_ToolkitStepSpec>[
         _ToolkitStepSpec(
           id: 'settle',
@@ -603,7 +1582,6 @@ class _ToolkitRitual {
           text:
               'Find a position your body can keep for a few minutes. Loosen '
               'anything tight around your waist. Let your shoulders drop.',
-          actionLabel: 'I am settled',
         ),
         _ToolkitStepSpec(
           id: 'warm-not-hot',
@@ -615,7 +1593,6 @@ class _ToolkitRitual {
           semanticsLabel:
               'Burn safety: warm, not hot. Use a cloth layer. Never on numb '
               'skin or while asleep.',
-          actionLabel: 'Warmth is safe',
         ),
         _ToolkitStepSpec(
           id: 'place',
@@ -623,7 +1600,6 @@ class _ToolkitRitual {
           text:
               'Rest the warmth over your lower belly or lower back — '
               'whichever is asking louder. Let the weight be gentle.',
-          actionLabel: 'It is in place',
         ),
         _ToolkitStepSpec(
           id: 'stay',
@@ -631,7 +1607,6 @@ class _ToolkitRitual {
           text:
               'Breathe out a little longer than you breathe in. Notice one '
               'small place that softens, even by a fraction.',
-          actionLabel: 'I stayed with it',
         ),
         _ToolkitStepSpec(
           id: 'complete',
@@ -640,7 +1615,6 @@ class _ToolkitRitual {
               'When you are ready, set the heat somewhere safe and off. '
               'Completing this ritual is optional and only happens if you '
               'choose it now.',
-          actionLabel: 'Complete warmth ritual',
           isFinal: true,
         ),
       ],
@@ -649,8 +1623,11 @@ class _ToolkitRitual {
       id: 'warm-shower',
       title: 'A warm shower',
       intention: 'Let water carry some of the tension for a while.',
+      encouragement:
+          'Let the water carry the noise away for a moment. Stay with the places that welcome its warmth.',
+      energy: _RitualEnergy.littleComfort,
+      menuOrder: 1,
       eyebrow: 'EVERYDAY CARE · WARMTH',
-      completionLabel: 'Complete shower ritual',
       steps: <_ToolkitStepSpec>[
         _ToolkitStepSpec(
           id: 'temperature',
@@ -661,7 +1638,6 @@ class _ToolkitRitual {
           semanticsLabel:
               'Burn safety: warm, not scalding. Sit down or step out if '
               'lightheaded.',
-          actionLabel: 'The water is kind',
         ),
         _ToolkitStepSpec(
           id: 'aim',
@@ -669,7 +1645,6 @@ class _ToolkitRitual {
           text:
               'Let the water run over your lower back, neck, or shoulders. '
               'No need to scrub anything away — just let it land.',
-          actionLabel: 'It is landing',
         ),
         _ToolkitStepSpec(
           id: 'hands',
@@ -677,7 +1652,6 @@ class _ToolkitRitual {
           text:
               'Place a hand where the ache is strongest. Keep it still. '
               'Count four slow breaths, or as many as feel possible.',
-          actionLabel: 'I counted a few',
         ),
         _ToolkitStepSpec(
           id: 'after',
@@ -685,7 +1659,6 @@ class _ToolkitRitual {
           text:
               'Dry off before you get chilled. Put on the softest layer '
               'within reach. Completing is your choice.',
-          actionLabel: 'Complete shower ritual',
           isFinal: true,
         ),
       ],
@@ -693,9 +1666,12 @@ class _ToolkitRitual {
     _ToolkitRitual(
       id: 'lower-back-release',
       title: 'Lower-back release',
-      intention: 'Small supported movement for a guarded back.',
+      intention: 'Small supported movement for a tense or aching lower back.',
+      encouragement:
+          'Move slowly enough to hear the first quiet answer from your back.',
+      energy: _RitualEnergy.moveALittle,
+      menuOrder: 1,
       eyebrow: 'EVERYDAY CARE · BODY',
-      completionLabel: 'Complete back release',
       steps: <_ToolkitStepSpec>[
         _ToolkitStepSpec(
           id: 'support',
@@ -704,7 +1680,6 @@ class _ToolkitRitual {
               'Lie on your back on a bed or mat, knees bent, feet down. If '
               'the floor is too much today, stay seated and lean back into '
               'a cushion instead.',
-          actionLabel: 'I am supported',
         ),
         _ToolkitStepSpec(
           id: 'tilt',
@@ -712,24 +1687,22 @@ class _ToolkitRitual {
           text:
               'Gently flatten your lower back toward the surface, then let '
               'it go. Slow enough that it almost is not movement.',
-          actionLabel: 'I tried the tilt',
+        ),
+        _ToolkitStepSpec(
+          id: 'release-neutral',
+          title: 'Release back to neutral',
+          text:
+              'Let the effort go and allow the small natural space beneath '
+              'your lower back to return. If helpful, rest a palm under one '
+              'side of your waist to notice the space. Do not push the arch.',
         ),
         _ToolkitStepSpec(
           id: 'knees-side',
-          title: 'Let the knees wander',
+          title: 'A small side-to-side option',
           text:
-              'With feet planted, let both knees drift a little to one side, '
-              'back to center, then the other side. Stay far inside any '
-              'sharp edge.',
-          actionLabel: 'They wandered',
-        ),
-        _ToolkitStepSpec(
-          id: 'rest',
-          title: 'Rest in the middle',
-          text:
-              'Come back to center. Let the surface hold the full weight of '
-              'your back for three breaths. Complete only if you want to.',
-          actionLabel: 'Complete back release',
+              'With feet planted, let both knees drift only a few inches to '
+              'one side, return to center, then try the other side. Skip this '
+              'if your back prefers stillness.',
           isFinal: true,
         ),
       ],
@@ -737,9 +1710,12 @@ class _ToolkitRitual {
     _ToolkitRitual(
       id: 'knees-to-chest',
       title: 'Knees-to-chest rest',
-      intention: 'A curled, held position for cramps and guarding.',
+      intention: 'A curled, supported position for cramps or body tension.',
+      encouragement:
+          'Hold only as close as your body welcomes, then let stillness do the rest.',
+      energy: _RitualEnergy.moveALittle,
+      menuOrder: 2,
       eyebrow: 'EVERYDAY CARE · BODY',
-      completionLabel: 'Complete knees-to-chest rest',
       steps: <_ToolkitStepSpec>[
         _ToolkitStepSpec(
           id: 'arrive',
@@ -747,7 +1723,6 @@ class _ToolkitRitual {
           text:
               'Lie somewhere comfortable. Bring one knee toward your chest, '
               'then the other if it is welcome. One knee is enough.',
-          actionLabel: 'I am here',
         ),
         _ToolkitStepSpec(
           id: 'hold-loosely',
@@ -755,7 +1730,6 @@ class _ToolkitRitual {
           text:
               'Rest your hands on your shins or behind your thighs. No '
               'pulling. Let your belly stay soft under your hands.',
-          actionLabel: 'My hold is loose',
         ),
         _ToolkitStepSpec(
           id: 'rock',
@@ -763,7 +1737,6 @@ class _ToolkitRitual {
           text:
               'If it feels good, rock an inch side to side. If stillness '
               'feels better, be still. Both count.',
-          actionLabel: 'I chose one',
         ),
         _ToolkitStepSpec(
           id: 'release',
@@ -771,7 +1744,6 @@ class _ToolkitRitual {
           text:
               'Lower one foot, then the other. Notice what changed and what '
               'did not. Completing the ritual is a choice, not a duty.',
-          actionLabel: 'Complete knees-to-chest rest',
           isFinal: true,
         ),
       ],
@@ -780,40 +1752,39 @@ class _ToolkitRitual {
       id: 'slow-hips',
       title: 'Slow hip and pelvic movement',
       intention: 'Gentle circles that remind the pelvis it can move.',
+      encouragement:
+          'Let the circle stay small enough that breathing remains easy.',
+      energy: _RitualEnergy.moveALittle,
+      menuOrder: 3,
       eyebrow: 'EVERYDAY CARE · BODY',
-      completionLabel: 'Complete hip circles',
       steps: <_ToolkitStepSpec>[
         _ToolkitStepSpec(
           id: 'stance',
           title: 'Find a steady stance',
           text:
-              'Stand holding a chair or wall, or sit tall on the edge of a '
-              'seat. Let your knees stay soft.',
-          actionLabel: 'I am steady',
+              'Stand with one hand resting lightly on a stable chair or wall. '
+              'Let both knees stay soft.',
         ),
         _ToolkitStepSpec(
-          id: 'circle-one',
-          title: 'One slow circle',
+          id: 'shift-right-front',
+          title: 'Shift right, then slightly forward',
           text:
-              'Move your hips in the smallest circle you can find. Slow '
-              'enough to feel each quarter of it.',
-          actionLabel: 'I made one circle',
+              'Keep both feet down. Move your pelvis an inch toward the '
+              'supported side, then an inch forward. Let your torso stay quiet.',
         ),
         _ToolkitStepSpec(
-          id: 'circle-other',
-          title: 'Change direction',
+          id: 'shift-left-back',
+          title: 'Shift left, then slightly back',
           text:
-              'Reverse the circle. Keep it boring on purpose — small, '
-              'quiet, and inside comfort.',
-          actionLabel: 'I reversed it',
+              'Continue the same tiny path toward the other side and back. '
+              'Your knees remain soft and your feet stay weighted.',
         ),
         _ToolkitStepSpec(
-          id: 'pause',
-          title: 'Pause and feel',
+          id: 'return-center',
+          title: 'Close the circle at center',
           text:
-              'Stand or sit still. Let the movement echo for a breath. '
-              'Complete only if this is where you want to stop.',
-          actionLabel: 'Complete hip circles',
+              'Join the four small shifts into one slow circle, or simply '
+              'return to center. Stop if your knee, hip, or back objects.',
           isFinal: true,
         ),
       ],
@@ -822,8 +1793,11 @@ class _ToolkitRitual {
       id: 'massage',
       title: 'Belly or back massage',
       intention: 'Your own hands, unhurried, over the tense places.',
+      encouragement:
+          'Your hands already know how to be gentle. Listen for the pressure your body welcomes.',
+      energy: _RitualEnergy.littleComfort,
+      menuOrder: 2,
       eyebrow: 'EVERYDAY CARE · BODY',
-      completionLabel: 'Complete massage ritual',
       steps: <_ToolkitStepSpec>[
         _ToolkitStepSpec(
           id: 'warm-hands',
@@ -831,31 +1805,29 @@ class _ToolkitRitual {
           text:
               'Rub your palms together for a few seconds. Warm hands are '
               'kinder than efficient ones.',
-          actionLabel: 'My hands are warm',
         ),
         _ToolkitStepSpec(
           id: 'choose-place',
-          title: 'Choose one place',
+          title: 'Choose one route',
           text:
-              'Pick your lower belly or one side of your lower back. Just '
-              'one. The rest can wait its turn.',
-          actionLabel: 'I chose a place',
+              'For your lower belly, lie on your side or back and rest a hand '
+              'below your navel. For your lower back, stay side-lying and '
+              'reach one hand behind you. Follow only the route that fits.',
         ),
         _ToolkitStepSpec(
           id: 'slow-strokes',
-          title: 'Slow strokes outward',
+          title: 'Follow only the route you chose',
           text:
-              'With gentle pressure, stroke from the center outward, like '
-              'smoothing a blanket. Six slow strokes is plenty.',
-          actionLabel: 'I smoothed it',
+              'On the lower belly, stroke gently from the center outward. '
+              'On the lower back, glide across the reachable muscle beside '
+              'the spine, never directly over it. Six slow strokes is plenty.',
         ),
         _ToolkitStepSpec(
           id: 'press-and-breathe',
-          title: 'Press and breathe out',
+          title: 'Pause with one steady hand',
           text:
               'Rest one hand on the tender place. As you breathe out, let '
               'your hand get heavier. Stop before any sharp pain.',
-          actionLabel: 'I breathed with it',
         ),
         _ToolkitStepSpec(
           id: 'finish',
@@ -863,7 +1835,6 @@ class _ToolkitRitual {
           text:
               'Keep your hand where it is for one more breath. Completing '
               'is optional and only counts if you choose it.',
-          actionLabel: 'Complete massage ritual',
           isFinal: true,
         ),
       ],
@@ -872,32 +1843,33 @@ class _ToolkitRitual {
       id: 'rest',
       title: 'Deliberate rest',
       intention: 'Doing nothing on purpose, with a beginning and an end.',
+      encouragement:
+          'There is nothing to perform here. Notice the smallest place in you that is ready to soften.',
+      energy: _RitualEnergy.restHere,
+      menuOrder: 1,
       eyebrow: 'EVERYDAY CARE · REST',
-      completionLabel: 'Complete rest ritual',
       steps: <_ToolkitStepSpec>[
         _ToolkitStepSpec(
           id: 'permission',
-          title: 'Give it edges',
+          title: 'Set up a supported place',
           text:
-              'Decide only this: “I am resting until I choose to stop.” No '
-              'timer needed. This is allowed to be unproductive.',
-          actionLabel: 'Rest has edges',
+              'Place a thin pillow under your head and a firm pillow or '
+              'bolster under your knees or lower legs. Keep a blanket nearby '
+              'only if you want warmth.',
         ),
         _ToolkitStepSpec(
           id: 'position',
-          title: 'Arrange the soft things',
+          title: 'Lie flat and let the legs be held',
           text:
-              'Pillow under knees, blanket over hips, phone face-down — '
-              'whatever makes the next minutes easier to keep.',
-          actionLabel: 'It is arranged',
+              'Lie on your back and let the support carry the weight of your '
+              'legs. Move it until your lower back can soften without effort.',
         ),
         _ToolkitStepSpec(
           id: 'one-anchor',
-          title: 'One anchor',
+          title: 'Rest your hands and choose one anchor',
           text:
-              'Pick one anchor: the weight of the blanket, the sound in the '
-              'room, or your breath leaving. Return to it when you drift.',
-          actionLabel: 'I have an anchor',
+              'Let your hands rest wherever they are comfortable. Notice the '
+              'support under your legs, the cat beside you, or one easy breath.',
         ),
         _ToolkitStepSpec(
           id: 'end-gently',
@@ -905,7 +1877,6 @@ class _ToolkitRitual {
           text:
               'Wiggle fingers and toes. Roll to one side before sitting up. '
               'Complete the rest only if you want it remembered.',
-          actionLabel: 'Complete rest ritual',
           isFinal: true,
         ),
       ],
@@ -914,28 +1885,28 @@ class _ToolkitRitual {
       id: 'warm-drink',
       title: 'A warm drink, slowly',
       intention: 'Comfort in a cup — a ritual, not a treatment.',
+      encouragement:
+          'Let the cup warm your hands first. There is no need to hurry the first sip.',
+      energy: _RitualEnergy.restHere,
+      menuOrder: 3,
       eyebrow: 'EVERYDAY CARE · COMFORT',
-      completionLabel: 'Complete warm drink ritual',
       steps: <_ToolkitStepSpec>[
         _ToolkitStepSpec(
           id: 'comfort-frame',
           title: 'Comfort, not a cure',
           text:
               'This will not fix a cycle and it does not have to. It is '
-              'warmth you can hold. The same is true of a warm foot soak: '
-              'comfort only, warm rather than hot.',
+              'warmth you can hold, offered for comfort rather than treatment.',
           semanticsLabel:
-              'Framing: a warm drink or foot soak is a comfort ritual, not a '
-              'treatment. Warm rather than hot.',
-          actionLabel: 'Comfort is enough',
+              'Framing: a warm drink is a comfort ritual, not a treatment. '
+              'Warm rather than hot.',
         ),
         _ToolkitStepSpec(
           id: 'safe-sip',
           title: 'Let it cool to kind',
           text:
-              'Test it before the first real sip. If a soak is part of this '
-              'moment, test the water with a wrist or elbow first.',
-          actionLabel: 'It is safe to sip',
+              'Test the drink before the first real sip. Let it cool until '
+              'the temperature feels gentle in your mouth.',
         ),
         _ToolkitStepSpec(
           id: 'both-hands',
@@ -943,7 +1914,6 @@ class _ToolkitRitual {
           text:
               'Wrap both hands around it. Take three slow sips, with a '
               'breath between each one.',
-          actionLabel: 'I took three sips',
         ),
         _ToolkitStepSpec(
           id: 'finish-cup',
@@ -951,7 +1921,6 @@ class _ToolkitRitual {
           text:
               'You do not need to finish the cup. Completing this ritual '
               'is your choice and only happens from here.',
-          actionLabel: 'Complete warm drink ritual',
           isFinal: true,
         ),
       ],

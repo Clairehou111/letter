@@ -2,6 +2,8 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 
+import '../../../experience/theme/experience_foundation.dart'
+    show CareRefugeDepths;
 import '../domain/care_mode.dart';
 import 'care_motion_flow.dart' show CareBreakVisuals, PhysicalCareContext;
 
@@ -406,6 +408,16 @@ class PrototypeSceneModel {
   }
 }
 
+/// The visual authority for the five scene canvases. Simulation math,
+/// variant tunings, and random-seed initialization shapes are frozen; what
+/// changed in this pass is only *where color comes from*: every ground
+/// resolves through [CareRefugeDepths] (via [CareBreakVisuals.forMode] and,
+/// for the headache-still room, directly), and every hardcoded accent — the
+/// reduced-motion composed frames, the heavy halo's warm core, the space
+/// room's lamplight and door furniture, the physical warmth — resolves
+/// through [CareBreakVisuals] so the painter and the visuals can never
+/// drift apart. The rooms keep their distinct emotional motion metaphors;
+/// they are now floors of the one plum refuge rather than separate apps.
 class PrototypeScenePainter extends CustomPainter {
   PrototypeScenePainter({
     required this.model,
@@ -460,8 +472,11 @@ class PrototypeScenePainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
+    // Grounds are plum depths of the one refuge. The still physical room
+    // (headache, or reduced-motion statics) rests on the refuge's darkest
+    // plum — still, dim, motionless, silent.
     final bg = mode == CareMode.physical && still
-        ? const Color(0xFF08060A)
+        ? CareRefugeDepths.headacheStill
         : visuals.background;
     canvas.drawRect(Offset.zero & size, Paint()..color = bg);
     if (still && variant != CareSceneVariant.aBaseline) {
@@ -500,6 +515,10 @@ class PrototypeScenePainter extends CustomPainter {
     canvas.restore();
   }
 
+  /// Reduced-motion composed statics: one settled, non-animated frame per
+  /// room with semantics identical to the live scene. Colors route through
+  /// the room's [CareBreakVisuals] so the static frame is the same refuge
+  /// at rest, never a degraded afterthought.
   void _reducedMotionFrame(Canvas canvas, Size size) {
     final center = size.center(Offset.zero);
     switch (mode) {
@@ -514,7 +533,7 @@ class PrototypeScenePainter extends CustomPainter {
             ..shader =
                 RadialGradient(
                   colors: [
-                    const Color(0xFFFFD9A8).withValues(alpha: 0.28),
+                    visuals.glow.withValues(alpha: 0.28),
                     visuals.accent.withValues(alpha: 0.18),
                     Colors.transparent,
                   ],
@@ -558,13 +577,19 @@ class PrototypeScenePainter extends CustomPainter {
   void _seal(Canvas canvas, Size size, double amount) {
     final center = size.center(Offset.zero);
     final radius = size.shortestSide * (0.1 + 0.02 * amount);
+    // The seal core is the room's own plum ground taken darker — the refuge
+    // at its deepest point — rather than a separate near-black brown, so the
+    // closed seal reads as part of the room it rests in.
+    final coreEdge = Color.lerp(visuals.background, Colors.black, 0.35)!;
+    final coreMid = Color.lerp(visuals.background, Colors.black, 0.62)!;
+    final coreDeep = Color.lerp(visuals.background, Colors.black, 0.82)!;
     canvas.drawCircle(
       center,
       radius,
       Paint()
-        ..shader = const RadialGradient(
-          colors: [Color(0xFF0A0403), Color(0xFF140604), Color(0xFF1D0907)],
-          stops: [0, 0.75, 1],
+        ..shader = RadialGradient(
+          colors: [coreDeep, coreMid, coreEdge],
+          stops: const [0, 0.75, 1],
         ).createShader(Rect.fromCircle(center: center, radius: radius)),
     );
     canvas.drawCircle(
@@ -780,6 +805,9 @@ class PrototypeScenePainter extends CustomPainter {
         (0.7 + energy * 0.3);
     final center = Offset(size.width / 2, size.height * 0.52);
     final haloAlphaScale = tuning.heavyHaloAlphaScale * (breath ? 1.25 : 1.0);
+    // The one warm light the rain thins around: its core is the room's glow
+    // token, so the halo is illumination from the same lamp the visuals
+    // describe, never a separate hardcoded warmth.
     canvas.drawCircle(
       center,
       radius * 2.2,
@@ -787,7 +815,7 @@ class PrototypeScenePainter extends CustomPainter {
         ..blendMode = BlendMode.plus
         ..shader = RadialGradient(
           colors: [
-            const Color(0xFFFFD9A8).withValues(
+            visuals.glow.withValues(
               alpha:
                   ((0.1 + p * tuning.heavyHaloProgressScale) *
                           energy *
@@ -953,6 +981,9 @@ class PrototypeScenePainter extends CustomPainter {
     final opening = Rect.fromLTWH(door.left, door.top, gap, door.height);
     canvas.save();
     canvas.clipRect(opening);
+    // The loud room outside keeps its cold daylight identity — that contrast
+    // with the warm lamp on this side *is* the metaphor. It is the world
+    // being shut out, not the refuge.
     canvas.drawRect(
       opening,
       Paint()
@@ -1034,12 +1065,22 @@ class PrototypeScenePainter extends CustomPainter {
       door.height,
     );
     if (panel.width > 0.5) {
+      // The door is warm wood furniture inside the plum room: its tones are
+      // drawn from the room's own ground and warmth tokens so it belongs to
+      // this refuge rather than a separate brown world.
+      final panelLight = Color.lerp(
+        visuals.background,
+        visuals.secondary,
+        0.34,
+      )!;
+      final panelMid = Color.lerp(visuals.background, visuals.secondary, 0.18)!;
+      final panelDark = Color.lerp(visuals.background, Colors.black, 0.28)!;
       canvas.drawRect(
         panel,
         Paint()
-          ..shader = const LinearGradient(
-            colors: [Color(0xFF261912), Color(0xFF1A110C), Color(0xFF0D0907)],
-            stops: [0, 0.12, 1],
+          ..shader = LinearGradient(
+            colors: [panelLight, panelMid, panelDark],
+            stops: const [0, 0.12, 1],
           ).createShader(panel),
       );
       final seamWidth = (2 + 26 * outside) * energy;
@@ -1065,7 +1106,7 @@ class PrototypeScenePainter extends CustomPainter {
       final railPaint = Paint()
         ..style = PaintingStyle.stroke
         ..strokeWidth = 1.2 * energy
-        ..color = const Color(0xFFFFD0A0).withValues(alpha: 0.05 + cozy * 0.06);
+        ..color = visuals.glow.withValues(alpha: 0.05 + cozy * 0.06);
       for (var index = 0; index < 2; index++) {
         final rail = Rect.fromLTWH(
           panel.left + panel.width * 0.16,
@@ -1088,9 +1129,7 @@ class PrototypeScenePainter extends CustomPainter {
             ..shader =
                 RadialGradient(
                   colors: [
-                    const Color(
-                      0xFFFFD6A8,
-                    ).withValues(alpha: 0.3 + cozy * 0.25),
+                    visuals.glow.withValues(alpha: 0.3 + cozy * 0.25),
                     Colors.transparent,
                   ],
                 ).createShader(
@@ -1103,7 +1142,7 @@ class PrototypeScenePainter extends CustomPainter {
             width: 10 * energy,
             height: 14 * energy,
           ),
-          Paint()..color = const Color(0xFFD6B084).withValues(alpha: 0.75),
+          Paint()..color = visuals.accent.withValues(alpha: 0.75),
         );
       }
     }
@@ -1114,7 +1153,7 @@ class PrototypeScenePainter extends CustomPainter {
       Paint()
         ..style = PaintingStyle.stroke
         ..strokeWidth = 2.4 * energy
-        ..color = const Color(0xFFFFCE9E).withValues(alpha: 0.06 + cozy * 0.07),
+        ..color = visuals.glow.withValues(alpha: 0.06 + cozy * 0.07),
     );
     if (eased > 0.9) {
       final underRect = Rect.fromLTWH(
@@ -1139,7 +1178,22 @@ class PrototypeScenePainter extends CustomPainter {
           ).createShader(underRect),
       );
     }
+    if (cozy > 0) {
+      // Non-motion settle cue: once the door is fully shut, a quiet warm
+      // threshold line rests at its foot so the settled state reads without
+      // relying on any movement. Motion math is untouched.
+      final thresholdY = door.bottom + 10 * energy;
+      canvas.drawLine(
+        Offset(door.left + door.width * 0.14, thresholdY),
+        Offset(door.right - door.width * 0.14, thresholdY),
+        _paint(visuals.glow, 0.2 * cozy, style: PaintingStyle.stroke)
+          ..strokeWidth = 1.2,
+      );
+    }
     final lampCenter = Offset(size.width * 0.22, size.height * 0.9);
+    // The settled lamp baseline is raised within the existing grammar so the
+    // closed room stays legible at rest — Space's settle must read as
+    // lamplight, not near-invisibility.
     canvas.drawRect(
       Offset.zero & size,
       Paint()
@@ -1152,10 +1206,10 @@ class PrototypeScenePainter extends CustomPainter {
           radius: 1.05,
           colors: [
             visuals.glow.withValues(
-              alpha: (0.05 + eased * 0.17 + cozy * 0.06) * flicker,
+              alpha: (0.07 + eased * 0.2 + cozy * 0.07) * flicker,
             ),
             visuals.secondary.withValues(
-              alpha: (0.05 + eased * 0.17 + cozy * 0.06) * flicker,
+              alpha: (0.07 + eased * 0.2 + cozy * 0.07) * flicker,
             ),
             Colors.transparent,
           ],
@@ -1185,7 +1239,9 @@ class PrototypeScenePainter extends CustomPainter {
           radius: 0.86,
           colors: [
             Colors.transparent,
-            Colors.black.withValues(alpha: 0.5 + eased * 0.38),
+            // Plum-black vignette: dusk shadows deepen in-family rather than
+            // cutting to harsh neutral black.
+            const Color(0xFF0A0510).withValues(alpha: 0.5 + eased * 0.38),
           ],
           stops: [
             (size.shortestSide *
@@ -1200,6 +1256,9 @@ class PrototypeScenePainter extends CustomPainter {
 
   void _care(Canvas canvas, Size size) {
     if (still || physicalContext == PhysicalCareContext.headache) {
+      // The still room: one dim warm presence and one hairline horizon,
+      // drawn from the room's own glow/accent tokens over the refuge's
+      // darkest plum ground. Motionless, soundless, nothing asked.
       final center = Offset(size.width / 2, size.height * 0.58);
       canvas.drawRect(
         Offset.zero & size,
@@ -1207,8 +1266,8 @@ class PrototypeScenePainter extends CustomPainter {
           ..shader =
               RadialGradient(
                 colors: [
-                  const Color(0xFFFFE0AB).withValues(alpha: 0.18),
-                  const Color(0xFFE8A34A).withValues(alpha: 0.065),
+                  visuals.glow.withValues(alpha: 0.18),
+                  visuals.accent.withValues(alpha: 0.065),
                   Colors.transparent,
                 ],
                 stops: const [0, 0.38, 1],
@@ -1223,7 +1282,7 @@ class PrototypeScenePainter extends CustomPainter {
         Offset(size.width * 0.24, center.dy),
         Offset(size.width * 0.76, center.dy),
         Paint()
-          ..color = const Color(0xFFFFE0AB).withValues(alpha: 0.14)
+          ..color = visuals.glow.withValues(alpha: 0.14)
           ..strokeWidth = 1.1,
       );
       return;

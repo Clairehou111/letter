@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 
 import '../../features/care/domain/care_memory.dart';
@@ -12,40 +14,75 @@ import '../theme/experience_foundation.dart';
 import 'care_animation_port.dart';
 import 'care_scene_foundation.dart';
 
-/// The soft-landing check-back that follows every Care scene.
+/// The Settled Page — the soft-landing check-back that follows every Care
+/// scene.
+///
+/// One rule governs this file: **completion is the default state; work is
+/// opt-in; the page never asks twice.**
 ///
 /// Contracts honored here (design authority):
 ///  * A completion is a **deliberate** [CareActionCompletion] supplied by the
 ///    scene the person actually performed. Reading a suggestion never counts;
 ///    nothing persists until the person deliberately saves an outcome.
-///  * The outcome is optional. Better / Same / Worse render through the
-///    shared outcome arcs in [DegreeGraphics] — shape + word, never color
-///    alone. Skipping records nothing and loses nothing.
-///  * The unsaved check-back has exactly three honest answers — Better /
-///    Same / Worse — plus `Save this check-back`,
-///    `Skip — nothing needs saving`, and the quiet safety line. Skip and
-///    Android/system back persist nothing and delegate to [onSkip], which
-///    returns to the Care landing; they never leave Care for Today.
-///  * The saved check-back page is frozen: its confirmation, optional
-///    receipt offer, optional reflection offer, layout, copy, and its single
-///    exit — exactly `Return to daylight` — are unchanged. `Leave for now`
-///    never renders in the saved state.
-///  * The RecoveryReceipt is offered **separately**, behind an explicit,
-///    plainly worded per-use opt-in, and is independently dismissible.
-///    Declining leaves the saved Care completion fully valid.
-///  * For [CareMode.space] — where [suggestedSymptomForCare] returns null —
-///    the free choice presents the [RecoveryReceiptSignal] list (including
-///    "Something else" and "I do not remember"), never the full catalog.
-///  * Pain inside the receipt is a severity degree: when the chosen signal
-///    is a pain-kind symptom, the shared pain card asks its degree in the
-///    same five named SymptomSeverity levels as every other observation —
-///    never a numeric score or a location list. Cancelling discards the
-///    unfinished degree rather than persisting invalid data.
-///  * Provenance derives from [recoveryReceiptProvenance] (same-day vs later
-///    recall) and is surfaced honestly after save.
-///  * Reflection fields respect the 280-character limit and surface
-///    [CareMemoryException.userMessage] verbatim on failure.
-///  * Errors are visual + textual only — never haptic.
+///  * The page asks exactly one display-size question — *"How does this
+///    moment feel now?"* — and accepts exactly one optional answer. The
+///    acknowledgement (*"You stayed with the moment."*) is a supporting
+///    line, never a headline. There is no luminous object at rest: the held
+///    orb and the eyebrow ember dot are retired; the eyebrow stands alone in
+///    ink. Ember appears at most once per viewport, always attached to an
+///    action.
+///  * The outcome is optional. Better / Same / Worse are absolutely neutral
+///    before selection: all three arcs and words render in the exact same
+///    soft ink through a private neutral glyph, so no honest answer is
+///    pre-warmed. Selection alone warms — the chosen option composes the
+///    shared [DegreeGraphics] outcome glyph in its selected treatment.
+///    Shape + word carry the meaning, never color alone. Skipping records
+///    nothing and loses nothing.
+///  * Skip (`Skip — nothing needs saving`) and Android/system back from the
+///    unsaved stage persist nothing and delegate to [onSkip]. The saved
+///    stage has exactly one exit, labeled exactly `Return to daylight`,
+///    rendered in flow (never pinned), and saved-stage system back is
+///    intercepted here and routed to [onLeaveCare]. `Leave for now` never
+///    renders in this flow.
+///  * Saving settles; it does not celebrate. The question crossfades into
+///    the settled outcome unit — no pulse, no halo, no breathing element.
+///  * After completion, optional work lives below the exit as quiet
+///    postscript rows — a health note (when [saveReceipt] is wired) and a
+///    reflection — each collapsing to a one-line confirmation once saved or
+///    declined. Declining never invalidates the saved check-back.
+///  * The RecoveryReceipt is offered **separately**, per use, as a stepped
+///    sheet: signal → severity → a deliberate `More` disclosure for
+///    additional physical signals (physical-category-only, deduped against
+///    the main signal, inheriting the main severity with a disclosed
+///    `Change` override written through
+///    [RecoveryReceiptDraft.additionalPhysicalSignalSeverities]) and
+///    functional impact. When the mode maps to a suggested signal, the
+///    signal step opens with only that suggestion and a deliberate
+///    `Change signal` action — the full [RecoveryReceiptSignal] list
+///    (including the complete record-nothing answers "Something else" and
+///    "I do not remember") appears only after that action; for
+///    [CareMode.space] the list is available from the start. The full
+///    symptom catalog is never exposed for the main signal. Pain-kind
+///    signals ask degree through the shared pain card in the same five
+///    named [SymptomSeverity] levels — never a numeric score; cancelling
+///    discards the unfinished degree. Provenance derives from
+///    [recoveryReceiptProvenance] and is surfaced honestly before and after
+///    save.
+///  * Both sheets pin their header — title plus a persistent 44pt
+///    `Not now` — outside the scrolling body, so the exit never scrolls
+///    away and stays reachable at 200% text with the keyboard open.
+///  * The reflection sheet is the Letter Desk: the whole sheet body is one
+///    [ExperiencePaper] inset ringed by dusk. It opens with a single paper
+///    field and the save action — one thought is enough — and
+///    `Add another thought` progressively discloses the need chips and the
+///    remaining fields. Writing is intentionally unconstrained, controllers
+///    are owned by this landing so an interrupted sheet keeps its draft,
+///    and [CareMemoryException.userMessage] surfaces verbatim on failure.
+///  * Primary-action labels sit on a lightened ember treatment in dark
+///    plum ink — the complete label area meets the 4.5:1 body floor; no
+///    outer glow is restored.
+///  * Errors are live-region text in the error color — visual + textual
+///    only, never haptic, never ember.
 class CareCompletionFlow extends StatefulWidget {
   const CareCompletionFlow({
     super.key,
@@ -54,6 +91,7 @@ class CareCompletionFlow extends StatefulWidget {
     required this.careMemoryRepository,
     required this.onLeaveCare,
     this.saveReceipt,
+    this.onDataChanged,
     this.onResumeScene,
     this.resumeHint,
     required this.onSkip,
@@ -72,9 +110,14 @@ class CareCompletionFlow extends StatefulWidget {
   final CareMemoryRepository careMemoryRepository;
 
   /// Receipt persistence seam, wired by the shell. When null, the receipt
-  /// opt-in is not offered at all.
+  /// postscript is not offered at all.
   final Future<RecoveryReceiptResult> Function(RecoveryReceiptDraft draft)?
   saveReceipt;
+
+  /// Reconciles local forecasts, reminders, Kit presence, and report reads
+  /// after a successful Care-side write. Failure here never rolls back the
+  /// record the person deliberately saved.
+  final Future<void> Function()? onDataChanged;
 
   /// Leave the Care world back to daylight. This is the saved page's single
   /// exit, labeled exactly `Return to daylight`.
@@ -105,6 +148,11 @@ class CareCompletionFlow extends StatefulWidget {
 
 enum _LandingStage { checkIn, checkedIn }
 
+/// Dark-plum on-ember ink, matching the theme's `onEmber` token. Over the
+/// lightened ember treatment in [_EmberAction], the complete label area
+/// holds ≥4.5:1 — no glow, no white-on-coral.
+const Color _onEmberInk = Color(0xFF241019);
+
 class _CareCompletionFlowState extends State<CareCompletionFlow> {
   _LandingStage _stage = _LandingStage.checkIn;
 
@@ -114,7 +162,6 @@ class _CareCompletionFlowState extends State<CareCompletionFlow> {
 
   CareRecord? _record;
   String? _ackLine;
-  bool _showPulse = false;
 
   bool _receiptDismissed = false;
   RecoveryReceiptResult? _receiptResult;
@@ -128,6 +175,15 @@ class _CareCompletionFlowState extends State<CareCompletionFlow> {
   ReflectionNeed? _reflectionNeed;
 
   DateTime _now() => widget.now?.call() ?? DateTime.now();
+
+  Future<void> _notifyDataChanged() async {
+    try {
+      await widget.onDataChanged?.call();
+    } on Object {
+      // The source write already succeeded. Derived surfaces can refresh on
+      // the next lifecycle/read boundary without turning this into an error.
+    }
+  }
 
   @override
   void dispose() {
@@ -152,6 +208,7 @@ class _CareCompletionFlowState extends State<CareCompletionFlow> {
         valid,
         outcome,
       );
+      await _notifyDataChanged();
       if (!mounted) return;
       final line = await ExperienceFoundation.savedRhythm(
         SavedRhythmKind.outcome,
@@ -162,7 +219,6 @@ class _CareCompletionFlowState extends State<CareCompletionFlow> {
         _record = record;
         _stage = _LandingStage.checkedIn;
         _ackLine = line;
-        _showPulse = true;
       });
     } on CareMemoryException catch (error) {
       // Errors are visual + textual. No haptics — vibration punishes.
@@ -196,6 +252,7 @@ class _CareCompletionFlowState extends State<CareCompletionFlow> {
     final result = await showExperienceSheet<RecoveryReceiptResult>(
       context,
       careWorld: true,
+      dominant: true,
       child: _RecoveryReceiptSheet(
         record: record,
         completion: widget.completion,
@@ -204,7 +261,15 @@ class _CareCompletionFlowState extends State<CareCompletionFlow> {
         now: widget.now,
       ),
     );
-    if (!mounted || result == null) return;
+    if (!mounted) return;
+    if (result == null) {
+      // Declining or cancelling the note leaves the saved check-back fully
+      // valid; the page never asks twice, so the doorway settles into its
+      // one-line confirmation.
+      setState(() => _receiptDismissed = true);
+      return;
+    }
+    await _notifyDataChanged();
     final line = await ExperienceFoundation.savedRhythm(
       SavedRhythmKind.record,
       now: _now(),
@@ -216,11 +281,6 @@ class _CareCompletionFlowState extends State<CareCompletionFlow> {
     });
   }
 
-  void _dismissReceipt() {
-    ExperienceHaptics.pick();
-    setState(() => _receiptDismissed = true);
-  }
-
   Future<void> _openReflection() async {
     final record = _record;
     if (record == null) return;
@@ -228,6 +288,7 @@ class _CareCompletionFlowState extends State<CareCompletionFlow> {
     final saved = await showExperienceSheet<bool>(
       context,
       careWorld: true,
+      dominant: true,
       child: _ReflectionSheet(
         recordId: record.id,
         careMemoryRepository: widget.careMemoryRepository,
@@ -239,6 +300,7 @@ class _CareCompletionFlowState extends State<CareCompletionFlow> {
       ),
     );
     if (!mounted || saved != true) return;
+    await _notifyDataChanged();
     final line = await ExperienceFoundation.savedRhythm(
       SavedRhythmKind.reflection,
       now: _now(),
@@ -262,114 +324,55 @@ class _CareCompletionFlowState extends State<CareCompletionFlow> {
             gradient: ExperienceColors.careBackdrop,
           ),
           child: SafeArea(
-            child: Padding(
+            // One scrollable column; nothing floats over content. The exit
+            // renders in flow, so large text pushes content instead of
+            // colliding with a pinned footer.
+            child: SingleChildScrollView(
+              physics: const ClampingScrollPhysics(),
               padding: const EdgeInsets.fromLTRB(
                 ExperienceSpacing.screenMargin,
                 ExperienceSpacing.sm,
                 ExperienceSpacing.screenMargin,
-                ExperienceSpacing.sm,
+                ExperienceSpacing.scrollBottomPadding,
               ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: <Widget>[
-                  FocusTraversalOrder(
-                    order: const NumericFocusOrder(1),
-                    child: Semantics(
-                      header: true,
-                      child: Column(
-                        children: <Widget>[
-                          Text(
-                            widget.mode.label.toUpperCase(),
-                            style: ExperienceType.eyebrow(
-                              ExperienceColors.careInkSoft,
-                            ),
-                            textAlign: TextAlign.center,
-                          ),
-                          const SizedBox(height: ExperienceSpacing.xs),
-                          Text(
-                            'You stayed with the moment.',
-                            style: ExperienceType.title(
-                              ExperienceColors.careInk,
-                            ),
-                            textAlign: TextAlign.center,
-                          ),
-                        ],
+              child: Center(
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 520),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: <Widget>[
+                      FocusTraversalOrder(
+                        order: const NumericFocusOrder(1),
+                        child: _Eyebrow(label: widget.mode.label),
                       ),
-                    ),
-                  ),
-                  const SizedBox(height: ExperienceSpacing.sm),
-                  // The held ember — the same luminous ember from the scene,
-                  // held closer. Decorative; never in the accessibility tree.
-                  Center(
-                    child: _HeldEmber(
-                      motion: widget.motionPreference,
-                      showPulse: _showPulse,
-                      onPulseComplete: () {
-                        if (mounted) {
-                          setState(() => _showPulse = false);
-                        }
-                      },
-                    ),
-                  ),
-                  const SizedBox(height: ExperienceSpacing.xs),
-                  Expanded(
-                    child: FocusTraversalOrder(
-                      order: const NumericFocusOrder(2),
-                      child: SingleChildScrollView(
-                        physics: const ClampingScrollPhysics(),
-                        padding: const EdgeInsets.only(
-                          bottom: ExperienceSpacing.xl,
-                        ),
-                        child: Center(
-                          child: ConstrainedBox(
-                            constraints: const BoxConstraints(maxWidth: 520),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.stretch,
-                              children: <Widget>[
-                                if (widget.resumeHint != null) ...<Widget>[
-                                  _ResumeCard(
-                                    hint: widget.resumeHint!,
-                                    onContinue: widget.onResumeScene,
-                                  ),
-                                  const SizedBox(height: ExperienceSpacing.md),
-                                ],
-                                if (_stage == _LandingStage.checkIn)
-                                  _buildOutcomeSection()
-                                else
-                                  _buildCheckedInSection(),
-                                const SizedBox(height: ExperienceSpacing.sm),
-                                Center(
-                                  child: SavedRhythmAckLine(
-                                    line: _ackLine,
-                                    careWorld: true,
-                                  ),
-                                ),
-                              ],
-                            ),
+                      const SizedBox(height: ExperienceSpacing.lg),
+                      FocusTraversalOrder(
+                        order: const NumericFocusOrder(2),
+                        // The threshold: the question crossfades into the
+                        // settled unit — one motion, one moment, resolved
+                        // from the threaded motion preference.
+                        child: AnimatedSwitcher(
+                          duration: CareSceneFoundation.stepTransition(
+                            widget.motionPreference,
                           ),
+                          switchInCurve: Curves.easeOut,
+                          switchOutCurve: Curves.easeOut,
+                          child: _stage == _LandingStage.checkIn
+                              ? _buildCheckInContent()
+                              : _buildSettledContent(),
                         ),
                       ),
-                    ),
-                  ),
-                  const SizedBox(height: ExperienceSpacing.xs),
-                  if (_stage == _LandingStage.checkedIn)
-                    FocusTraversalOrder(
-                      order: const NumericFocusOrder(3),
-                      child: _EmberAction(
-                        label: 'Return to daylight',
-                        onPressed: widget.onLeaveCare,
+                      const SizedBox(height: ExperienceSpacing.md),
+                      // The quiet safety line persists in both page stages,
+                      // at the end of the scroll content, never inside the
+                      // sheets.
+                      FocusTraversalOrder(
+                        order: const NumericFocusOrder(4),
+                        child: _QuietSafetyLine(onTap: widget.onOpenSafety),
                       ),
-                    ),
-                  if (_stage == _LandingStage.checkedIn)
-                    const SizedBox(height: ExperienceSpacing.xs),
-                  // The unsaved footer is the quiet safety line only; once
-                  // saved, "Return to daylight" above is the single exit.
-                  FocusTraversalOrder(
-                    order: const NumericFocusOrder(4),
-                    child: _QuietSafetyLine(onTap: widget.onOpenSafety),
+                    ],
                   ),
-                  const SizedBox(height: ExperienceSpacing.xs),
-                ],
+                ),
               ),
             ),
           ),
@@ -377,27 +380,35 @@ class _CareCompletionFlowState extends State<CareCompletionFlow> {
       ),
     );
 
-    if (_stage != _LandingStage.checkIn) {
-      return body;
-    }
-    // Android/system back from the unsaved check-back is Skip: Care landing,
-    // zero persistence, never Today. The saved stage keeps current behavior.
+    // Unsaved back is Skip (zero persistence); saved-stage back mirrors the
+    // sanctioned exit — the invariant is guaranteed by the flow itself.
     return PopScope(
       canPop: false,
       onPopInvokedWithResult: (didPop, result) {
         if (didPop) return;
-        _skipOutcome();
+        if (_stage == _LandingStage.checkIn) {
+          _skipOutcome();
+        } else {
+          widget.onLeaveCare();
+        }
       },
       child: body,
     );
   }
 
-  Widget _buildOutcomeSection() {
+  Widget _buildCheckInContent() {
     return Column(
+      key: const ValueKey<String>('check-in'),
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: <Widget>[
-        // The question leads. Reassurance follows the actions, so nothing
-        // competes with Better / Same / Worse before a choice is made.
+        if (widget.resumeHint != null) ...<Widget>[
+          _ResumeLine(
+            hint: widget.resumeHint!,
+            onContinue: widget.onResumeScene,
+          ),
+          const SizedBox(height: ExperienceSpacing.md),
+        ],
+        // The one display thought on the unsaved page.
         Text(
           'How does this moment feel now?',
           style: ExperienceType.title(ExperienceColors.careInk),
@@ -405,37 +416,34 @@ class _CareCompletionFlowState extends State<CareCompletionFlow> {
         ),
         const SizedBox(height: ExperienceSpacing.md),
         Row(
-          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
           children: <Widget>[
             for (final outcome in DegreeGraphics.outcomes)
-              _OutcomeOption(
-                outcome: outcome,
-                selected: _selectedOutcome == outcome,
-                onTap: _savingOutcome
-                    ? null
-                    : () {
-                        ExperienceHaptics.pick();
-                        setState(() => _selectedOutcome = outcome);
-                      },
+              Expanded(
+                child: _OutcomeOption(
+                  outcome: outcome,
+                  selected: _selectedOutcome == outcome,
+                  onTap: _savingOutcome
+                      ? null
+                      : () {
+                          ExperienceHaptics.pick();
+                          setState(() => _selectedOutcome = outcome);
+                        },
+                ),
               ),
           ],
         ),
         const SizedBox(height: ExperienceSpacing.sm),
         Text(
-          'If you like, leave one word about how it landed. '
-          'It is optional — skipping records nothing.',
+          'Choose what fits — or skip. Nothing is recorded until you save.',
           style: ExperienceType.caption(ExperienceColors.careInkSoft),
           textAlign: TextAlign.center,
         ),
         const SizedBox(height: ExperienceSpacing.lg),
-        FocusTraversalOrder(
-          order: const NumericFocusOrder(3),
-          child: _EmberAction(
-            label: _savingOutcome ? 'Saving…' : 'Save this check-back',
-            onPressed: _selectedOutcome == null || _savingOutcome
-                ? null
-                : _saveOutcome,
-          ),
+        _EmberAction(
+          label: _savingOutcome ? 'Saving…' : 'Save this check-back',
+          onPressed: _selectedOutcome == null || _savingOutcome
+              ? null
+              : _saveOutcome,
         ),
         if (_outcomeError != null)
           Padding(
@@ -444,7 +452,7 @@ class _CareCompletionFlowState extends State<CareCompletionFlow> {
               liveRegion: true,
               child: Text(
                 _outcomeError!,
-                style: ExperienceType.caption(ExperienceColors.emberSoft),
+                style: ExperienceType.caption(ExperienceColors.error),
                 textAlign: TextAlign.center,
               ),
             ),
@@ -452,20 +460,19 @@ class _CareCompletionFlowState extends State<CareCompletionFlow> {
         const SizedBox(height: ExperienceSpacing.sm),
         // Skip is a first-class, fully visible exit from the question —
         // its own quiet row, never tucked under the primary action.
-        TextButton(
-          style: TextButton.styleFrom(
-            minimumSize: const Size.fromHeight(
-              ExperienceSpacing.minTouchTarget,
-            ),
-          ),
+        _QuietExitRow(
+          label: 'Skip — nothing needs saving',
+          strong: true,
           onPressed: _savingOutcome ? null : _skipOutcome,
-          child: Text(
-            'Skip — nothing needs saving',
-            style: ExperienceType.label(ExperienceColors.careInkSoft),
-            textAlign: TextAlign.center,
-          ),
         ),
-        const SizedBox(height: ExperienceSpacing.md),
+        const SizedBox(height: ExperienceSpacing.xl),
+        // The acknowledgement validates; it never headlines.
+        Text(
+          'You stayed with the moment.',
+          style: ExperienceType.caption(ExperienceColors.careInkSoft),
+          textAlign: TextAlign.center,
+        ),
+        const SizedBox(height: ExperienceSpacing.xs),
         Text(
           'However it went, showing up was the whole of '
           'it. Nothing needs fixing now.',
@@ -476,52 +483,58 @@ class _CareCompletionFlowState extends State<CareCompletionFlow> {
     );
   }
 
-  Widget _buildCheckedInSection() {
+  Widget _buildSettledContent() {
     final record = _record;
+    final receiptResult = _receiptResult;
     return Column(
+      key: const ValueKey<String>('settled'),
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: <Widget>[
-        // Saved state: the chosen outcome settles, read-only, with its word.
-        if (record != null)
-          Center(
-            child: Column(
-              children: <Widget>[
-                DegreeGraphics.outcome(
-                  record.outcome,
-                  selected: true,
-                  careWorld: true,
-                ),
-                const SizedBox(height: ExperienceSpacing.xs),
-                Text(
-                  'You recorded “${record.actionLabel}”.',
-                  style: ExperienceType.bodySmall(ExperienceColors.careInkSoft),
-                  textAlign: TextAlign.center,
-                ),
-              ],
-            ),
-          ),
+        // The settled unit: arc + word + record line. Static; the page
+        // settles, nothing celebrates.
+        if (record != null) _SettledUnit(record: record),
+        const SizedBox(height: ExperienceSpacing.sm),
+        Center(child: SavedRhythmAckLine(line: _ackLine, careWorld: true)),
         const SizedBox(height: ExperienceSpacing.lg),
-        // The RecoveryReceipt opt-in — separate, explicit, dismissible.
-        if (widget.saveReceipt != null &&
-            _receiptResult == null &&
-            !_receiptDismissed)
-          _ReceiptOptInCard(onAccept: _openReceipt, onDecline: _dismissReceipt),
-        if (_receiptDismissed && _receiptResult == null)
-          Text(
-            'Nothing else was added — your check-back stands.',
-            style: ExperienceType.caption(ExperienceColors.careInkSoft),
-            textAlign: TextAlign.center,
+        // The single exit, in flow — the settled page's one coral element.
+        FocusTraversalOrder(
+          order: const NumericFocusOrder(3),
+          child: _EmberAction(
+            label: 'Return to daylight',
+            onPressed: widget.onLeaveCare,
           ),
-        if (_receiptResult != null) _ReceiptSavedCard(result: _receiptResult!),
-        const SizedBox(height: ExperienceSpacing.md),
-        // A few words, optionally, for future you.
+        ),
+        const SizedBox(height: ExperienceSpacing.xl),
+        // Postscripts: optional work, deliberately after the point of
+        // completion — quiet hairline rows, visually subordinate to the
+        // exit, ink only.
+        if (widget.saveReceipt != null &&
+            receiptResult == null &&
+            !_receiptDismissed)
+          _PostscriptRow(
+            label: 'Add a health note — optional',
+            semanticsLabel: 'Add a health note. Optional.',
+            onTap: _openReceipt,
+          ),
+        if (_receiptDismissed && receiptResult == null)
+          const _PostscriptConfirmation(
+            line: 'Nothing else was added — your check-back stands.',
+          ),
+        if (receiptResult != null)
+          _PostscriptConfirmation(
+            line: receiptResult.provenance == HealthRecordProvenance.sameDay
+                ? 'Health note saved — same-day record.'
+                : 'Health note saved — later recall, and it still counts.',
+          ),
         if (!_reflectionSaved)
-          _ReflectionOfferCard(onWrite: _openReflection)
+          _PostscriptRow(
+            label: 'A few words for future you — optional',
+            semanticsLabel: 'Write a few words for future you. Optional.',
+            onTap: _openReflection,
+          )
         else
-          Text(
-            'Reflection kept for future you.',
-            style: ExperienceType.caption(ExperienceColors.careInkSoft),
-            textAlign: TextAlign.center,
+          const _PostscriptConfirmation(
+            line: 'Reflection kept for future you.',
           ),
       ],
     );
@@ -532,113 +545,75 @@ class _CareCompletionFlowState extends State<CareCompletionFlow> {
 // Landing pieces
 // ---------------------------------------------------------------------------
 
-/// The luminous held ember from the active scene, carried into the landing.
-/// Layered warm glow around [EmberOrb] — decorative and motion-aware; the
-/// breathing and pulse honour [CareSceneMotionPreference] through the orb
-/// itself. Excluded from the accessibility tree.
-class _HeldEmber extends StatelessWidget {
-  const _HeldEmber({
-    required this.motion,
-    required this.showPulse,
-    required this.onPulseComplete,
-  });
+/// The mode eyebrow. It stands alone in ink — the former coral dot read as
+/// a recording indicator and broke the one-coral rule in selected states,
+/// so no luminous object accompanies it.
+class _Eyebrow extends StatelessWidget {
+  const _Eyebrow({required this.label});
 
-  final CareSceneMotionPreference motion;
-  final bool showPulse;
-  final VoidCallback onPulseComplete;
+  final String label;
 
   @override
   Widget build(BuildContext context) {
-    const orbSize = 72.0;
-    return ExcludeSemantics(
-      child: SizedBox(
-        width: orbSize,
-        height: orbSize,
-        child: Stack(
-          alignment: Alignment.center,
-          clipBehavior: Clip.none,
-          children: <Widget>[
-            // Warm halo — the ember's light on the dark, not a flat disc.
-            Container(
-              width: orbSize * 2.6,
-              height: orbSize * 2.6,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                gradient: RadialGradient(
-                  colors: <Color>[
-                    ExperienceColors.emberGlow.withValues(alpha: 0.34),
-                    ExperienceColors.emberGlow.withValues(alpha: 0.10),
-                    ExperienceColors.emberGlow.withValues(alpha: 0),
-                  ],
-                  stops: const <double>[0, 0.45, 1],
-                ),
-              ),
-            ),
-            Container(
-              width: orbSize * 1.5,
-              height: orbSize * 1.5,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                gradient: RadialGradient(
-                  colors: <Color>[
-                    ExperienceColors.emberSoft.withValues(alpha: 0.30),
-                    ExperienceColors.emberSoft.withValues(alpha: 0),
-                  ],
-                ),
-              ),
-            ),
-            EmberOrb(size: orbSize, breathing: true, motion: motion),
-            if (showPulse)
-              EmberPulse(diameter: 108, onComplete: onPulseComplete),
-          ],
-        ),
+    return Semantics(
+      header: true,
+      child: Text(
+        label.toUpperCase(),
+        style: ExperienceType.eyebrow(ExperienceColors.careInkSoft),
+        textAlign: TextAlign.center,
       ),
     );
   }
 }
 
-class _ResumeCard extends StatelessWidget {
-  const _ResumeCard({required this.hint, required this.onContinue});
+/// Interruption recovery as the first quiet line inside the content region —
+/// a continuation sentence with a 44pt `Continue` action, never a card, and
+/// never competing with the question.
+class _ResumeLine extends StatelessWidget {
+  const _ResumeLine({required this.hint, required this.onContinue});
 
   final String hint;
   final VoidCallback? onContinue;
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(ExperienceSpacing.md),
-      decoration: BoxDecoration(
-        color: ExperienceColors.careGlass,
-        borderRadius: ExperienceRadius.cardRadius,
-        border: Border.all(color: ExperienceColors.careGlassBorder),
-      ),
-      child: Column(
-        children: <Widget>[
-          Text(
-            hint,
-            style: ExperienceType.body(ExperienceColors.careInk),
-            textAlign: TextAlign.center,
-          ),
-          if (onContinue != null) ...<Widget>[
-            const SizedBox(height: ExperienceSpacing.sm),
-            Semantics(
-              button: true,
-              label: 'Continue where you left off',
-              child: TextButton(
-                onPressed: onContinue,
-                child: Text(
-                  'Continue',
-                  style: ExperienceType.label(ExperienceColors.emberSoft),
+    return Column(
+      children: <Widget>[
+        Text(
+          hint,
+          style: ExperienceType.bodySmall(ExperienceColors.careInkSoft),
+          textAlign: TextAlign.center,
+        ),
+        if (onContinue != null)
+          Semantics(
+            button: true,
+            label: 'Continue where you left off',
+            child: TextButton(
+              style: TextButton.styleFrom(
+                minimumSize: const Size(
+                  ExperienceSpacing.minTouchTarget,
+                  ExperienceSpacing.minTouchTarget,
                 ),
               ),
+              onPressed: onContinue,
+              child: Text(
+                'Continue',
+                style: ExperienceType.label(ExperienceColors.careInk),
+              ),
             ),
-          ],
-        ],
-      ),
+          ),
+      ],
     );
   }
 }
 
+/// One of the three honest answers. Borderless at rest — ink glyph and word
+/// on bare dusk, identical container for all three so no card bias and no
+/// valence smuggling. **Absolute neutrality before selection:** all three
+/// arcs and words render in the exact same soft ink through the private
+/// [_NeutralOutcomeGlyph]; the shared [DegreeGraphics] glyph — whose Better
+/// arc is ember by its own vocabulary — composes only after selection, so
+/// coral appears exclusively on the answer the person chose.
 class _OutcomeOption extends StatelessWidget {
   const _OutcomeOption({
     required this.outcome,
@@ -662,42 +637,31 @@ class _OutcomeOption extends StatelessWidget {
         onTap: onTap,
         borderRadius: ExperienceRadius.chipRadius,
         child: AnimatedContainer(
-          duration: ExperienceMotion.chipSelect,
+          duration: _selectionDuration(context),
           constraints: const BoxConstraints(
-            minWidth: ExperienceSpacing.degreeTarget,
             minHeight: ExperienceSpacing.degreeTarget,
           ),
           padding: const EdgeInsets.symmetric(
-            horizontal: ExperienceSpacing.sm,
+            horizontal: ExperienceSpacing.xs,
             vertical: ExperienceSpacing.xs * 2,
           ),
           decoration: BoxDecoration(
-            color: selected
-                ? const Color(0x29FFFFFF)
-                : ExperienceColors.careGlass,
+            color: selected ? const Color(0x29FFFFFF) : Colors.transparent,
             borderRadius: ExperienceRadius.chipRadius,
             border: Border.all(
-              color: selected
-                  ? ExperienceColors.emberSoft
-                  : ExperienceColors.careGlassBorder,
+              color: selected ? ExperienceColors.emberSoft : Colors.transparent,
               width: selected ? 1.5 : 1,
             ),
-            // A colored glow only at the focal moment of choosing.
-            boxShadow: selected
-                ? <BoxShadow>[
-                    BoxShadow(
-                      color: ExperienceColors.emberGlow.withValues(alpha: 0.35),
-                      blurRadius: 18,
-                      offset: const Offset(0, 4),
-                    ),
-                  ]
-                : null,
           ),
           child: ExcludeSemantics(
-            child: DegreeGraphics.outcome(
-              outcome,
-              selected: selected,
-              careWorld: true,
+            child: Center(
+              child: selected
+                  ? DegreeGraphics.outcome(
+                      outcome,
+                      selected: true,
+                      careWorld: true,
+                    )
+                  : _NeutralOutcomeGlyph(outcome: outcome),
             ),
           ),
         ),
@@ -706,149 +670,204 @@ class _OutcomeOption extends StatelessWidget {
   }
 }
 
-class _ReceiptOptInCard extends StatelessWidget {
-  const _ReceiptOptInCard({required this.onAccept, required this.onDecline});
+/// The resting outcome glyph: the three shared arc shapes (up-arc, level
+/// line, softened down-arc) redrawn privately in one neutral soft ink with
+/// the word beneath in the same ink. Shape and word carry the meaning;
+/// before selection no answer is warmer than another. The shared
+/// [DegreeGraphics] outcome glyph owns the selected appearance.
+class _NeutralOutcomeGlyph extends StatelessWidget {
+  const _NeutralOutcomeGlyph({required this.outcome});
 
-  final VoidCallback onAccept;
-  final VoidCallback onDecline;
+  final CareOutcome outcome;
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(ExperienceSpacing.md),
-      decoration: BoxDecoration(
-        color: ExperienceColors.careGlass,
-        borderRadius: ExperienceRadius.cardRadius,
-        border: Border.all(color: ExperienceColors.careGlassBorder),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: <Widget>[
-          Text(
-            'Add this moment to your health record?',
-            style: ExperienceType.headline(ExperienceColors.careInk),
+    const ink = ExperienceColors.careInkSoft;
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: <Widget>[
+        SizedBox(
+          width: 36 * 1.6,
+          height: 36,
+          child: CustomPaint(
+            painter: _NeutralOutcomeArcPainter(outcome: outcome, color: ink),
           ),
-          const SizedBox(height: ExperienceSpacing.xs),
-          Text(
-            'Optional, and separate from your check-back — that is already '
-            'saved either way. With your yes, you name the signal and its '
-            'intensity, plus pain only if it was present, so your patterns '
-            'can learn from real moments.',
-            style: ExperienceType.bodySmall(ExperienceColors.careInkSoft),
-          ),
-          const SizedBox(height: ExperienceSpacing.md),
-          _EmberAction(label: 'Yes, add the note', onPressed: onAccept),
-          TextButton(
-            onPressed: onDecline,
-            child: Text(
-              'Not now',
-              style: ExperienceType.caption(ExperienceColors.careInkSoft),
-            ),
-          ),
-        ],
-      ),
+        ),
+        const SizedBox(height: ExperienceSpacing.xs),
+        Text(
+          DegreeGraphics.outcomeLabel(outcome),
+          style: ExperienceType.caption(ink),
+        ),
+      ],
     );
   }
 }
 
-class _ReceiptSavedCard extends StatelessWidget {
-  const _ReceiptSavedCard({required this.result});
+/// The three outcome arc shapes, verbatim in geometry, in a single caller-
+/// supplied ink. Kept private to this file so the shared vocabulary in
+/// [DegreeGraphics] is never modified.
+final class _NeutralOutcomeArcPainter extends CustomPainter {
+  const _NeutralOutcomeArcPainter({required this.outcome, required this.color});
 
-  final RecoveryReceiptResult result;
+  final CareOutcome outcome;
+  final Color color;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final w = size.width;
+    final h = size.height;
+    final paint = Paint()
+      ..color = color
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = math.max(2.5, h * 0.12)
+      ..strokeCap = StrokeCap.round;
+
+    switch (outcome) {
+      case CareOutcome.better:
+        // Up-arc: rises and ends high.
+        final path = Path()
+          ..moveTo(w * 0.06, h * 0.72)
+          ..quadraticBezierTo(w * 0.5, -h * 0.22, w * 0.94, h * 0.3);
+        canvas.drawPath(path, paint);
+      case CareOutcome.same:
+        // Level line.
+        canvas.drawLine(
+          Offset(w * 0.08, h * 0.5),
+          Offset(w * 0.92, h * 0.5),
+          paint,
+        );
+      case CareOutcome.worse:
+        // Softened down-arc: sags and ends lower than it began.
+        final path = Path()
+          ..moveTo(w * 0.06, h * 0.28)
+          ..quadraticBezierTo(w * 0.5, h * 1.18, w * 0.94, h * 0.66);
+        canvas.drawPath(path, paint);
+    }
+  }
+
+  @override
+  bool shouldRepaint(_NeutralOutcomeArcPainter oldDelegate) {
+    return oldDelegate.outcome != outcome || oldDelegate.color != color;
+  }
+}
+
+/// The settled outcome: the chosen arc in its selected treatment with its
+/// word, and the quiet record line beneath. The record line informs; it does
+/// not perform.
+class _SettledUnit extends StatelessWidget {
+  const _SettledUnit({required this.record});
+
+  final CareRecord record;
 
   @override
   Widget build(BuildContext context) {
-    final count = result.records.length;
-    final provenanceLine = result.provenance == HealthRecordProvenance.sameDay
-        ? 'Recorded as a same-day note.'
-        : 'Recorded from later recall — it still counts.';
-    return Container(
-      padding: const EdgeInsets.all(ExperienceSpacing.md),
-      decoration: BoxDecoration(
-        color: ExperienceColors.careGlass,
-        borderRadius: ExperienceRadius.cardRadius,
-        border: Border.all(color: ExperienceColors.careGlassBorder),
-      ),
-      child: Column(
-        children: <Widget>[
-          Text.rich(
-            TextSpan(
-              style: ExperienceType.body(ExperienceColors.careInk),
-              children: <InlineSpan>[
-                const TextSpan(text: 'Added '),
-                TextSpan(
-                  text: '$count',
-                  style: ExperienceType.data(ExperienceColors.careInk),
-                ),
-                TextSpan(
-                  text: count == 1
-                      ? ' health note to your record.'
-                      : ' health notes to your record.',
-                ),
-              ],
-            ),
-            textAlign: TextAlign.center,
+    return Column(
+      children: <Widget>[
+        Center(
+          child: DegreeGraphics.outcome(
+            record.outcome,
+            selected: true,
+            careWorld: true,
           ),
-          const SizedBox(height: ExperienceSpacing.xs),
-          Text(
-            provenanceLine,
-            style: ExperienceType.caption(ExperienceColors.careInkSoft),
-            textAlign: TextAlign.center,
-          ),
-        ],
-      ),
+        ),
+        const SizedBox(height: ExperienceSpacing.xs),
+        Text(
+          'You recorded “${record.actionLabel}”.',
+          style: ExperienceType.bodySmall(ExperienceColors.careInkSoft),
+          textAlign: TextAlign.center,
+        ),
+      ],
     );
   }
 }
 
-class _ReflectionOfferCard extends StatelessWidget {
-  const _ReflectionOfferCard({required this.onWrite});
+/// An optional doorway after completion: a full-width, 48pt-minimum text row
+/// with a hairline top border, a sans label in ink, and a trailing quiet ›.
+/// Never a filled card, never a serif headline, never ember text.
+class _PostscriptRow extends StatelessWidget {
+  const _PostscriptRow({
+    required this.label,
+    required this.semanticsLabel,
+    required this.onTap,
+  });
 
-  final VoidCallback onWrite;
+  final String label;
+  final String semanticsLabel;
+  final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(ExperienceSpacing.md),
-      decoration: BoxDecoration(
-        color: ExperienceColors.careGlass,
-        borderRadius: ExperienceRadius.cardRadius,
-        border: Border.all(color: ExperienceColors.careGlassBorder),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: <Widget>[
-          Text(
-            'Keep a few words for future you?',
-            style: ExperienceType.headline(ExperienceColors.careInk),
+    return Semantics(
+      button: true,
+      label: semanticsLabel,
+      child: InkWell(
+        onTap: onTap,
+        child: Container(
+          constraints: const BoxConstraints(
+            minHeight: ExperienceSpacing.degreeTarget,
           ),
-          const SizedBox(height: ExperienceSpacing.xs),
-          Text(
-            'What the moment was, what helped — anything you want the next '
-            'hard moment to remember. Optional, always.',
-            style: ExperienceType.bodySmall(ExperienceColors.careInkSoft),
+          decoration: const BoxDecoration(
+            border: Border(
+              top: BorderSide(color: ExperienceColors.careGlassBorder),
+            ),
           ),
-          const SizedBox(height: ExperienceSpacing.sm),
-          Align(
-            alignment: Alignment.centerLeft,
-            child: Semantics(
-              button: true,
-              label: 'Write a reflection',
-              child: TextButton(
-                onPressed: onWrite,
+          padding: const EdgeInsets.symmetric(vertical: ExperienceSpacing.sm),
+          child: Row(
+            children: <Widget>[
+              Expanded(
                 child: Text(
-                  'Write a reflection',
-                  style: ExperienceType.label(ExperienceColors.emberSoft),
+                  label,
+                  style: ExperienceType.label(ExperienceColors.careInk),
                 ),
               ),
-            ),
+              ExcludeSemantics(
+                child: Text(
+                  '›',
+                  style: ExperienceType.label(ExperienceColors.careInkSoft),
+                ),
+              ),
+            ],
           ),
-        ],
+        ),
       ),
     );
   }
 }
 
+/// The one-line confirmation a postscript row collapses into once its work
+/// is saved or declined — caption weight, hairline-divided like the row it
+/// replaces.
+class _PostscriptConfirmation extends StatelessWidget {
+  const _PostscriptConfirmation({required this.line});
+
+  final String line;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      constraints: const BoxConstraints(
+        minHeight: ExperienceSpacing.minTouchTarget,
+      ),
+      decoration: const BoxDecoration(
+        border: Border(
+          top: BorderSide(color: ExperienceColors.careGlassBorder),
+        ),
+      ),
+      padding: const EdgeInsets.symmetric(vertical: ExperienceSpacing.sm),
+      child: Align(
+        alignment: Alignment.centerLeft,
+        child: Text(
+          line,
+          style: ExperienceType.caption(ExperienceColors.careInkSoft),
+        ),
+      ),
+    );
+  }
+}
+
+/// The quiet safety line. Quiet in weight, never in reach: the full
+/// interactive route holds an explicit 44pt minimum height while the visual
+/// treatment stays a soft caption with a small heart mark.
 class _QuietSafetyLine extends StatelessWidget {
   const _QuietSafetyLine({required this.onTap});
 
@@ -862,9 +881,16 @@ class _QuietSafetyLine extends StatelessWidget {
       textAlign: TextAlign.center,
     );
     if (onTap == null) {
-      return Padding(
-        padding: const EdgeInsets.symmetric(vertical: ExperienceSpacing.xs),
-        child: text,
+      return ConstrainedBox(
+        constraints: const BoxConstraints(
+          minHeight: ExperienceSpacing.minTouchTarget,
+        ),
+        child: Center(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(vertical: ExperienceSpacing.xs),
+            child: text,
+          ),
+        ),
       );
     }
     return Semantics(
@@ -873,23 +899,30 @@ class _QuietSafetyLine extends StatelessWidget {
       child: InkWell(
         borderRadius: ExperienceRadius.chipRadius,
         onTap: onTap,
-        child: Padding(
-          padding: const EdgeInsets.symmetric(
-            horizontal: ExperienceSpacing.sm,
-            vertical: ExperienceSpacing.xs,
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(
+            minHeight: ExperienceSpacing.minTouchTarget,
           ),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            mainAxisSize: MainAxisSize.min,
-            children: <Widget>[
-              const Icon(
-                Icons.favorite_border,
-                size: 14,
-                color: ExperienceColors.careInkSoft,
+          child: Center(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(
+                horizontal: ExperienceSpacing.sm,
+                vertical: ExperienceSpacing.xs,
               ),
-              const SizedBox(width: ExperienceSpacing.xs),
-              Flexible(child: text),
-            ],
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                mainAxisSize: MainAxisSize.min,
+                children: <Widget>[
+                  const Icon(
+                    Icons.favorite_border,
+                    size: 14,
+                    color: ExperienceColors.careInkSoft,
+                  ),
+                  const SizedBox(width: ExperienceSpacing.xs),
+                  Flexible(child: text),
+                ],
+              ),
+            ),
           ),
         ),
       ),
@@ -897,6 +930,12 @@ class _QuietSafetyLine extends StatelessWidget {
   }
 }
 
+/// The one primary-action treatment: full-width ember pill, no outer glow
+/// shadow. The enabled treatment carries a constant soft light wash over
+/// the ember gradient so the dark-plum label holds ≥4.5:1 across the
+/// complete label area; the disabled state is a quiet hairline-outline
+/// treatment — glass fill, soft-ink label — obviously unavailable, never
+/// glowing, never error-colored, never dimmed-bright.
 class _EmberAction extends StatelessWidget {
   const _EmberAction({required this.label, required this.onPressed});
 
@@ -914,20 +953,27 @@ class _EmberAction extends StatelessWidget {
         constraints: const BoxConstraints(
           minHeight: ExperienceSpacing.degreeTarget,
         ),
-        child: Opacity(
-          opacity: enabled ? 1 : 0.55,
-          child: DecoratedBox(
-            decoration: BoxDecoration(
-              gradient: ExperienceColors.emberGradient,
-              borderRadius: ExperienceRadius.heroRadius,
-              boxShadow: <BoxShadow>[
-                BoxShadow(
-                  color: ExperienceColors.emberGlow.withValues(alpha: 0.55),
-                  blurRadius: 22,
-                  offset: const Offset(0, 8),
+        child: DecoratedBox(
+          decoration: enabled
+              ? const BoxDecoration(
+                  gradient: ExperienceColors.emberGradient,
+                  borderRadius: ExperienceRadius.heroRadius,
+                )
+              : BoxDecoration(
+                  color: ExperienceColors.careGlass,
+                  borderRadius: ExperienceRadius.heroRadius,
+                  border: Border.all(color: ExperienceColors.careGlassBorder),
                 ),
-              ],
-            ),
+          child: DecoratedBox(
+            // The wash lifts every gradient stop uniformly, so the label's
+            // contrast floor is met at the brightest and the deepest point
+            // alike — measured, not claimed. No glow is restored.
+            decoration: enabled
+                ? BoxDecoration(
+                    color: Colors.white.withValues(alpha: 0.22),
+                    borderRadius: ExperienceRadius.heroRadius,
+                  )
+                : const BoxDecoration(),
             child: Material(
               color: Colors.transparent,
               child: InkWell(
@@ -940,7 +986,9 @@ class _EmberAction extends StatelessWidget {
                   ),
                   child: Text(
                     label,
-                    style: ExperienceType.label(Colors.white),
+                    style: ExperienceType.label(
+                      enabled ? _onEmberInk : ExperienceColors.careInkSoft,
+                    ),
                     textAlign: TextAlign.center,
                   ),
                 ),
@@ -953,8 +1001,208 @@ class _EmberAction extends StatelessWidget {
   }
 }
 
+/// A quiet exit: leave without consequence. Enforces the 44pt minimum and
+/// the soft-ink label everywhere — skip rows, header "Not now" actions,
+/// bottom cancels, and the graceful-note close.
+class _QuietExitRow extends StatelessWidget {
+  const _QuietExitRow({
+    required this.label,
+    required this.onPressed,
+    this.strong = false,
+    this.color = ExperienceColors.careInkSoft,
+  });
+
+  final String label;
+  final VoidCallback? onPressed;
+
+  /// Label weight instead of caption — for first-class exits like Skip and
+  /// header "Not now" actions.
+  final bool strong;
+  final Color color;
+
+  @override
+  Widget build(BuildContext context) {
+    final style = strong
+        ? ExperienceType.label(color)
+        : ExperienceType.caption(color);
+    return Semantics(
+      button: true,
+      enabled: onPressed != null,
+      label: label,
+      child: TextButton(
+        style: TextButton.styleFrom(
+          minimumSize: const Size(
+            ExperienceSpacing.minTouchTarget,
+            ExperienceSpacing.minTouchTarget,
+          ),
+        ),
+        onPressed: onPressed,
+        child: Text(label, style: style, textAlign: TextAlign.center),
+      ),
+    );
+  }
+}
+
+/// A sheet header: the title plus a persistent right-aligned 44pt "Not now"
+/// text action, so the sheet is always exitable from the top — even at 200%
+/// text with the keyboard covering the bottom actions. The title takes the
+/// full remaining width and wraps cleanly beneath itself; the exit keeps
+/// its own unambiguous, never-squeezed space.
+class _SheetHeader extends StatelessWidget {
+  const _SheetHeader({
+    required this.title,
+    required this.onNotNow,
+    this.serifTitle = false,
+  });
+
+  final String title;
+  final VoidCallback? onNotNow;
+
+  /// Georgia is retained for the Letter Desk title only; every other sheet
+  /// title is sans.
+  final bool serifTitle;
+
+  @override
+  Widget build(BuildContext context) {
+    final titleStyle = serifTitle
+        ? ExperienceType.title(ExperienceColors.careInk)
+        : ExperienceType.bodyStrong(
+            ExperienceColors.careInk,
+          ).copyWith(fontSize: 19, height: 28 / 19);
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: <Widget>[
+        Expanded(
+          child: Semantics(
+            header: true,
+            child: Padding(
+              padding: const EdgeInsets.only(top: 10),
+              child: Text(title, style: titleStyle),
+            ),
+          ),
+        ),
+        const SizedBox(width: ExperienceSpacing.xs),
+        Semantics(
+          button: true,
+          label: 'Not now',
+          child: TextButton(
+            style: TextButton.styleFrom(
+              minimumSize: const Size(
+                ExperienceSpacing.minTouchTarget,
+                ExperienceSpacing.minTouchTarget,
+              ),
+              padding: const EdgeInsets.symmetric(
+                horizontal: ExperienceSpacing.xs * 2,
+              ),
+              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+            ),
+            onPressed: onNotNow,
+            child: Text(
+              'Not now',
+              style: ExperienceType.label(ExperienceColors.careInkSoft),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+/// A deliberate disclosure row — `More`, `Add another thought` — that
+/// expands optional vocabulary in place. Count-free label, 44pt target,
+/// expansion survives scroll, and the motion collapses to instant when the
+/// platform asks for reduced motion.
+class _Disclosure extends StatefulWidget {
+  const _Disclosure({
+    required this.label,
+    required this.child,
+    this.onPaper = false,
+  });
+
+  final String label;
+  final Widget child;
+
+  /// Paper-material variant for the Letter Desk.
+  final bool onPaper;
+
+  @override
+  State<_Disclosure> createState() => _DisclosureState();
+}
+
+class _DisclosureState extends State<_Disclosure> {
+  bool _open = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final ink = widget.onPaper ? ExperiencePaper.ink : ExperienceColors.careInk;
+    final inkSoft = widget.onPaper
+        ? ExperiencePaper.inkSoft
+        : ExperienceColors.careInkSoft;
+    final duration = ExperienceMotion.reducedMotion(context)
+        ? Duration.zero
+        : const Duration(milliseconds: 200);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: <Widget>[
+        Semantics(
+          button: true,
+          expanded: _open,
+          label: widget.label,
+          child: InkWell(
+            onTap: () => setState(() => _open = !_open),
+            borderRadius: ExperienceRadius.chipRadius,
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(
+                minHeight: ExperienceSpacing.minTouchTarget,
+              ),
+              child: Row(
+                children: <Widget>[
+                  Expanded(
+                    child: Text(widget.label, style: ExperienceType.label(ink)),
+                  ),
+                  ExcludeSemantics(
+                    child: Icon(
+                      _open
+                          ? Icons.keyboard_arrow_up
+                          : Icons.keyboard_arrow_down,
+                      size: 20,
+                      color: inkSoft,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+        AnimatedCrossFade(
+          firstChild: const SizedBox(width: double.infinity),
+          secondChild: Padding(
+            padding: const EdgeInsets.only(top: ExperienceSpacing.sm),
+            child: widget.child,
+          ),
+          crossFadeState: _open
+              ? CrossFadeState.showSecond
+              : CrossFadeState.showFirst,
+          duration: duration,
+          sizeCurve: Curves.easeOut,
+        ),
+      ],
+    );
+  }
+}
+
+Duration _selectionDuration(BuildContext context) {
+  if (ExperienceMotion.reducedMotion(context)) {
+    return Duration.zero;
+  }
+  return ExperienceMotion.chipSelect;
+}
+
 // ---------------------------------------------------------------------------
-// RecoveryReceipt sheet — the explicit, per-use opt-in health note.
+// RecoveryReceipt sheet — the stepped, per-use health note on dusk glass.
+// The header (title + persistent 44pt "Not now") is pinned outside the
+// scrolling body, so the exit never scrolls away — at any text scale, with
+// or without the keyboard.
 // ---------------------------------------------------------------------------
 
 class _RecoveryReceiptSheet extends StatefulWidget {
@@ -981,7 +1229,20 @@ class _RecoveryReceiptSheetState extends State<_RecoveryReceiptSheet> {
   RecoveryReceiptSignal? _signal;
   SymptomSeverity? _severity;
   final Set<SymptomType> _additionalSignals = <SymptomType>{};
+  final Map<SymptomType, SymptomSeverity> _severityOverrides =
+      <SymptomType, SymptomSeverity>{};
   final Set<FunctionalImpact> _impacts = <FunctionalImpact>{};
+
+  /// The additional signal whose per-signal degree editor is open, if any.
+  SymptomType? _editingSignal;
+
+  /// The contextual suggestion for this mode, when one exists.
+  RecoveryReceiptSignal? _suggested;
+
+  /// Whether the person has deliberately opened the full receipt-signal
+  /// list. When a suggestion exists, the sheet opens with only that
+  /// suggestion and a `Change signal` action — never the option wall.
+  bool _signalListExpanded = false;
 
   bool _saving = false;
   String? _error;
@@ -991,7 +1252,8 @@ class _RecoveryReceiptSheetState extends State<_RecoveryReceiptSheet> {
     super.initState();
     // Modes with a suggested signal start there; space starts with the free
     // signal list and nothing preselected.
-    _signal = _suggestedSignal();
+    _suggested = _suggestedSignal();
+    _signal = _suggested;
   }
 
   RecoveryReceiptSignal? _suggestedSignal() {
@@ -1002,9 +1264,6 @@ class _RecoveryReceiptSheetState extends State<_RecoveryReceiptSheet> {
     }
     return null;
   }
-
-  bool get _suggestionAvailable =>
-      suggestedSymptomForCare(widget.record) != null;
 
   /// Whether the chosen signal is a pain-kind symptom. Its degree is then
   /// asked through the shared pain card — pain is a severity degree, never
@@ -1042,6 +1301,50 @@ class _RecoveryReceiptSheetState extends State<_RecoveryReceiptSheet> {
         : 'This will be marked as a later recollection — it still counts.';
   }
 
+  void _selectSignal(RecoveryReceiptSignal option) {
+    ExperienceHaptics.pick();
+    setState(() {
+      _signal = option;
+      _error = null;
+      // Changing the main signal can never leave it duplicated in the
+      // additional physical step — nor keep a stale override for it.
+      final main = option.symptom;
+      if (main != null) {
+        _additionalSignals.remove(main);
+        _severityOverrides.remove(main);
+        if (_editingSignal == main) _editingSignal = null;
+      }
+    });
+  }
+
+  void _toggleAdditionalSignal(SymptomType type) {
+    ExperienceHaptics.pick();
+    setState(() {
+      if (_additionalSignals.contains(type)) {
+        _additionalSignals.remove(type);
+        // Removing the signal also removes its override — reverting to
+        // inherit removes the key.
+        _severityOverrides.remove(type);
+        if (_editingSignal == type) _editingSignal = null;
+      } else {
+        _additionalSignals.add(type);
+      }
+    });
+  }
+
+  void _setOverride(SymptomType type, SymptomSeverity degree) {
+    ExperienceHaptics.pick();
+    setState(() {
+      if (_severity != null && degree == _severity) {
+        // Choosing the main severity reverts to inheritance.
+        _severityOverrides.remove(type);
+      } else {
+        _severityOverrides[type] = degree;
+      }
+      _editingSignal = null;
+    });
+  }
+
   Future<void> _save() async {
     final signal = _signal;
     if (signal == null) {
@@ -1075,6 +1378,8 @@ class _RecoveryReceiptSheetState extends State<_RecoveryReceiptSheet> {
           severity: severity,
           functionalImpacts: _impacts,
           additionalPhysicalSignals: _additionalSignals,
+          additionalPhysicalSignalSeverities:
+              Map<SymptomType, SymptomSeverity>.of(_severityOverrides),
         ),
       );
       final result = await widget.saveReceipt(draft);
@@ -1105,236 +1410,431 @@ class _RecoveryReceiptSheetState extends State<_RecoveryReceiptSheet> {
     Navigator.of(context).pop();
   }
 
+  /// Step 1's decision surface. With a contextual suggestion, the sheet
+  /// opens with only that suggestion plus a deliberate 44pt `Change signal`
+  /// action; the full [RecoveryReceiptSignal] list (never the full symptom
+  /// catalog) appears only after it. Without a suggestion — CareMode.space —
+  /// the receipt-signal list is available from the start.
+  Widget _buildSignalChoices() {
+    final suggested = _suggested;
+    if (suggested != null && !_signalListExpanded) {
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: <Widget>[
+          Wrap(
+            spacing: ExperienceSpacing.xs * 2,
+            runSpacing: ExperienceSpacing.xs * 2,
+            children: <Widget>[
+              _CareChoiceChip(
+                label: suggested.label,
+                semanticsLabel: 'Signal: ${suggested.label}',
+                selected: _signal == suggested,
+                onTap: _saving ? null : () => _selectSignal(suggested),
+              ),
+            ],
+          ),
+          Align(
+            alignment: Alignment.centerLeft,
+            child: Semantics(
+              button: true,
+              label: 'Change signal — show every signal for this note',
+              child: TextButton(
+                style: TextButton.styleFrom(
+                  minimumSize: const Size(
+                    ExperienceSpacing.minTouchTarget,
+                    ExperienceSpacing.minTouchTarget,
+                  ),
+                ),
+                onPressed: _saving
+                    ? null
+                    : () => setState(() => _signalListExpanded = true),
+                child: Text(
+                  'Change signal',
+                  style: ExperienceType.label(ExperienceColors.careInk),
+                ),
+              ),
+            ),
+          ),
+        ],
+      );
+    }
+    return Wrap(
+      spacing: ExperienceSpacing.xs * 2,
+      runSpacing: ExperienceSpacing.xs * 2,
+      children: <Widget>[
+        for (final option in RecoveryReceiptSignal.values)
+          _CareChoiceChip(
+            label: option.label,
+            semanticsLabel: 'Signal: ${option.label}',
+            selected: _signal == option,
+            onTap: _saving ? null : () => _selectSignal(option),
+          ),
+      ],
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final signal = _signal;
     final symptom = signal?.symptom;
 
-    return SingleChildScrollView(
-      physics: const ClampingScrollPhysics(),
-      padding: const EdgeInsets.fromLTRB(
-        ExperienceSpacing.screenMargin,
-        0,
-        ExperienceSpacing.screenMargin,
-        ExperienceSpacing.lg,
-      ),
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: <Widget>[
+        // Persistent header: the top exit never scrolls away.
+        Padding(
+          padding: const EdgeInsets.symmetric(
+            horizontal: ExperienceSpacing.screenMargin,
+          ),
+          child: _SheetHeader(
+            title: 'What was this moment?',
+            onNotNow: _saving ? null : _cancel,
+          ),
+        ),
+        const SizedBox(height: ExperienceSpacing.sm),
+        Flexible(
+          child: SingleChildScrollView(
+            physics: const ClampingScrollPhysics(),
+            keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
+            padding: const EdgeInsets.fromLTRB(
+              ExperienceSpacing.screenMargin,
+              0,
+              ExperienceSpacing.screenMargin,
+              ExperienceSpacing.lg,
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: <Widget>[
+                Text(
+                  'Kept light on purpose — a signal, its intensity, and pain '
+                  'only if it was present.',
+                  style: ExperienceType.bodySmall(ExperienceColors.careInkSoft),
+                ),
+                const SizedBox(height: ExperienceSpacing.lg),
+
+                // --- Step 1, signal: the contextual suggestion alone when
+                // the mode maps to one; the full receipt signal list (never
+                // the full catalog) only after a deliberate `Change signal`,
+                // or from the start for space. -----------------------------
+                Text(
+                  'The signal',
+                  style: ExperienceType.bodyStrong(ExperienceColors.careInk),
+                ),
+                if (_suggested != null)
+                  Padding(
+                    padding: const EdgeInsets.only(top: ExperienceSpacing.xs),
+                    child: Text(
+                      'Suggested from this moment — change it if another fits '
+                      'better.',
+                      style: ExperienceType.caption(
+                        ExperienceColors.careInkSoft,
+                      ),
+                    ),
+                  ),
+                const SizedBox(height: ExperienceSpacing.sm),
+                _buildSignalChoices(),
+                const SizedBox(height: ExperienceSpacing.md),
+
+                if (signal == null)
+                  Text(
+                    'Choose a signal above to continue — or “I do not '
+                    'remember” if none fit.',
+                    style: ExperienceType.caption(ExperienceColors.careInkSoft),
+                  )
+                else if (symptom == null)
+                  _GracefulSignalNote(signal: signal, onClose: _cancel)
+                else ...<Widget>[
+                  // --- Step 2, degree: exactly five named degrees, never
+                  // "not at all". For a pain-kind signal the shared pain
+                  // card asks the same question — pain is a severity
+                  // degree, never a score. ---------------------------------
+                  if (_isPainSignal)
+                    DegreeGraphics.painEntry(
+                      severity: _severity,
+                      careWorld: true,
+                      enabled: !_saving,
+                      onSeverityChanged: (degree) {
+                        setState(() {
+                          // Choosing the same degree again removes it —
+                          // absence, never "not at all".
+                          _severity = _severity == degree ? null : degree;
+                          _error = null;
+                        });
+                      },
+                      onCleared: () {
+                        ExperienceHaptics.pick();
+                        setState(() {
+                          _severity = null;
+                          _error = null;
+                        });
+                      },
+                    )
+                  else ...<Widget>[
+                    Text(
+                      'Its intensity',
+                      style: ExperienceType.bodyStrong(
+                        ExperienceColors.careInk,
+                      ),
+                    ),
+                    const SizedBox(height: ExperienceSpacing.sm),
+                    for (final severity in SymptomSeverity.values)
+                      Padding(
+                        padding: const EdgeInsets.only(
+                          bottom: ExperienceSpacing.xs,
+                        ),
+                        child: _SeverityRow(
+                          severity: severity,
+                          selected: _severity == severity,
+                          onTap: _saving
+                              ? null
+                              : () {
+                                  ExperienceHaptics.pick();
+                                  setState(() {
+                                    _severity = severity;
+                                    _error = null;
+                                  });
+                                },
+                        ),
+                      ),
+                  ],
+                  const SizedBox(height: ExperienceSpacing.sm),
+
+                  // --- Step 3, `More`: a deliberate disclosure keeps the
+                  // option wall out of the first viewport. Additional
+                  // physical signals (physical-category-only, deduped
+                  // against main) and what the moment affected live behind
+                  // it. -----------------------------------------------------
+                  _Disclosure(
+                    label: 'Add more — other signals, what it affected',
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: <Widget>[
+                        Text(
+                          'Any other physical signals? (optional)',
+                          style: ExperienceType.bodyStrong(
+                            ExperienceColors.careInk,
+                          ),
+                        ),
+                        const SizedBox(height: ExperienceSpacing.sm),
+                        Wrap(
+                          spacing: ExperienceSpacing.xs * 2,
+                          runSpacing: ExperienceSpacing.xs * 2,
+                          children: <Widget>[
+                            for (final type in _physicalOptions)
+                              _CareChoiceChip(
+                                label: type.label,
+                                semanticsLabel:
+                                    'Additional physical signal: ${type.label}',
+                                selected: _additionalSignals.contains(type),
+                                onTap: _saving
+                                    ? null
+                                    : () => _toggleAdditionalSignal(type),
+                              ),
+                          ],
+                        ),
+                        if (_additionalSignals.isNotEmpty)
+                          Padding(
+                            padding: const EdgeInsets.only(
+                              top: ExperienceSpacing.sm,
+                            ),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.stretch,
+                              children: <Widget>[
+                                for (final type in _additionalSignals)
+                                  _AdditionalSignalRow(
+                                    key: ValueKey<SymptomType>(type),
+                                    signal: type,
+                                    mainSeverity: _severity,
+                                    degreeOverride: _severityOverrides[type],
+                                    editing: _editingSignal == type,
+                                    enabled: !_saving,
+                                    onToggleEdit: () {
+                                      setState(
+                                        () => _editingSignal =
+                                            _editingSignal == type
+                                            ? null
+                                            : type,
+                                      );
+                                    },
+                                    onDegreeChosen: (degree) =>
+                                        _setOverride(type, degree),
+                                  ),
+                              ],
+                            ),
+                          ),
+                        const SizedBox(height: ExperienceSpacing.md),
+                        Text(
+                          'Did it get in the way of anything? (optional)',
+                          style: ExperienceType.bodyStrong(
+                            ExperienceColors.careInk,
+                          ),
+                        ),
+                        const SizedBox(height: ExperienceSpacing.sm),
+                        Wrap(
+                          spacing: ExperienceSpacing.xs * 2,
+                          runSpacing: ExperienceSpacing.xs * 2,
+                          children: <Widget>[
+                            for (final impact in FunctionalImpact.values)
+                              _CareChoiceChip(
+                                label: impact.label,
+                                semanticsLabel:
+                                    'Functional impact: ${impact.label}',
+                                selected: _impacts.contains(impact),
+                                onTap: _saving
+                                    ? null
+                                    : () {
+                                        ExperienceHaptics.pick();
+                                        setState(() {
+                                          if (_impacts.contains(impact)) {
+                                            _impacts.remove(impact);
+                                          } else {
+                                            _impacts.add(impact);
+                                          }
+                                        });
+                                      },
+                              ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: ExperienceSpacing.md),
+
+                  // Provenance is shown honestly before save — and echoed
+                  // after.
+                  Text(
+                    _provenanceHint,
+                    style: ExperienceType.caption(ExperienceColors.careInkSoft),
+                  ),
+                  if (_error != null)
+                    Padding(
+                      padding: const EdgeInsets.only(top: ExperienceSpacing.sm),
+                      child: Semantics(
+                        liveRegion: true,
+                        child: Text(
+                          _error!,
+                          style: ExperienceType.caption(ExperienceColors.error),
+                        ),
+                      ),
+                    ),
+                  const SizedBox(height: ExperienceSpacing.md),
+                  _EmberAction(
+                    label: _saving ? 'Saving…' : 'Save health note',
+                    // Severity is part of the health claim, not an optional
+                    // embellishment. Keep the action visually quiet and
+                    // inert until the person has named it.
+                    onPressed: _saving || _severity == null ? null : _save,
+                  ),
+                  _QuietExitRow(
+                    label: 'Cancel — discard this note',
+                    onPressed: _saving ? null : _cancel,
+                  ),
+                ],
+              ],
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+/// One additional physical signal with its inheritance line and `Change`
+/// action. Additional signals inherit the main severity unless the person
+/// deliberately overrides the degree; the override is written through
+/// `additionalPhysicalSignalSeverities`, and reverting to the main degree
+/// removes the key.
+class _AdditionalSignalRow extends StatelessWidget {
+  const _AdditionalSignalRow({
+    super.key,
+    required this.signal,
+    required this.mainSeverity,
+    required this.degreeOverride,
+    required this.editing,
+    required this.enabled,
+    required this.onToggleEdit,
+    required this.onDegreeChosen,
+  });
+
+  final SymptomType signal;
+  final SymptomSeverity? mainSeverity;
+  final SymptomSeverity? degreeOverride;
+  final bool editing;
+  final bool enabled;
+  final VoidCallback onToggleEdit;
+  final ValueChanged<SymptomSeverity> onDegreeChosen;
+
+  @override
+  Widget build(BuildContext context) {
+    final override = degreeOverride;
+    final main = mainSeverity;
+    final inheritance = override != null
+        ? 'Its own degree: ${override.label}'
+        : main != null
+        ? 'Same as main: ${main.label}'
+        : 'Inherits the main intensity';
+    return Padding(
+      padding: const EdgeInsets.only(top: ExperienceSpacing.xs),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: <Widget>[
-          Semantics(
-            header: true,
-            child: Text(
-              'What was this moment?',
-              style: ExperienceType.title(ExperienceColors.careInk),
-            ),
-          ),
-          const SizedBox(height: ExperienceSpacing.xs),
           Text(
-            'Kept light on purpose — a signal, its intensity, and pain only '
-            'if it was present.',
-            style: ExperienceType.bodySmall(ExperienceColors.careInkSoft),
+            signal.label,
+            style: ExperienceType.label(ExperienceColors.careInk),
           ),
-          const SizedBox(height: ExperienceSpacing.lg),
-
-          // --- Signal: suggested for mapped modes, the receipt signal list
-          // (never the full catalog) for space and for changing. -----------
-          Text(
-            'The signal',
-            style: ExperienceType.bodyStrong(ExperienceColors.careInk),
+          Row(
+            children: <Widget>[
+              Expanded(
+                child: Text(
+                  inheritance,
+                  style: ExperienceType.caption(ExperienceColors.careInkSoft),
+                ),
+              ),
+              Semantics(
+                button: true,
+                label: 'Change the degree for ${signal.label}',
+                child: TextButton(
+                  style: TextButton.styleFrom(
+                    minimumSize: const Size(
+                      ExperienceSpacing.minTouchTarget,
+                      ExperienceSpacing.minTouchTarget,
+                    ),
+                  ),
+                  onPressed: enabled ? onToggleEdit : null,
+                  child: Text(
+                    editing ? 'Done' : 'Change',
+                    style: ExperienceType.label(ExperienceColors.careInk),
+                  ),
+                ),
+              ),
+            ],
           ),
-          if (_suggestionAvailable)
+          if (editing)
             Padding(
               padding: const EdgeInsets.only(top: ExperienceSpacing.xs),
-              child: Text(
-                'Suggested from this moment — change it if another fits '
-                'better.',
-                style: ExperienceType.caption(ExperienceColors.careInkSoft),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: <Widget>[
+                  for (final severity in SymptomSeverity.values)
+                    Padding(
+                      padding: const EdgeInsets.only(
+                        bottom: ExperienceSpacing.xs,
+                      ),
+                      child: _SeverityRow(
+                        severity: severity,
+                        selected: (override ?? main) == severity,
+                        onTap: () => onDegreeChosen(severity),
+                      ),
+                    ),
+                  Text(
+                    'Choosing the main degree returns this signal to '
+                    'inheriting it.',
+                    style: ExperienceType.caption(ExperienceColors.careInkSoft),
+                  ),
+                ],
               ),
             ),
-          const SizedBox(height: ExperienceSpacing.sm),
-          Wrap(
-            spacing: ExperienceSpacing.xs * 2,
-            runSpacing: ExperienceSpacing.xs * 2,
-            children: <Widget>[
-              for (final option in RecoveryReceiptSignal.values)
-                _CareChoiceChip(
-                  label: option.label,
-                  semanticsLabel: 'Signal: ${option.label}',
-                  selected: _signal == option,
-                  onTap: _saving
-                      ? null
-                      : () {
-                          ExperienceHaptics.pick();
-                          setState(() {
-                            _signal = option;
-                            _error = null;
-                            if (option.symptom != _signal?.symptom) {
-                              _additionalSignals.remove(option.symptom);
-                            }
-                          });
-                          // Changing the main signal can never leave it
-                          // duplicated in the additional physical step.
-                          final main = option.symptom;
-                          if (main != null &&
-                              _additionalSignals.contains(main)) {
-                            setState(() => _additionalSignals.remove(main));
-                          }
-                        },
-                ),
-            ],
-          ),
-          const SizedBox(height: ExperienceSpacing.md),
-
-          if (signal == null)
-            Text(
-              'Choose a signal above to continue — or “I do not remember” if '
-              'none fit.',
-              style: ExperienceType.caption(ExperienceColors.careInkSoft),
-            )
-          else if (symptom == null)
-            _GracefulSignalNote(signal: signal, onClose: _cancel)
-          else ...<Widget>[
-            // --- Degree: exactly five named degrees, never "not at all".
-            // For a pain-kind signal the shared pain card asks the same
-            // question — pain is a severity degree, never a score. ------
-            if (_isPainSignal)
-              DegreeGraphics.painEntry(
-                severity: _severity,
-                careWorld: true,
-                enabled: !_saving,
-                onSeverityChanged: (degree) {
-                  setState(() {
-                    // Choosing the same degree again removes it —
-                    // absence, never "not at all".
-                    _severity = _severity == degree ? null : degree;
-                    _error = null;
-                  });
-                },
-                onCleared: () {
-                  ExperienceHaptics.pick();
-                  setState(() {
-                    _severity = null;
-                    _error = null;
-                  });
-                },
-              )
-            else ...<Widget>[
-              Text(
-                'Its intensity',
-                style: ExperienceType.bodyStrong(ExperienceColors.careInk),
-              ),
-              const SizedBox(height: ExperienceSpacing.sm),
-              for (final severity in SymptomSeverity.values)
-                Padding(
-                  padding: const EdgeInsets.only(bottom: ExperienceSpacing.xs),
-                  child: _SeverityRow(
-                    severity: severity,
-                    selected: _severity == severity,
-                    onTap: _saving
-                        ? null
-                        : () {
-                            ExperienceHaptics.pick();
-                            setState(() {
-                              _severity = severity;
-                              _error = null;
-                            });
-                          },
-                  ),
-                ),
-            ],
-            const SizedBox(height: ExperienceSpacing.sm),
-
-            // --- Optional additional physical signals (physical only). ---
-            Text(
-              'Any other physical signals? (optional)',
-              style: ExperienceType.bodyStrong(ExperienceColors.careInk),
-            ),
-            const SizedBox(height: ExperienceSpacing.sm),
-            Wrap(
-              spacing: ExperienceSpacing.xs * 2,
-              runSpacing: ExperienceSpacing.xs * 2,
-              children: <Widget>[
-                for (final type in _physicalOptions)
-                  _CareChoiceChip(
-                    label: type.label,
-                    semanticsLabel: 'Additional physical signal: ${type.label}',
-                    selected: _additionalSignals.contains(type),
-                    onTap: _saving
-                        ? null
-                        : () {
-                            ExperienceHaptics.pick();
-                            setState(() {
-                              if (_additionalSignals.contains(type)) {
-                                _additionalSignals.remove(type);
-                              } else {
-                                _additionalSignals.add(type);
-                              }
-                            });
-                          },
-                  ),
-              ],
-            ),
-            const SizedBox(height: ExperienceSpacing.md),
-
-            // --- Functional impact, optional. ----------------------------
-            Text(
-              'Did it get in the way of anything? (optional)',
-              style: ExperienceType.bodyStrong(ExperienceColors.careInk),
-            ),
-            const SizedBox(height: ExperienceSpacing.sm),
-            Wrap(
-              spacing: ExperienceSpacing.xs * 2,
-              runSpacing: ExperienceSpacing.xs * 2,
-              children: <Widget>[
-                for (final impact in FunctionalImpact.values)
-                  _CareChoiceChip(
-                    label: impact.label,
-                    semanticsLabel: 'Functional impact: ${impact.label}',
-                    selected: _impacts.contains(impact),
-                    onTap: _saving
-                        ? null
-                        : () {
-                            ExperienceHaptics.pick();
-                            setState(() {
-                              if (_impacts.contains(impact)) {
-                                _impacts.remove(impact);
-                              } else {
-                                _impacts.add(impact);
-                              }
-                            });
-                          },
-                  ),
-              ],
-            ),
-            const SizedBox(height: ExperienceSpacing.md),
-            Text(
-              _provenanceHint,
-              style: ExperienceType.caption(ExperienceColors.careInkSoft),
-            ),
-            if (_error != null)
-              Padding(
-                padding: const EdgeInsets.only(top: ExperienceSpacing.sm),
-                child: Semantics(
-                  liveRegion: true,
-                  child: Text(
-                    _error!,
-                    style: ExperienceType.caption(ExperienceColors.emberSoft),
-                  ),
-                ),
-              ),
-            const SizedBox(height: ExperienceSpacing.md),
-            _EmberAction(
-              label: _saving ? 'Saving…' : 'Save health note',
-              onPressed: _saving ? null : _save,
-            ),
-            TextButton(
-              onPressed: _saving ? null : _cancel,
-              child: Text(
-                'Cancel — discard this note',
-                style: ExperienceType.caption(ExperienceColors.careInkSoft),
-              ),
-            ),
-          ],
         ],
       ),
     );
@@ -1375,12 +1875,11 @@ class _GracefulSignalNote extends StatelessWidget {
             textAlign: TextAlign.center,
           ),
           const SizedBox(height: ExperienceSpacing.sm),
-          TextButton(
+          _QuietExitRow(
+            label: 'Close — nothing more to add',
+            strong: true,
+            color: ExperienceColors.careInk,
             onPressed: onClose,
-            child: Text(
-              'Close — nothing more to add',
-              style: ExperienceType.label(ExperienceColors.emberSoft),
-            ),
           ),
         ],
       ),
@@ -1410,7 +1909,7 @@ class _SeverityRow extends StatelessWidget {
         onTap: onTap,
         borderRadius: ExperienceRadius.chipRadius,
         child: AnimatedContainer(
-          duration: ExperienceMotion.chipSelect,
+          duration: _selectionDuration(context),
           constraints: const BoxConstraints(
             minHeight: ExperienceSpacing.degreeTarget,
           ),
@@ -1449,6 +1948,7 @@ class _CareChoiceChip extends StatelessWidget {
     required this.semanticsLabel,
     required this.selected,
     required this.onTap,
+    this.onPaper = false,
   });
 
   final String label;
@@ -1456,8 +1956,28 @@ class _CareChoiceChip extends StatelessWidget {
   final bool selected;
   final VoidCallback? onTap;
 
+  /// Paper-material variant for the Letter Desk need chips: paper fill,
+  /// paper hairline, ember selection border, paper ink label.
+  final bool onPaper;
+
   @override
   Widget build(BuildContext context) {
+    final Color fill;
+    final Color border;
+    final Color text;
+    if (onPaper) {
+      fill = selected
+          ? ExperienceColors.emberSoft.withValues(alpha: 0.16)
+          : ExperiencePaper.surface;
+      border = selected ? ExperienceColors.ember : ExperiencePaper.hairline;
+      text = ExperiencePaper.ink;
+    } else {
+      fill = selected ? const Color(0x29FFFFFF) : ExperienceColors.careGlass;
+      border = selected
+          ? ExperienceColors.emberSoft
+          : ExperienceColors.careGlassBorder;
+      text = ExperienceColors.careInk;
+    }
     return Semantics(
       button: true,
       enabled: onTap != null,
@@ -1467,27 +1987,17 @@ class _CareChoiceChip extends StatelessWidget {
         onTap: onTap,
         borderRadius: ExperienceRadius.chipRadius,
         child: AnimatedContainer(
-          duration: ExperienceMotion.chipSelect,
+          duration: _selectionDuration(context),
           constraints: const BoxConstraints(
             minHeight: ExperienceSpacing.minTouchTarget,
           ),
           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
           decoration: BoxDecoration(
-            color: selected
-                ? const Color(0x29FFFFFF)
-                : ExperienceColors.careGlass,
+            color: fill,
             borderRadius: ExperienceRadius.chipRadius,
-            border: Border.all(
-              color: selected
-                  ? ExperienceColors.emberSoft
-                  : ExperienceColors.careGlassBorder,
-              width: selected ? 1.5 : 1,
-            ),
+            border: Border.all(color: border, width: selected ? 1.5 : 1),
           ),
-          child: Text(
-            label,
-            style: ExperienceType.label(ExperienceColors.careInk),
-          ),
+          child: Text(label, style: ExperienceType.label(text)),
         ),
       ),
     );
@@ -1495,7 +2005,13 @@ class _CareChoiceChip extends StatelessWidget {
 }
 
 // ---------------------------------------------------------------------------
-// Reflection sheet — a few words for future you, 280 characters per field.
+// Reflection sheet — the Letter Desk: one coherent paper inset ringed by
+// dusk. One inviting writing action opens it; `Add another thought`
+// progressively discloses the rest. Writing has no character counter or
+// artificial brevity constraint. The header (serif title + persistent 44pt
+// "Not now") is pinned outside the scrolling
+// body, so the exit stays reachable when the keyboard covers the bottom
+// actions.
 // ---------------------------------------------------------------------------
 
 class _ReflectionSheet extends StatefulWidget {
@@ -1558,8 +2074,8 @@ class _ReflectionSheetState extends State<_ReflectionSheet> {
       if (!mounted) return;
       Navigator.of(context).pop(true);
     } on CareMemoryException catch (error) {
-      // Verbatim, ready-made copy: the 280-character limit and the
-      // one-thought minimum speak in the repository's own words.
+      // Ready-made validation copy from the repository keeps storage errors
+      // and the one-thought minimum consistent.
       setState(() => _error = error.userMessage);
     } catch (_) {
       setState(
@@ -1574,7 +2090,15 @@ class _ReflectionSheetState extends State<_ReflectionSheet> {
     }
   }
 
-  Widget _field({
+  void _leave() {
+    // Both exits keep the draft: the controllers live on the landing, so an
+    // interrupted sheet keeps its words while this check-back is open.
+    Navigator.of(context).pop(false);
+  }
+
+  /// One writing surface on the desk: paper fill, paper ink text, a
+  /// readable hint and counter in paper soft ink, and an ember focus border.
+  Widget _paperField({
     required String label,
     required TextEditingController controller,
     required String hint,
@@ -1582,56 +2106,43 @@ class _ReflectionSheetState extends State<_ReflectionSheet> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: <Widget>[
-        Text(label, style: ExperienceType.bodyStrong(ExperienceColors.careInk)),
-        const SizedBox(height: ExperienceSpacing.xs),
-        TextField(
-          controller: controller,
-          enabled: !_saving,
-          maxLength: careMemoryTextMaximumCharacters,
-          maxLines: 3,
-          minLines: 1,
-          style: ExperienceType.body(ExperienceColors.careInk),
-          cursorColor: ExperienceColors.emberSoft,
-          decoration: InputDecoration(
-            hintText: hint,
-            hintStyle: ExperienceType.bodySmall(ExperienceColors.careInkFaint),
-            filled: true,
-            fillColor: ExperienceColors.careGlass,
-            contentPadding: const EdgeInsets.all(ExperienceSpacing.sm),
-            border: OutlineInputBorder(
-              borderRadius: ExperienceRadius.chipRadius,
-              borderSide: const BorderSide(
-                color: ExperienceColors.careGlassBorder,
-              ),
-            ),
-            enabledBorder: OutlineInputBorder(
-              borderRadius: ExperienceRadius.chipRadius,
-              borderSide: const BorderSide(
-                color: ExperienceColors.careGlassBorder,
-              ),
-            ),
-            focusedBorder: OutlineInputBorder(
-              borderRadius: ExperienceRadius.chipRadius,
-              borderSide: const BorderSide(color: ExperienceColors.emberSoft),
-            ),
-            counterStyle: ExperienceType.caption(ExperienceColors.careInkFaint),
+        ExcludeSemantics(
+          child: Text(
+            label,
+            style: ExperienceType.bodyStrong(ExperiencePaper.ink),
           ),
-          buildCounter:
-              (
-                context, {
-                required currentLength,
-                required isFocused,
-                maxLength,
-              }) {
-                return Text(
-                  '$currentLength / $maxLength',
-                  style: ExperienceType.data(
-                    ExperienceColors.careInkFaint,
-                    size: 12,
-                    weight: FontWeight.w400,
-                  ),
-                );
-              },
+        ),
+        const SizedBox(height: ExperienceSpacing.xs),
+        Semantics(
+          label: label,
+          textField: true,
+          child: TextField(
+            controller: controller,
+            enabled: !_saving,
+            maxLines: 8,
+            minLines: 4,
+            style: ExperienceType.body(ExperiencePaper.ink),
+            cursorColor: ExperienceColors.ember,
+            decoration: InputDecoration(
+              hintText: hint,
+              hintStyle: ExperienceType.bodySmall(ExperiencePaper.inkSoft),
+              filled: true,
+              fillColor: ExperiencePaper.surface,
+              contentPadding: const EdgeInsets.all(ExperienceSpacing.sm),
+              border: OutlineInputBorder(
+                borderRadius: ExperienceRadius.chipRadius,
+                borderSide: const BorderSide(color: ExperiencePaper.hairline),
+              ),
+              enabledBorder: OutlineInputBorder(
+                borderRadius: ExperienceRadius.chipRadius,
+                borderSide: const BorderSide(color: ExperiencePaper.hairline),
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: ExperienceRadius.chipRadius,
+                borderSide: const BorderSide(color: ExperienceColors.ember),
+              ),
+            ),
+          ),
         ),
       ],
     );
@@ -1639,97 +2150,158 @@ class _ReflectionSheetState extends State<_ReflectionSheet> {
 
   @override
   Widget build(BuildContext context) {
-    return SingleChildScrollView(
-      physics: const ClampingScrollPhysics(),
-      padding: const EdgeInsets.fromLTRB(
-        ExperienceSpacing.screenMargin,
-        0,
-        ExperienceSpacing.screenMargin,
-        ExperienceSpacing.lg,
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: <Widget>[
-          Semantics(
-            header: true,
-            child: Text(
-              'A few words for future you',
-              style: ExperienceType.title(ExperienceColors.careInk),
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: <Widget>[
+        // The desk header stays pinned on the dusk ring — its "Not now" is
+        // the guaranteed exit when the keyboard covers the bottom actions.
+        Padding(
+          padding: const EdgeInsets.symmetric(
+            horizontal: ExperienceSpacing.screenMargin,
+          ),
+          child: _SheetHeader(
+            title: 'A few words for future you',
+            serifTitle: true,
+            onNotNow: _saving ? null : _leave,
+          ),
+        ),
+        const SizedBox(height: ExperienceSpacing.sm),
+        Flexible(
+          child: SingleChildScrollView(
+            physics: const ClampingScrollPhysics(),
+            keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
+            padding: const EdgeInsets.fromLTRB(
+              ExperienceSpacing.screenMargin,
+              0,
+              ExperienceSpacing.screenMargin,
+              ExperienceSpacing.lg,
             ),
-          ),
-          const SizedBox(height: ExperienceSpacing.xs),
-          Text(
-            'One thought is enough. Up to 280 characters each.',
-            style: ExperienceType.bodySmall(ExperienceColors.careInkSoft),
-          ),
-          const SizedBox(height: ExperienceSpacing.lg),
-          _field(
-            label: 'What was this moment like?',
-            controller: widget.observationController,
-            hint: 'As honest or as brief as you like.',
-          ),
-          const SizedBox(height: ExperienceSpacing.sm),
-          Text(
-            'What did this moment need?',
-            style: ExperienceType.bodyStrong(ExperienceColors.careInk),
-          ),
-          const SizedBox(height: ExperienceSpacing.sm),
-          Wrap(
-            spacing: ExperienceSpacing.xs * 2,
-            runSpacing: ExperienceSpacing.xs * 2,
-            children: <Widget>[
-              for (final need in ReflectionNeed.values)
-                _CareChoiceChip(
-                  label: _needLabel(need),
-                  semanticsLabel: 'Need: ${_needLabel(need)}',
-                  selected: _need == need,
-                  onTap: _saving
-                      ? null
-                      : () {
-                          ExperienceHaptics.pick();
-                          setState(() => _need = _need == need ? null : need);
-                          widget.onNeedChanged(_need);
-                        },
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: <Widget>[
+                // The Letter Desk: one coherent paper material holding every
+                // field, chip, counter, and the save action — paper you
+                // hold, ringed by the dusk you live in.
+                Container(
+                  decoration: BoxDecoration(
+                    color: ExperiencePaper.canvas,
+                    borderRadius: ExperienceRadius.cardRadius,
+                    border: Border.all(color: ExperiencePaper.hairline),
+                    boxShadow: ExperienceShadows.card,
+                  ),
+                  padding: const EdgeInsets.all(ExperienceSpacing.md),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: <Widget>[
+                      Text(
+                        'Write as much as you need. It stays on this device.',
+                        style: ExperienceType.bodySmall(
+                          ExperiencePaper.inkSoft,
+                        ),
+                      ),
+                      const SizedBox(height: ExperienceSpacing.md),
+                      _paperField(
+                        label: 'What was this moment like?',
+                        controller: widget.observationController,
+                        hint: 'Say what you need to say.',
+                      ),
+                      if (_error != null)
+                        Padding(
+                          padding: const EdgeInsets.only(
+                            top: ExperienceSpacing.sm,
+                          ),
+                          child: Semantics(
+                            liveRegion: true,
+                            child: Text(
+                              _error!,
+                              style: ExperienceType.caption(
+                                ExperiencePaper.error,
+                              ),
+                            ),
+                          ),
+                        ),
+                      const SizedBox(height: ExperienceSpacing.md),
+                      // Save is available from the opening state — one
+                      // thought is enough.
+                      _EmberAction(
+                        label: _saving ? 'Saving…' : 'Keep this reflection',
+                        onPressed: _saving ? null : _save,
+                      ),
+                      const SizedBox(height: ExperienceSpacing.sm),
+                      _Disclosure(
+                        label: 'Add another thought',
+                        onPaper: true,
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: <Widget>[
+                            Text(
+                              'What did this moment need?',
+                              style: ExperienceType.bodyStrong(
+                                ExperiencePaper.ink,
+                              ),
+                            ),
+                            const SizedBox(height: ExperienceSpacing.sm),
+                            Wrap(
+                              spacing: ExperienceSpacing.xs * 2,
+                              runSpacing: ExperienceSpacing.xs * 2,
+                              children: <Widget>[
+                                for (final need in ReflectionNeed.values)
+                                  _CareChoiceChip(
+                                    label: _needLabel(need),
+                                    semanticsLabel: 'Need: ${_needLabel(need)}',
+                                    selected: _need == need,
+                                    onPaper: true,
+                                    onTap: _saving
+                                        ? null
+                                        : () {
+                                            ExperienceHaptics.pick();
+                                            setState(
+                                              () => _need = _need == need
+                                                  ? null
+                                                  : need,
+                                            );
+                                            widget.onNeedChanged(_need);
+                                          },
+                                  ),
+                              ],
+                            ),
+                            const SizedBox(height: ExperienceSpacing.md),
+                            _paperField(
+                              label: 'What helped, even a little?',
+                              controller: widget.whatHelpedController,
+                              hint: 'Warmth, quiet, a message sent…',
+                            ),
+                            const SizedBox(height: ExperienceSpacing.sm),
+                            _paperField(
+                              label: 'A note to future you',
+                              controller: widget.futureSelfController,
+                              hint:
+                                  'Something the next hard moment should '
+                                  'hear.',
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: ExperienceSpacing.sm),
+                      Text(
+                        'Your draft stays here while this check-back is open.',
+                        style: ExperienceType.caption(ExperiencePaper.inkSoft),
+                        textAlign: TextAlign.center,
+                      ),
+                    ],
+                  ),
                 ),
-            ],
-          ),
-          const SizedBox(height: ExperienceSpacing.md),
-          _field(
-            label: 'What helped, even a little?',
-            controller: widget.whatHelpedController,
-            hint: 'Warmth, quiet, a message sent…',
-          ),
-          const SizedBox(height: ExperienceSpacing.sm),
-          _field(
-            label: 'A note to future you',
-            controller: widget.futureSelfController,
-            hint: 'Something the next hard moment should hear.',
-          ),
-          if (_error != null)
-            Padding(
-              padding: const EdgeInsets.only(top: ExperienceSpacing.sm),
-              child: Semantics(
-                liveRegion: true,
-                child: Text(
-                  _error!,
-                  style: ExperienceType.caption(ExperienceColors.emberSoft),
+                const SizedBox(height: ExperienceSpacing.sm),
+                _QuietExitRow(
+                  label: 'Not now — keep my draft',
+                  onPressed: _saving ? null : _leave,
                 ),
-              ),
-            ),
-          const SizedBox(height: ExperienceSpacing.md),
-          _EmberAction(
-            label: _saving ? 'Saving…' : 'Keep this reflection',
-            onPressed: _saving ? null : _save,
-          ),
-          TextButton(
-            onPressed: _saving ? null : () => Navigator.of(context).pop(false),
-            child: Text(
-              'Not now — keep my draft',
-              style: ExperienceType.caption(ExperienceColors.careInkSoft),
+              ],
             ),
           ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 }

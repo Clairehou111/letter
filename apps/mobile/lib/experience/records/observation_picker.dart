@@ -59,7 +59,10 @@ final class ObservationPicker extends StatefulWidget {
 
   /// Persists a validated draft. Throwing [HealthRecordException] surfaces
   /// its `userMessage` inline.
-  final Future<void> Function(HealthRecordDraft draft)? onSave;
+  /// Persists and returns the stable record identity. Returning the saved
+  /// record keeps edit and delete affordances consistent for observations
+  /// added while this sheet is still open.
+  final Future<HealthRecord> Function(HealthRecordDraft draft)? onSave;
 
   /// Removes a persisted record when the user deselects it (absence).
   final Future<void> Function(HealthRecord record)? onDelete;
@@ -98,7 +101,7 @@ final class ObservationPicker extends StatefulWidget {
     required LocalDate experiencedDate,
     required HealthRecordProvenance provenance,
     List<HealthRecord> existingRecords = const <HealthRecord>[],
-    Future<void> Function(HealthRecordDraft draft)? onSave,
+    Future<HealthRecord> Function(HealthRecordDraft draft)? onSave,
     Future<void> Function(HealthRecord record)? onDelete,
     Future<void> Function(SymptomType symptom)? onWithdraw,
     ValueChanged<HealthRecord>? onEditImpacts,
@@ -169,6 +172,10 @@ class _ObservationPickerState extends State<ObservationPicker> {
   final Map<String, HealthRecordDraft> _sessionDrafts =
       <String, HealthRecordDraft>{};
 
+  /// Stable records returned by persistence during this open session.
+  final Map<SymptomType, HealthRecord> _sessionRecords =
+      <SymptomType, HealthRecord>{};
+
   /// Records removed while this picker is open. Some callers provide a
   /// snapshot of [ObservationPicker.existingRecords], so successful removals
   /// must be reflected locally until the sheet closes.
@@ -217,6 +224,8 @@ class _ObservationPickerState extends State<ObservationPicker> {
 
   HealthRecord? _recordFor(SymptomType symptom) {
     if (_sessionRemoved.contains(symptom)) return null;
+    final sessionRecord = _sessionRecords[symptom];
+    if (sessionRecord != null) return sessionRecord;
     for (final record in widget.existingRecords) {
       if (record.symptom == symptom) return record;
     }
@@ -279,12 +288,13 @@ class _ObservationPickerState extends State<ObservationPicker> {
       _errorLine = null;
     });
     try {
-      await widget.onSave?.call(draft);
+      final saved = await widget.onSave?.call(draft);
       if (!mounted) return;
       setState(() {
         _saving = false;
         _sessionRemoved.remove(definition.symptom);
         _sessionDrafts[definition.id] = draft;
+        if (saved != null) _sessionRecords[definition.symptom] = saved;
         _workingSeverity = draft.severity;
       });
       final line = await SavedRhythm.acknowledge(SavedRhythmKind.record);
@@ -338,6 +348,7 @@ class _ObservationPickerState extends State<ObservationPicker> {
         setState(() {
           _sessionRemoved.add(definition.symptom);
           _sessionDrafts.remove(definition.id);
+          _sessionRecords.remove(definition.symptom);
           _ackLine = 'Removed from this record.';
         });
       } else if (_sessionDrafts.containsKey(definition.id) &&
@@ -347,6 +358,7 @@ class _ObservationPickerState extends State<ObservationPicker> {
         setState(() {
           _sessionRemoved.add(definition.symptom);
           _sessionDrafts.remove(definition.id);
+          _sessionRecords.remove(definition.symptom);
           _ackLine = 'Removed from this record.';
         });
       }
@@ -512,7 +524,9 @@ class _ObservationPickerState extends State<ObservationPicker> {
             for (final definition in _quickPicks) _buildSymptomChip(definition),
           ],
         ),
-        if (_activeId != null) _buildActiveDetail(),
+        if (_activeId != null &&
+            _quickPicks.any((definition) => definition.id == _activeId))
+          _buildActiveDetail(),
       ],
     );
   }
@@ -743,12 +757,14 @@ class _ObservationPickerState extends State<ObservationPicker> {
   Widget _buildSessionHistoryRow(String definitionId, HealthRecordDraft draft) {
     final definition = _definitionFor(definitionId);
     if (definition == null) return const SizedBox.shrink();
+    final record = _sessionRecords[definition.symptom];
     return _buildHistoryEntry(
       definition: definition,
       severity: draft.severity,
       impactLabels: draft.functionalImpacts
           .map((impact) => impact.label)
           .toList(growable: false),
+      record: record,
     );
   }
 

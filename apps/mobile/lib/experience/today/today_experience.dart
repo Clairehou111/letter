@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../features/capture/domain/capture_models.dart';
 import '../../features/check_in/domain/moment_check_in_repository.dart';
+import '../../features/comfort_kit/application/comfort_experience_controller.dart';
 import '../../features/cycle/domain/local_date.dart';
 import '../../features/cycle/domain/period_repository.dart';
 import '../../features/health_records/domain/health_record_repository.dart';
@@ -23,6 +24,7 @@ class TodayExperience extends StatelessWidget {
     required this.checkInRepository,
     required this.healthRecordRepository,
     required this.captureNoteStore,
+    this.comfortExperienceController,
     required this.today,
     required this.onOpenCare,
     required this.onOpenCycleDayEditor,
@@ -39,6 +41,7 @@ class TodayExperience extends StatelessWidget {
   final MomentCheckInRepository checkInRepository;
   final HealthRecordRepository healthRecordRepository;
   final CaptureNoteStore captureNoteStore;
+  final ComfortExperienceController? comfortExperienceController;
   final LocalDate Function() today;
   final DateTime Function()? now;
   final VoidCallback onOpenCare;
@@ -54,6 +57,7 @@ class TodayExperience extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final comfortController = comfortExperienceController;
     return TodayExperienceVisual(
       revision: revision,
       port: RepositoryTodayVisualPort(
@@ -82,6 +86,14 @@ class TodayExperience extends StatelessWidget {
             _ => null,
           };
         },
+        loadComfortExperience: comfortController?.load,
+        saveComfortReminderPreference: comfortController == null
+            ? null
+            : ({required bool enabled, required int leadDays}) =>
+                  comfortController.saveReminder(
+                    enabled: enabled,
+                    leadDays: leadDays,
+                  ),
       ),
     );
   }

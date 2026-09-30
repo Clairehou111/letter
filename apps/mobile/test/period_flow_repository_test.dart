@@ -222,4 +222,55 @@ void main() {
     expect(reflection.startingPeriodId, period.id);
     expect(reflection.cycleStartDay, const LocalDate(2026, 8, 1).epochDay);
   });
+
+  test(
+    'Drift date edit keeps the cycle reflection aligned by stable id',
+    () async {
+      final database = LetterHealthDatabase(NativeDatabase.memory());
+      addTearDown(database.close);
+      final repository = DriftPeriodRepository(
+        database,
+        clock: () => DateTime.utc(2026, 8, 8, 12),
+        idGenerator: () => 'period-stable',
+        closeDatabase: false,
+      );
+      final period = await repository.create(
+        const PeriodDraft(
+          startDate: LocalDate(2026, 8, 3),
+          endDate: LocalDate(2026, 8, 5),
+        ),
+        today: today,
+      );
+      await database
+          .into(database.cycleReflectionRows)
+          .insert(
+            CycleReflectionRowsCompanion.insert(
+              id: 'reflection',
+              startingPeriodId: Value(period.id),
+              cycleStartDay: const LocalDate(2026, 8, 3).epochDay,
+              createdAtMillis: 1,
+              updatedAtMillis: 1,
+            ),
+          );
+
+      final edited = await repository.update(
+        period.id,
+        const PeriodDraft(
+          startDate: LocalDate(2026, 8, 4),
+          endDate: LocalDate(2026, 8, 6),
+        ),
+        today: today,
+      );
+
+      expect(edited.id, period.id);
+      final reflection =
+          (await database.select(database.cycleReflectionRows).get()).single;
+      expect(reflection.startingPeriodId, period.id);
+      expect(reflection.cycleStartDay, const LocalDate(2026, 8, 4).epochDay);
+      expect(
+        reflection.updatedAtMillis,
+        DateTime.utc(2026, 8, 8, 12).millisecondsSinceEpoch,
+      );
+    },
+  );
 }

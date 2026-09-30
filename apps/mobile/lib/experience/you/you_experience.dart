@@ -1,8 +1,12 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 
 import '../../features/auth/domain/auth_service.dart';
+import '../../features/comfort_kit/application/comfort_experience_controller.dart';
 import '../../features/local_backup/domain/local_backup_models.dart';
 import '../../features/privacy/domain/privacy_preferences.dart';
+import '../comfort/comfort_reminder_sheet.dart';
 import '../experience_release_ports.dart';
 import '../theme/experience_foundation.dart';
 
@@ -14,6 +18,8 @@ class YouExperience extends StatefulWidget {
     this.onOpenPlus,
     this.onOpenReports,
     this.onCycleDataChanged,
+    this.loadComfortExperience,
+    this.saveComfortReminder,
     this.now,
   });
 
@@ -35,6 +41,15 @@ class YouExperience extends StatefulWidget {
   /// coherently across destinations.
   final VoidCallback? onCycleDataChanged;
 
+  /// Optional because isolated previews can render Settings without the
+  /// health-store graph. Production supplies both callbacks together.
+  final Future<ComfortExperienceSnapshot> Function()? loadComfortExperience;
+  final Future<ComfortExperienceSnapshot> Function({
+    required bool enabled,
+    required int leadDays,
+  })?
+  saveComfortReminder;
+
   /// Clock seam for the header date (tests).
   final DateTime Function()? now;
 
@@ -44,7 +59,14 @@ class YouExperience extends StatefulWidget {
 
 class _YouExperienceState extends State<YouExperience> {
   late PrivacyPreferences _privacy = widget.port.privacy;
+  late final TextEditingController _careCompanionNameController;
   String? _privacyError;
+  String? _careCompanionNameError;
+  bool _savingCareCompanionName = false;
+  ComfortExperienceSnapshot? _comfort;
+  bool _comfortLoading = false;
+  bool _comfortSaving = false;
+  String? _comfortError;
 
   static const List<String> _weekdays = <String>[
     'Mon',
@@ -72,6 +94,24 @@ class _YouExperienceState extends State<YouExperience> {
 
   DateTime _today() => (widget.now ?? DateTime.now)();
 
+  @override
+  void initState() {
+    super.initState();
+    _careCompanionNameController = TextEditingController(
+      text: _privacy.careCompanionName ?? '',
+    );
+    if (widget.loadComfortExperience != null) {
+      _comfortLoading = true;
+      _loadComfort();
+    }
+  }
+
+  @override
+  void dispose() {
+    _careCompanionNameController.dispose();
+    super.dispose();
+  }
+
   String _formatDate(DateTime date) {
     return '${_weekdays[date.weekday - 1]}, '
         '${_months[date.month - 1]} ${date.day}';
@@ -98,6 +138,135 @@ class _YouExperienceState extends State<YouExperience> {
     }
   }
 
+  Future<void> _saveCareCompanionName() async {
+    final normalized = PrivacyPreferences.normalizeCareCompanionName(
+      _careCompanionNameController.text,
+    );
+    if (normalized == null) {
+      setState(() {
+        _careCompanionNameError = 'Enter a name using 24 characters or fewer.';
+      });
+      return;
+    }
+    if (normalized == _privacy.careCompanionName) {
+      _careCompanionNameController.text = normalized;
+      setState(() => _careCompanionNameError = null);
+      return;
+    }
+
+    final previous = _privacy;
+    final next = _privacy.copyWith(careCompanionName: normalized);
+    setState(() {
+      _privacy = next;
+      _savingCareCompanionName = true;
+      _careCompanionNameError = null;
+    });
+    try {
+      await widget.port.savePrivacy(next);
+      if (!mounted) return;
+      _careCompanionNameController.text = normalized;
+      unawaited(ExperienceHaptics.saved());
+    } catch (_) {
+      if (!mounted) return;
+      setState(() {
+        _privacy = previous;
+        _careCompanionNameError = 'That name could not be saved. Try again.';
+      });
+    } finally {
+      if (mounted) setState(() => _savingCareCompanionName = false);
+    }
+  }
+
+  Future<void> _clearCareCompanionName() async {
+    final savedName = _privacy.careCompanionName;
+    if (savedName == null || _savingCareCompanionName) return;
+    final previous = _privacy;
+    final next = _privacy.copyWith(careCompanionName: null);
+    setState(() {
+      _privacy = next;
+      _careCompanionNameController.clear();
+      _savingCareCompanionName = true;
+      _careCompanionNameError = null;
+    });
+    try {
+      await widget.port.savePrivacy(next);
+      if (!mounted) return;
+      unawaited(ExperienceHaptics.saved());
+    } catch (_) {
+      if (!mounted) return;
+      setState(() {
+        _privacy = previous;
+        _careCompanionNameController.text = savedName;
+        _careCompanionNameError = 'That name could not be removed. Try again.';
+      });
+    } finally {
+      if (mounted) setState(() => _savingCareCompanionName = false);
+    }
+  }
+
+  Future<void> _loadComfort() async {
+    final load = widget.loadComfortExperience;
+    if (load == null) return;
+    if (mounted) {
+      setState(() {
+        _comfortLoading = true;
+        _comfortError = null;
+      });
+    }
+    try {
+      final snapshot = await load();
+      if (!mounted) return;
+      setState(() {
+        _comfort = snapshot;
+        _comfortLoading = false;
+      });
+    } catch (_) {
+      if (!mounted) return;
+      setState(() {
+        _comfortLoading = false;
+        _comfortError = 'Comfort Window settings could not be read. Try again.';
+      });
+    }
+  }
+
+  Future<void> _saveComfort({
+    required bool enabled,
+    required int leadDays,
+  }) async {
+    final save = widget.saveComfortReminder;
+    if (save == null || _comfortSaving) return;
+    setState(() {
+      _comfortSaving = true;
+      _comfortError = null;
+    });
+    try {
+      final snapshot = await save(enabled: enabled, leadDays: leadDays);
+      if (!mounted) return;
+      setState(() => _comfort = snapshot);
+      unawaited(ExperienceHaptics.saved());
+    } catch (_) {
+      if (!mounted) return;
+      setState(() {
+        _comfortError = 'That reminder change could not be saved. Try again.';
+      });
+    } finally {
+      if (mounted) setState(() => _comfortSaving = false);
+    }
+  }
+
+  Future<void> _chooseComfortTiming() async {
+    final snapshot = _comfort;
+    if (snapshot == null || !snapshot.canConfigureReminder) return;
+    final result = await showComfortReminderSheet(
+      context,
+      enabled: snapshot.reminder.enabled,
+      configured: snapshot.reminder.updatedAt != null,
+      leadDays: snapshot.reminder.leadDays,
+    );
+    if (!mounted || result == null) return;
+    await _saveComfort(enabled: result.enabled, leadDays: result.leadDays);
+  }
+
   @override
   Widget build(BuildContext context) {
     return SafeArea(
@@ -115,6 +284,12 @@ class _YouExperienceState extends State<YouExperience> {
           _AccountSection(port: widget.port),
           const SizedBox(height: ExperienceSpacing.md),
           _buildProtectionCard(),
+          if (widget.loadComfortExperience != null) ...<Widget>[
+            const SizedBox(height: ExperienceSpacing.md),
+            _buildComfortWindowCard(),
+          ],
+          const SizedBox(height: ExperienceSpacing.md),
+          _buildCareCompanionCard(),
           const SizedBox(height: ExperienceSpacing.md),
           _BackupSection(
             port: widget.backupPort,
@@ -168,6 +343,7 @@ class _YouExperienceState extends State<YouExperience> {
       padding: EdgeInsets.symmetric(vertical: ExperienceSpacing.xs),
       child: Divider(height: 1, color: ExperienceColors.hairline),
     );
+    final analyticsOn = _privacy.analyticsConsent == AnalyticsConsent.granted;
     return _SectionCard(
       title: 'Protection & preferences',
       children: <Widget>[
@@ -192,6 +368,27 @@ class _YouExperienceState extends State<YouExperience> {
           onChanged: (value) =>
               _savePrivacy(_privacy.copyWith(cycleCheckInEnabled: value)),
         ),
+        divider,
+        _ToggleRow(
+          key: const Key('analytics-consent-toggle'),
+          title: 'Anonymous analytics',
+          description: analyticsOn
+              ? 'On — only anonymous, coarse product-use information is '
+                    'shared. Never period dates, symptoms, notes, Care '
+                    'details, or your identity.'
+              : 'Off — analytics is optional. Turning it on shares only '
+                    'anonymous, coarse product-use information — never '
+                    'period dates, symptoms, notes, Care details, or your '
+                    'identity.',
+          value: analyticsOn,
+          onChanged: (value) => _savePrivacy(
+            _privacy.copyWith(
+              analyticsConsent: value
+                  ? AnalyticsConsent.granted
+                  : AnalyticsConsent.optedOut,
+            ),
+          ),
+        ),
         if (_privacyError != null) ...<Widget>[
           const SizedBox(height: ExperienceSpacing.sm),
           Text(
@@ -203,9 +400,169 @@ class _YouExperienceState extends State<YouExperience> {
     );
   }
 
+  Widget _buildComfortWindowCard() {
+    if (_comfortLoading) {
+      return _SectionCard(
+        title: 'Comfort Window',
+        children: <Widget>[
+          Text(
+            'Reading your local reminder preference…',
+            style: ExperienceType.bodySmall(ExperienceColors.inkSoft),
+          ),
+        ],
+      );
+    }
+
+    final snapshot = _comfort;
+    if (snapshot == null) {
+      return _SectionCard(
+        title: 'Comfort Window',
+        children: <Widget>[
+          Text(
+            _comfortError ??
+                'A reminder is not available until your local records show '
+                    'a clearer repeating pattern.',
+            style: ExperienceType.bodySmall(
+              _comfortError == null
+                  ? ExperienceColors.inkSoft
+                  : ExperienceColors.error,
+            ),
+          ),
+          if (_comfortError != null) ...<Widget>[
+            const SizedBox(height: ExperienceSpacing.xs),
+            TextButton(onPressed: _loadComfort, child: const Text('Try again')),
+          ],
+        ],
+      );
+    }
+
+    final reminder = snapshot.reminder;
+    final canConfigure = snapshot.canConfigureReminder;
+    final canToggle = !_comfortSaving && (canConfigure || reminder.enabled);
+    final description = reminder.enabled
+        ? canConfigure
+              ? 'Preference on — '
+                    '${comfortReminderLeadLabel(reminder.leadDays)} at 09:00 '
+                    'local time. System notification settings control delivery.'
+              : 'Preference on, but nothing is scheduled while the current '
+                    'estimate is not reliable enough.'
+        : canConfigure
+        ? 'Off — no Comfort Window notifications.'
+        : 'Unavailable until your local records show a Clearer repeating '
+              'pattern and the period estimate is reliable.';
+
+    return _SectionCard(
+      title: 'Comfort Window',
+      children: <Widget>[
+        Text(
+          'One neutral notification can arrive before your estimated harder '
+          'days. It never includes symptoms or cycle dates.',
+          style: ExperienceType.bodySmall(ExperienceColors.inkSoft),
+        ),
+        const Padding(
+          padding: EdgeInsets.symmetric(vertical: ExperienceSpacing.xs),
+          child: Divider(height: 1, color: ExperienceColors.hairline),
+        ),
+        _ToggleRow(
+          key: const Key('comfort-reminder-toggle'),
+          title: 'Comfort Window reminder',
+          description: description,
+          value: reminder.enabled,
+          onChanged: canToggle
+              ? (value) =>
+                    _saveComfort(enabled: value, leadDays: reminder.leadDays)
+              : null,
+        ),
+        if (canConfigure) ...<Widget>[
+          const Padding(
+            padding: EdgeInsets.symmetric(vertical: ExperienceSpacing.xs),
+            child: Divider(height: 1, color: ExperienceColors.hairline),
+          ),
+          _PreferenceActionRow(
+            key: const Key('comfort-reminder-timing'),
+            title: 'Timing',
+            description:
+                '${comfortReminderLeadLabel(reminder.leadDays)} · 09:00 local',
+            onTap: _comfortSaving ? null : _chooseComfortTiming,
+          ),
+        ],
+        if (_comfortError != null) ...<Widget>[
+          const SizedBox(height: ExperienceSpacing.xs),
+          Text(
+            _comfortError!,
+            style: ExperienceType.caption(ExperienceColors.error),
+          ),
+        ],
+      ],
+    );
+  }
+
+  Widget _buildCareCompanionCard() {
+    final savedName = _privacy.careCompanionName;
+    final draftName = PrivacyPreferences.normalizeCareCompanionName(
+      _careCompanionNameController.text,
+    );
+    final canSave =
+        !_savingCareCompanionName &&
+        draftName != null &&
+        draftName != savedName;
+    return _SectionCard(
+      title: 'Care companion',
+      children: <Widget>[
+        Text(
+          savedName == null
+              ? 'Give the cat who joins your care practices a name. '
+                    'It stays on this device.'
+              : '$savedName will keep you company across care practices. '
+                    'You can change or remove the name at any time.',
+          style: ExperienceType.caption(ExperienceColors.inkSoft),
+        ),
+        const SizedBox(height: ExperienceSpacing.sm),
+        TextField(
+          key: const Key('care-companion-name-field'),
+          controller: _careCompanionNameController,
+          enabled: !_savingCareCompanionName,
+          maxLength: PrivacyPreferences.maxCareCompanionNameRunes,
+          textCapitalization: TextCapitalization.words,
+          textInputAction: TextInputAction.done,
+          autocorrect: false,
+          onSubmitted: (_) {
+            if (canSave) _saveCareCompanionName();
+          },
+          onChanged: (_) {
+            setState(() => _careCompanionNameError = null);
+          },
+          decoration: InputDecoration(
+            labelText: 'Cat name',
+            hintText: 'Miso',
+            helperText: 'Saved only on this device.',
+            errorText: _careCompanionNameError,
+          ),
+        ),
+        const SizedBox(height: ExperienceSpacing.xs),
+        _PrimaryButton(
+          label: _savingCareCompanionName ? 'Saving name…' : 'Save name',
+          onPressed: canSave ? _saveCareCompanionName : null,
+        ),
+        if (savedName != null) ...<Widget>[
+          const SizedBox(height: ExperienceSpacing.xs),
+          TextButton(
+            key: const Key('remove-care-companion-name'),
+            onPressed: _savingCareCompanionName
+                ? null
+                : _clearCareCompanionName,
+            child: const Text('Remove name'),
+          ),
+        ],
+      ],
+    );
+  }
+
   Widget _buildAboutCard() {
-    return const _SectionCard(
+    return const _DisclosureSectionCard(
+      key: Key('about-support-disclosure'),
       title: 'About & support',
+      summary: 'Local storage, honest estimates, and recovery guidance.',
       children: <Widget>[
         _AboutRow(
           title: 'Local-first',
@@ -482,8 +839,10 @@ class _BackupSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return _SectionCard(
+    return _DisclosureSectionCard(
+      key: const Key('backup-restore-disclosure'),
       title: 'Backup & restore',
+      summary: 'Encrypted copies you create and control.',
       children: <Widget>[
         Text(
           'Your records live on this device. A backup is an encrypted copy '
@@ -1466,10 +1825,112 @@ class _SectionCard extends StatelessWidget {
   }
 }
 
+/// Keeps low-frequency Settings work available without presenting every
+/// explanation and action at once. The compact row is a complete 48pt target,
+/// announces its state, and expands in place without opening another route.
+class _DisclosureSectionCard extends StatefulWidget {
+  const _DisclosureSectionCard({
+    super.key,
+    required this.title,
+    required this.summary,
+    required this.children,
+  });
+
+  final String title;
+  final String summary;
+  final List<Widget> children;
+
+  @override
+  State<_DisclosureSectionCard> createState() => _DisclosureSectionCardState();
+}
+
+class _DisclosureSectionCardState extends State<_DisclosureSectionCard> {
+  bool _expanded = false;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      decoration: BoxDecoration(
+        color: ExperienceColors.surface,
+        borderRadius: ExperienceRadius.cardRadius,
+        border: Border.all(color: ExperienceColors.hairline),
+        boxShadow: ExperienceShadows.card,
+      ),
+      child: Material(
+        type: MaterialType.transparency,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: <Widget>[
+            Semantics(
+              button: true,
+              expanded: _expanded,
+              label: widget.title,
+              hint: _expanded ? 'Collapse section' : 'Expand section',
+              child: InkWell(
+                borderRadius: ExperienceRadius.cardRadius,
+                onTap: () => setState(() => _expanded = !_expanded),
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(minHeight: 56),
+                  child: Padding(
+                    padding: const EdgeInsets.all(ExperienceSpacing.md),
+                    child: Row(
+                      children: <Widget>[
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: <Widget>[
+                              Text(
+                                widget.title,
+                                style: ExperienceType.headline(
+                                  ExperienceColors.ink,
+                                ),
+                              ),
+                              const SizedBox(height: 2),
+                              Text(
+                                widget.summary,
+                                style: ExperienceType.caption(
+                                  ExperienceColors.inkSoft,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(width: ExperienceSpacing.sm),
+                        Icon(
+                          _expanded
+                              ? Icons.expand_less_rounded
+                              : Icons.expand_more_rounded,
+                          color: ExperienceColors.inkSoft,
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ),
+            if (_expanded) ...<Widget>[
+              const Divider(height: 1, color: ExperienceColors.hairline),
+              Padding(
+                padding: const EdgeInsets.all(ExperienceSpacing.md),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: widget.children,
+                ),
+              ),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+}
+
 /// A real persisted toggle with visible state — the switch position and the
 /// state caption always agree.
 class _ToggleRow extends StatelessWidget {
   const _ToggleRow({
+    super.key,
     required this.title,
     required this.description,
     required this.value,
@@ -1479,7 +1940,7 @@ class _ToggleRow extends StatelessWidget {
   final String title;
   final String description;
   final bool value;
-  final ValueChanged<bool> onChanged;
+  final ValueChanged<bool>? onChanged;
 
   @override
   Widget build(BuildContext context) {
@@ -1510,13 +1971,76 @@ class _ToggleRow extends StatelessWidget {
             toggled: value,
             child: Switch(
               value: value,
-              onChanged: (next) {
-                ExperienceHaptics.pick();
-                onChanged(next);
-              },
+              onChanged: onChanged == null
+                  ? null
+                  : (next) {
+                      ExperienceHaptics.pick();
+                      onChanged!(next);
+                    },
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _PreferenceActionRow extends StatelessWidget {
+  const _PreferenceActionRow({
+    super.key,
+    required this.title,
+    required this.description,
+    required this.onTap,
+  });
+
+  final String title;
+  final String description;
+  final VoidCallback? onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Semantics(
+      button: true,
+      enabled: onTap != null,
+      label: '$title. $description',
+      child: Material(
+        type: MaterialType.transparency,
+        child: InkWell(
+          borderRadius: ExperienceRadius.chipRadius,
+          onTap: onTap,
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(
+              minHeight: ExperienceSpacing.minTouchTarget,
+            ),
+            child: Row(
+              children: <Widget>[
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: <Widget>[
+                      Text(
+                        title,
+                        style: ExperienceType.bodyStrong(ExperienceColors.ink),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        description,
+                        style: ExperienceType.caption(ExperienceColors.inkSoft),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(width: ExperienceSpacing.sm),
+                Icon(
+                  Icons.chevron_right,
+                  color: onTap == null
+                      ? ExperienceColors.inkFaint
+                      : ExperienceColors.inkSoft,
+                ),
+              ],
+            ),
+          ),
+        ),
       ),
     );
   }

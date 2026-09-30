@@ -3267,8 +3267,42 @@ class $CaptureNoteRowsTable extends CaptureNoteRows
     type: DriftSqlType.int,
     requiredDuringInsert: true,
   );
+  static const VerificationMeta _updatedAtMillisMeta = const VerificationMeta(
+    'updatedAtMillis',
+  );
   @override
-  List<GeneratedColumn> get $columns => [id, content, source, createdAtMillis];
+  late final GeneratedColumn<int> updatedAtMillis = GeneratedColumn<int>(
+    'updated_at_millis',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(0),
+  );
+  static const VerificationMeta _keepInComfortKitMeta = const VerificationMeta(
+    'keepInComfortKit',
+  );
+  @override
+  late final GeneratedColumn<bool> keepInComfortKit = GeneratedColumn<bool>(
+    'keep_in_comfort_kit',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("keep_in_comfort_kit" IN (0, 1))',
+    ),
+    defaultValue: const Constant(false),
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    id,
+    content,
+    source,
+    createdAtMillis,
+    updatedAtMillis,
+    keepInComfortKit,
+  ];
   @override
   String get aliasedName => _alias ?? actualTableName;
   @override
@@ -3313,6 +3347,24 @@ class $CaptureNoteRowsTable extends CaptureNoteRows
     } else if (isInserting) {
       context.missing(_createdAtMillisMeta);
     }
+    if (data.containsKey('updated_at_millis')) {
+      context.handle(
+        _updatedAtMillisMeta,
+        updatedAtMillis.isAcceptableOrUnknown(
+          data['updated_at_millis']!,
+          _updatedAtMillisMeta,
+        ),
+      );
+    }
+    if (data.containsKey('keep_in_comfort_kit')) {
+      context.handle(
+        _keepInComfortKitMeta,
+        keepInComfortKit.isAcceptableOrUnknown(
+          data['keep_in_comfort_kit']!,
+          _keepInComfortKitMeta,
+        ),
+      );
+    }
     return context;
   }
 
@@ -3338,6 +3390,14 @@ class $CaptureNoteRowsTable extends CaptureNoteRows
         DriftSqlType.int,
         data['${effectivePrefix}created_at_millis'],
       )!,
+      updatedAtMillis: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}updated_at_millis'],
+      )!,
+      keepInComfortKit: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}keep_in_comfort_kit'],
+      )!,
     );
   }
 
@@ -3352,11 +3412,15 @@ class CaptureNoteRow extends DataClass implements Insertable<CaptureNoteRow> {
   final String content;
   final String source;
   final int createdAtMillis;
+  final int updatedAtMillis;
+  final bool keepInComfortKit;
   const CaptureNoteRow({
     required this.id,
     required this.content,
     required this.source,
     required this.createdAtMillis,
+    required this.updatedAtMillis,
+    required this.keepInComfortKit,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -3365,6 +3429,8 @@ class CaptureNoteRow extends DataClass implements Insertable<CaptureNoteRow> {
     map['content'] = Variable<String>(content);
     map['source'] = Variable<String>(source);
     map['created_at_millis'] = Variable<int>(createdAtMillis);
+    map['updated_at_millis'] = Variable<int>(updatedAtMillis);
+    map['keep_in_comfort_kit'] = Variable<bool>(keepInComfortKit);
     return map;
   }
 
@@ -3374,6 +3440,8 @@ class CaptureNoteRow extends DataClass implements Insertable<CaptureNoteRow> {
       content: Value(content),
       source: Value(source),
       createdAtMillis: Value(createdAtMillis),
+      updatedAtMillis: Value(updatedAtMillis),
+      keepInComfortKit: Value(keepInComfortKit),
     );
   }
 
@@ -3387,6 +3455,8 @@ class CaptureNoteRow extends DataClass implements Insertable<CaptureNoteRow> {
       content: serializer.fromJson<String>(json['content']),
       source: serializer.fromJson<String>(json['source']),
       createdAtMillis: serializer.fromJson<int>(json['createdAtMillis']),
+      updatedAtMillis: serializer.fromJson<int>(json['updatedAtMillis']),
+      keepInComfortKit: serializer.fromJson<bool>(json['keepInComfortKit']),
     );
   }
   @override
@@ -3397,6 +3467,8 @@ class CaptureNoteRow extends DataClass implements Insertable<CaptureNoteRow> {
       'content': serializer.toJson<String>(content),
       'source': serializer.toJson<String>(source),
       'createdAtMillis': serializer.toJson<int>(createdAtMillis),
+      'updatedAtMillis': serializer.toJson<int>(updatedAtMillis),
+      'keepInComfortKit': serializer.toJson<bool>(keepInComfortKit),
     };
   }
 
@@ -3405,11 +3477,15 @@ class CaptureNoteRow extends DataClass implements Insertable<CaptureNoteRow> {
     String? content,
     String? source,
     int? createdAtMillis,
+    int? updatedAtMillis,
+    bool? keepInComfortKit,
   }) => CaptureNoteRow(
     id: id ?? this.id,
     content: content ?? this.content,
     source: source ?? this.source,
     createdAtMillis: createdAtMillis ?? this.createdAtMillis,
+    updatedAtMillis: updatedAtMillis ?? this.updatedAtMillis,
+    keepInComfortKit: keepInComfortKit ?? this.keepInComfortKit,
   );
   CaptureNoteRow copyWithCompanion(CaptureNoteRowsCompanion data) {
     return CaptureNoteRow(
@@ -3419,6 +3495,12 @@ class CaptureNoteRow extends DataClass implements Insertable<CaptureNoteRow> {
       createdAtMillis: data.createdAtMillis.present
           ? data.createdAtMillis.value
           : this.createdAtMillis,
+      updatedAtMillis: data.updatedAtMillis.present
+          ? data.updatedAtMillis.value
+          : this.updatedAtMillis,
+      keepInComfortKit: data.keepInComfortKit.present
+          ? data.keepInComfortKit.value
+          : this.keepInComfortKit,
     );
   }
 
@@ -3428,13 +3510,22 @@ class CaptureNoteRow extends DataClass implements Insertable<CaptureNoteRow> {
           ..write('id: $id, ')
           ..write('content: $content, ')
           ..write('source: $source, ')
-          ..write('createdAtMillis: $createdAtMillis')
+          ..write('createdAtMillis: $createdAtMillis, ')
+          ..write('updatedAtMillis: $updatedAtMillis, ')
+          ..write('keepInComfortKit: $keepInComfortKit')
           ..write(')'))
         .toString();
   }
 
   @override
-  int get hashCode => Object.hash(id, content, source, createdAtMillis);
+  int get hashCode => Object.hash(
+    id,
+    content,
+    source,
+    createdAtMillis,
+    updatedAtMillis,
+    keepInComfortKit,
+  );
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -3442,7 +3533,9 @@ class CaptureNoteRow extends DataClass implements Insertable<CaptureNoteRow> {
           other.id == this.id &&
           other.content == this.content &&
           other.source == this.source &&
-          other.createdAtMillis == this.createdAtMillis);
+          other.createdAtMillis == this.createdAtMillis &&
+          other.updatedAtMillis == this.updatedAtMillis &&
+          other.keepInComfortKit == this.keepInComfortKit);
 }
 
 class CaptureNoteRowsCompanion extends UpdateCompanion<CaptureNoteRow> {
@@ -3450,12 +3543,16 @@ class CaptureNoteRowsCompanion extends UpdateCompanion<CaptureNoteRow> {
   final Value<String> content;
   final Value<String> source;
   final Value<int> createdAtMillis;
+  final Value<int> updatedAtMillis;
+  final Value<bool> keepInComfortKit;
   final Value<int> rowid;
   const CaptureNoteRowsCompanion({
     this.id = const Value.absent(),
     this.content = const Value.absent(),
     this.source = const Value.absent(),
     this.createdAtMillis = const Value.absent(),
+    this.updatedAtMillis = const Value.absent(),
+    this.keepInComfortKit = const Value.absent(),
     this.rowid = const Value.absent(),
   });
   CaptureNoteRowsCompanion.insert({
@@ -3463,6 +3560,8 @@ class CaptureNoteRowsCompanion extends UpdateCompanion<CaptureNoteRow> {
     required String content,
     required String source,
     required int createdAtMillis,
+    this.updatedAtMillis = const Value.absent(),
+    this.keepInComfortKit = const Value.absent(),
     this.rowid = const Value.absent(),
   }) : id = Value(id),
        content = Value(content),
@@ -3473,6 +3572,8 @@ class CaptureNoteRowsCompanion extends UpdateCompanion<CaptureNoteRow> {
     Expression<String>? content,
     Expression<String>? source,
     Expression<int>? createdAtMillis,
+    Expression<int>? updatedAtMillis,
+    Expression<bool>? keepInComfortKit,
     Expression<int>? rowid,
   }) {
     return RawValuesInsertable({
@@ -3480,6 +3581,8 @@ class CaptureNoteRowsCompanion extends UpdateCompanion<CaptureNoteRow> {
       if (content != null) 'content': content,
       if (source != null) 'source': source,
       if (createdAtMillis != null) 'created_at_millis': createdAtMillis,
+      if (updatedAtMillis != null) 'updated_at_millis': updatedAtMillis,
+      if (keepInComfortKit != null) 'keep_in_comfort_kit': keepInComfortKit,
       if (rowid != null) 'rowid': rowid,
     });
   }
@@ -3489,6 +3592,8 @@ class CaptureNoteRowsCompanion extends UpdateCompanion<CaptureNoteRow> {
     Value<String>? content,
     Value<String>? source,
     Value<int>? createdAtMillis,
+    Value<int>? updatedAtMillis,
+    Value<bool>? keepInComfortKit,
     Value<int>? rowid,
   }) {
     return CaptureNoteRowsCompanion(
@@ -3496,6 +3601,8 @@ class CaptureNoteRowsCompanion extends UpdateCompanion<CaptureNoteRow> {
       content: content ?? this.content,
       source: source ?? this.source,
       createdAtMillis: createdAtMillis ?? this.createdAtMillis,
+      updatedAtMillis: updatedAtMillis ?? this.updatedAtMillis,
+      keepInComfortKit: keepInComfortKit ?? this.keepInComfortKit,
       rowid: rowid ?? this.rowid,
     );
   }
@@ -3515,6 +3622,12 @@ class CaptureNoteRowsCompanion extends UpdateCompanion<CaptureNoteRow> {
     if (createdAtMillis.present) {
       map['created_at_millis'] = Variable<int>(createdAtMillis.value);
     }
+    if (updatedAtMillis.present) {
+      map['updated_at_millis'] = Variable<int>(updatedAtMillis.value);
+    }
+    if (keepInComfortKit.present) {
+      map['keep_in_comfort_kit'] = Variable<bool>(keepInComfortKit.value);
+    }
     if (rowid.present) {
       map['rowid'] = Variable<int>(rowid.value);
     }
@@ -3528,6 +3641,8 @@ class CaptureNoteRowsCompanion extends UpdateCompanion<CaptureNoteRow> {
           ..write('content: $content, ')
           ..write('source: $source, ')
           ..write('createdAtMillis: $createdAtMillis, ')
+          ..write('updatedAtMillis: $updatedAtMillis, ')
+          ..write('keepInComfortKit: $keepInComfortKit, ')
           ..write('rowid: $rowid')
           ..write(')'))
         .toString();
@@ -5060,6 +5175,759 @@ class PreparationDismissalRowsCompanion
   }
 }
 
+class $ComfortKitOverrideRowsTable extends ComfortKitOverrideRows
+    with TableInfo<$ComfortKitOverrideRowsTable, ComfortKitOverrideRow> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $ComfortKitOverrideRowsTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _sourceIdMeta = const VerificationMeta(
+    'sourceId',
+  );
+  @override
+  late final GeneratedColumn<String> sourceId = GeneratedColumn<String>(
+    'source_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _actionMeta = const VerificationMeta('action');
+  @override
+  late final GeneratedColumn<String> action = GeneratedColumn<String>(
+    'action',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _sourceVersionMeta = const VerificationMeta(
+    'sourceVersion',
+  );
+  @override
+  late final GeneratedColumn<String> sourceVersion = GeneratedColumn<String>(
+    'source_version',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _updatedAtMillisMeta = const VerificationMeta(
+    'updatedAtMillis',
+  );
+  @override
+  late final GeneratedColumn<int> updatedAtMillis = GeneratedColumn<int>(
+    'updated_at_millis',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    sourceId,
+    action,
+    sourceVersion,
+    updatedAtMillis,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'comfort_kit_override_rows';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<ComfortKitOverrideRow> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('source_id')) {
+      context.handle(
+        _sourceIdMeta,
+        sourceId.isAcceptableOrUnknown(data['source_id']!, _sourceIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_sourceIdMeta);
+    }
+    if (data.containsKey('action')) {
+      context.handle(
+        _actionMeta,
+        action.isAcceptableOrUnknown(data['action']!, _actionMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_actionMeta);
+    }
+    if (data.containsKey('source_version')) {
+      context.handle(
+        _sourceVersionMeta,
+        sourceVersion.isAcceptableOrUnknown(
+          data['source_version']!,
+          _sourceVersionMeta,
+        ),
+      );
+    }
+    if (data.containsKey('updated_at_millis')) {
+      context.handle(
+        _updatedAtMillisMeta,
+        updatedAtMillis.isAcceptableOrUnknown(
+          data['updated_at_millis']!,
+          _updatedAtMillisMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_updatedAtMillisMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {sourceId};
+  @override
+  ComfortKitOverrideRow map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return ComfortKitOverrideRow(
+      sourceId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}source_id'],
+      )!,
+      action: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}action'],
+      )!,
+      sourceVersion: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}source_version'],
+      ),
+      updatedAtMillis: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}updated_at_millis'],
+      )!,
+    );
+  }
+
+  @override
+  $ComfortKitOverrideRowsTable createAlias(String alias) {
+    return $ComfortKitOverrideRowsTable(attachedDatabase, alias);
+  }
+}
+
+class ComfortKitOverrideRow extends DataClass
+    implements Insertable<ComfortKitOverrideRow> {
+  final String sourceId;
+  final String action;
+  final String? sourceVersion;
+  final int updatedAtMillis;
+  const ComfortKitOverrideRow({
+    required this.sourceId,
+    required this.action,
+    this.sourceVersion,
+    required this.updatedAtMillis,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['source_id'] = Variable<String>(sourceId);
+    map['action'] = Variable<String>(action);
+    if (!nullToAbsent || sourceVersion != null) {
+      map['source_version'] = Variable<String>(sourceVersion);
+    }
+    map['updated_at_millis'] = Variable<int>(updatedAtMillis);
+    return map;
+  }
+
+  ComfortKitOverrideRowsCompanion toCompanion(bool nullToAbsent) {
+    return ComfortKitOverrideRowsCompanion(
+      sourceId: Value(sourceId),
+      action: Value(action),
+      sourceVersion: sourceVersion == null && nullToAbsent
+          ? const Value.absent()
+          : Value(sourceVersion),
+      updatedAtMillis: Value(updatedAtMillis),
+    );
+  }
+
+  factory ComfortKitOverrideRow.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return ComfortKitOverrideRow(
+      sourceId: serializer.fromJson<String>(json['sourceId']),
+      action: serializer.fromJson<String>(json['action']),
+      sourceVersion: serializer.fromJson<String?>(json['sourceVersion']),
+      updatedAtMillis: serializer.fromJson<int>(json['updatedAtMillis']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'sourceId': serializer.toJson<String>(sourceId),
+      'action': serializer.toJson<String>(action),
+      'sourceVersion': serializer.toJson<String?>(sourceVersion),
+      'updatedAtMillis': serializer.toJson<int>(updatedAtMillis),
+    };
+  }
+
+  ComfortKitOverrideRow copyWith({
+    String? sourceId,
+    String? action,
+    Value<String?> sourceVersion = const Value.absent(),
+    int? updatedAtMillis,
+  }) => ComfortKitOverrideRow(
+    sourceId: sourceId ?? this.sourceId,
+    action: action ?? this.action,
+    sourceVersion: sourceVersion.present
+        ? sourceVersion.value
+        : this.sourceVersion,
+    updatedAtMillis: updatedAtMillis ?? this.updatedAtMillis,
+  );
+  ComfortKitOverrideRow copyWithCompanion(
+    ComfortKitOverrideRowsCompanion data,
+  ) {
+    return ComfortKitOverrideRow(
+      sourceId: data.sourceId.present ? data.sourceId.value : this.sourceId,
+      action: data.action.present ? data.action.value : this.action,
+      sourceVersion: data.sourceVersion.present
+          ? data.sourceVersion.value
+          : this.sourceVersion,
+      updatedAtMillis: data.updatedAtMillis.present
+          ? data.updatedAtMillis.value
+          : this.updatedAtMillis,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('ComfortKitOverrideRow(')
+          ..write('sourceId: $sourceId, ')
+          ..write('action: $action, ')
+          ..write('sourceVersion: $sourceVersion, ')
+          ..write('updatedAtMillis: $updatedAtMillis')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode =>
+      Object.hash(sourceId, action, sourceVersion, updatedAtMillis);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is ComfortKitOverrideRow &&
+          other.sourceId == this.sourceId &&
+          other.action == this.action &&
+          other.sourceVersion == this.sourceVersion &&
+          other.updatedAtMillis == this.updatedAtMillis);
+}
+
+class ComfortKitOverrideRowsCompanion
+    extends UpdateCompanion<ComfortKitOverrideRow> {
+  final Value<String> sourceId;
+  final Value<String> action;
+  final Value<String?> sourceVersion;
+  final Value<int> updatedAtMillis;
+  final Value<int> rowid;
+  const ComfortKitOverrideRowsCompanion({
+    this.sourceId = const Value.absent(),
+    this.action = const Value.absent(),
+    this.sourceVersion = const Value.absent(),
+    this.updatedAtMillis = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  ComfortKitOverrideRowsCompanion.insert({
+    required String sourceId,
+    required String action,
+    this.sourceVersion = const Value.absent(),
+    required int updatedAtMillis,
+    this.rowid = const Value.absent(),
+  }) : sourceId = Value(sourceId),
+       action = Value(action),
+       updatedAtMillis = Value(updatedAtMillis);
+  static Insertable<ComfortKitOverrideRow> custom({
+    Expression<String>? sourceId,
+    Expression<String>? action,
+    Expression<String>? sourceVersion,
+    Expression<int>? updatedAtMillis,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (sourceId != null) 'source_id': sourceId,
+      if (action != null) 'action': action,
+      if (sourceVersion != null) 'source_version': sourceVersion,
+      if (updatedAtMillis != null) 'updated_at_millis': updatedAtMillis,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  ComfortKitOverrideRowsCompanion copyWith({
+    Value<String>? sourceId,
+    Value<String>? action,
+    Value<String?>? sourceVersion,
+    Value<int>? updatedAtMillis,
+    Value<int>? rowid,
+  }) {
+    return ComfortKitOverrideRowsCompanion(
+      sourceId: sourceId ?? this.sourceId,
+      action: action ?? this.action,
+      sourceVersion: sourceVersion ?? this.sourceVersion,
+      updatedAtMillis: updatedAtMillis ?? this.updatedAtMillis,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (sourceId.present) {
+      map['source_id'] = Variable<String>(sourceId.value);
+    }
+    if (action.present) {
+      map['action'] = Variable<String>(action.value);
+    }
+    if (sourceVersion.present) {
+      map['source_version'] = Variable<String>(sourceVersion.value);
+    }
+    if (updatedAtMillis.present) {
+      map['updated_at_millis'] = Variable<int>(updatedAtMillis.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('ComfortKitOverrideRowsCompanion(')
+          ..write('sourceId: $sourceId, ')
+          ..write('action: $action, ')
+          ..write('sourceVersion: $sourceVersion, ')
+          ..write('updatedAtMillis: $updatedAtMillis, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
+class $ComfortReminderPreferenceRowsTable extends ComfortReminderPreferenceRows
+    with
+        TableInfo<
+          $ComfortReminderPreferenceRowsTable,
+          ComfortReminderPreferenceRow
+        > {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $ComfortReminderPreferenceRowsTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<String> id = GeneratedColumn<String>(
+    'id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _enabledMeta = const VerificationMeta(
+    'enabled',
+  );
+  @override
+  late final GeneratedColumn<bool> enabled = GeneratedColumn<bool>(
+    'enabled',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("enabled" IN (0, 1))',
+    ),
+    defaultValue: const Constant(false),
+  );
+  static const VerificationMeta _leadDaysMeta = const VerificationMeta(
+    'leadDays',
+  );
+  @override
+  late final GeneratedColumn<int> leadDays = GeneratedColumn<int>(
+    'lead_days',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(2),
+  );
+  static const VerificationMeta _hourMeta = const VerificationMeta('hour');
+  @override
+  late final GeneratedColumn<int> hour = GeneratedColumn<int>(
+    'hour',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(9),
+  );
+  static const VerificationMeta _minuteMeta = const VerificationMeta('minute');
+  @override
+  late final GeneratedColumn<int> minute = GeneratedColumn<int>(
+    'minute',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(0),
+  );
+  static const VerificationMeta _updatedAtMillisMeta = const VerificationMeta(
+    'updatedAtMillis',
+  );
+  @override
+  late final GeneratedColumn<int> updatedAtMillis = GeneratedColumn<int>(
+    'updated_at_millis',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    id,
+    enabled,
+    leadDays,
+    hour,
+    minute,
+    updatedAtMillis,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'comfort_reminder_preference_rows';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<ComfortReminderPreferenceRow> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    } else if (isInserting) {
+      context.missing(_idMeta);
+    }
+    if (data.containsKey('enabled')) {
+      context.handle(
+        _enabledMeta,
+        enabled.isAcceptableOrUnknown(data['enabled']!, _enabledMeta),
+      );
+    }
+    if (data.containsKey('lead_days')) {
+      context.handle(
+        _leadDaysMeta,
+        leadDays.isAcceptableOrUnknown(data['lead_days']!, _leadDaysMeta),
+      );
+    }
+    if (data.containsKey('hour')) {
+      context.handle(
+        _hourMeta,
+        hour.isAcceptableOrUnknown(data['hour']!, _hourMeta),
+      );
+    }
+    if (data.containsKey('minute')) {
+      context.handle(
+        _minuteMeta,
+        minute.isAcceptableOrUnknown(data['minute']!, _minuteMeta),
+      );
+    }
+    if (data.containsKey('updated_at_millis')) {
+      context.handle(
+        _updatedAtMillisMeta,
+        updatedAtMillis.isAcceptableOrUnknown(
+          data['updated_at_millis']!,
+          _updatedAtMillisMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_updatedAtMillisMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  ComfortReminderPreferenceRow map(
+    Map<String, dynamic> data, {
+    String? tablePrefix,
+  }) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return ComfortReminderPreferenceRow(
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}id'],
+      )!,
+      enabled: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}enabled'],
+      )!,
+      leadDays: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}lead_days'],
+      )!,
+      hour: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}hour'],
+      )!,
+      minute: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}minute'],
+      )!,
+      updatedAtMillis: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}updated_at_millis'],
+      )!,
+    );
+  }
+
+  @override
+  $ComfortReminderPreferenceRowsTable createAlias(String alias) {
+    return $ComfortReminderPreferenceRowsTable(attachedDatabase, alias);
+  }
+}
+
+class ComfortReminderPreferenceRow extends DataClass
+    implements Insertable<ComfortReminderPreferenceRow> {
+  final String id;
+  final bool enabled;
+  final int leadDays;
+  final int hour;
+  final int minute;
+  final int updatedAtMillis;
+  const ComfortReminderPreferenceRow({
+    required this.id,
+    required this.enabled,
+    required this.leadDays,
+    required this.hour,
+    required this.minute,
+    required this.updatedAtMillis,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<String>(id);
+    map['enabled'] = Variable<bool>(enabled);
+    map['lead_days'] = Variable<int>(leadDays);
+    map['hour'] = Variable<int>(hour);
+    map['minute'] = Variable<int>(minute);
+    map['updated_at_millis'] = Variable<int>(updatedAtMillis);
+    return map;
+  }
+
+  ComfortReminderPreferenceRowsCompanion toCompanion(bool nullToAbsent) {
+    return ComfortReminderPreferenceRowsCompanion(
+      id: Value(id),
+      enabled: Value(enabled),
+      leadDays: Value(leadDays),
+      hour: Value(hour),
+      minute: Value(minute),
+      updatedAtMillis: Value(updatedAtMillis),
+    );
+  }
+
+  factory ComfortReminderPreferenceRow.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return ComfortReminderPreferenceRow(
+      id: serializer.fromJson<String>(json['id']),
+      enabled: serializer.fromJson<bool>(json['enabled']),
+      leadDays: serializer.fromJson<int>(json['leadDays']),
+      hour: serializer.fromJson<int>(json['hour']),
+      minute: serializer.fromJson<int>(json['minute']),
+      updatedAtMillis: serializer.fromJson<int>(json['updatedAtMillis']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<String>(id),
+      'enabled': serializer.toJson<bool>(enabled),
+      'leadDays': serializer.toJson<int>(leadDays),
+      'hour': serializer.toJson<int>(hour),
+      'minute': serializer.toJson<int>(minute),
+      'updatedAtMillis': serializer.toJson<int>(updatedAtMillis),
+    };
+  }
+
+  ComfortReminderPreferenceRow copyWith({
+    String? id,
+    bool? enabled,
+    int? leadDays,
+    int? hour,
+    int? minute,
+    int? updatedAtMillis,
+  }) => ComfortReminderPreferenceRow(
+    id: id ?? this.id,
+    enabled: enabled ?? this.enabled,
+    leadDays: leadDays ?? this.leadDays,
+    hour: hour ?? this.hour,
+    minute: minute ?? this.minute,
+    updatedAtMillis: updatedAtMillis ?? this.updatedAtMillis,
+  );
+  ComfortReminderPreferenceRow copyWithCompanion(
+    ComfortReminderPreferenceRowsCompanion data,
+  ) {
+    return ComfortReminderPreferenceRow(
+      id: data.id.present ? data.id.value : this.id,
+      enabled: data.enabled.present ? data.enabled.value : this.enabled,
+      leadDays: data.leadDays.present ? data.leadDays.value : this.leadDays,
+      hour: data.hour.present ? data.hour.value : this.hour,
+      minute: data.minute.present ? data.minute.value : this.minute,
+      updatedAtMillis: data.updatedAtMillis.present
+          ? data.updatedAtMillis.value
+          : this.updatedAtMillis,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('ComfortReminderPreferenceRow(')
+          ..write('id: $id, ')
+          ..write('enabled: $enabled, ')
+          ..write('leadDays: $leadDays, ')
+          ..write('hour: $hour, ')
+          ..write('minute: $minute, ')
+          ..write('updatedAtMillis: $updatedAtMillis')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode =>
+      Object.hash(id, enabled, leadDays, hour, minute, updatedAtMillis);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is ComfortReminderPreferenceRow &&
+          other.id == this.id &&
+          other.enabled == this.enabled &&
+          other.leadDays == this.leadDays &&
+          other.hour == this.hour &&
+          other.minute == this.minute &&
+          other.updatedAtMillis == this.updatedAtMillis);
+}
+
+class ComfortReminderPreferenceRowsCompanion
+    extends UpdateCompanion<ComfortReminderPreferenceRow> {
+  final Value<String> id;
+  final Value<bool> enabled;
+  final Value<int> leadDays;
+  final Value<int> hour;
+  final Value<int> minute;
+  final Value<int> updatedAtMillis;
+  final Value<int> rowid;
+  const ComfortReminderPreferenceRowsCompanion({
+    this.id = const Value.absent(),
+    this.enabled = const Value.absent(),
+    this.leadDays = const Value.absent(),
+    this.hour = const Value.absent(),
+    this.minute = const Value.absent(),
+    this.updatedAtMillis = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  ComfortReminderPreferenceRowsCompanion.insert({
+    required String id,
+    this.enabled = const Value.absent(),
+    this.leadDays = const Value.absent(),
+    this.hour = const Value.absent(),
+    this.minute = const Value.absent(),
+    required int updatedAtMillis,
+    this.rowid = const Value.absent(),
+  }) : id = Value(id),
+       updatedAtMillis = Value(updatedAtMillis);
+  static Insertable<ComfortReminderPreferenceRow> custom({
+    Expression<String>? id,
+    Expression<bool>? enabled,
+    Expression<int>? leadDays,
+    Expression<int>? hour,
+    Expression<int>? minute,
+    Expression<int>? updatedAtMillis,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (enabled != null) 'enabled': enabled,
+      if (leadDays != null) 'lead_days': leadDays,
+      if (hour != null) 'hour': hour,
+      if (minute != null) 'minute': minute,
+      if (updatedAtMillis != null) 'updated_at_millis': updatedAtMillis,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  ComfortReminderPreferenceRowsCompanion copyWith({
+    Value<String>? id,
+    Value<bool>? enabled,
+    Value<int>? leadDays,
+    Value<int>? hour,
+    Value<int>? minute,
+    Value<int>? updatedAtMillis,
+    Value<int>? rowid,
+  }) {
+    return ComfortReminderPreferenceRowsCompanion(
+      id: id ?? this.id,
+      enabled: enabled ?? this.enabled,
+      leadDays: leadDays ?? this.leadDays,
+      hour: hour ?? this.hour,
+      minute: minute ?? this.minute,
+      updatedAtMillis: updatedAtMillis ?? this.updatedAtMillis,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<String>(id.value);
+    }
+    if (enabled.present) {
+      map['enabled'] = Variable<bool>(enabled.value);
+    }
+    if (leadDays.present) {
+      map['lead_days'] = Variable<int>(leadDays.value);
+    }
+    if (hour.present) {
+      map['hour'] = Variable<int>(hour.value);
+    }
+    if (minute.present) {
+      map['minute'] = Variable<int>(minute.value);
+    }
+    if (updatedAtMillis.present) {
+      map['updated_at_millis'] = Variable<int>(updatedAtMillis.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('ComfortReminderPreferenceRowsCompanion(')
+          ..write('id: $id, ')
+          ..write('enabled: $enabled, ')
+          ..write('leadDays: $leadDays, ')
+          ..write('hour: $hour, ')
+          ..write('minute: $minute, ')
+          ..write('updatedAtMillis: $updatedAtMillis, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
 abstract class _$LetterHealthDatabase extends GeneratedDatabase {
   _$LetterHealthDatabase(QueryExecutor e) : super(e);
   $LetterHealthDatabaseManager get managers =>
@@ -5083,6 +5951,10 @@ abstract class _$LetterHealthDatabase extends GeneratedDatabase {
       $PreparationPlanRowsTable(this);
   late final $PreparationDismissalRowsTable preparationDismissalRows =
       $PreparationDismissalRowsTable(this);
+  late final $ComfortKitOverrideRowsTable comfortKitOverrideRows =
+      $ComfortKitOverrideRowsTable(this);
+  late final $ComfortReminderPreferenceRowsTable comfortReminderPreferenceRows =
+      $ComfortReminderPreferenceRowsTable(this);
   @override
   Iterable<TableInfo<Table, Object?>> get allTables =>
       allSchemaEntities.whereType<TableInfo<Table, Object?>>();
@@ -5098,6 +5970,8 @@ abstract class _$LetterHealthDatabase extends GeneratedDatabase {
     momentCheckInRows,
     preparationPlanRows,
     preparationDismissalRows,
+    comfortKitOverrideRows,
+    comfortReminderPreferenceRows,
   ];
   @override
   StreamQueryUpdateRules get streamUpdateRules => const StreamQueryUpdateRules([
@@ -7473,6 +8347,8 @@ typedef $$CaptureNoteRowsTableCreateCompanionBuilder =
       required String content,
       required String source,
       required int createdAtMillis,
+      Value<int> updatedAtMillis,
+      Value<bool> keepInComfortKit,
       Value<int> rowid,
     });
 typedef $$CaptureNoteRowsTableUpdateCompanionBuilder =
@@ -7481,6 +8357,8 @@ typedef $$CaptureNoteRowsTableUpdateCompanionBuilder =
       Value<String> content,
       Value<String> source,
       Value<int> createdAtMillis,
+      Value<int> updatedAtMillis,
+      Value<bool> keepInComfortKit,
       Value<int> rowid,
     });
 
@@ -7510,6 +8388,16 @@ class $$CaptureNoteRowsTableFilterComposer
 
   ColumnFilters<int> get createdAtMillis => $composableBuilder(
     column: $table.createdAtMillis,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get updatedAtMillis => $composableBuilder(
+    column: $table.updatedAtMillis,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get keepInComfortKit => $composableBuilder(
+    column: $table.keepInComfortKit,
     builder: (column) => ColumnFilters(column),
   );
 }
@@ -7542,6 +8430,16 @@ class $$CaptureNoteRowsTableOrderingComposer
     column: $table.createdAtMillis,
     builder: (column) => ColumnOrderings(column),
   );
+
+  ColumnOrderings<int> get updatedAtMillis => $composableBuilder(
+    column: $table.updatedAtMillis,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<bool> get keepInComfortKit => $composableBuilder(
+    column: $table.keepInComfortKit,
+    builder: (column) => ColumnOrderings(column),
+  );
 }
 
 class $$CaptureNoteRowsTableAnnotationComposer
@@ -7564,6 +8462,16 @@ class $$CaptureNoteRowsTableAnnotationComposer
 
   GeneratedColumn<int> get createdAtMillis => $composableBuilder(
     column: $table.createdAtMillis,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get updatedAtMillis => $composableBuilder(
+    column: $table.updatedAtMillis,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<bool> get keepInComfortKit => $composableBuilder(
+    column: $table.keepInComfortKit,
     builder: (column) => column,
   );
 }
@@ -7609,12 +8517,16 @@ class $$CaptureNoteRowsTableTableManager
                 Value<String> content = const Value.absent(),
                 Value<String> source = const Value.absent(),
                 Value<int> createdAtMillis = const Value.absent(),
+                Value<int> updatedAtMillis = const Value.absent(),
+                Value<bool> keepInComfortKit = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => CaptureNoteRowsCompanion(
                 id: id,
                 content: content,
                 source: source,
                 createdAtMillis: createdAtMillis,
+                updatedAtMillis: updatedAtMillis,
+                keepInComfortKit: keepInComfortKit,
                 rowid: rowid,
               ),
           createCompanionCallback:
@@ -7623,12 +8535,16 @@ class $$CaptureNoteRowsTableTableManager
                 required String content,
                 required String source,
                 required int createdAtMillis,
+                Value<int> updatedAtMillis = const Value.absent(),
+                Value<bool> keepInComfortKit = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => CaptureNoteRowsCompanion.insert(
                 id: id,
                 content: content,
                 source: source,
                 createdAtMillis: createdAtMillis,
+                updatedAtMillis: updatedAtMillis,
+                keepInComfortKit: keepInComfortKit,
                 rowid: rowid,
               ),
           withReferenceMapper: (p0) => p0
@@ -8471,6 +9387,453 @@ typedef $$PreparationDismissalRowsTableProcessedTableManager =
       PreparationDismissalRow,
       PrefetchHooks Function()
     >;
+typedef $$ComfortKitOverrideRowsTableCreateCompanionBuilder =
+    ComfortKitOverrideRowsCompanion Function({
+      required String sourceId,
+      required String action,
+      Value<String?> sourceVersion,
+      required int updatedAtMillis,
+      Value<int> rowid,
+    });
+typedef $$ComfortKitOverrideRowsTableUpdateCompanionBuilder =
+    ComfortKitOverrideRowsCompanion Function({
+      Value<String> sourceId,
+      Value<String> action,
+      Value<String?> sourceVersion,
+      Value<int> updatedAtMillis,
+      Value<int> rowid,
+    });
+
+class $$ComfortKitOverrideRowsTableFilterComposer
+    extends Composer<_$LetterHealthDatabase, $ComfortKitOverrideRowsTable> {
+  $$ComfortKitOverrideRowsTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get sourceId => $composableBuilder(
+    column: $table.sourceId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get action => $composableBuilder(
+    column: $table.action,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get sourceVersion => $composableBuilder(
+    column: $table.sourceVersion,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get updatedAtMillis => $composableBuilder(
+    column: $table.updatedAtMillis,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$ComfortKitOverrideRowsTableOrderingComposer
+    extends Composer<_$LetterHealthDatabase, $ComfortKitOverrideRowsTable> {
+  $$ComfortKitOverrideRowsTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get sourceId => $composableBuilder(
+    column: $table.sourceId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get action => $composableBuilder(
+    column: $table.action,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get sourceVersion => $composableBuilder(
+    column: $table.sourceVersion,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get updatedAtMillis => $composableBuilder(
+    column: $table.updatedAtMillis,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$ComfortKitOverrideRowsTableAnnotationComposer
+    extends Composer<_$LetterHealthDatabase, $ComfortKitOverrideRowsTable> {
+  $$ComfortKitOverrideRowsTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get sourceId =>
+      $composableBuilder(column: $table.sourceId, builder: (column) => column);
+
+  GeneratedColumn<String> get action =>
+      $composableBuilder(column: $table.action, builder: (column) => column);
+
+  GeneratedColumn<String> get sourceVersion => $composableBuilder(
+    column: $table.sourceVersion,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get updatedAtMillis => $composableBuilder(
+    column: $table.updatedAtMillis,
+    builder: (column) => column,
+  );
+}
+
+class $$ComfortKitOverrideRowsTableTableManager
+    extends
+        RootTableManager<
+          _$LetterHealthDatabase,
+          $ComfortKitOverrideRowsTable,
+          ComfortKitOverrideRow,
+          $$ComfortKitOverrideRowsTableFilterComposer,
+          $$ComfortKitOverrideRowsTableOrderingComposer,
+          $$ComfortKitOverrideRowsTableAnnotationComposer,
+          $$ComfortKitOverrideRowsTableCreateCompanionBuilder,
+          $$ComfortKitOverrideRowsTableUpdateCompanionBuilder,
+          (
+            ComfortKitOverrideRow,
+            BaseReferences<
+              _$LetterHealthDatabase,
+              $ComfortKitOverrideRowsTable,
+              ComfortKitOverrideRow
+            >,
+          ),
+          ComfortKitOverrideRow,
+          PrefetchHooks Function()
+        > {
+  $$ComfortKitOverrideRowsTableTableManager(
+    _$LetterHealthDatabase db,
+    $ComfortKitOverrideRowsTable table,
+  ) : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$ComfortKitOverrideRowsTableFilterComposer(
+                $db: db,
+                $table: table,
+              ),
+          createOrderingComposer: () =>
+              $$ComfortKitOverrideRowsTableOrderingComposer(
+                $db: db,
+                $table: table,
+              ),
+          createComputedFieldComposer: () =>
+              $$ComfortKitOverrideRowsTableAnnotationComposer(
+                $db: db,
+                $table: table,
+              ),
+          updateCompanionCallback:
+              ({
+                Value<String> sourceId = const Value.absent(),
+                Value<String> action = const Value.absent(),
+                Value<String?> sourceVersion = const Value.absent(),
+                Value<int> updatedAtMillis = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => ComfortKitOverrideRowsCompanion(
+                sourceId: sourceId,
+                action: action,
+                sourceVersion: sourceVersion,
+                updatedAtMillis: updatedAtMillis,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required String sourceId,
+                required String action,
+                Value<String?> sourceVersion = const Value.absent(),
+                required int updatedAtMillis,
+                Value<int> rowid = const Value.absent(),
+              }) => ComfortKitOverrideRowsCompanion.insert(
+                sourceId: sourceId,
+                action: action,
+                sourceVersion: sourceVersion,
+                updatedAtMillis: updatedAtMillis,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$ComfortKitOverrideRowsTableProcessedTableManager =
+    ProcessedTableManager<
+      _$LetterHealthDatabase,
+      $ComfortKitOverrideRowsTable,
+      ComfortKitOverrideRow,
+      $$ComfortKitOverrideRowsTableFilterComposer,
+      $$ComfortKitOverrideRowsTableOrderingComposer,
+      $$ComfortKitOverrideRowsTableAnnotationComposer,
+      $$ComfortKitOverrideRowsTableCreateCompanionBuilder,
+      $$ComfortKitOverrideRowsTableUpdateCompanionBuilder,
+      (
+        ComfortKitOverrideRow,
+        BaseReferences<
+          _$LetterHealthDatabase,
+          $ComfortKitOverrideRowsTable,
+          ComfortKitOverrideRow
+        >,
+      ),
+      ComfortKitOverrideRow,
+      PrefetchHooks Function()
+    >;
+typedef $$ComfortReminderPreferenceRowsTableCreateCompanionBuilder =
+    ComfortReminderPreferenceRowsCompanion Function({
+      required String id,
+      Value<bool> enabled,
+      Value<int> leadDays,
+      Value<int> hour,
+      Value<int> minute,
+      required int updatedAtMillis,
+      Value<int> rowid,
+    });
+typedef $$ComfortReminderPreferenceRowsTableUpdateCompanionBuilder =
+    ComfortReminderPreferenceRowsCompanion Function({
+      Value<String> id,
+      Value<bool> enabled,
+      Value<int> leadDays,
+      Value<int> hour,
+      Value<int> minute,
+      Value<int> updatedAtMillis,
+      Value<int> rowid,
+    });
+
+class $$ComfortReminderPreferenceRowsTableFilterComposer
+    extends
+        Composer<_$LetterHealthDatabase, $ComfortReminderPreferenceRowsTable> {
+  $$ComfortReminderPreferenceRowsTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get enabled => $composableBuilder(
+    column: $table.enabled,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get leadDays => $composableBuilder(
+    column: $table.leadDays,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get hour => $composableBuilder(
+    column: $table.hour,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get minute => $composableBuilder(
+    column: $table.minute,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get updatedAtMillis => $composableBuilder(
+    column: $table.updatedAtMillis,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$ComfortReminderPreferenceRowsTableOrderingComposer
+    extends
+        Composer<_$LetterHealthDatabase, $ComfortReminderPreferenceRowsTable> {
+  $$ComfortReminderPreferenceRowsTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<bool> get enabled => $composableBuilder(
+    column: $table.enabled,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get leadDays => $composableBuilder(
+    column: $table.leadDays,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get hour => $composableBuilder(
+    column: $table.hour,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get minute => $composableBuilder(
+    column: $table.minute,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get updatedAtMillis => $composableBuilder(
+    column: $table.updatedAtMillis,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$ComfortReminderPreferenceRowsTableAnnotationComposer
+    extends
+        Composer<_$LetterHealthDatabase, $ComfortReminderPreferenceRowsTable> {
+  $$ComfortReminderPreferenceRowsTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<bool> get enabled =>
+      $composableBuilder(column: $table.enabled, builder: (column) => column);
+
+  GeneratedColumn<int> get leadDays =>
+      $composableBuilder(column: $table.leadDays, builder: (column) => column);
+
+  GeneratedColumn<int> get hour =>
+      $composableBuilder(column: $table.hour, builder: (column) => column);
+
+  GeneratedColumn<int> get minute =>
+      $composableBuilder(column: $table.minute, builder: (column) => column);
+
+  GeneratedColumn<int> get updatedAtMillis => $composableBuilder(
+    column: $table.updatedAtMillis,
+    builder: (column) => column,
+  );
+}
+
+class $$ComfortReminderPreferenceRowsTableTableManager
+    extends
+        RootTableManager<
+          _$LetterHealthDatabase,
+          $ComfortReminderPreferenceRowsTable,
+          ComfortReminderPreferenceRow,
+          $$ComfortReminderPreferenceRowsTableFilterComposer,
+          $$ComfortReminderPreferenceRowsTableOrderingComposer,
+          $$ComfortReminderPreferenceRowsTableAnnotationComposer,
+          $$ComfortReminderPreferenceRowsTableCreateCompanionBuilder,
+          $$ComfortReminderPreferenceRowsTableUpdateCompanionBuilder,
+          (
+            ComfortReminderPreferenceRow,
+            BaseReferences<
+              _$LetterHealthDatabase,
+              $ComfortReminderPreferenceRowsTable,
+              ComfortReminderPreferenceRow
+            >,
+          ),
+          ComfortReminderPreferenceRow,
+          PrefetchHooks Function()
+        > {
+  $$ComfortReminderPreferenceRowsTableTableManager(
+    _$LetterHealthDatabase db,
+    $ComfortReminderPreferenceRowsTable table,
+  ) : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$ComfortReminderPreferenceRowsTableFilterComposer(
+                $db: db,
+                $table: table,
+              ),
+          createOrderingComposer: () =>
+              $$ComfortReminderPreferenceRowsTableOrderingComposer(
+                $db: db,
+                $table: table,
+              ),
+          createComputedFieldComposer: () =>
+              $$ComfortReminderPreferenceRowsTableAnnotationComposer(
+                $db: db,
+                $table: table,
+              ),
+          updateCompanionCallback:
+              ({
+                Value<String> id = const Value.absent(),
+                Value<bool> enabled = const Value.absent(),
+                Value<int> leadDays = const Value.absent(),
+                Value<int> hour = const Value.absent(),
+                Value<int> minute = const Value.absent(),
+                Value<int> updatedAtMillis = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => ComfortReminderPreferenceRowsCompanion(
+                id: id,
+                enabled: enabled,
+                leadDays: leadDays,
+                hour: hour,
+                minute: minute,
+                updatedAtMillis: updatedAtMillis,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required String id,
+                Value<bool> enabled = const Value.absent(),
+                Value<int> leadDays = const Value.absent(),
+                Value<int> hour = const Value.absent(),
+                Value<int> minute = const Value.absent(),
+                required int updatedAtMillis,
+                Value<int> rowid = const Value.absent(),
+              }) => ComfortReminderPreferenceRowsCompanion.insert(
+                id: id,
+                enabled: enabled,
+                leadDays: leadDays,
+                hour: hour,
+                minute: minute,
+                updatedAtMillis: updatedAtMillis,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$ComfortReminderPreferenceRowsTableProcessedTableManager =
+    ProcessedTableManager<
+      _$LetterHealthDatabase,
+      $ComfortReminderPreferenceRowsTable,
+      ComfortReminderPreferenceRow,
+      $$ComfortReminderPreferenceRowsTableFilterComposer,
+      $$ComfortReminderPreferenceRowsTableOrderingComposer,
+      $$ComfortReminderPreferenceRowsTableAnnotationComposer,
+      $$ComfortReminderPreferenceRowsTableCreateCompanionBuilder,
+      $$ComfortReminderPreferenceRowsTableUpdateCompanionBuilder,
+      (
+        ComfortReminderPreferenceRow,
+        BaseReferences<
+          _$LetterHealthDatabase,
+          $ComfortReminderPreferenceRowsTable,
+          ComfortReminderPreferenceRow
+        >,
+      ),
+      ComfortReminderPreferenceRow,
+      PrefetchHooks Function()
+    >;
 
 class $LetterHealthDatabaseManager {
   final _$LetterHealthDatabase _db;
@@ -8497,5 +9860,16 @@ class $LetterHealthDatabaseManager {
       $$PreparationDismissalRowsTableTableManager(
         _db,
         _db.preparationDismissalRows,
+      );
+  $$ComfortKitOverrideRowsTableTableManager get comfortKitOverrideRows =>
+      $$ComfortKitOverrideRowsTableTableManager(
+        _db,
+        _db.comfortKitOverrideRows,
+      );
+  $$ComfortReminderPreferenceRowsTableTableManager
+  get comfortReminderPreferenceRows =>
+      $$ComfortReminderPreferenceRowsTableTableManager(
+        _db,
+        _db.comfortReminderPreferenceRows,
       );
 }

@@ -18,6 +18,7 @@ void main() {
     required InMemoryPeriodRepository periods,
     required InMemoryMomentCheckInRepository moods,
     required InMemoryHealthRecordRepository symptoms,
+    InMemoryCaptureNoteStore? notes,
     void Function()? onChanged,
     Future<String?> Function()? loadRememberedHelpLine,
   }) {
@@ -25,7 +26,7 @@ void main() {
       periodRepository: periods,
       checkInRepository: moods,
       healthRecordRepository: symptoms,
-      captureNoteStore: InMemoryCaptureNoteStore(),
+      captureNoteStore: notes ?? InMemoryCaptureNoteStore(),
       today: () => today,
       now: () => timestamp,
       onCycleDataChanged: onChanged ?? () {},
@@ -160,4 +161,35 @@ void main() {
     );
     expect((await unavailable.load()).rememberedHelpLine, isNull);
   });
+
+  test(
+    'Quick notes keep local history and support edit, Kit opt-in, and delete',
+    () async {
+      final notes = InMemoryCaptureNoteStore();
+      final port = buildPort(
+        periods: InMemoryPeriodRepository(clock: () => timestamp),
+        moods: InMemoryMomentCheckInRepository(clock: () => timestamp),
+        symptoms: InMemoryHealthRecordRepository(clock: () => timestamp),
+        notes: notes,
+      );
+
+      var snapshot = await port.saveQuickNote('Bring the soft blanket.');
+      expect(snapshot.quickNotes, hasLength(1));
+      expect(snapshot.quickNotes.single.keepInComfortKit, isFalse);
+
+      final noteId = snapshot.quickNotes.single.id;
+      snapshot = await port.updateQuickNote(
+        noteId,
+        text: 'Bring the warm blanket.',
+        keepInComfortKit: true,
+      );
+      expect(snapshot.quickNotes.single.text, 'Bring the warm blanket.');
+      expect(snapshot.quickNotes.single.keepInComfortKit, isTrue);
+      expect(snapshot.quickNotes.single.updatedAt, timestamp.toUtc());
+
+      snapshot = await port.deleteQuickNote(noteId);
+      expect(snapshot.quickNotes, isEmpty);
+      expect(await notes.getAll(), isEmpty);
+    },
+  );
 }

@@ -68,7 +68,6 @@ void main() {
   group('CycleCheckInScheduler', () {
     test('preferences default to one enabled neutral check-in', () {
       const preferences = PrivacyPreferences();
-      expect(preferences.appLockEnabled, isFalse);
       expect(preferences.cycleCheckInEnabled, isTrue);
       expect(
         CycleCheckInScheduler.neutralTitle.toLowerCase(),
@@ -80,9 +79,8 @@ void main() {
       );
     });
 
-    test('privacy preference codec preserves lock and permission state', () {
+    test('privacy preference codec preserves reminder permission state', () {
       const preferences = PrivacyPreferences(
-        appLockEnabled: true,
         cycleCheckInEnabled: false,
         notificationPermissionRequested: true,
       );

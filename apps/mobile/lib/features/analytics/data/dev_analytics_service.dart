@@ -26,21 +26,5 @@ final class DevAnalyticsService implements AnalyticsService {
   Future<void> disable() async => _enabled = false;
 
   @override
-  Future<void> identifyAuthenticatedUser(String supabaseUserId) async {
-    if (!_isUuid(supabaseUserId)) return;
-    // Deliberately do not log or retain the identifier in the dev adapter.
-  }
-
-  @override
-  Future<void> clearAuthenticatedUser() async {}
-
-  @override
   Future<void> dispose() async => _enabled = false;
-}
-
-bool _isUuid(String value) {
-  final uuid = RegExp(
-    r'^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-5][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}$',
-  );
-  return uuid.hasMatch(value);
 }

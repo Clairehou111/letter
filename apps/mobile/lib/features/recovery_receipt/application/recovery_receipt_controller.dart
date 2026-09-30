@@ -78,7 +78,9 @@ final class RecoveryReceiptController {
           await _healthRecordRepository.create(
             HealthRecordDraft(
               symptom: symptom,
-              severity: valid.severity,
+              severity:
+                  valid.additionalPhysicalSignalSeverities[symptom] ??
+                  valid.severity,
               functionalImpacts: valid.functionalImpacts,
               experiencedDate: experiencedDate,
               provenance: provenance,

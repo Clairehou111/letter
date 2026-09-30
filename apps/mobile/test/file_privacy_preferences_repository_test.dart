@@ -26,11 +26,11 @@ void main() {
   test('persists privacy preferences between repository instances', () async {
     final first = FilePrivacyPreferencesRepository(directory);
     const preferences = PrivacyPreferences(
-      appLockEnabled: true,
       screenCoverEnabled: false,
       cycleCheckInEnabled: false,
       notificationPermissionRequested: true,
       analyticsConsent: AnalyticsConsent.optedOut,
+      careCompanionName: 'Miso',
     );
 
     await first.save(preferences);

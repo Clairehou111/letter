@@ -1,4 +1,5 @@
 import 'dart:math';
+import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
@@ -8,6 +9,7 @@ import 'package:flutter_soloud/flutter_soloud.dart';
 
 import '../../../design_system/letter_theme.dart';
 import 'care_audio_runtime.dart';
+import 'care_motion_flow.dart';
 
 /// A breathing activity inside "My body needs care".
 ///
@@ -108,7 +110,7 @@ class _BreathFlowState extends State<BreathFlow>
   Duration _elapsed = Duration.zero;
 
   BreathPattern _pattern = BreathPattern.coherent;
-  bool _picking = false;
+  bool _menuOpen = false;
   int _phaseIndex = -1;
   bool _minutePassed = false;
   bool _settled = false;
@@ -283,11 +285,37 @@ class _BreathFlowState extends State<BreathFlow>
     }
   }
 
-  String get _soundLabel => switch (_sound) {
-    BreathSound.off => 'sound off',
-    BreathSound.voice => 'a voice',
-    BreathSound.wordless => 'wordless',
+  String get _soundChoiceLabel => switch (_sound) {
+    BreathSound.off => 'Sound: off',
+    BreathSound.voice => 'Sound: a voice',
+    BreathSound.wordless => 'Sound: wordless',
   };
+
+  String get _soundChoiceNote => switch (_sound) {
+    BreathSound.off => 'silent — the ring and the haptics are enough',
+    BreathSound.voice => 'a few soft words at the turning points, then quiet',
+    BreathSound.wordless => 'a soft hum instead of words, no language',
+  };
+
+  String _phaseSemanticsLabel(BreathPhase phase) => switch (phase.kind) {
+    0 => 'Breathe in',
+    1 => 'Hold',
+    _ => 'Breathe out',
+  };
+
+  void _toggleMenu() => setState(() => _menuOpen = !_menuOpen);
+
+  void _dismissMenu() {
+    if (_menuOpen) setState(() => _menuOpen = false);
+  }
+
+  void _choosePattern(BreathPattern pattern) {
+    setState(() {
+      _pattern = pattern;
+      _phaseIndex = -1;
+      _menuOpen = false;
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -311,15 +339,19 @@ class _BreathFlowState extends State<BreathFlow>
       body: Stack(
         children: [
           Positioned.fill(
-            child: RepaintBoundary(
-              key: const Key('breath-animation-surface'),
-              child: CustomPaint(
-                painter: _BreathPainter(
-                  expand: eased,
-                  seconds: seconds,
-                  ink: _ink,
-                  glow: _glow,
-                  bg: _bg,
+            child: GestureDetector(
+              behavior: HitTestBehavior.opaque,
+              onTap: _dismissMenu,
+              child: RepaintBoundary(
+                key: const Key('breath-animation-surface'),
+                child: CustomPaint(
+                  painter: _BreathPainter(
+                    expand: eased,
+                    seconds: seconds,
+                    ink: _ink,
+                    glow: _glow,
+                    bg: _bg,
+                  ),
                 ),
               ),
             ),
@@ -330,25 +362,32 @@ class _BreathFlowState extends State<BreathFlow>
             child: Align(
               alignment: const Alignment(0, -0.12),
               child: IgnorePointer(
-                child: AnimatedOpacity(
-                  opacity: hold ? 0.5 : 0.85,
-                  duration: reduceMotion
-                      ? Duration.zero
-                      : const Duration(milliseconds: 400),
-                  child: AnimatedSwitcher(
+                child: Semantics(
+                  key: const Key('breath-phase-cue'),
+                  container: true,
+                  liveRegion: true,
+                  label: _phaseSemanticsLabel(now.phase),
+                  excludeSemantics: true,
+                  child: AnimatedOpacity(
+                    opacity: hold ? 0.5 : 0.85,
                     duration: reduceMotion
                         ? Duration.zero
-                        : const Duration(milliseconds: 900),
-                    switchInCurve: Curves.easeOut,
-                    switchOutCurve: Curves.easeIn,
-                    child: Text(
-                      now.phase.word,
-                      key: ValueKey('${now.phase.word}-${now.index}'),
-                      style: TextStyle(
-                        fontFamily: 'Newsreader',
-                        fontSize: 30,
-                        letterSpacing: 1,
-                        color: _glow.withValues(alpha: 0.9),
+                        : const Duration(milliseconds: 400),
+                    child: AnimatedSwitcher(
+                      duration: reduceMotion
+                          ? Duration.zero
+                          : const Duration(milliseconds: 900),
+                      switchInCurve: Curves.easeOut,
+                      switchOutCurve: Curves.easeIn,
+                      child: Text(
+                        now.phase.word,
+                        key: ValueKey('${now.phase.word}-${now.index}'),
+                        style: TextStyle(
+                          fontFamily: 'Newsreader',
+                          fontSize: 30,
+                          letterSpacing: 1,
+                          color: _glow.withValues(alpha: 0.9),
+                        ),
                       ),
                     ),
                   ),
@@ -368,64 +407,6 @@ class _BreathFlowState extends State<BreathFlow>
                   style: TextStyle(
                     fontSize: 11.5,
                     color: _glow.withValues(alpha: 0.4),
-                  ),
-                ),
-              ),
-            ),
-          if (_picking)
-            Positioned.fill(
-              child: GestureDetector(
-                onTap: () => setState(() => _picking = false),
-                child: ColoredBox(
-                  color: _bg.withValues(alpha: 0.88),
-                  child: SafeArea(
-                    child: Center(
-                      child: SingleChildScrollView(
-                        padding: const EdgeInsets.symmetric(horizontal: 24),
-                        child: ConstrainedBox(
-                          constraints: const BoxConstraints(maxWidth: 384),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              for (final b in breathPatterns)
-                                _PatternChoice(
-                                  info: b,
-                                  selected: b.id == _pattern,
-                                  glow: _glow,
-                                  onTap: () => setState(() {
-                                    _pattern = b.id;
-                                    _phaseIndex = -1;
-                                    _picking = false;
-                                  }),
-                                ),
-                              const SizedBox(height: 10),
-                              _PatternChoice(
-                                info: BreathPatternInfo(
-                                  _pattern,
-                                  switch (_sound) {
-                                    BreathSound.off => 'Sound: off',
-                                    BreathSound.voice => 'Sound: a voice',
-                                    BreathSound.wordless => 'Sound: wordless',
-                                  },
-                                  switch (_sound) {
-                                    BreathSound.off =>
-                                      'silent — the ring and the haptics are enough',
-                                    BreathSound.voice =>
-                                      'a few soft words at the turning points, then quiet',
-                                    BreathSound.wordless =>
-                                      'a soft hum instead of words, no language',
-                                  },
-                                  const [],
-                                ),
-                                selected: _sound != BreathSound.off,
-                                glow: _glow,
-                                onTap: _cycleSound,
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                    ),
                   ),
                 ),
               ),
@@ -450,44 +431,46 @@ class _BreathFlowState extends State<BreathFlow>
                     icon: const Icon(Icons.arrow_back_rounded, size: 21),
                   ),
                 ),
-                Align(
-                  alignment: Alignment.bottomCenter,
-                  child: Container(
-                    margin: const EdgeInsets.fromLTRB(16, 0, 16, 20),
-                    padding: const EdgeInsets.all(10),
-                    decoration: BoxDecoration(
-                      color: _bg.withValues(alpha: 0.86),
-                      borderRadius: BorderRadius.circular(24),
-                      border: Border.all(color: _glow.withValues(alpha: 0.16)),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withValues(alpha: 0.2),
-                          blurRadius: 24,
-                          offset: const Offset(0, 10),
-                        ),
-                      ],
-                    ),
-                    child: OutlinedButton.icon(
-                      key: const Key('breath-options'),
-                      onPressed: () => setState(() => _picking = !_picking),
-                      style: OutlinedButton.styleFrom(
-                        minimumSize: const Size.fromHeight(48),
-                        foregroundColor: _glow.withValues(alpha: 0.82),
-                        side: BorderSide(color: _glow.withValues(alpha: 0.2)),
-                        shape: const StadiumBorder(),
-                        padding: const EdgeInsets.symmetric(horizontal: 14),
+                Positioned(
+                  top: 8,
+                  right: 12,
+                  child: Semantics(
+                    button: true,
+                    label: _menuOpen
+                        ? 'Hide breathing options'
+                        : 'Show breathing options',
+                    child: IconButton(
+                      key: const Key('breath-menu'),
+                      onPressed: _toggleMenu,
+                      tooltip: _menuOpen
+                          ? 'Hide breathing options'
+                          : 'Show breathing options',
+                      style: IconButton.styleFrom(
+                        minimumSize: const Size(48, 48),
+                        foregroundColor: _glow.withValues(alpha: 0.9),
+                        backgroundColor: Colors.transparent,
+                        side: BorderSide(color: _glow.withValues(alpha: 0.14)),
+                        shape: const CircleBorder(),
                       ),
-                      icon: const Icon(Icons.tune_rounded, size: 18),
-                      label: Text(
-                        '${breathPatternInfo(_pattern).label} · $_soundLabel',
-                        textScaler: TextScaler.noScaling,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(fontSize: 11.5),
-                      ),
+                      icon: _menuOpen
+                          ? const Icon(Icons.close_rounded, size: 18)
+                          : const CareSceneHandleGlyph(),
                     ),
                   ),
                 ),
+                if (_menuOpen)
+                  Positioned(
+                    top: 66,
+                    right: 12,
+                    child: _BreathMenu(
+                      pattern: _pattern,
+                      soundLabel: _soundChoiceLabel,
+                      soundNote: _soundChoiceNote,
+                      soundEnabled: _sound != BreathSound.off,
+                      onPatternSelected: _choosePattern,
+                      onSoundPressed: _cycleSound,
+                    ),
+                  ),
               ],
             ),
           ),
@@ -497,48 +480,172 @@ class _BreathFlowState extends State<BreathFlow>
   }
 }
 
-class _PatternChoice extends StatelessWidget {
-  const _PatternChoice({
-    required this.info,
+class _BreathMenu extends StatelessWidget {
+  const _BreathMenu({
+    required this.pattern,
+    required this.soundLabel,
+    required this.soundNote,
+    required this.soundEnabled,
+    required this.onPatternSelected,
+    required this.onSoundPressed,
+  });
+
+  final BreathPattern pattern;
+  final String soundLabel;
+  final String soundNote;
+  final bool soundEnabled;
+  final ValueChanged<BreathPattern> onPatternSelected;
+  final VoidCallback onSoundPressed;
+
+  @override
+  Widget build(BuildContext context) {
+    final reduced = MediaQuery.disableAnimationsOf(context);
+    final highContrast = MediaQuery.highContrastOf(context);
+    final size = MediaQuery.sizeOf(context);
+    final width = min(292.0, size.width - 40);
+    final maxHeight = max(240.0, size.height - 120);
+
+    final choices = <Widget>[
+      for (final info in breathPatterns)
+        _BreathMenuChoice(
+          choiceKey: Key('breath-pattern-${info.id.name}'),
+          label: info.label,
+          note: info.note,
+          selected: info.id == pattern,
+          onTap: () => onPatternSelected(info.id),
+        ),
+      _BreathMenuChoice(
+        choiceKey: const Key('breath-sound'),
+        label: soundLabel,
+        note: soundNote,
+        selected: soundEnabled,
+        onTap: onSoundPressed,
+      ),
+    ];
+
+    return TweenAnimationBuilder<double>(
+      tween: Tween(begin: 0, end: 1),
+      duration: reduced ? Duration.zero : const Duration(milliseconds: 260),
+      curve: Curves.easeOutCubic,
+      builder: (context, t, child) => Opacity(
+        opacity: t,
+        child: Transform.translate(
+          offset: Offset(18 * (1 - t), 0),
+          child: child,
+        ),
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(20),
+        child: BackdropFilter(
+          filter: ui.ImageFilter.blur(sigmaX: 18, sigmaY: 18),
+          child: Container(
+            width: width,
+            constraints: BoxConstraints(maxHeight: maxHeight),
+            decoration: BoxDecoration(
+              color: _BreathFlowState._bg.withValues(alpha: 0.9),
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(
+                width: highContrast ? 1.4 : 1,
+                color: _BreathFlowState._glow.withValues(
+                  alpha: highContrast ? 0.42 : 0.16,
+                ),
+              ),
+            ),
+            child: Material(
+              color: Colors.transparent,
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.symmetric(vertical: 6),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    for (var i = 0; i < choices.length; i++) ...[
+                      if (i > 0)
+                        Divider(
+                          height: 1,
+                          indent: 16,
+                          color: _BreathFlowState._glow.withValues(alpha: 0.1),
+                        ),
+                      choices[i],
+                    ],
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _BreathMenuChoice extends StatelessWidget {
+  const _BreathMenuChoice({
+    required this.choiceKey,
+    required this.label,
+    required this.note,
     required this.selected,
-    required this.glow,
     required this.onTap,
   });
 
-  final BreathPatternInfo info;
+  final Key choiceKey;
+  final String label;
+  final String note;
   final bool selected;
-  final Color glow;
   final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 8),
-      child: Material(
-        color: glow.withValues(alpha: selected ? 0.14 : 0.06),
-        borderRadius: BorderRadius.circular(18),
-        child: InkWell(
-          borderRadius: BorderRadius.circular(18),
-          onTap: onTap,
+    final glow = _BreathFlowState._glow;
+    return Semantics(
+      button: true,
+      selected: selected,
+      label: '$label. $note',
+      child: InkWell(
+        key: choiceKey,
+        onTap: onTap,
+        splashColor: glow.withValues(alpha: 0.06),
+        highlightColor: glow.withValues(alpha: 0.04),
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(minHeight: 56),
           child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+            padding: const EdgeInsets.fromLTRB(16, 10, 14, 10),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.center,
               children: [
-                Text(
-                  info.label,
-                  style: TextStyle(
-                    fontSize: 14,
-                    color: glow.withValues(alpha: 0.9),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        label,
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                          color: glow.withValues(alpha: 0.9),
+                        ),
+                      ),
+                      const SizedBox(height: 3),
+                      Text(
+                        note,
+                        style: TextStyle(
+                          fontSize: 11.5,
+                          height: 1.35,
+                          color: glow.withValues(alpha: 0.52),
+                        ),
+                      ),
+                    ],
                   ),
                 ),
-                const SizedBox(height: 3),
-                Text(
-                  info.note,
-                  style: TextStyle(
-                    fontSize: 11.5,
-                    height: 1.5,
-                    color: glow.withValues(alpha: 0.5),
+                const SizedBox(width: 10),
+                Container(
+                  width: 8,
+                  height: 8,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: selected ? glow : Colors.transparent,
+                    border: selected
+                        ? null
+                        : Border.all(color: glow.withValues(alpha: 0.32)),
                   ),
                 ),
               ],

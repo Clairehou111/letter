@@ -126,7 +126,10 @@ void main() {
       expect(summary.careRows.single.cycleDay, 18);
       expect(summary.notes.single.text, 'A quiet room helped.');
       expect(summary.predictions.single.sourceLabel, 'Local cycle estimate');
-      expect(summary.missingness, isEmpty);
+      expect(summary.missingness, const [
+        'Recorded observations appear on 3 of 31 calendar days in this '
+            'range. Blank days are unknown, not symptom-free.',
+      ]);
       final periodRange = observedPeriodRanges(summary.periodDays).single;
       expect(periodRange.dayCount, 2);
       expect(summaryDateLabel(periodRange.start), '7/1/2026');
@@ -162,6 +165,57 @@ void main() {
       expect(text, isNot(contains('A quiet room helped.')));
     },
   );
+
+  test('neutralizes spreadsheet formulas in every user-note prefix', () {
+    final input = SummaryExportInput(
+      periodDays: const [],
+      predictions: const [],
+      healthRecords: const [],
+      checkIns: const [],
+      careRecords: const [],
+      notes: const [
+        SummarySelectableNote(
+          id: 'equals',
+          date: LocalDate(2026, 7, 2),
+          label: 'Note',
+          text: '=1+1',
+          sourceLabel: 'Private note',
+        ),
+        SummarySelectableNote(
+          id: 'plus',
+          date: LocalDate(2026, 7, 3),
+          label: 'Note',
+          text: '+SUM(A1:A2)',
+          sourceLabel: 'Private note',
+        ),
+        SummarySelectableNote(
+          id: 'minus',
+          date: LocalDate(2026, 7, 4),
+          label: 'Note',
+          text: '  -2+3',
+          sourceLabel: 'Private note',
+        ),
+        SummarySelectableNote(
+          id: 'at',
+          date: LocalDate(2026, 7, 5),
+          label: 'Note',
+          text: '@cmd',
+          sourceLabel: 'Private note',
+        ),
+      ],
+    );
+    final summary = buildCycleAndCareSummary(
+      input: input,
+      range: range,
+      selectedNoteIds: const {'equals', 'plus', 'minus', 'at'},
+    );
+    final csv = utf8.decode(buildCycleAndCareCsv(summary).bytes);
+
+    expect(csv, contains('"\'=1+1"'));
+    expect(csv, contains('"\'+SUM(A1:A2)"'));
+    expect(csv, contains('"\'  -2+3"'));
+    expect(csv, contains('"\'@cmd"'));
+  });
 
   test('uses singular day grammar for a one-day observed period', () {
     final summary = buildCycleAndCareSummary(

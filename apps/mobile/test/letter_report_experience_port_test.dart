@@ -12,6 +12,9 @@ import 'package:letter_mobile/features/check_in/domain/moment_check_in.dart';
 import 'package:letter_mobile/features/cycle/data/in_memory_period_repository.dart';
 import 'package:letter_mobile/features/cycle/domain/local_date.dart';
 import 'package:letter_mobile/features/cycle/domain/period_record.dart';
+import 'package:letter_mobile/features/entitlement/data/local_entitlement_repository.dart';
+import 'package:letter_mobile/features/entitlement/domain/entitlement.dart';
+import 'package:letter_mobile/features/entitlement/domain/entitlement_repository.dart';
 import 'package:letter_mobile/features/health_records/data/in_memory_health_record_repository.dart';
 import 'package:letter_mobile/features/summary_export/domain/cycle_care_summary.dart';
 import 'package:letter_mobile/features/summary_export/domain/cycle_care_pdf.dart';
@@ -19,12 +22,19 @@ import 'package:letter_mobile/features/summary_export/domain/local_file_share_ad
 import 'package:letter_mobile/features/summary_export/presentation/twin_matrix_summary_adapter.dart';
 
 final class _RecordingShareAdapter implements LocalFileShareAdapter {
+  _RecordingShareAdapter({
+    this.result = const LocalFileShareResult.shared(
+      savedPath: '/Letter/report',
+    ),
+  });
+
+  final LocalFileShareResult result;
   LocalExportFile? file;
 
   @override
   Future<LocalFileShareResult> share(LocalExportFile value) async {
     file = value;
-    return const LocalFileShareResult.shared(savedPath: '/Letter/report');
+    return result;
   }
 }
 
@@ -40,55 +50,62 @@ PeriodRecord _period(String id, LocalDate start, {LocalDate? end}) =>
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
   final now = DateTime(2026, 7, 30, 12);
+  final paidEntitlement = LocalEntitlementRepository(
+    initial: const EntitlementState(status: EntitlementStatus.activePaid),
+  );
+  tearDownAll(paidEntitlement.dispose);
 
-  LetterReportExperiencePort port(_RecordingShareAdapter share) =>
-      LetterReportExperiencePort(
-        periodRepository: InMemoryPeriodRepository(
-          seed: [
-            _period(
-              'closed',
-              const LocalDate(2026, 7, 1),
-              end: const LocalDate(2026, 7, 5),
-            ),
-            _period('open', const LocalDate(2026, 7, 29)),
-          ],
+  LetterReportExperiencePort port(
+    _RecordingShareAdapter share, {
+    EntitlementRepository? entitlementRepository,
+  }) => LetterReportExperiencePort(
+    periodRepository: InMemoryPeriodRepository(
+      seed: [
+        _period(
+          'closed',
+          const LocalDate(2026, 7, 1),
+          end: const LocalDate(2026, 7, 5),
         ),
-        careMemoryRepository: InMemoryCareMemoryRepository(
-          records: [
-            CareRecord(
-              id: 'warmth-before-period',
-              mode: CareMode.physical,
-              actionId: 'warmth',
-              actionLabel: 'Apply warmth',
-              outcome: CareOutcome.better,
-              occurredAt: DateTime.utc(2026, 7, 28, 10),
-              createdAt: DateTime.utc(2026, 7, 28, 10),
-              updatedAt: DateTime.utc(2026, 7, 28, 10),
-              pinned: false,
-            ),
-          ],
+        _period('open', const LocalDate(2026, 7, 29)),
+      ],
+    ),
+    careMemoryRepository: InMemoryCareMemoryRepository(
+      records: [
+        CareRecord(
+          id: 'warmth-before-period',
+          mode: CareMode.physical,
+          actionId: 'warmth',
+          actionLabel: 'Apply warmth',
+          outcome: CareOutcome.better,
+          occurredAt: DateTime.utc(2026, 7, 28, 10),
+          createdAt: DateTime.utc(2026, 7, 28, 10),
+          updatedAt: DateTime.utc(2026, 7, 28, 10),
+          pinned: false,
         ),
-        healthRecordRepository: InMemoryHealthRecordRepository(),
-        momentCheckInRepository: InMemoryMomentCheckInRepository(
-          seed: [
-            MomentCheckIn(
-              id: 'anxious-before-period',
-              state: MomentCheckInState.anxious,
-              occurredAt: DateTime.utc(2026, 7, 28, 9),
-              createdAt: DateTime.utc(2026, 7, 28, 9),
-            ),
-            MomentCheckIn(
-              id: 'calm-during-period',
-              state: MomentCheckInState.calm,
-              occurredAt: DateTime.utc(2026, 7, 30, 9),
-              createdAt: DateTime.utc(2026, 7, 30, 9),
-            ),
-          ],
+      ],
+    ),
+    healthRecordRepository: InMemoryHealthRecordRepository(),
+    momentCheckInRepository: InMemoryMomentCheckInRepository(
+      seed: [
+        MomentCheckIn(
+          id: 'anxious-before-period',
+          state: MomentCheckInState.anxious,
+          occurredAt: DateTime.utc(2026, 7, 28, 9),
+          createdAt: DateTime.utc(2026, 7, 28, 9),
         ),
-        captureNoteStore: InMemoryCaptureNoteStore(),
-        fileShareAdapter: share,
-        now: () => now,
-      );
+        MomentCheckIn(
+          id: 'calm-during-period',
+          state: MomentCheckInState.calm,
+          occurredAt: DateTime.utc(2026, 7, 30, 9),
+          createdAt: DateTime.utc(2026, 7, 30, 9),
+        ),
+      ],
+    ),
+    captureNoteStore: InMemoryCaptureNoteStore(),
+    entitlementRepository: entitlementRepository ?? paidEntitlement,
+    fileShareAdapter: share,
+    now: () => now,
+  );
 
   test(
     'uses recorded period ranges even when no daily flow was entered',
@@ -108,7 +125,7 @@ void main() {
     },
   );
 
-  test('creates real CSV and Twin Matrix PDF exports', () async {
+  test('paid Plus creates real CSV and Twin Matrix PDF exports', () async {
     final csvShare = _RecordingShareAdapter();
     final csvReceipt = await port(csvShare).export(
       range: const SummaryDateRange(
@@ -172,4 +189,74 @@ void main() {
     expect(pdfShare.file, isA<LocalPdfFile>());
     expect(utf8.decode(pdfShare.file!.bytes.take(4).toList()), '%PDF');
   });
+
+  test(
+    'preserves the local file across share dismissal and reports native failures honestly',
+    () async {
+      final cases = <(LocalFileShareResult, ExperienceFileOutcome, String?)>[
+        (
+          const LocalFileShareResult.savedOnly(
+            savedPath: '/Letter/dismissed.csv',
+          ),
+          ExperienceFileOutcome.savedOnly,
+          '/Letter/dismissed.csv',
+        ),
+        (
+          const LocalFileShareResult.unavailable(),
+          ExperienceFileOutcome.failed,
+          null,
+        ),
+        (
+          const LocalFileShareResult.failed(),
+          ExperienceFileOutcome.failed,
+          null,
+        ),
+      ];
+
+      for (final entry in cases) {
+        final share = _RecordingShareAdapter(result: entry.$1);
+        final receipt = await port(share).export(
+          range: const SummaryDateRange(
+            start: LocalDate(2026, 7, 1),
+            end: LocalDate(2026, 7, 30),
+          ),
+          selectedNoteIds: const {},
+          format: ReportExportFormat.rawCsv,
+        );
+
+        expect(receipt.outcome, entry.$2);
+        expect(receipt.localPath, entry.$3);
+        expect(share.file, isA<LocalCsvFile>());
+      }
+    },
+  );
+
+  test(
+    'every file format is blocked before generation without paid Plus',
+    () async {
+      final freeEntitlement = LocalEntitlementRepository();
+      addTearDown(freeEntitlement.dispose);
+
+      for (final format in ReportExportFormat.values) {
+        final share = _RecordingShareAdapter();
+        final receipt =
+            await port(share, entitlementRepository: freeEntitlement).export(
+              range: const SummaryDateRange(
+                start: LocalDate(2026, 7, 1),
+                end: LocalDate(2026, 7, 30),
+              ),
+              selectedNoteIds: const {},
+              format: format,
+            );
+
+        expect(
+          receipt.outcome,
+          ExperienceFileOutcome.failed,
+          reason: '$format',
+        );
+        expect(receipt.message, contains('paid Plus'), reason: '$format');
+        expect(share.file, isNull, reason: '$format');
+      }
+    },
+  );
 }

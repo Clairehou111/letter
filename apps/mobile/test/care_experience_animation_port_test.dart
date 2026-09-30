@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:letter_mobile/experience/care/care_animation_port.dart';
+import 'package:letter_mobile/experience/care/care_editorial_art.dart';
 import 'package:letter_mobile/experience/care/care_experience.dart';
 import 'package:letter_mobile/experience/care/original_care_animation_port.dart';
 import 'package:letter_mobile/features/care/data/in_memory_care_memory_repository.dart';
@@ -277,7 +278,33 @@ void main() {
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 400));
 
-    expect(find.textContaining('Even breathing'), findsOneWidget);
     expect(find.byKey(const Key('breath-back')), findsOneWidget);
+    expect(find.byKey(const Key('breath-pattern-coherent')), findsNothing);
+    await tester.tap(find.byKey(const Key('breath-menu')));
+    await tester.pump();
+    expect(find.textContaining('Even breathing'), findsOneWidget);
+    expect(find.textContaining('Longer out-breath'), findsOneWidget);
+    expect(find.textContaining('Four corners'), findsOneWidget);
+    expect(find.textContaining('Sound: off'), findsOneWidget);
+  });
+
+  testWidgets('the companion does not move while its page is hidden', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      const MaterialApp(
+        home: TickerMode(
+          enabled: false,
+          child: CareInlineCat(motion: CareSceneMotionPreference.full),
+        ),
+      ),
+    );
+
+    expect(find.byKey(const ValueKey<int>(1)), findsOneWidget);
+    await tester.pump(const Duration(seconds: 40));
+    expect(find.byKey(const ValueKey<int>(1)), findsOneWidget);
+    expect(find.byKey(const ValueKey<int>(0)), findsNothing);
+    expect(find.byKey(const ValueKey<int>(2)), findsNothing);
+    expect(find.byKey(const ValueKey<int>(3)), findsNothing);
   });
 }

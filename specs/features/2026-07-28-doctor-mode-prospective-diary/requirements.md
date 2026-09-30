@@ -3,6 +3,11 @@
 Status: proposed
 Dependencies: health-record foundation, local export, and clinical review gate
 
+Current product state: future capability. The repository contains domain models
+and in-memory test/preview repositories only. There is no production encrypted
+persistence, application wiring, user entry point, prospective report, or
+release claim for Doctor Mode.
+
 ## Goal
 
 Offer an optional prospective daily diary for users preparing for a clinician

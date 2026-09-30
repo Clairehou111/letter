@@ -3,6 +3,8 @@ import 'dart:io';
 
 import 'package:drift/drift.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:flutter/services.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:integration_test/integration_test.dart';
 import 'package:letter_mobile/features/capture/domain/capture_models.dart';
 import 'package:letter_mobile/features/health_data/data/local_health_store.dart';
@@ -32,6 +34,19 @@ void main() {
   testWidgets('default mobile key survives a native store reopen', (
     tester,
   ) async {
+    const privacyChannel = MethodChannel('app.letterwithin/privacy');
+    await privacyChannel.invokeMethod<void>('protectHealthStorage');
+
+    const secureStorage = FlutterSecureStorage(
+      iOptions: IOSOptions(
+        accessibility: KeychainAccessibility.first_unlock_this_device,
+      ),
+    );
+    const keychainProbe = 'letter.native_storage_acceptance.probe';
+    await secureStorage.write(key: keychainProbe, value: 'available');
+    expect(await secureStorage.read(key: keychainProbe), 'available');
+    await secureStorage.delete(key: keychainProbe);
+
     final store = createDefaultLocalHealthStore();
     final existing = await store.captureNoteStore.getAll();
     final previous = existing.where((note) => note.id == _persistentNoteId);

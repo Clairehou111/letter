@@ -108,16 +108,25 @@ final class DriftPeriodRepository implements PeriodRepository {
             updatedAt: _clock().toUtc(),
           );
         }
+        final updatedAt = _clock().toUtc();
         final updated = PeriodRecord(
           id: id,
           startDate: draft.startDate,
           endDate: draft.endDate,
           createdAt: previous.createdAt,
-          updatedAt: _clock().toUtc(),
+          updatedAt: updatedAt,
         );
         await (_database.update(
           _database.periodRows,
         )..where((row) => row.id.equals(id))).write(_toCompanion(updated));
+        await (_database.update(
+          _database.cycleReflectionRows,
+        )..where((row) => row.startingPeriodId.equals(id))).write(
+          CycleReflectionRowsCompanion(
+            cycleStartDay: Value(draft.startDate.epochDay),
+            updatedAtMillis: Value(updatedAt.millisecondsSinceEpoch),
+          ),
+        );
         final upperBound = draft.endDate?.epochDay ?? today.epochDay;
         await (_database.delete(_database.periodFlowRows)..where(
               (row) =>
