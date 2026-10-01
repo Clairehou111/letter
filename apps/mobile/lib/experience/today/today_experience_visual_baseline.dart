@@ -1347,11 +1347,9 @@ class _TodayExperienceVisualState extends State<TodayExperienceVisual> {
       ),
       _CycleView.known => _StatusCard(
         key: ValueKey<String>('known-$_periodActive'),
-        kicker: 'TODAY’S PLACE IN THE CYCLE',
-        title: isPeriodToday ? 'Period phase' : 'Between periods',
-        footnote: cycle == null
-            ? 'Loading your recorded dates.'
-            : 'Based on your recorded period starts.',
+        title: isPeriodToday
+            ? 'Period day ${cycle?.dayNumber ?? 1}'
+            : 'Cycle day ${cycle?.dayNumber ?? 1}',
         middle: _KnownCycleMiddle(context: cycle),
         action: _periodActive
             ? TextButton(
@@ -2402,17 +2400,17 @@ class _SectionHeader extends StatelessWidget {
 class _StatusCard extends StatelessWidget {
   const _StatusCard({
     super.key,
-    required this.kicker,
+    this.kicker,
     required this.title,
     required this.middle,
-    required this.footnote,
+    this.footnote,
     this.action,
   });
 
-  final String kicker;
+  final String? kicker;
   final String title;
   final Widget middle;
-  final String footnote;
+  final String? footnote;
   final Widget? action;
 
   @override
@@ -2441,16 +2439,18 @@ class _StatusCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
-          Text(
-            kicker,
-            style: _sans(
-              10.5,
-              color: _emberBright.withValues(alpha: 0.85),
-              weight: FontWeight.w700,
-              spacing: 2.2,
+          if (kicker != null) ...<Widget>[
+            Text(
+              kicker!,
+              style: _sans(
+                10.5,
+                color: _emberBright.withValues(alpha: 0.85),
+                weight: FontWeight.w700,
+                spacing: 2.2,
+              ),
             ),
-          ),
-          const SizedBox(height: 8),
+            const SizedBox(height: 8),
+          ],
           // Display-type resilience: the hero title keeps its authored serif
           // voice at every scale, but it is measured and clamped so no word
           // ever splits mid-glyph and the title never fills the first
@@ -2467,22 +2467,27 @@ class _StatusCard extends StatelessWidget {
           ),
           const SizedBox(height: 12),
           middle,
-          const SizedBox(height: 14),
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: <Widget>[
-              Expanded(
-                child: Text(
-                  footnote,
-                  style: _sans(12.5, color: _inkSoft, height: 1.4),
-                ),
-              ),
-              if (action != null) ...<Widget>[
-                const SizedBox(width: 12),
-                action!,
+          if (footnote != null || action != null) ...<Widget>[
+            const SizedBox(height: 14),
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: <Widget>[
+                if (footnote != null)
+                  Expanded(
+                    child: Text(
+                      footnote!,
+                      style: _sans(12.5, color: _inkSoft, height: 1.4),
+                    ),
+                  )
+                else
+                  const Spacer(),
+                if (action != null) ...<Widget>[
+                  if (footnote != null) const SizedBox(width: 12),
+                  action!,
+                ],
               ],
-            ],
-          ),
+            ),
+          ],
         ],
       ),
     );
@@ -2563,39 +2568,18 @@ class _KnownCycleMiddle extends StatelessWidget {
     final prediction = currentContext.prediction;
     final isPeriod = currentContext.kind == TodayCycleKind.periodInProgress;
     final day = currentContext.dayNumber ?? 1;
-    final String lead = 'Day $day ';
-    final String rest = isPeriod
-        ? 'of your recorded period'
-        : prediction == null
-        ? 'of your current cycle'
-        : 'of a typical ${prediction.medianCycleDays}-day cycle';
     final double? progress = isPeriod || prediction == null
         ? null
         : (day / prediction.medianCycleDays).clamp(0.0, 1.0);
     final String caption = prediction == null
         ? isPeriod
-              ? 'This period began ${_shortDateLabel(currentContext.latestStart!)}'
-              : 'One more recorded period start will add a personalized estimate'
-        : prediction.isEarlyEstimate
-        ? 'Early estimate: next period ${_dateRangeLabel(prediction.predictedMensesStart, prediction.predictedMensesEnd)} · based on 1 recorded cycle'
-        : 'Estimated next period ${_dateRangeLabel(prediction.predictedMensesStart, prediction.predictedMensesEnd)} · ${prediction.confidence.label.toLowerCase()} confidence';
+              ? 'Started ${_shortDateLabel(currentContext.latestStart!)}'
+              : 'Record one more period to see an estimate'
+        : 'Estimated next period ${_dateRangeLabel(prediction.predictedMensesStart, prediction.predictedMensesEnd)}';
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: <Widget>[
-        RichText(
-          text: TextSpan(
-            children: <TextSpan>[
-              TextSpan(
-                text: lead,
-                style: _serif(22, color: _ink),
-              ),
-              TextSpan(
-                text: rest,
-                style: _sans(14.5, color: _inkSoft, weight: FontWeight.w600),
-              ),
-            ],
-          ),
-        ),
+        Text(caption, style: _sans(13, color: _inkSoft)),
         if (progress != null) ...<Widget>[
           const SizedBox(height: 12),
           ClipRRect(
@@ -2608,8 +2592,6 @@ class _KnownCycleMiddle extends StatelessWidget {
             ),
           ),
         ],
-        const SizedBox(height: 6),
-        Text(caption, style: _sans(11.5, color: _inkSoft)),
       ],
     );
   }

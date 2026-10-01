@@ -17,6 +17,7 @@ import 'package:letter_mobile/experience/you/you_experience.dart';
 import 'package:letter_mobile/features/auth/domain/auth_service.dart';
 import 'package:letter_mobile/features/care/data/in_memory_care_memory_repository.dart';
 import 'package:letter_mobile/features/care/domain/care_memory.dart';
+import 'package:letter_mobile/features/care/domain/care_mode.dart';
 import 'package:letter_mobile/features/capture/domain/capture_models.dart';
 import 'package:letter_mobile/features/check_in/data/in_memory_moment_check_in_repository.dart';
 import 'package:letter_mobile/features/check_in/domain/moment_check_in.dart';
@@ -24,6 +25,9 @@ import 'package:letter_mobile/features/cycle/domain/bleeding_flow.dart';
 import 'package:letter_mobile/features/cycle/data/in_memory_period_repository.dart';
 import 'package:letter_mobile/features/cycle/domain/local_date.dart';
 import 'package:letter_mobile/features/cycle/domain/period_record.dart';
+import 'package:letter_mobile/features/comfort_kit/application/comfort_experience_controller.dart';
+import 'package:letter_mobile/features/comfort_kit/data/in_memory_comfort_kit_repository.dart';
+import 'package:letter_mobile/features/comfort_window/data/comfort_reminder_preference_repositories.dart';
 import 'package:letter_mobile/features/entitlement/data/local_entitlement_repository.dart';
 import 'package:letter_mobile/features/entitlement/data/revenue_cat_entitlement_repository.dart';
 import 'package:letter_mobile/features/entitlement/domain/entitlement_repository.dart';
@@ -32,6 +36,8 @@ import 'package:letter_mobile/features/health_records/domain/health_record.dart'
 import 'package:letter_mobile/features/local_backup/domain/local_backup_models.dart';
 import 'package:letter_mobile/features/onboarding/presentation/privacy_explainer_sheet.dart';
 import 'package:letter_mobile/features/patterns/domain/patterns_experience_data.dart';
+import 'package:letter_mobile/features/patterns/domain/pattern_source.dart';
+import 'package:letter_mobile/features/patterns/domain/personal_pattern.dart';
 import 'package:letter_mobile/features/patterns/presentation/patterns_experience_screen.dart';
 import 'package:letter_mobile/features/privacy/domain/privacy_preferences.dart';
 import 'package:letter_mobile/features/summary_export/domain/cycle_care_summary.dart';
@@ -84,6 +90,7 @@ class _ManualQaApp extends StatelessWidget {
         ),
       ),
     ),
+    'care-memory' => _careMemoryCaptureSurface(),
     'care-heavy' => Scaffold(
       backgroundColor: ExperienceColors.careSkyBottom,
       body: CareHeavyScene(
@@ -147,6 +154,75 @@ class _ManualQaApp extends StatelessWidget {
     'patterns' => PatternsExperienceScreen(data: _patternsCaptureData()),
     _ => const _QaShell(),
   };
+}
+
+/// Synthetic repeated help for checking the single Care landing invitation.
+Widget _careMemoryCaptureSurface() {
+  final now = DateTime(2026, 9, 26, 12);
+  final records = <CareRecord>[
+    for (final (id, day) in [('first', 20), ('second', 22)])
+      CareRecord(
+        id: id,
+        mode: CareMode.heavy,
+        actionId: 'care.heavy.guided_scene',
+        actionLabel: 'Rest into support',
+        outcome: CareOutcome.better,
+        occurredAt: DateTime.utc(2026, 9, day, 12),
+        createdAt: DateTime.utc(2026, 9, day, 12),
+        updatedAt: DateTime.utc(2026, 9, day, 12),
+        pinned: false,
+      ),
+  ];
+  final careMemory = InMemoryCareMemoryRepository(records: records);
+  final controller = ComfortExperienceController(
+    patternSource: _QaPatternSource(
+      PatternSourceSnapshot(careRecords: records),
+    ),
+    careMemory: careMemory,
+    quickNotes: InMemoryCaptureNoteStore(),
+    kitRepository: InMemoryComfortKitRepository(),
+    reminderRepository: InMemoryComfortReminderPreferenceRepository(),
+    now: () => now,
+  );
+  return Scaffold(
+    backgroundColor: ExperienceColors.careSkyBottom,
+    body: CareExperience(
+      careMemoryRepository: careMemory,
+      comfortExperienceController: controller,
+      memoryEvidence: const <SupportActionPattern>[
+        SupportActionPattern(
+          id: 'repeated-help',
+          actionId: 'care.heavy.guided_scene',
+          actionLabel: 'Rest into support',
+          mode: CareMode.heavy,
+          count: 2,
+          firstDate: LocalDate(2026, 9, 20),
+          lastDate: LocalDate(2026, 9, 22),
+          coveredDates: <LocalDate>[
+            LocalDate(2026, 9, 20),
+            LocalDate(2026, 9, 22),
+          ],
+          betterCount: 2,
+          sameCount: 0,
+          worseCount: 0,
+          sources: <PatternSourceReference>[],
+          pinned: false,
+          reflections: <AuthoredReflectionEvidence>[],
+        ),
+      ],
+      performanceConstrained: true,
+      now: () => now,
+    ),
+  );
+}
+
+final class _QaPatternSource implements PatternSourceReader {
+  const _QaPatternSource(this.snapshot);
+
+  final PatternSourceSnapshot snapshot;
+
+  @override
+  Future<PatternSourceSnapshot> read() async => snapshot;
 }
 
 enum _TrackerDestination { today, cycle }

@@ -24,9 +24,8 @@ import '../theme/experience_foundation.dart';
 ///    pixel dash under a thick stroke merges into a solid-looking band;
 ///    dashes must stay visibly distinct at ring width, and the contrast the
 ///    dash rhythm costs is repaid with stroke weight, never saturation.
-///  * Low-confidence models additionally carry the "Rough estimate"
-///    caption; that treatment composes with the estimated texture (same
-///    dashes, plus words) so the two never read as different meanings.
+///  * Limited-history models keep the same estimated texture; the source
+///    detail explains the available evidence without adding a second badge.
 ///  * Late cycles keep the today marker: the ember position is derived from
 ///    [TodayCycleRingModel.currentDay] against
 ///    [TodayCycleRingModel.displayCycleDays], which the model already
@@ -131,7 +130,7 @@ final class TodayCycleRing extends StatelessWidget {
   /// The full screen-reader description of a working ring. It names the
   /// day, the current phase and its certainty, **every segment grouped by
   /// observed vs estimated**, states that estimated ovulation is a range
-  /// band rather than a detected day, and flags a rough estimate when the
+  /// band rather than a detected day, and names limited history when the
   /// model has limited confidence. Also usable by consumers (Cycle
   /// destination, tests) that need identical wording.
   static String describeModel(TodayCycleRingModel model) {
@@ -176,7 +175,7 @@ final class TodayCycleRing extends StatelessWidget {
       buffer.write(' Estimated ovulation is a range band, not a detected day.');
     }
     if (model.hasLimitedEstimate) {
-      buffer.write(' This is a rough estimate based on limited history.');
+      buffer.write(' This estimate uses limited recorded history.');
     }
     return buffer.toString();
   }
@@ -333,16 +332,6 @@ final class TodayCycleRing extends StatelessWidget {
                 style: ExperienceType.caption(ExperienceColors.inkSoft),
                 textAlign: TextAlign.center,
               ),
-              if (ringModel.hasLimitedEstimate)
-                Padding(
-                  padding: const EdgeInsets.only(top: 2),
-                  child: Text(
-                    'Rough estimate',
-                    style: ExperienceType.caption(
-                      ExperienceColors.inkFaint,
-                    ).copyWith(fontStyle: FontStyle.italic),
-                  ),
-                ),
             ],
           ),
         ),
@@ -580,9 +569,7 @@ final class _RingPainter extends CustomPainter {
 }
 
 /// The shared observed/estimated texture key — the same legend grammar
-/// used by every chart in the system. Low-confidence ("Rough estimate")
-/// states reuse the estimated sample plus their caption, so the two
-/// treatments never read as different meanings here.
+/// used by every chart in the system. All estimates use the same sample.
 final class _CertaintyLegend extends StatelessWidget {
   const _CertaintyLegend();
 

@@ -319,7 +319,6 @@ class _GravityChartState extends State<GravityChart>
           details: <String>[
             'Based on ${prediction.intervalCount} recorded intervals; '
                 'median about ${prediction.medianCycleDays} days.',
-            'Confidence: ${prediction.confidence.label}.',
             'Drawn dashed and labeled "est." on the chart.',
           ],
         ),
@@ -370,7 +369,7 @@ class _GravityChartState extends State<GravityChart>
         'Estimated period window '
         '${summaryDateLabel(prediction.predictedMensesStart)} to '
         '${summaryDateLabel(prediction.predictedMensesEnd)}, '
-        'labeled estimate. Confidence ${prediction.confidence.label}.',
+        'labeled estimate from ${prediction.intervalCount} recorded intervals.',
       );
     }
     parts.add(
@@ -536,7 +535,6 @@ class _GravityChartState extends State<GravityChart>
       case HorizonStateId.predictionAvailable:
         final p = prediction;
         if (p == null) return const SizedBox.shrink();
-        final lowConfidence = p.confidence == PredictionConfidence.low;
         return Padding(
           padding: const EdgeInsets.only(top: ExperienceSpacing.xs),
           child: Text.rich(
@@ -552,19 +550,6 @@ class _GravityChartState extends State<GravityChart>
                       '${summaryDateLabel(p.predictedMensesEnd)}',
                   style: ExperienceType.data(ExperienceColors.ink, size: 13),
                 ),
-                TextSpan(
-                  text: ' (est.) · confidence ',
-                  style: ExperienceType.caption(ExperienceColors.inkSoft),
-                ),
-                TextSpan(
-                  text: p.confidence.label.toLowerCase(),
-                  style: ExperienceType.data(ExperienceColors.ink, size: 13),
-                ),
-                if (lowConfidence)
-                  TextSpan(
-                    text: ' — rough estimate',
-                    style: ExperienceType.caption(ExperienceColors.inkSoft),
-                  ),
               ],
             ),
           ),

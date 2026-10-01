@@ -872,8 +872,10 @@ class _CareExperienceState extends State<CareExperience>
 
   Widget _buildLanding(CareSceneMotionPreference motion) {
     final entryLine = _entryLine;
-    final memoryLine = _resolveLandingMemoryLine();
     final kitPresence = _resolveKitPresence();
+    // The kit already gives remembered help an actionable home. Showing a
+    // second remembered-help card beside it repeats the same invitation.
+    final memoryLine = kitPresence == null ? _resolveLandingMemoryLine() : null;
 
     return DecoratedBox(
       decoration: const BoxDecoration(gradient: ExperienceColors.careBackdrop),

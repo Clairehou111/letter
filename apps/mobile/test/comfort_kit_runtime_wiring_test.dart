@@ -96,6 +96,50 @@ void main() {
   );
 
   testWidgets(
+    'Care shows remembered help once when the Comfort Kit is formed',
+    (tester) async {
+      final first = _careRecord(
+        id: 'first-heavy',
+        occurredAt: DateTime.utc(2026, 9, 20, 12),
+      );
+      final second = _careRecord(
+        id: 'second-heavy',
+        occurredAt: DateTime.utc(2026, 9, 22, 12),
+      );
+      const firstDate = LocalDate(2026, 9, 20);
+      const lastDate = LocalDate(2026, 9, 22);
+      await _pumpOpenedKit(
+        tester,
+        records: <CareRecord>[first, second],
+        memoryEvidence: const <SupportActionPattern>[
+          SupportActionPattern(
+            id: 'rest-into-support',
+            actionId: 'care.heavy.guided_scene',
+            actionLabel: 'Rest into support',
+            mode: CareMode.heavy,
+            count: 2,
+            firstDate: firstDate,
+            lastDate: lastDate,
+            coveredDates: <LocalDate>[firstDate, lastDate],
+            betterCount: 2,
+            sameCount: 0,
+            worseCount: 0,
+            sources: <PatternSourceReference>[],
+            pinned: false,
+            reflections: <AuthoredReflectionEvidence>[],
+          ),
+        ],
+        onLanding: (tester) {
+          expect(find.text('Your comfort kit'), findsOneWidget);
+          expect(find.textContaining('helped 2 times'), findsNothing);
+        },
+      );
+
+      expect(find.text('Rest into support'), findsOneWidget);
+    },
+  );
+
+  testWidgets(
     'opened kit leads with the top-ranked Care action and can use it now',
     (tester) async {
       final first = _careRecord(
@@ -192,8 +236,10 @@ Future<void> _pumpOpenedKit(
   WidgetTester tester, {
   List<CareRecord> records = const <CareRecord>[],
   List<CycleReflection> cycleReflections = const <CycleReflection>[],
+  List<SupportActionPattern> memoryEvidence = const <SupportActionPattern>[],
   CaptureNoteStore? quickNotes,
   double textScale = 1,
+  void Function(WidgetTester tester)? onLanding,
 }) async {
   const size = Size(390, 844);
   tester.view.devicePixelRatio = 1;
@@ -226,12 +272,14 @@ Future<void> _pumpOpenedKit(
         child: CareExperience(
           careMemoryRepository: careMemory,
           comfortExperienceController: controller,
+          memoryEvidence: memoryEvidence,
           performanceConstrained: true,
         ),
       ),
     ),
   );
   await pumpUntilFound(tester, find.text('Your comfort kit'));
+  onLanding?.call(tester);
   await tester.tap(find.text('Your comfort kit'));
   await pumpUntilFound(tester, find.text('Back to care'));
 }

@@ -863,7 +863,7 @@ void main() {
     expect(find.text('Bring the warm blanket.'), findsNothing);
   });
 
-  testWidgets('formal low-confidence estimate names its confidence', (
+  testWidgets('Today shows the estimate without a confidence grade', (
     tester,
   ) async {
     const today = LocalDate(2026, 9, 20);
@@ -898,8 +898,13 @@ void main() {
     );
     await tester.pumpAndSettle();
 
+    expect(find.text('Cycle day 12'), findsOneWidget);
     expect(find.textContaining('Estimated next period'), findsOneWidget);
-    expect(find.textContaining('low confidence'), findsOneWidget);
+    expect(find.textContaining('confidence'), findsNothing);
+    expect(
+      find.textContaining('Based on your recorded period starts'),
+      findsNothing,
+    );
   });
 
   testWidgets('ending a same-day period never offers an overlapping start', (
@@ -934,6 +939,8 @@ void main() {
       MaterialApp(home: TodayExperienceVisual(port: port)),
     );
     await tester.pumpAndSettle();
+    expect(find.text('Period day 1'), findsOneWidget);
+    expect(find.text('Started Aug 15'), findsOneWidget);
     await tester.tap(find.text('End period'));
     await tester.pumpAndSettle();
     await tester.tap(find.text('End period').last);

@@ -74,7 +74,7 @@ final class LetterReportExperiencePort implements ReportExperiencePort {
                 start: prediction.predictedMensesStart,
                 end: prediction.predictedMensesEnd,
                 sourceLabel:
-                    'Calendar estimate · ${prediction.confidence.label.toLowerCase()} confidence',
+                    'Calendar estimate · ${prediction.intervalCount} recorded ${prediction.intervalCount == 1 ? 'cycle' : 'cycles'}',
               ),
             ],
       healthRecords: healthRecords,
