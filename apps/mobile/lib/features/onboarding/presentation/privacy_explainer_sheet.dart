@@ -54,7 +54,7 @@ class PrivacyExplainerSheet extends StatelessWidget {
                   'Letters, and Care records are not stored in your account.',
             ),
             const _PrivacyExplanation(
-              icon: Icons.phone_android_outlined,
+              icon: Icons.smartphone_outlined,
               title: 'Your records stay here, encrypted',
               body:
                   'Period dates, symptoms, notes, and Care records are stored '

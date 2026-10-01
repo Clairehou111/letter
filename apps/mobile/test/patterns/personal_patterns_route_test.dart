@@ -443,6 +443,18 @@ void main() {
           pinned: true,
         ),
       ],
+      cycleReflections: [
+        CycleReflection(
+          id: 'cycle-help',
+          cycleStartDay: const LocalDate(2026, 8, 8).epochDay,
+          observation: null,
+          need: null,
+          whatHelped: 'Warmth and fewer plans.',
+          futureSelfNote: null,
+          createdAt: timestamp,
+          updatedAt: timestamp,
+        ),
+      ],
     );
     final periods = InMemoryPeriodRepository(
       seed: [
@@ -507,6 +519,11 @@ void main() {
     await tester.pumpAndSettle();
     final careRow = find.byKey(const Key('patterns-care-row-Lower the input'));
     await revealPatternContent(tester, careRow);
+    expect(find.text('Warmth and fewer plans.'), findsOneWidget);
+    expect(
+      find.byKey(const Key('patterns-cycle-help-cycle-help')),
+      findsOneWidget,
+    );
     await tester.tap(careRow);
     await tester.pumpAndSettle();
     expect(find.text('Lower the input'), findsWidgets);

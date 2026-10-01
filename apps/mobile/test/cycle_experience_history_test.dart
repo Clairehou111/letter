@@ -187,7 +187,18 @@ void main() {
               experiencedDate: today,
               provenance: HealthRecordProvenance.sameDay,
               existingRecords: <HealthRecord>[record],
-              onEditImpacts: (_) {},
+              onEditImpacts: (_) async => HealthRecord(
+                id: record.id,
+                symptom: record.symptom,
+                severity: record.severity,
+                functionalImpacts: const {FunctionalImpact.workOrSchool},
+                experiencedDate: record.experiencedDate,
+                recordedAt: record.recordedAt,
+                updatedAt: DateTime.utc(2026, 7, 15, 13),
+                provenance: record.provenance,
+                userConfirmed: record.userConfirmed,
+                vocabularyVersion: record.vocabularyVersion,
+              ),
             ),
           ),
         ),
@@ -199,6 +210,11 @@ void main() {
     expect(find.text('Daily impact not marked'), findsOneWidget);
     expect(find.byTooltip('Edit daily impact for Back pain'), findsOneWidget);
     expect(find.text('What this day affected'), findsNothing);
+
+    await tester.tap(find.byTooltip('Edit daily impact for Back pain'));
+    await tester.pumpAndSettle();
+    expect(find.text('Daily impact: Work or school'), findsOneWidget);
+    expect(find.text('Daily impact not marked'), findsNothing);
   });
 
   testWidgets('a browse-only symptom opens exactly one degree editor', (
@@ -371,6 +387,20 @@ void main() {
           'A record saved while the sheet is open must expose the same edit '
           'action as a record that existed before opening it.',
     );
+    final editImpact = find.byTooltip('Edit daily impact for Cramps');
+    await tester.ensureVisible(editImpact);
+    await tester.pumpAndSettle();
+    await tester.tap(editImpact);
+    await tester.pumpAndSettle();
+    expect(find.text('What cramps affected'), findsOneWidget);
+    await tester.tap(find.text('Work or school'));
+    await tester.tap(find.widgetWithText(FilledButton, 'Save'));
+    await tester.pumpAndSettle();
+    expect(find.text('Daily impact: Work or school'), findsOneWidget);
+    expect(find.text('Daily impact not marked'), findsNothing);
+    expect((await healthRecords.getAll()).single.functionalImpacts, {
+      FunctionalImpact.workOrSchool,
+    });
 
     await tester.ensureVisible(mildDegree);
     await tester.pumpAndSettle();

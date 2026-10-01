@@ -528,4 +528,35 @@ void main() {
       );
     },
   );
+
+  test(
+    'keeps in-range cycle What helped text without inventing an outcome',
+    () {
+      final data = _builder.build(
+        PatternSourceSnapshot(
+          periods: [
+            _period('july', const LocalDate(2026, 7, 1)),
+            _period('august', const LocalDate(2026, 7, 29)),
+          ],
+          cycleReflections: [
+            CycleReflection(
+              id: 'cycle-help',
+              cycleStartDay: const LocalDate(2026, 7, 1).epochDay,
+              observation: null,
+              need: null,
+              whatHelped: 'Warmth and fewer plans.',
+              futureSelfNote: null,
+              createdAt: DateTime.utc(2026, 7, 28),
+              updatedAt: DateTime.utc(2026, 7, 28),
+            ),
+          ],
+        ),
+        today: _today,
+      );
+
+      expect(data.cycleHelp, hasLength(1));
+      expect(data.cycleHelp.single.text, 'Warmth and fewer plans.');
+      expect(data.care, isEmpty);
+    },
+  );
 }

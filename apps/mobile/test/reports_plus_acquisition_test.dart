@@ -72,44 +72,45 @@ void main() {
     expect(cycleOpened, isTrue);
   });
 
-  testWidgets('zero completed cycles still shows recorded in-range facts', (
-    tester,
-  ) async {
-    final recordedAt = DateTime.utc(2026, 8, 10, 12);
-    await pumpReport(
-      tester,
-      _input(
-        1,
-        healthRecords: <HealthRecord>[
-          HealthRecord(
-            id: 'crying',
-            symptom: SymptomType.crying,
-            severity: SymptomSeverity.severe,
-            functionalImpacts: const <FunctionalImpact>{},
-            experiencedDate: const LocalDate(2026, 8, 10),
-            recordedAt: recordedAt,
-            updatedAt: recordedAt,
-            provenance: HealthRecordProvenance.sameDay,
-            userConfirmed: true,
-            vocabularyVersion: healthRecordVocabularyVersion,
-          ),
-        ],
-        checkIns: <MomentCheckIn>[
-          MomentCheckIn(
-            id: 'overwhelmed',
-            state: MomentCheckInState.overwhelmed,
-            occurredAt: recordedAt,
-            createdAt: recordedAt,
-          ),
-        ],
-      ),
-    );
+  testWidgets(
+    'zero completed cycles shows health facts without a check-in ledger',
+    (tester) async {
+      final recordedAt = DateTime.utc(2026, 8, 10, 12);
+      await pumpReport(
+        tester,
+        _input(
+          1,
+          healthRecords: <HealthRecord>[
+            HealthRecord(
+              id: 'crying',
+              symptom: SymptomType.crying,
+              severity: SymptomSeverity.severe,
+              functionalImpacts: const <FunctionalImpact>{},
+              experiencedDate: const LocalDate(2026, 8, 10),
+              recordedAt: recordedAt,
+              updatedAt: recordedAt,
+              provenance: HealthRecordProvenance.sameDay,
+              userConfirmed: true,
+              vocabularyVersion: healthRecordVocabularyVersion,
+            ),
+          ],
+          checkIns: <MomentCheckIn>[
+            MomentCheckIn(
+              id: 'overwhelmed',
+              state: MomentCheckInState.overwhelmed,
+              occurredAt: recordedAt,
+              createdAt: recordedAt,
+            ),
+          ],
+        ),
+      );
 
-    await _reveal(tester, find.textContaining('Crying · Severe'));
-    expect(find.textContaining('Crying · Severe'), findsOneWidget);
-    await _reveal(tester, find.textContaining('Overwhelmed'));
-    expect(find.textContaining('Overwhelmed'), findsOneWidget);
-  });
+      await _reveal(tester, find.textContaining('Crying · Severe'));
+      expect(find.textContaining('Crying · Severe'), findsOneWidget);
+      expect(find.textContaining('Overwhelmed'), findsNothing);
+      expect(find.text('Check-ins'), findsNothing);
+    },
+  );
 
   testWidgets('report readiness counts period days, not unrelated check-ins', (
     tester,
@@ -233,10 +234,16 @@ void main() {
       tester,
       find.textContaining('more difficult check-ins in this range'),
     );
+    expect(find.text('Difficult Today check-ins'), findsOneWidget);
     expect(
-      find.textContaining('Generated reports keep all of them'),
+      find.text(
+        '+ 82 more difficult check-ins in this range. '
+        'Raw CSV keeps every check-in.',
+      ),
       findsOneWidget,
     );
+    expect(find.text('Check-ins'), findsNothing);
+    expect(find.text('90 moments'), findsNothing);
     expect(tester.takeException(), isNull);
   });
 
@@ -446,8 +453,10 @@ void main() {
     await tester.tap(find.text('Last 6 months'));
     await tester.pumpAndSettle();
     await _returnToTop(tester);
-    expect(find.text('2/12/2026 to 8/14/2026'), findsOneWidget);
+    expect(captured?.kind, PlusOutcomeIntentKind.seeAllCycles);
+    expect(find.text('5/14/2026 to 8/14/2026'), findsOneWidget);
 
+    captured = null;
     await _reveal(tester, find.text('Export Visit Summary'));
     await tester.tap(find.text('Export Visit Summary'));
     await tester.pumpAndSettle();
@@ -459,6 +468,32 @@ void main() {
     EntitlementStatus.lapsed,
     EntitlementStatus.offlineUnknown,
   ]) {
+    testWidgets(
+      'live ${status.name} returns an open paid range to the free preview',
+      (tester) async {
+        final repository = LocalEntitlementRepository(
+          initial: const EntitlementState(status: EntitlementStatus.activePaid),
+        );
+        addTearDown(repository.dispose);
+        await pumpReport(
+          tester,
+          _input(6, first: const LocalDate(2026, 1, 1)),
+          entitlementRepository: repository,
+          hasPlusPreviewAccess: true,
+        );
+
+        await tester.tap(find.text('All records'));
+        await tester.pumpAndSettle();
+        expect(find.text('1/1/2026 to 8/14/2026'), findsOneWidget);
+
+        repository.debugSet(EntitlementState(status: status));
+        await tester.pumpAndSettle();
+
+        expect(find.text('5/14/2026 to 8/14/2026'), findsOneWidget);
+        expect(find.text('1/1/2026 to 8/14/2026'), findsNothing);
+      },
+    );
+
     testWidgets(
       'live ${status.name} blocks generation while Reports stays open',
       (tester) async {
@@ -571,7 +606,7 @@ void main() {
     },
   );
 
-  testWidgets('desktop Plus explains store support without claiming offline', (
+  testWidgets('Plus failure offers retry and functional legal links', (
     tester,
   ) async {
     tester.view.physicalSize = const Size(390, 844);
@@ -584,6 +619,55 @@ void main() {
       store: null,
     );
     addTearDown(repository.dispose);
+    final openedUrls = <Uri>[];
+
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: ExperienceFoundation.lightTheme(),
+        home: PlusExperience(
+          entitlementRepository: repository,
+          openLegalUrl: (url) async {
+            openedUrls.add(url);
+            return true;
+          },
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('Plans could not be loaded'), findsOneWidget);
+    expect(find.text('Try again'), findsOneWidget);
+    expect(find.textContaining('desktop build'), findsNothing);
+    expect(find.textContaining('Google Play'), findsNothing);
+
+    final privacyLink = find.text('Privacy Policy');
+    await tester.ensureVisible(privacyLink);
+    await tester.tap(privacyLink);
+    final termsLink = find.text('Terms of Use');
+    await tester.ensureVisible(termsLink);
+    await tester.tap(termsLink);
+    expect(openedUrls, <Uri>[
+      Uri.parse('https://letterwithin.app/privacy'),
+      Uri.parse(
+        'https://www.apple.com/legal/internet-services/itunes/dev/stdeula/',
+      ),
+    ]);
+  });
+
+  testWidgets('Plus reloads plans when account store setup finishes', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(390, 844);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.reset);
+    final repository = RevenueCatEntitlementRepository(
+      appUserId: '',
+      appleApiKey: 'appl_public_key',
+      googleApiKey: '',
+      store: RevenueCatStore.apple,
+      client: _ReadyRevenueCatClient(),
+    );
+    addTearDown(repository.dispose);
 
     await tester.pumpWidget(
       MaterialApp(
@@ -592,11 +676,48 @@ void main() {
       ),
     );
     await tester.pumpAndSettle();
+    expect(find.text('Plans could not be loaded'), findsOneWidget);
 
-    expect(find.text('Plans are available in the mobile app'), findsOneWidget);
-    expect(find.textContaining('appear to be offline'), findsNothing);
-    expect(find.text('Try again'), findsNothing);
+    await repository.identifyAuthenticatedUser(
+      '550e8400-e29b-41d4-a716-446655440000',
+    );
+    await tester.pumpAndSettle();
+    expect(find.text('Plans could not be loaded'), findsNothing);
+    expect(find.textContaining('\$29.99'), findsWidgets);
   });
+}
+
+final class _ReadyRevenueCatClient implements RevenueCatClient {
+  @override
+  Future<void> configure({
+    required String apiKey,
+    required String appUserId,
+  }) async {}
+
+  @override
+  Future<void> clearUser() async {}
+
+  @override
+  Future<List<RevenueCatPlanOffer>> loadPlans() async => const [
+    RevenueCatPlanOffer(
+      productId: 'letter_yearly',
+      priceLabel: '\$29.99 / year',
+    ),
+  ];
+
+  @override
+  Future<RevenueCatCustomerState> currentCustomerState() async =>
+      const RevenueCatCustomerState(
+        hasActiveEntitlement: false,
+        hasPurchasedLetterProduct: false,
+      );
+
+  @override
+  Future<RevenueCatCustomerState> purchase(String productId) =>
+      currentCustomerState();
+
+  @override
+  Future<RevenueCatCustomerState> restore() => currentCustomerState();
 }
 
 class _Port implements ReportExperiencePort {

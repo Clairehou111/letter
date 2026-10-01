@@ -34,6 +34,7 @@ final class RepositoryPatternSource
     final healthRecordsFuture = healthRecords.getAll();
     final careRecordsFuture = careMemory.getRecords();
     final reflectionsFuture = careMemory.getReflections();
+    final cycleReflectionsFuture = careMemory.getCycleReflections();
     final periodsFuture = periods.getAll();
     final flowDaysFuture = periods.getAllFlowDays();
     final checkInsFuture =
@@ -43,6 +44,7 @@ final class RepositoryPatternSource
       healthRecords: await healthRecordsFuture,
       careRecords: await careRecordsFuture,
       careReflections: await reflectionsFuture,
+      cycleReflections: await cycleReflectionsFuture,
       periods: recordedPeriods,
       flowDays: await flowDaysFuture,
       momentCheckIns: await checkInsFuture,

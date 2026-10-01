@@ -21,6 +21,7 @@ final class PatternsExperienceData {
     required this.moods,
     required this.care,
     required this.today,
+    this.cycleHelp = const [],
   });
 
   final List<PatternsCompletedCycle> completedCycles;
@@ -28,6 +29,7 @@ final class PatternsExperienceData {
   final List<PatternsSymptomRecord> symptoms;
   final List<PatternsMoodRecord> moods;
   final List<PatternsCareRecord> care;
+  final List<PatternsCycleHelpRecord> cycleHelp;
   final LocalDate today;
 
   bool get hasAnyPeriodHistory =>
@@ -214,6 +216,21 @@ final class PatternsCareRecord {
   final String? reflection;
 }
 
+/// Authored "What helped" text saved with a completed-cycle reflection.
+/// It is kept separate from Care outcomes because it has no Better/Same/Worse
+/// result and must never be counted as if it did.
+final class PatternsCycleHelpRecord {
+  const PatternsCycleHelpRecord({
+    required this.id,
+    required this.date,
+    required this.text,
+  });
+
+  final String id;
+  final LocalDate date;
+  final String text;
+}
+
 /// Builds the display contract from a freshly-read database snapshot. It has no
 /// storage side effects, so every refresh and every test sees the same rules.
 final class PatternsExperienceDataBuilder {
@@ -256,6 +273,9 @@ final class PatternsExperienceDataBuilder {
           firstIncluded,
           lastIncluded,
         ),
+      ),
+      cycleHelp: List.unmodifiable(
+        _cycleHelp(source.cycleReflections, firstIncluded, lastIncluded),
       ),
       today: today,
     );
@@ -439,6 +459,30 @@ final class PatternsExperienceDataBuilder {
           return byDate != 0 ? byDate : left.label.compareTo(right.label);
         });
     return sorted;
+  }
+
+  List<PatternsCycleHelpRecord> _cycleHelp(
+    List<CycleReflection> reflections,
+    LocalDate? firstIncluded,
+    LocalDate lastIncluded,
+  ) {
+    if (firstIncluded == null) return const [];
+    final rows = <PatternsCycleHelpRecord>[];
+    for (final reflection in reflections) {
+      final date = LocalDate.fromEpochDay(reflection.cycleStartDay);
+      final text = reflection.whatHelped?.trim();
+      if (text == null ||
+          text.isEmpty ||
+          date.isBefore(firstIncluded) ||
+          date.isAfter(lastIncluded)) {
+        continue;
+      }
+      rows.add(
+        PatternsCycleHelpRecord(id: reflection.id, date: date, text: text),
+      );
+    }
+    rows.sort((left, right) => right.date.compareTo(left.date));
+    return rows;
   }
 
   PatternsSymptomCategory _categoryFor(SymptomType symptom) =>

@@ -448,7 +448,7 @@ class _AuthScreenState extends State<AuthScreen> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         const Icon(
-                          Icons.phone_android,
+                          Icons.smartphone,
                           color: ExperienceColors.inkSoft,
                         ),
                         const SizedBox(width: ExperienceSpacing.sm),

@@ -3,7 +3,7 @@ import '../../capture/domain/capture_models.dart';
 import '../../cycle/domain/local_date.dart';
 import '../../patterns/domain/personal_pattern.dart';
 
-enum ComfortKitSourceKind { careAction, futureSelfNote, quickNote }
+enum ComfortKitSourceKind { careAction, whatHelped, futureSelfNote, quickNote }
 
 enum ComfortKitOverrideAction { removeUntilChanged, dontShowAgain }
 
@@ -47,7 +47,8 @@ final class ComfortKitItem {
   final DateTime lastChangedAt;
 
   /// Lower values are returned first. Groups are the approved free ranking:
-  /// repeated Better, pinned Care, recent Better, future note, Quick note.
+  /// repeated Better, pinned Care, recent Better, authored reflection, Quick
+  /// note.
   final int rankGroup;
   final String? careMode;
 }
@@ -75,6 +76,8 @@ final class ComfortKitAssembler {
     final candidates =
         <ComfortKitItem>[
               ..._careActions(supportActions),
+              ..._careWhatHelped(careReflections),
+              ..._cycleWhatHelped(cycleReflections),
               ..._careFutureNotes(careReflections),
               ..._cycleFutureNotes(cycleReflections),
               ..._quickNotes(quickNotes),
@@ -142,6 +145,49 @@ final class ComfortKitAssembler {
         lastChangedAt: reflection.updatedAt,
         rankGroup: 3,
         careMode: reflection.mode.name,
+      );
+    }
+  }
+
+  Iterable<ComfortKitItem> _careWhatHelped(
+    List<CareReflection> reflections,
+  ) sync* {
+    for (final reflection in reflections) {
+      final text = reflection.whatHelped?.trim();
+      if (text == null || text.isEmpty) continue;
+      yield ComfortKitItem(
+        sourceId: 'care-help:${reflection.id}',
+        sourceVersion: _version([
+          reflection.updatedAt.toUtc().millisecondsSinceEpoch,
+          _stableTextHash(text),
+        ]),
+        kind: ComfortKitSourceKind.whatHelped,
+        title: 'What helped in a hard moment',
+        body: text,
+        lastChangedAt: reflection.updatedAt,
+        rankGroup: 3,
+        careMode: reflection.mode.name,
+      );
+    }
+  }
+
+  Iterable<ComfortKitItem> _cycleWhatHelped(
+    List<CycleReflection> reflections,
+  ) sync* {
+    for (final reflection in reflections) {
+      final text = reflection.whatHelped?.trim();
+      if (text == null || text.isEmpty) continue;
+      yield ComfortKitItem(
+        sourceId: 'cycle-help:${reflection.id}',
+        sourceVersion: _version([
+          reflection.updatedAt.toUtc().millisecondsSinceEpoch,
+          _stableTextHash(text),
+        ]),
+        kind: ComfortKitSourceKind.whatHelped,
+        title: 'What helped in an earlier cycle',
+        body: text,
+        lastChangedAt: reflection.updatedAt,
+        rankGroup: 3,
       );
     }
   }

@@ -89,12 +89,17 @@ enum CareEntrySource { tab, todayDoorway, checkInAcknowledgment }
 ///    outlined row when a kit is formed, and one warm glass card only while
 ///    [ComfortKitWindowState.proactivelyVisible] is true. The row or card
 ///    crosses through the same world-crossing switcher to a reading shelf —
-///    "Things that helped before, kept close." — where each kept item
-///    offers Remove, Replace (when a replacement waits), and a two-step
-///    Don't show again, all routed through the controller's existing
-///    operations and re-composed from the fresh snapshot each returns. The
-///    kit never gates the doors, never explains forecasts, and never asks
-///    to be managed before care.
+///    "Things that helped before, kept close." — composed as kept things,
+///    not records: the highest-ranked item leads through typography and
+///    negative space rather than a card, a future-self note is the only
+///    warm paper object, secondary items rest as quiet lines separated by
+///    one fine rule, and only a kept Care action offers `Try this now`,
+///    routed into the existing scene. Every kept item offers Remove,
+///    Replace (when a replacement waits), and a two-step Don't show again,
+///    all routed through the controller's existing operations and
+///    re-composed from the fresh snapshot each returns. The kit never gates
+///    the doors, never explains forecasts, and never asks to be managed
+///    before care.
 ///  * **Safety.** The deterministic [CareSafetyRoute] is reachable from a
 ///    quiet, persistent line on every Care surface this experience renders,
 ///    including the kit shelf.
@@ -581,7 +586,16 @@ class _CareExperienceState extends State<CareExperience>
             layoutBuilder: (currentChild, previousChildren) {
               return Stack(
                 fit: StackFit.expand,
-                children: <Widget>[...previousChildren, ?currentChild],
+                children: <Widget>[
+                  for (final previousChild in previousChildren)
+                    // The outgoing Care surface stays visible for the fade,
+                    // but must stop sharing the route's primary scroll
+                    // controller with the incoming surface immediately.
+                    // Otherwise Page Up/Down during the crossing throws
+                    // because both scroll positions are still attached.
+                    PrimaryScrollController.none(child: previousChild),
+                  ?currentChild,
+                ],
               );
             },
             transitionBuilder: (child, animation) =>
@@ -1401,27 +1415,21 @@ class _CareExperienceState extends State<CareExperience>
 
   // -------------------------------------------------------------------------
   // Comfort Kit shelf — things that helped before, kept close. A reading
-  // surface, not a dashboard: title, the kept items, safety, and the way
-  // back. Item actions are deliberate; suppression is a two-step confirm.
+  // surface, not a dashboard: a compact header, the highest-ranked kept
+  // thing leading through typography and negative space rather than a card,
+  // the future-self note as the only warm paper object, and secondary kept
+  // things as quiet lines separated by one fine rule. Item actions are
+  // deliberate; suppression is a two-step confirm. Only a kept Care action
+  // offers Try this now, routed into the existing scene.
   // -------------------------------------------------------------------------
 
-  /// Care-layer presentation mapping for kit item kinds. The domain stays
-  /// free of display copy; the shelf owns its own words.
-  static String _kitItemEyebrow(ComfortKitItem item) {
-    final kindLabel = switch (item.kind) {
-      ComfortKitSourceKind.careAction => 'Care that helped',
-      ComfortKitSourceKind.futureSelfNote => 'A note for you',
-      ComfortKitSourceKind.quickNote => 'A kept note',
-    };
-    final modeName = _kitCareModeDisplayName(item.careMode);
-    final combined = modeName == null ? kindLabel : '$kindLabel · $modeName';
-    return combined.toUpperCase();
-  }
-
-  static String? _kitCareModeDisplayName(String? modeName) {
+  /// Resolves a kept Care action's recorded mode back to its [CareMode] so
+  /// Try this now can open the existing scene. Notes and remedies carry no
+  /// executable action and never reach here.
+  static CareMode? _kitCareModeFor(String? modeName) {
     if (modeName == null) return null;
     for (final mode in CareMode.values) {
-      if (mode.name == modeName) return _sceneDisplayName(mode);
+      if (mode.name == modeName) return mode;
     }
     return null;
   }
@@ -1469,6 +1477,17 @@ class _CareExperienceState extends State<CareExperience>
       return _buildLanding(motion);
     }
     final items = kit.visibleItems;
+    final primary = items.first;
+    final secondary = items.skip(1).toList(growable: false);
+
+    // Only a kept Care action is executable. Anything else — a remedy, a
+    // letter, a kept note — is read-only no matter where it ranks.
+    VoidCallback? tryNowFor(ComfortKitItem item) {
+      if (item.kind != ComfortKitSourceKind.careAction) return null;
+      final mode = _kitCareModeFor(item.careMode);
+      if (mode == null) return null;
+      return () => _openScene(mode);
+    }
 
     return DecoratedBox(
       decoration: const BoxDecoration(gradient: ExperienceColors.careBackdrop),
@@ -1482,9 +1501,10 @@ class _CareExperienceState extends State<CareExperience>
           ),
           child: FocusTraversalGroup(
             policy: OrderedTraversalPolicy(),
-            // Explicit traversal: title → item cards → item actions →
-            // safety → back. No privacy explanation joins this surface; the
-            // safety line remains the only signal, as on every Care surface.
+            // Explicit traversal: title → the leading kept thing → each
+            // quiet line (Try this now before its overflow) → safety →
+            // back. No privacy explanation joins this surface; the safety
+            // line remains the only signal, as on every Care surface.
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: <Widget>[
@@ -1495,56 +1515,24 @@ class _CareExperienceState extends State<CareExperience>
                       bottom: ExperienceSpacing.lg,
                     ),
                     children: <Widget>[
-                      FocusTraversalOrder(
-                        order: const NumericFocusOrder(1),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: <Widget>[
-                            Row(
-                              children: <Widget>[
-                                EmberOrb(
-                                  size: 20,
-                                  breathing: true,
-                                  motion: motion,
-                                ),
-                                const SizedBox(width: 10),
-                                Text(
-                                  'COMFORT KIT',
-                                  style: ExperienceType.eyebrow(
-                                    ExperienceColors.careInkFaint,
-                                  ),
-                                ),
-                              ],
-                            ),
-                            const SizedBox(height: 8),
-                            Semantics(
-                              header: true,
-                              child: Text(
-                                'Your comfort kit',
-                                style: ExperienceType.title(
-                                  ExperienceColors.careInk,
-                                ),
-                              ),
-                            ),
-                            const SizedBox(height: 8),
-                            Text(
-                              'Things that helped before, kept close.',
-                              style: ExperienceType.bodySmall(
-                                ExperienceColors.careInkSoft,
-                              ),
-                            ),
-                          ],
-                        ),
+                      const FocusTraversalOrder(
+                        order: NumericFocusOrder(1),
+                        child: _KitShelfHeader(),
                       ),
-                      const SizedBox(height: ExperienceSpacing.md),
-                      for (var i = 0; i < items.length; i++) ...<Widget>[
-                        if (i > 0)
-                          const SizedBox(height: _LandingMetrics.doorGap),
-                        _KitItemCard(
-                          item: items[i],
-                          eyebrow: _kitItemEyebrow(items[i]),
-                          actionOrder: NumericFocusOrder(10.0 + i),
-                          onActions: () => _openKitItemActions(items[i]),
+                      const SizedBox(height: ExperienceSpacing.lg),
+                      _KitPrimaryItem(
+                        item: primary,
+                        actionOrder: const NumericFocusOrder(10),
+                        onActions: () => _openKitItemActions(primary),
+                        onTryNow: tryNowFor(primary),
+                      ),
+                      for (var i = 0; i < secondary.length; i++) ...<Widget>[
+                        const _KitShelfRule(),
+                        _KitSecondaryItem(
+                          item: secondary[i],
+                          actionOrder: NumericFocusOrder(11.0 + i),
+                          onActions: () => _openKitItemActions(secondary[i]),
+                          onTryNow: tryNowFor(secondary[i]),
                         ),
                       ],
                     ],
@@ -2818,90 +2806,512 @@ class _ComfortKitProactiveCard extends StatelessWidget {
   }
 }
 
-/// One kept thing on the kit shelf: a quiet glass card — kind eyebrow,
-/// serif title, body — with a single overflow affordance. No shadows, no
-/// glow; the shelf is quieter than the doors. The card itself is
-/// descriptive, not actionable; the overflow carries the deliberate
-/// actions.
-class _KitItemCard extends StatelessWidget {
-  const _KitItemCard({
-    required this.item,
-    required this.eyebrow,
-    required this.actionOrder,
-    required this.onActions,
-  });
+// ---------------------------------------------------------------------------
+// Comfort Kit shelf pieces — the Concept A composition: kept things held by
+// typography, rhythm, and one warm paper object; no repeated card stack, no
+// source taxonomy labels, no section headers. The kit's ranking and order
+// arrive fully formed from the controller; this layer only gives them voice.
+// ---------------------------------------------------------------------------
 
-  final ComfortKitItem item;
-  final String eyebrow;
-  final NumericFocusOrder actionOrder;
-  final VoidCallback onActions;
+/// The shelf header: compact and sans, deliberately smaller than the world's
+/// serif room titles — the kept things below carry the emotion; the chrome
+/// only orients.
+class _KitShelfHeader extends StatelessWidget {
+  const _KitShelfHeader();
 
   @override
   Widget build(BuildContext context) {
-    return DecoratedBox(
-      decoration: BoxDecoration(
-        color: ExperienceColors.careGlass,
-        borderRadius: ExperienceRadius.chipRadius,
-        border: Border.all(color: _careHairline(context, 0.2)),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(
-          horizontal: ExperienceSpacing.sm,
-          vertical: 12,
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: <Widget>[
+        Semantics(
+          header: true,
+          child: Text(
+            'Your comfort kit',
+            style: ExperienceType.bodyStrong(
+              ExperienceColors.careInk,
+            ).copyWith(fontSize: 20, height: 1.3, letterSpacing: -0.2),
+          ),
         ),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: <Widget>[
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: <Widget>[
-                  Text(
-                    eyebrow,
-                    style: ExperienceType.eyebrow(
-                      ExperienceColors.careInkFaint,
-                    ),
-                  ),
-                  const SizedBox(height: ExperienceSpacing.xs),
-                  Text(
-                    item.title,
-                    style: ExperienceType.headline(ExperienceColors.careInk),
-                  ),
-                  const SizedBox(height: ExperienceSpacing.xs),
-                  Text(
-                    item.body,
-                    style: ExperienceType.bodySmall(
-                      ExperienceColors.careInkSoft,
-                    ),
-                    maxLines: 5,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ],
-              ),
+        const SizedBox(height: ExperienceSpacing.xs),
+        Text(
+          'Things that helped before, kept close.',
+          style: ExperienceType.bodySmall(ExperienceColors.careInkSoft),
+        ),
+      ],
+    );
+  }
+}
+
+/// The one fine rule separating secondary kept things on the shelf. Rhythm
+/// and this hairline do the work an archive section or a card wall would.
+class _KitShelfRule extends StatelessWidget {
+  const _KitShelfRule();
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: ExperienceSpacing.sm),
+      child: Container(height: 1, color: _careHairline(context, 0.35)),
+    );
+  }
+}
+
+/// The per-item overflow affordance — the only management gesture on the
+/// shelf. Always at least a 44-point target.
+class _KitOverflowButton extends StatelessWidget {
+  const _KitOverflowButton({
+    required this.item,
+    required this.onTap,
+    this.iconColor = ExperienceColors.careInkSoft,
+  });
+
+  final ComfortKitItem item;
+  final VoidCallback onTap;
+  final Color iconColor;
+
+  @override
+  Widget build(BuildContext context) {
+    return Semantics(
+      button: true,
+      label: 'Options for ${item.title}',
+      child: InkWell(
+        borderRadius: ExperienceRadius.chipRadius,
+        onTap: onTap,
+        child: Padding(
+          padding: const EdgeInsets.all(ExperienceSpacing.sm),
+          child: Icon(Icons.more_horiz, size: 20, color: iconColor),
+        ),
+      ),
+    );
+  }
+}
+
+/// Try this now — the only executable gesture on the shelf, offered only by
+/// a kept Care action and routed into the existing scene. The primary
+/// variant is the light pill (the shelf's one focal object besides paper);
+/// the quiet variant keeps a secondary action clearly actionable without
+/// becoming a button wall.
+class _KitTryNowButton extends StatelessWidget {
+  const _KitTryNowButton({
+    required this.item,
+    required this.onPressed,
+    this.quiet = false,
+  });
+
+  final ComfortKitItem item;
+  final VoidCallback onPressed;
+
+  /// Quiet: a secondary kept action renders as an ember text action, not a
+  /// second pill.
+  final bool quiet;
+
+  @override
+  Widget build(BuildContext context) {
+    if (quiet) {
+      return Semantics(
+        button: true,
+        label: 'Try this now. ${item.title}.',
+        child: Align(
+          alignment: Alignment.centerLeft,
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(
+              minHeight: ExperienceSpacing.minTouchTarget,
             ),
-            const SizedBox(width: ExperienceSpacing.xs),
-            FocusTraversalOrder(
-              order: actionOrder,
-              child: Semantics(
-                button: true,
-                label: 'Options for ${item.title}',
-                child: InkWell(
-                  borderRadius: ExperienceRadius.chipRadius,
-                  onTap: onActions,
-                  child: const Padding(
-                    padding: EdgeInsets.all(ExperienceSpacing.sm),
-                    child: Icon(
-                      Icons.more_horiz,
-                      size: 20,
-                      color: ExperienceColors.careInkSoft,
+            child: InkWell(
+              borderRadius: ExperienceRadius.chipRadius,
+              onTap: onPressed,
+              child: Padding(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: ExperienceSpacing.xs,
+                  vertical: ExperienceSpacing.xs,
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: <Widget>[
+                    Text(
+                      'Try this now',
+                      style: ExperienceType.label(ExperienceColors.emberSoft),
                     ),
-                  ),
+                    const SizedBox(width: ExperienceSpacing.xs),
+                    const Icon(
+                      Icons.arrow_forward,
+                      size: 16,
+                      color: ExperienceColors.emberSoft,
+                    ),
+                  ],
                 ),
               ),
             ),
-          ],
+          ),
+        ),
+      );
+    }
+    return Semantics(
+      button: true,
+      label: 'Try this now. ${item.title}.',
+      child: Align(
+        alignment: Alignment.centerLeft,
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(
+            minHeight: ExperienceSpacing.minTouchTarget,
+          ),
+          child: Material(
+            color: ExperienceColors.careInk,
+            borderRadius: ExperienceRadius.heroRadius,
+            child: InkWell(
+              borderRadius: ExperienceRadius.heroRadius,
+              onTap: onPressed,
+              child: Padding(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: ExperienceSpacing.lg,
+                  vertical: ExperienceSpacing.sm,
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: <Widget>[
+                    Text(
+                      'Try this now',
+                      style: ExperienceType.label(
+                        ExperienceColors.careSkyBottom,
+                      ),
+                    ),
+                    const SizedBox(width: ExperienceSpacing.xs),
+                    const Icon(
+                      Icons.arrow_forward,
+                      size: 16,
+                      color: ExperienceColors.careSkyBottom,
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
         ),
       ),
+    );
+  }
+}
+
+/// The future-self letter: the shelf's only warm paper object. It sits at a
+/// very slight angle — held, not pinned — stays fully readable, and shrinks
+/// to a smaller note when it ranks below the lead. Static under every
+/// motion preference.
+class _KitPaperNote extends StatelessWidget {
+  const _KitPaperNote({
+    required this.item,
+    required this.actionOrder,
+    required this.onActions,
+    this.primary = false,
+  });
+
+  final ComfortKitItem item;
+  final NumericFocusOrder actionOrder;
+  final VoidCallback onActions;
+  final bool primary;
+
+  @override
+  Widget build(BuildContext context) {
+    final bodyStyle = primary
+        ? ExperienceType.headline(ExperiencePaper.ink)
+        : ExperienceType.bodySmall(ExperiencePaper.ink);
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: ExperienceSpacing.xs),
+      child: Transform.rotate(
+        angle: primary ? -0.012 : -0.008,
+        child: Container(
+          decoration: BoxDecoration(
+            color: ExperiencePaper.canvas,
+            borderRadius: BorderRadius.circular(6),
+            boxShadow: const <BoxShadow>[
+              BoxShadow(
+                color: ExperiencePaper.shadowWarm,
+                blurRadius: 16,
+                offset: Offset(0, 6),
+              ),
+            ],
+          ),
+          padding: EdgeInsets.symmetric(
+            horizontal: ExperienceSpacing.sm,
+            vertical: primary ? ExperienceSpacing.sm : 12,
+          ),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: <Widget>[
+              Expanded(child: Text(item.body, style: bodyStyle)),
+              FocusTraversalOrder(
+                order: actionOrder,
+                child: _KitOverflowButton(
+                  item: item,
+                  onTap: onActions,
+                  iconColor: ExperiencePaper.inkSoft,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// The shelf's lead: the highest-ranked kept thing, centered by typography
+/// and negative space rather than a container. A kept Care action leads in
+/// bold sans with its real Try this now; a remedy leads as bold sans over
+/// an expressive serif line; a kept note leads as a loose informal voice; a
+/// future-self letter always becomes the paper object. Nothing here is
+/// truncated — the shelf scrolls before it clips a kept thing.
+class _KitPrimaryItem extends StatelessWidget {
+  const _KitPrimaryItem({
+    required this.item,
+    required this.actionOrder,
+    required this.onActions,
+    required this.onTryNow,
+  });
+
+  final ComfortKitItem item;
+  final NumericFocusOrder actionOrder;
+  final VoidCallback onActions;
+  final VoidCallback? onTryNow;
+
+  @override
+  Widget build(BuildContext context) {
+    if (item.kind == ComfortKitSourceKind.futureSelfNote) {
+      return _KitPaperNote(
+        item: item,
+        actionOrder: actionOrder,
+        onActions: onActions,
+        primary: true,
+      );
+    }
+
+    final overflow = FocusTraversalOrder(
+      order: actionOrder,
+      child: _KitOverflowButton(item: item, onTap: onActions),
+    );
+    final tryNow = onTryNow == null
+        ? null
+        : FocusTraversalOrder(
+            order: NumericFocusOrder(actionOrder.order - 0.5),
+            child: _KitTryNowButton(item: item, onPressed: onTryNow!),
+          );
+
+    final Widget lead;
+    switch (item.kind) {
+      case ComfortKitSourceKind.careAction:
+        lead = Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: <Widget>[
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: <Widget>[
+                Expanded(
+                  child: Text(
+                    item.title,
+                    style: ExperienceType.bodyStrong(
+                      ExperienceColors.careInk,
+                    ).copyWith(fontSize: 26, height: 1.25, letterSpacing: -0.2),
+                  ),
+                ),
+                overflow,
+              ],
+            ),
+            const SizedBox(height: ExperienceSpacing.xs),
+            Text(
+              item.body,
+              style: ExperienceType.bodySmall(ExperienceColors.careInkSoft),
+            ),
+            if (tryNow != null) ...<Widget>[
+              const SizedBox(height: ExperienceSpacing.sm),
+              tryNow,
+            ],
+          ],
+        );
+      case ComfortKitSourceKind.whatHelped:
+        // The remedy itself is the headline: the small sans title only
+        // orients, the serif line carries what actually helped.
+        lead = Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: <Widget>[
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: <Widget>[
+                Expanded(
+                  child: Text(
+                    item.title,
+                    style: ExperienceType.label(ExperienceColors.careInkSoft),
+                  ),
+                ),
+                overflow,
+              ],
+            ),
+            const SizedBox(height: ExperienceSpacing.sm),
+            Text(
+              item.body,
+              style: ExperienceType.title(
+                ExperienceColors.careInk,
+              ).copyWith(fontSize: 30, height: 1.2),
+            ),
+          ],
+        );
+      case ComfortKitSourceKind.quickNote:
+        lead = Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: <Widget>[
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: <Widget>[
+                Expanded(
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: <Widget>[
+                      Container(
+                        width: 6,
+                        height: 6,
+                        decoration: const BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: ExperienceColors.careQuietMarker,
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Flexible(
+                        child: Text(
+                          item.title,
+                          style: ExperienceType.label(
+                            ExperienceColors.careInkSoft,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                overflow,
+              ],
+            ),
+            const SizedBox(height: ExperienceSpacing.sm),
+            Text(
+              item.body,
+              style: ExperienceType.bodyStrong(ExperienceColors.careInk)
+                  .copyWith(
+                    fontSize: 22,
+                    height: 1.3,
+                    fontStyle: FontStyle.italic,
+                  ),
+            ),
+          ],
+        );
+      case ComfortKitSourceKind.futureSelfNote:
+        // Handled above — the letter is always the paper object.
+        lead = const SizedBox.shrink();
+    }
+    return lead;
+  }
+}
+
+/// A secondary kept thing: a quiet line held by rhythm and the fine rule,
+/// never another card. A remedy rests as one serif line; a kept note stays
+/// small and informal beside its quiet marker; a kept Care action remains
+/// clearly actionable through the quiet Try this now; a future-self letter
+/// shrinks into the smaller paper note.
+class _KitSecondaryItem extends StatelessWidget {
+  const _KitSecondaryItem({
+    required this.item,
+    required this.actionOrder,
+    required this.onActions,
+    required this.onTryNow,
+  });
+
+  final ComfortKitItem item;
+  final NumericFocusOrder actionOrder;
+  final VoidCallback onActions;
+  final VoidCallback? onTryNow;
+
+  @override
+  Widget build(BuildContext context) {
+    if (item.kind == ComfortKitSourceKind.futureSelfNote) {
+      return _KitPaperNote(
+        item: item,
+        actionOrder: actionOrder,
+        onActions: onActions,
+      );
+    }
+
+    final Widget content;
+    switch (item.kind) {
+      case ComfortKitSourceKind.careAction:
+        content = Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: <Widget>[
+            Text(
+              item.title,
+              style: ExperienceType.bodyStrong(ExperienceColors.careInk),
+            ),
+            const SizedBox(height: ExperienceSpacing.xs),
+            Text(
+              item.body,
+              style: ExperienceType.bodySmall(ExperienceColors.careInkSoft),
+            ),
+            if (onTryNow != null) ...<Widget>[
+              const SizedBox(height: ExperienceSpacing.xs),
+              FocusTraversalOrder(
+                order: NumericFocusOrder(actionOrder.order - 0.5),
+                child: _KitTryNowButton(
+                  item: item,
+                  onPressed: onTryNow!,
+                  quiet: true,
+                ),
+              ),
+            ],
+          ],
+        );
+      case ComfortKitSourceKind.whatHelped:
+        // The quiet secondary remedy: the words themselves, one serif line
+        // of voice, nothing managed or framed.
+        content = Text(
+          item.body,
+          style: ExperienceType.headline(ExperienceColors.careInk),
+        );
+      case ComfortKitSourceKind.quickNote:
+        content = Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: <Widget>[
+            Padding(
+              padding: const EdgeInsets.only(top: 7),
+              child: Container(
+                width: 6,
+                height: 6,
+                decoration: const BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: ExperienceColors.careQuietMarker,
+                ),
+              ),
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Text(
+                item.body,
+                style: ExperienceType.bodySmall(
+                  ExperienceColors.careInk,
+                ).copyWith(fontStyle: FontStyle.italic),
+              ),
+            ),
+          ],
+        );
+      case ComfortKitSourceKind.futureSelfNote:
+        // Handled above — the letter is always the paper object.
+        content = const SizedBox.shrink();
+    }
+
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: <Widget>[
+        Expanded(child: content),
+        const SizedBox(width: ExperienceSpacing.xs),
+        FocusTraversalOrder(
+          order: actionOrder,
+          child: _KitOverflowButton(item: item, onTap: onActions),
+        ),
+      ],
     );
   }
 }

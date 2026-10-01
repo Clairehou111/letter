@@ -1769,8 +1769,8 @@ class _DayEditorSheetState extends State<_DayEditorSheet> {
     );
   }
 
-  void _openImpactsEditor(HealthRecord record) {
-    showExperienceSheet<void>(
+  Future<HealthRecord?> _openImpactsEditor(HealthRecord record) {
+    return showExperienceSheet<HealthRecord>(
       context,
       child: _ImpactsEditorSheet(
         record: record,
@@ -1873,11 +1873,14 @@ class _ImpactsEditorSheetState extends State<_ImpactsEditorSheet> {
           functionalImpacts: _selected,
         ),
       );
-      await widget.healthRecordRepository.update(widget.record.id, draft);
+      final updated = await widget.healthRecordRepository.update(
+        widget.record.id,
+        draft,
+      );
       await SavedRhythm.acknowledge(SavedRhythmKind.record);
       await widget.onSaved();
       if (!mounted) return;
-      Navigator.of(context).pop();
+      Navigator.of(context).pop(updated);
     } on HealthRecordException catch (error) {
       if (!mounted) return;
       setState(() {
@@ -2180,8 +2183,8 @@ class _BackfillSheetState extends State<_BackfillSheet> {
     widget.onDataChanged();
   }
 
-  void _openImpactsEditor(HealthRecord record) {
-    showExperienceSheet<void>(
+  Future<HealthRecord?> _openImpactsEditor(HealthRecord record) {
+    return showExperienceSheet<HealthRecord>(
       context,
       child: _ImpactsEditorSheet(
         record: record,

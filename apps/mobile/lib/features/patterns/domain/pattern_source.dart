@@ -10,6 +10,7 @@ final class PatternSourceSnapshot {
     this.healthRecords = const [],
     this.careRecords = const [],
     this.careReflections = const [],
+    this.cycleReflections = const [],
     this.periods = const [],
     this.flowDays = const [],
     this.momentCheckIns = const [],
@@ -18,6 +19,7 @@ final class PatternSourceSnapshot {
   final List<HealthRecord> healthRecords;
   final List<CareRecord> careRecords;
   final List<CareReflection> careReflections;
+  final List<CycleReflection> cycleReflections;
   final List<PeriodRecord> periods;
   final List<BleedingDayRecord> flowDays;
   final List<MomentCheckIn> momentCheckIns;
@@ -42,6 +44,13 @@ final class PatternSourceSnapshot {
       careReflections: careReflections
           .where(
             (reflection) => retainedCareIds.contains(reflection.careRecordId),
+          )
+          .toList(growable: false),
+      cycleReflections: cycleReflections
+          .where(
+            (reflection) => !LocalDate.fromEpochDay(
+              reflection.cycleStartDay,
+            ).isAfter(today),
           )
           .toList(growable: false),
       periods: periods

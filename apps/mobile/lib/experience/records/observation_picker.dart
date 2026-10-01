@@ -75,7 +75,7 @@ final class ObservationPicker extends StatefulWidget {
 
   /// Opens functional-impact editing for this same record. Keeping the
   /// action inside the on-record row avoids rendering every symptom twice.
-  final ValueChanged<HealthRecord>? onEditImpacts;
+  final Future<HealthRecord?> Function(HealthRecord record)? onEditImpacts;
 
   /// Optional route to the medical-boundary surface. When null, the fixed
   /// boundary list still renders inline at record time.
@@ -104,7 +104,7 @@ final class ObservationPicker extends StatefulWidget {
     Future<HealthRecord> Function(HealthRecordDraft draft)? onSave,
     Future<void> Function(HealthRecord record)? onDelete,
     Future<void> Function(SymptomType symptom)? onWithdraw,
-    ValueChanged<HealthRecord>? onEditImpacts,
+    Future<HealthRecord?> Function(HealthRecord record)? onEditImpacts,
     VoidCallback? onMedicalAttention,
     bool careWorld = false,
   }) {
@@ -772,17 +772,18 @@ class _ObservationPickerState extends State<ObservationPicker> {
     HealthRecord record, {
     SymptomSeverity? severityOverride,
   }) {
-    final definition = ObservationCatalog.definitionFor(record.symptom);
+    final current = _sessionRecords[record.symptom] ?? record;
+    final definition = ObservationCatalog.definitionFor(current.symptom);
     final impactLabels =
-        record.functionalImpacts
+        current.functionalImpacts
             .map((impact) => impact.label)
             .toList(growable: false)
           ..sort();
     return _buildHistoryEntry(
       definition: definition,
-      severity: severityOverride ?? record.severity,
+      severity: severityOverride ?? current.severity,
       impactLabels: impactLabels,
-      record: record,
+      record: current,
     );
   }
 
@@ -847,7 +848,13 @@ class _ObservationPickerState extends State<ObservationPicker> {
               tooltip: 'Edit daily impact for ${definition.label}',
               onPressed: _saving
                   ? null
-                  : () => widget.onEditImpacts?.call(record),
+                  : () async {
+                      final updated = await widget.onEditImpacts?.call(record);
+                      if (!mounted || updated == null) return;
+                      setState(() {
+                        _sessionRecords[updated.symptom] = updated;
+                      });
+                    },
               icon: const Icon(
                 Icons.edit_outlined,
                 size: 18,

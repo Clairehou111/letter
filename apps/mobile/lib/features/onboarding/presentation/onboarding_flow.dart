@@ -487,7 +487,7 @@ class _PrivacyStep extends StatelessWidget {
         ),
         const SizedBox(height: ExperienceSpacing.lg),
         const _PrivacyFact(
-          icon: Icons.phone_android_outlined,
+          icon: Icons.smartphone_outlined,
           text: 'Your cycle and Care records are stored locally.',
         ),
         const _PrivacyFact(

@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../../features/entitlement/domain/entitlement.dart';
 import '../../features/entitlement/domain/entitlement_repository.dart';
@@ -99,9 +100,11 @@ class PlusExperience extends StatefulWidget {
     super.key,
     required this.entitlementRepository,
     this.outcomeContext,
+    this.openLegalUrl,
   });
 
   final EntitlementRepository entitlementRepository;
+  final Future<bool> Function(Uri url)? openLegalUrl;
 
   /// Additive outcome context. Null means a deliberate Settings/Patterns
   /// entry: the headline is the plain product name and no outcome is invented.
@@ -205,7 +208,19 @@ class _PlusExperienceState extends State<PlusExperience> {
       if (!mounted) {
         return;
       }
+      final waitingForAccount =
+          _plansError is EntitlementException &&
+          (_plansError! as EntitlementException).message ==
+              'Purchases are unavailable on this build.';
       setState(() => _entitlement = state);
+      // The app can open its shell while account-bound store reconciliation
+      // finishes. If plans were requested before the user ID reached the store
+      // adapter, retry once that unavailable state clears.
+      if (waitingForAccount &&
+          !_plansLoading &&
+          state.message != 'Purchases are unavailable on this build.') {
+        unawaited(_loadPlans());
+      }
     });
     _loadPlans();
     _loadManagementUrl();
@@ -470,6 +485,29 @@ class _PlusExperienceState extends State<PlusExperience> {
     );
   }
 
+  Future<void> _openLegalLink(Uri url) async {
+    try {
+      final opener =
+          widget.openLegalUrl ??
+          (Uri destination) =>
+              launchUrl(destination, mode: LaunchMode.externalApplication);
+      final opened = await opener(url);
+      if (!opened && mounted) {
+        _setFeedback(
+          'The link could not be opened. Please try again.',
+          isError: true,
+        );
+      }
+    } on Object {
+      if (mounted) {
+        _setFeedback(
+          'The link could not be opened. Please try again.',
+          isError: true,
+        );
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final hasPremium = _entitlement.hasPremiumAccess;
@@ -611,6 +649,33 @@ class _PlusExperienceState extends State<PlusExperience> {
           textAlign: TextAlign.center,
           style: ExperienceType.caption(ExperienceColors.inkSoft),
         ),
+        const SizedBox(height: ExperienceSpacing.xs),
+        Wrap(
+          alignment: WrapAlignment.center,
+          spacing: ExperienceSpacing.sm,
+          children: <Widget>[
+            Semantics(
+              link: true,
+              child: TextButton(
+                onPressed: () => _openLegalLink(
+                  Uri.parse('https://letterwithin.app/privacy'),
+                ),
+                child: const Text('Privacy Policy'),
+              ),
+            ),
+            Semantics(
+              link: true,
+              child: TextButton(
+                onPressed: () => _openLegalLink(
+                  Uri.parse(
+                    'https://www.apple.com/legal/internet-services/itunes/dev/stdeula/',
+                  ),
+                ),
+                child: const Text('Terms of Use'),
+              ),
+            ),
+          ],
+        ),
         const SizedBox(height: ExperienceSpacing.sm),
         _PlusSecondaryButton(
           label: _restoreInFlight
@@ -623,26 +688,6 @@ class _PlusExperienceState extends State<PlusExperience> {
   }
 
   Widget _buildPlansError() {
-    final message = _plansError is EntitlementException
-        ? (_plansError! as EntitlementException).message
-        : '';
-    final unsupportedBuild = message.contains('unavailable on this build');
-    final setupIncomplete = message.contains('not configured for this build');
-    final title = unsupportedBuild
-        ? 'Plans are available in the mobile app'
-        : setupIncomplete
-        ? 'Plans are not ready in this build'
-        : 'Plans could not be loaded';
-    final body = unsupportedBuild
-        ? 'Purchases are not offered by this desktop build. Use Letter '
-              'Within on iPhone or Android to view plans; your records and '
-              'free features remain available here.'
-        : setupIncomplete
-        ? 'The App Store products have not been connected to this build yet. '
-              'Your records and every free feature keep working.'
-        : 'The store could not return plans for this build. Your records '
-              'are already safe on this device, and everything free keeps '
-              'working.';
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(ExperienceSpacing.sm),
@@ -654,13 +699,17 @@ class _PlusExperienceState extends State<PlusExperience> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
-          Text(title, style: ExperienceType.bodyStrong(ExperienceColors.ink)),
+          Text(
+            'Plans could not be loaded',
+            style: ExperienceType.bodyStrong(ExperienceColors.ink),
+          ),
           const SizedBox(height: ExperienceSpacing.xs),
-          Text(body, style: ExperienceType.bodySmall(ExperienceColors.inkSoft)),
-          if (!unsupportedBuild && !setupIncomplete) ...<Widget>[
-            const SizedBox(height: ExperienceSpacing.sm),
-            _PlusSecondaryButton(label: 'Try again', onPressed: _loadPlans),
-          ],
+          Text(
+            'Please try again. Your records and free features remain available.',
+            style: ExperienceType.bodySmall(ExperienceColors.inkSoft),
+          ),
+          const SizedBox(height: ExperienceSpacing.sm),
+          _PlusSecondaryButton(label: 'Try again', onPressed: _loadPlans),
         ],
       ),
     );

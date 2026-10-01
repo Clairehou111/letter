@@ -147,5 +147,4 @@ const letterPlans = [
 const introOfferLabel = 'Letter Within Plus';
 const introRenewalNote =
     'Store pricing and renewal terms are shown before purchase.';
-const yearlyVsLifetimeNote =
-    'Prices are localized by the App Store or Google Play.';
+const yearlyVsLifetimeNote = 'Prices and billing terms may vary by region.';

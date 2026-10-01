@@ -269,6 +269,72 @@ void main() {
   );
 
   testWidgets(
+    'cycle What helped stays in Drift and reaches Comfort Kit and Patterns',
+    (tester) async {
+      final harness = _Harness();
+      addTearDown(harness.close);
+      _phone(tester);
+
+      for (final draft in const <PeriodDraft>[
+        PeriodDraft(
+          startDate: LocalDate(2026, 6, 1),
+          endDate: LocalDate(2026, 6, 5),
+        ),
+        PeriodDraft(
+          startDate: LocalDate(2026, 7, 1),
+          endDate: LocalDate(2026, 7, 5),
+        ),
+        PeriodDraft(
+          startDate: LocalDate(2026, 8, 1),
+          endDate: LocalDate(2026, 8, 5),
+        ),
+      ]) {
+        await harness.periods.create(draft, today: _today);
+      }
+      await harness.care.saveCycleReflection(
+        const LocalDate(2026, 7, 1).epochDay,
+        const CycleReflectionDraft(whatHelped: 'Warmth and fewer plans.'),
+        startingPeriodId: 'period-1',
+      );
+
+      final rows = await harness.database
+          .select(harness.database.cycleReflectionRows)
+          .get();
+      expect(rows.single.whatHelped, 'Warmth and fewer plans.');
+      expect(
+        (await harness.comfort.load()).kit.items.first.body,
+        'Warmth and fewer plans.',
+      );
+      expect((await harness.patterns.read()).cycleReflections, hasLength(1));
+
+      final paid = LocalEntitlementRepository(
+        initial: const EntitlementState(status: EntitlementStatus.activePaid),
+      );
+      addTearDown(paid.dispose);
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: LetterTheme.light,
+          home: EntitlementScope(
+            repository: paid,
+            initialState: const EntitlementState(
+              status: EntitlementStatus.activePaid,
+            ),
+            child: PersonalPatternsRoute(
+              source: harness.patterns,
+              now: () => _now,
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const Key('patterns-tab-helped')));
+      await tester.pumpAndSettle();
+      await _reveal(tester, find.text('Warmth and fewer plans.'));
+      expect(find.text('Warmth and fewer plans.'), findsOneWidget);
+    },
+  );
+
+  testWidgets(
     'two completed cycles carry Drift symptoms and Care check-back into Patterns and range-correct Reports',
     (tester) async {
       final harness = _Harness();

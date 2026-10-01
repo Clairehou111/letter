@@ -3937,7 +3937,7 @@ class _CoveragePainter extends CustomPainter {
 }
 
 // ---------------------------------------------------------------------------
-// VIEW 3 — What helped (compact historical aggregate only)
+// VIEW 3 — What helped (authored cycle text plus factual Care aggregates)
 // ---------------------------------------------------------------------------
 class HelpedView extends StatelessWidget {
   final PatternsExperienceData data;
@@ -3972,26 +3972,65 @@ class HelpedView extends StatelessWidget {
           number: '01',
           question: 'What you tried, and what you noted after',
           children: [
-            if (names.isEmpty)
+            if (data.cycleHelp.isNotEmpty) ...[
+              Text('From your cycle reflections', style: _S.titleM),
+              const SizedBox(height: 6),
+              for (final reflection in data.cycleHelp)
+                _CycleHelpRow(reflection: reflection),
+              const _Scope(
+                'Cycle reflections exactly as you saved them · no Care outcome inferred',
+              ),
+              if (names.isNotEmpty) const SizedBox(height: 18),
+            ],
+            if (names.isEmpty && data.cycleHelp.isEmpty)
               Text(
                 'No care was saved in this report range yet.',
                 style: _S.bodyM.copyWith(fontStyle: FontStyle.italic),
               )
-            else ...[
+            else if (names.isNotEmpty) ...[
               for (final name in names) _CareRow(data: data, name: name),
               const SizedBox(height: 14),
               _Takeaway(takeaway!),
+              const _Scope(
+                'Only care you actually saved · outcomes exactly as you recorded them · tap a row for its records',
+              ),
+              const _QuietInfo(
+                'What this is',
+                'Each row counts how often you saved trying something, and the outcome you recorded afterward: Better, Same or Worse. Nothing is checked back on your behalf.',
+              ),
             ],
-            const _Scope(
-              'Only care you actually saved · outcomes exactly as you recorded them · tap a row for its records',
-            ),
-            const _QuietInfo(
-              'What this is',
-              'Each row counts how often you saved trying something, and the outcome you recorded afterward: Better, Same or Worse. Nothing is checked back on your behalf.',
-            ),
           ],
         ),
       ],
+    );
+  }
+}
+
+class _CycleHelpRow extends StatelessWidget {
+  const _CycleHelpRow({required this.reflection});
+
+  final PatternsCycleHelpRecord reflection;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      key: ValueKey('patterns-cycle-help-${reflection.id}'),
+      width: double.infinity,
+      padding: const EdgeInsets.fromLTRB(2, 11, 2, 14),
+      decoration: const BoxDecoration(
+        border: Border(bottom: BorderSide(color: T.line)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(reflection.text, style: _S.bodyM),
+          const SizedBox(height: 4),
+          Text(
+            'Cycle started ${fmtDate(reflection.date.epochDay)}',
+            style: _S.bodyS,
+          ),
+        ],
+      ),
     );
   }
 }

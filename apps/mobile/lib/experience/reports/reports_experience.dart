@@ -47,9 +47,9 @@ import '../theme/experience_foundation.dart';
 /// explained.
 ///
 /// Gating: only the limited recent-three-month factual preview is free.
-/// Longer/custom ranges and in-app Plus interpretation may be demonstrated by
-/// the no-card Preview. Every generated file requires freshly verified paid
-/// `clinicianReports` entitlement; after a lapse previously generated files
+/// A no-card Preview may demonstrate in-app Plus interpretation inside that
+/// range, but longer/custom ranges and every generated file require paid
+/// `clinicianReports` entitlement. After a lapse previously generated files
 /// remain untouched. The clinical matrix is never rendered without Plus depth.
 /// Contextual Plus acquisition is never shown or opened within 24 hours of
 /// the latest Care record; existing paid access remains usable.
@@ -142,6 +142,11 @@ class _ReportsExperienceState extends State<ReportsExperience> {
   /// so the original range/export intent continues without a route rebuild.
   bool _plusActivated = false;
 
+  /// Tracks paid range access so an open Reports route cannot retain a paid
+  /// range after entitlement ends. A no-card Preview may still render Plus
+  /// depth inside the free recent-three-month range.
+  bool? _lastHasPaidRangeAccess;
+
   bool _exporting = false;
   ReportExportFormat? _lastAttemptedFormat;
   ExperienceFileReceipt? _receipt;
@@ -176,6 +181,16 @@ class _ReportsExperienceState extends State<ReportsExperience> {
     return widget.canUseClinicianReports || _plusActivated;
   }
 
+  bool get _hasPaidRangeAccess {
+    final liveRepository = EntitlementScope.repositoryOf(context);
+    if (liveRepository != null) {
+      return EntitlementScope.stateOf(
+        context,
+      ).canUse(LetterCapability.clinicianReports);
+    }
+    return widget.canUseClinicianReports || _plusActivated;
+  }
+
   Future<bool> _refreshPaidFileAccess() async {
     final repository = EntitlementScope.repositoryOf(context);
     if (repository == null) return _hasPaidFileAccess;
@@ -192,6 +207,19 @@ class _ReportsExperienceState extends State<ReportsExperience> {
   void initState() {
     super.initState();
     _load();
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final hasPaidRangeAccess = _hasPaidRangeAccess;
+    if (_lastHasPaidRangeAccess == true &&
+        !hasPaidRangeAccess &&
+        _preset != _RangePreset.lastThreeMonths) {
+      _preset = _RangePreset.lastThreeMonths;
+      _customRange = null;
+    }
+    _lastHasPaidRangeAccess = hasPaidRangeAccess;
   }
 
   Future<void> _load() async {
@@ -550,6 +578,7 @@ class _ReportsExperienceState extends State<ReportsExperience> {
         summary.careRows.isNotEmpty;
     final careAdjacent = _careAdjacent(input);
     final hasPlusDepthAccess = _hasPlusDepthAccess;
+    final hasPaidRangeAccess = _hasPaidRangeAccess;
     final hasPaidFileAccess = _hasPaidFileAccess;
     // Contextual acquisition stays quiet near recent Care and requires a Plus
     // route, while locked ranges remain visible and explained.
@@ -633,10 +662,10 @@ class _ReportsExperienceState extends State<ReportsExperience> {
               customRange: _customRange,
               rangeLabel: range.label,
               gated: (preset) =>
-                  preset != _RangePreset.lastThreeMonths && !hasPlusDepthAccess,
+                  preset != _RangePreset.lastThreeMonths && !hasPaidRangeAccess,
               onSelect: (preset) async {
                 if (preset != _RangePreset.lastThreeMonths &&
-                    !hasPlusDepthAccess) {
+                    !hasPaidRangeAccess) {
                   if (!canAcquire) return;
                   await _openCommitment(
                     PlusOutcomeContext.seeAllCycles(
@@ -1437,7 +1466,9 @@ class _CertaintyLegend extends StatelessWidget {
 // confirmed 1–5 ratings on two observed timing windows. Blank means no
 // observation; gaps are never filled. Difficult Today check-ins share the
 // axis as neutral open rings: timing evidence only, never scored, never
-// averaged, never mapped to a symptom cluster, never recolored.
+// averaged, never mapped to a symptom cluster, never recolored. Their text
+// appears once below the matrix; the general full check-in ledger is omitted
+// from the in-app report while raw export remains complete.
 //
 // The canvas is a 28-day ledger: cluster labels stack slash-joined domains
 // as intentional line breaks (never a trailing-slash truncation), severity
@@ -1647,8 +1678,7 @@ class _TwinMatrixSection extends StatelessWidget {
                 padding: const EdgeInsets.only(top: ExperienceSpacing.unit),
                 child: Text(
                   '+ ${vm.qualitativeCheckIns.length - 8} more difficult '
-                  'check-ins in this range. Generated reports keep all of '
-                  'them.',
+                  'check-ins in this range. Raw CSV keeps every check-in.',
                   style: ExperienceType.caption(ExperienceColors.inkFaint),
                 ),
               ),
@@ -2250,25 +2280,6 @@ class _PreviewSections extends StatelessWidget {
     );
   }
 
-  Widget _checkInRow(SummaryCheckInRow row) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: ExperienceSpacing.xs),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: <Widget>[
-          Text(
-            '${summaryDateLabel(row.date)} · ${row.state.label}',
-            style: ExperienceType.bodySmall(ExperienceColors.ink),
-          ),
-          Text(
-            row.sourceLabel,
-            style: ExperienceType.caption(ExperienceColors.inkFaint),
-          ),
-        ],
-      ),
-    );
-  }
-
   Widget _noteRow(SummarySelectableNote note) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: ExperienceSpacing.xs),
@@ -2315,13 +2326,6 @@ class _PreviewSections extends StatelessWidget {
           unit: 'records',
           emptySemantics: 'Missing — no confirmed health records in this range',
           rows: _capped(summary.healthRows, _healthRow, 'records'),
-        ),
-        _section(
-          title: 'Check-ins',
-          count: summary.checkInRows.length,
-          unit: 'moments',
-          emptySemantics: 'Missing — no check-ins in this range',
-          rows: _capped(summary.checkInRows, _checkInRow, 'check-ins'),
         ),
         _section(
           title: 'Care events',

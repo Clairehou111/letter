@@ -48,6 +48,45 @@ void main() {
     ]);
   });
 
+  test('keeps authored What helped text from Care and cycle reflections', () {
+    final result = assembler.compose(
+      supportActions: const [],
+      careReflections: [
+        CareReflection(
+          id: 'care-help',
+          careRecordId: 'care-record',
+          mode: CareMode.heavy,
+          observation: null,
+          need: null,
+          whatHelped: 'A quieter room.',
+          futureSelfNote: null,
+          createdAt: DateTime.utc(2026, 1, 1),
+          updatedAt: DateTime.utc(2026, 1, 2),
+        ),
+      ],
+      cycleReflections: [
+        CycleReflection(
+          id: 'cycle-help',
+          cycleStartDay: const LocalDate(2026, 1, 1).epochDay,
+          observation: null,
+          need: null,
+          whatHelped: 'Warmth and fewer plans.',
+          futureSelfNote: null,
+          createdAt: DateTime.utc(2026, 1, 1),
+          updatedAt: DateTime.utc(2026, 1, 3),
+        ),
+      ],
+      quickNotes: const [],
+    );
+
+    expect(result.items.map((item) => item.sourceId), [
+      'cycle-help:cycle-help',
+      'care-help:care-help',
+    ]);
+    expect(result.items.first.kind, ComfortKitSourceKind.whatHelped);
+    expect(result.items.first.body, 'Warmth and fewer plans.');
+  });
+
   test('remove hides one version while do-not-show hides later versions', () {
     final original = _action(id: 'care', better: 1, pinned: false);
     final first = assembler

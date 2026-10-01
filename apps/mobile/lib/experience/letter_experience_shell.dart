@@ -707,6 +707,13 @@ class _LetterExperienceShellState extends State<LetterExperienceShell>
   /// excluded from the accessibility tree, and ignore pointer input.
   Widget _worldLayer(int index, Widget child, Duration duration) {
     final visible = _index == index;
+    // All four destination trees stay mounted to preserve their local state.
+    // Hidden vertical ScrollViews must not inherit the route's primary
+    // controller, otherwise a hardware Page Up/Down action sees several
+    // attached positions and throws before it can reach the visible page.
+    final scrollIsolatedChild = visible
+        ? child
+        : PrimaryScrollController.none(child: child);
     return AnimatedOpacity(
       opacity: visible ? 1 : 0,
       duration: duration,
@@ -715,7 +722,7 @@ class _LetterExperienceShellState extends State<LetterExperienceShell>
         enabled: visible,
         child: ExcludeSemantics(
           excluding: !visible,
-          child: IgnorePointer(ignoring: !visible, child: child),
+          child: IgnorePointer(ignoring: !visible, child: scrollIsolatedChild),
         ),
       ),
     );
