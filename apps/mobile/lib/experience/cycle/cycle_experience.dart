@@ -14,6 +14,7 @@ import '../../features/health_records/domain/observation_catalog.dart';
 import '../../features/summary_export/domain/cycle_care_summary.dart';
 import '../../features/today/today_cycle_ring_model.dart';
 import '../degree/degree_graphics.dart';
+import 'cycle_estimate_copy.dart';
 import '../records/observation_picker.dart';
 import '../source/source_panel.dart';
 import '../theme/experience_foundation.dart';
@@ -184,6 +185,18 @@ class _CycleExperienceState extends State<CycleExperience> {
 
   CycleReadSnapshot get _cycleSnapshot =>
       CycleReadSnapshot.fromRecords(records: _periods, today: _today);
+
+  TodayCycleRingModel? get _ringForLoadedRecords {
+    // The shell's model may still describe the previous repository revision
+    // while this destination has already reloaded an edited period. Use it as
+    // the availability signal, then render from this page's current records.
+    if (widget.ringModel == null) return null;
+    try {
+      return TodayCycleRingModel.fromRecords(records: _periods, today: _today);
+    } on TodayCycleRingException {
+      return null;
+    }
+  }
 
   CurrentCycle? get _currentCycle => _cycleSnapshot.currentCycle;
 
@@ -422,7 +435,7 @@ class _CycleExperienceState extends State<CycleExperience> {
   }
 
   void _inspectRing() {
-    final model = widget.ringModel;
+    final model = _ringForLoadedRecords;
     final snapshot = _cycleSnapshot;
     final evidence = snapshot.predictionEvidence;
     final evidenceLabel = switch (evidence.kind) {
@@ -519,6 +532,7 @@ class _CycleExperienceState extends State<CycleExperience> {
   }
 
   Widget _buildContent() {
+    final ringModel = _ringForLoadedRecords;
     final currentCycle = _currentCycle;
     final completed = _completedCycles;
     final lastClosed = _lastClosedPeriod;
@@ -540,8 +554,8 @@ class _CycleExperienceState extends State<CycleExperience> {
       children: <Widget>[
         _buildHeader(),
         const SizedBox(height: ExperienceSpacing.md),
-        Center(child: _buildRing()),
-        if (widget.ringModel != null) _buildEstimateLine(),
+        Center(child: _buildRing(ringModel)),
+        if (ringModel != null) _buildEstimateLine(ringModel),
         const SizedBox(height: ExperienceSpacing.md),
         SavedRhythmAckLine(line: _ackLine),
         if (_actionError != null) _InlineErrorLine(message: _actionError!),
@@ -640,8 +654,7 @@ class _CycleExperienceState extends State<CycleExperience> {
     );
   }
 
-  Widget _buildRing() {
-    final model = widget.ringModel;
+  Widget _buildRing(TodayCycleRingModel? model) {
     final eligible = _cycleSnapshot.eligiblePeriodsNewestFirst;
     if (eligible.isEmpty) {
       return TodayCycleRing.empty(onInspect: _inspectRing);
@@ -681,23 +694,21 @@ class _CycleExperienceState extends State<CycleExperience> {
     );
   }
 
-  Widget _buildEstimateLine() {
-    final model = widget.ringModel!;
+  Widget _buildEstimateLine(TodayCycleRingModel model) {
+    final prediction = _cycleSnapshot.visiblePrediction!;
     final estimatedStart = model.predictedPeriodStart;
     final estimatedEnd = model.predictedPeriodEnd;
     final estimatedLabel = estimatedStart == estimatedEnd
         ? summaryDateLabel(estimatedStart)
         : '${summaryDateLabel(estimatedStart)} – ${summaryDateLabel(estimatedEnd)}';
+    final contextLabel = cycleEstimateContextLabel(prediction, _today);
     return Padding(
       padding: const EdgeInsets.only(top: ExperienceSpacing.sm),
       child: Semantics(
-        label:
-            'Estimated next period '
-            '$estimatedLabel'
-            '${model.hasLimitedEstimate ? ', based on limited history' : ''}',
-        child: Wrap(
-          alignment: WrapAlignment.center,
-          crossAxisAlignment: WrapCrossAlignment.center,
+        excludeSemantics: true,
+        label: 'Estimated next period $estimatedLabel. $contextLabel.',
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: <Widget>[
             const CertaintySwatch(
               certainty: ExperienceCertainty.estimated,
@@ -705,17 +716,24 @@ class _CycleExperienceState extends State<CycleExperience> {
               color: ExperienceColors.accentGravity,
             ),
             const SizedBox(width: ExperienceSpacing.xs * 2),
-            Text(
-              'Estimated next period · ',
-              style: ExperienceType.bodySmall(ExperienceColors.inkSoft),
-            ),
-            Text(
-              estimatedLabel,
-              style: ExperienceType.data(ExperienceColors.ink, size: 14),
-            ),
-            Text(
-              model.hasLimitedEstimate ? ' · limited history' : '',
-              style: ExperienceType.caption(ExperienceColors.inkFaint),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: <Widget>[
+                  Text(
+                    'Estimated next period',
+                    style: ExperienceType.bodySmall(ExperienceColors.inkSoft),
+                  ),
+                  Text(
+                    estimatedLabel,
+                    style: ExperienceType.data(ExperienceColors.ink, size: 14),
+                  ),
+                  Text(
+                    contextLabel,
+                    style: ExperienceType.caption(ExperienceColors.inkFaint),
+                  ),
+                ],
+              ),
             ),
           ],
         ),

@@ -626,7 +626,9 @@ void main() {
     );
   });
 
-  testWidgets('limited prediction confidence is stated once', (tester) async {
+  testWidgets('one-interval early estimate provenance is stated once', (
+    tester,
+  ) async {
     await tester.binding.setSurfaceSize(const Size(622, 1200));
     addTearDown(() => tester.binding.setSurfaceSize(null));
     final records = <PeriodRecord>[
@@ -654,7 +656,10 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    expect(find.text(' · limited history'), findsOneWidget);
+    expect(
+      find.text('early estimate from one observed interval · upcoming'),
+      findsOneWidget,
+    );
     expect(find.textContaining('rough estimate'), findsNothing);
     expect(find.text(' est.'), findsNothing);
   });

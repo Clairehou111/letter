@@ -4,6 +4,32 @@ Status: validated
 
 ## Automated Checks
 
+The checks below describe the original formal prediction. The 1.0 Today/Cycle
+visual-only amendment is tracked in
+`validation/today-cycle-audit-2026-10-01/` and must additionally verify the
+two-start early range, asymmetric margins, timing, cross-year labels, and
+matching Today/Cycle semantics on small and large-text iPhone simulators.
+
+## 1.0 Today/Cycle release audit (2026-10-01)
+
+- [x] Independently calculated synthetic dates cover zero/one/two starts,
+  regular and variable cycles, ongoing and ended-today bleeding, forecast
+  timing, leap day and year rollover, future dates, and historical edits.
+- [x] Today and Cycle agree on current day and inclusive estimate range. The
+  Cycle ring places today in the expected observed or estimated segment and
+  names each segment's day bounds in its accessibility description.
+- [x] A one-interval estimate is labeled early and remains visual-only;
+  variable history is described as variable rather than limited history.
+- [x] At 320 logical pixels and 200% text, both destinations keep their facts
+  readable without overflow; iPhone 17 Pro Max and SE 3 Simulator captures
+  were visually reviewed, including larger system text on SE 3.
+- [x] `flutter analyze --no-pub` found no issues; final full `flutter test
+  --no-pub -r expanded` passed 671 tests with one pre-existing skip.
+
+The screenshot files, expanded test log, independent arithmetic sheet, and
+temporary synthetic-data entrypoint remain local verification artifacts and
+are intentionally excluded from the release commit.
+
 - [x] fewer than two complete intervals produces no prediction
 - [x] exactly two intervals produces a Low-confidence range
 - [x] the most recent six intervals are used

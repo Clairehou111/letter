@@ -50,6 +50,8 @@ final class TodayCycleRingModel {
     required this.segments,
     required this.currentPhase,
     required this.predictionConfidence,
+    required this.isEarlyEstimate,
+    required this.hasWideVariation,
     required this.predictedPeriodStart,
     required this.predictedPeriodEnd,
     required this.estimatedOvulationCenterDay,
@@ -146,6 +148,8 @@ final class TodayCycleRingModel {
       segments: List.unmodifiable(segments),
       currentPhase: currentPhase,
       predictionConfidence: prediction.confidence,
+      isEarlyEstimate: prediction.isEarlyEstimate,
+      hasWideVariation: prediction.hasWideVariation,
       predictedPeriodStart: prediction.predictedMensesStart,
       predictedPeriodEnd: prediction.predictedMensesEnd,
       estimatedOvulationCenterDay: estimatedCenter,
@@ -163,6 +167,8 @@ final class TodayCycleRingModel {
   final List<CycleRingSegment> segments;
   final CycleRingPhase? currentPhase;
   final PredictionConfidence predictionConfidence;
+  final bool isEarlyEstimate;
+  final bool hasWideVariation;
   final LocalDate predictedPeriodStart;
   final LocalDate predictedPeriodEnd;
   final int estimatedOvulationCenterDay;

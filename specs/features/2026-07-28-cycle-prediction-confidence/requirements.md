@@ -18,6 +18,29 @@ but intentionally not merged without the user's explicit request.
 Show a transparent next-period date range and confidence explanation after
 enough observed cycle history exists.
 
+## 1.0 Today/Cycle presentation amendment (2026-10-01)
+
+The formal prediction in REQ-002 and the Algorithm below still requires two
+usable start-to-start intervals. Today and Cycle also offer a **visual-only
+early estimate** after one usable interval (two recorded starts). It uses the
+observed interval as its median and an inclusive range seven calendar days on
+either side of the midpoint. Label it as early and based on one observed
+interval. It must not feed insights, reports, preparation, reminders, or other
+health decisions. With zero intervals, show the factual current day and an
+honest forming state, without an estimate.
+
+For both estimate kinds, calculate separate left and right margins: each is
+the greater of its sample minimum and the corresponding deviation from the
+median. This may make a variable-history range asymmetric. Preserve the
+original range before, during, and after its dates; identify the current
+window and a later-than-estimate state without rolling the dates forward.
+The Today card and Cycle ring/estimate line must agree on current day, range,
+timing, and the reason an estimate is limited. A variable-history estimate
+must say recorded cycles vary, rather than implying the person has little
+history. Date labels must disambiguate a range that crosses years.
+After a history edit, Cycle must render its ring and estimate from the same
+freshly loaded record revision while the enclosing shell refreshes.
+
 ## Requirements
 
 REQ-001: Calculate predictions locally from user-recorded period start dates.
@@ -25,7 +48,8 @@ Do not use the API, cloud tools, analytics, population averages, or LLM output.
 
 REQ-002: Require at least two complete start-to-next-start cycle intervals.
 This normally requires three recorded period starts. Do not show a prediction
-from only one interval.
+from only one interval in the formal prediction. See the 1.0 amendment for the
+separately labeled Today/Cycle early estimate.
 
 REQ-003: Predict a date range, never a single promised date.
 
@@ -37,7 +61,8 @@ the range according to both sample count and observed variation.
 
 REQ-006: Apply a minimum uncertainty margin of four days on either side with
 two intervals, three days with three intervals, and two days with four or more
-intervals. A wider observed spread must widen the range further.
+intervals. A wider observed spread must widen the affected side of the range
+further. The visual-only one-interval estimate uses seven days on each side.
 
 REQ-007: Label confidence as `Low`, `Medium`, or `Higher`, not as certain or
 clinically validated.
@@ -84,11 +109,11 @@ of a biological phase.
 3. Calculate start-to-start day differences.
 4. Require at least two differences.
 5. Use the rounded median difference as the center cycle length.
-6. Set the uncertainty half-width to the larger of:
-   - the sample-count minimum margin
-   - the farthest observed interval from the median
+6. Set the left margin to the larger of the sample-count minimum and median
+   minus the shortest used interval. Set the right margin to the larger of the
+   sample-count minimum and the longest used interval minus the median.
 7. Add the center length to the latest start for the midpoint.
-8. Subtract and add the half-width for the displayed date range.
+8. Subtract the left margin and add the right margin for the displayed range.
 
 These are conservative product heuristics, not a clinical prediction model.
 

@@ -13,6 +13,7 @@ import '../../features/health_records/domain/health_record.dart';
 import '../../features/health_records/domain/observation_catalog.dart';
 import '../../features/today/today_cycle_context.dart';
 import '../comfort/comfort_reminder_sheet.dart';
+import '../cycle/cycle_estimate_copy.dart';
 import '../degree/degree_graphics.dart';
 import '../theme/experience_foundation.dart';
 import 'today_visual_port.dart';
@@ -2580,6 +2581,13 @@ class _KnownCycleMiddle extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: <Widget>[
         Text(caption, style: _sans(13, color: _inkSoft)),
+        if (prediction != null) ...<Widget>[
+          const SizedBox(height: 4),
+          Text(
+            cycleEstimateContextLabel(prediction, currentContext.today),
+            style: _sans(12.5, color: _inkSoft),
+          ),
+        ],
         if (progress != null) ...<Widget>[
           const SizedBox(height: 12),
           ClipRRect(
@@ -2615,9 +2623,13 @@ const List<String> _shortMonths = <String>[
 String _shortDateLabel(LocalDate date) =>
     '${_shortMonths[date.month - 1]} ${date.day}';
 
-String _dateRangeLabel(LocalDate start, LocalDate end) => start == end
-    ? _shortDateLabel(start)
-    : '${_shortDateLabel(start)}–${_shortDateLabel(end)}';
+String _dateRangeLabel(LocalDate start, LocalDate end) {
+  if (start == end) return _shortDateLabel(start);
+  if (start.year != end.year) {
+    return '${_shortDateLabel(start)}, ${start.year}–${_shortDateLabel(end)}, ${end.year}';
+  }
+  return '${_shortDateLabel(start)}–${_shortDateLabel(end)}';
+}
 
 String _headerDateLabel(LocalDate? date) {
   if (date == null) return 'Today';

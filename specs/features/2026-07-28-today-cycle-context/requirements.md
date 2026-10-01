@@ -37,6 +37,14 @@ REQ-005: If a supported prediction exists, show its date range and whether it
 is upcoming, current, or later than estimated. Use the same prediction engine
 as Cycle.
 
+For the 1.0 Today/Cycle orientation surface, "supported" also includes the
+visual-only one-interval early estimate defined in the prediction requirements.
+Say that it is early; keep it out of formal health insights. The Cycle ring
+must announce the current day and which segment is observed or estimated.
+Both pages must preserve the same range after it passes, distinguish a wide
+variable-history estimate from limited recorded history, and show both years
+when a displayed range crosses a year boundary.
+
 REQ-006: If prediction history is insufficient, say that the cycle record is
 still taking shape. Do not substitute a population-average cycle.
 

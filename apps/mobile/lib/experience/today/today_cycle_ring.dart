@@ -160,12 +160,12 @@ final class TodayCycleRing extends StatelessWidget {
     final observedLabels = <String>[
       for (final segment in model.segments)
         if (segment.certainty == CycleRingCertainty.observed)
-          segment.phase.label,
+          '${segment.phase.label} days ${segment.startDay} to ${segment.endDay}',
     ];
     final estimatedLabels = <String>[
       for (final segment in model.segments)
         if (segment.certainty == CycleRingCertainty.estimated)
-          segment.phase.label,
+          '${segment.phase.label} days ${segment.startDay} to ${segment.endDay}',
     ];
     if (observedLabels.isNotEmpty) {
       buffer.write(' Observed on the ring: ${observedLabels.join(', ')}.');
@@ -174,7 +174,11 @@ final class TodayCycleRing extends StatelessWidget {
       buffer.write(' Estimated on the ring: ${estimatedLabels.join(', ')}.');
       buffer.write(' Estimated ovulation is a range band, not a detected day.');
     }
-    if (model.hasLimitedEstimate) {
+    if (model.isEarlyEstimate) {
+      buffer.write(' This is an early estimate from one observed interval.');
+    } else if (model.hasWideVariation) {
+      buffer.write(' Recorded cycles vary; this estimate is wider.');
+    } else if (model.hasLimitedEstimate) {
       buffer.write(' This estimate uses limited recorded history.');
     }
     return buffer.toString();

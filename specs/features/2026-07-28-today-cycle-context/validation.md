@@ -2,6 +2,17 @@
 
 Status: validated
 
+## 1.0 release revalidation (2026-10-01)
+
+- [x] The Today card keeps factual period/cycle days with no history, one
+  start, an open period, and a period ended today.
+- [x] A supported range names whether it is upcoming, current, or later than
+  estimated; the range is retained after it passes and matches Cycle.
+- [x] The visual-only two-start estimate is labeled early. Cross-year ranges
+  show both years. The screen reader semantics tree exposes the day and range.
+- [x] 320 logical pixels at 200% text and native Pro Max / SE 3 screenshots
+  show readable, scrollable Today content without overflow.
+
 ## Automated Checks
 
 - [x] repository loading does not flash synthetic context
