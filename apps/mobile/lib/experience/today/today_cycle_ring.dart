@@ -135,8 +135,11 @@ final class TodayCycleRing extends StatelessWidget {
   /// destination, tests) that need identical wording.
   static String describeModel(TodayCycleRingModel model) {
     final buffer = StringBuffer(
-      'Day ${model.currentDay}; usual cycle about '
-      '${model.typicalCycleDays} days',
+      model.isEarlyEstimate
+          ? 'Day ${model.currentDay}; one observed interval of '
+                '${model.typicalCycleDays} days'
+          : 'Day ${model.currentDay}; usual cycle about '
+                '${model.typicalCycleDays} days',
     );
     final phase = model.currentPhase;
     if (phase != null) {
@@ -332,7 +335,9 @@ final class TodayCycleRing extends StatelessWidget {
                 ),
               ),
               Text(
-                'usual ~${ringModel.typicalCycleDays} days',
+                ringModel.isEarlyEstimate
+                    ? 'one interval · ${ringModel.typicalCycleDays} days'
+                    : 'usual ~${ringModel.typicalCycleDays} days',
                 style: ExperienceType.caption(ExperienceColors.inkSoft),
                 textAlign: TextAlign.center,
               ),

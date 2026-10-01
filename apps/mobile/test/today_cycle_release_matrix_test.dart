@@ -178,6 +178,8 @@ void main() {
       ),
       allOf(
         contains('Period days 1 to 5'),
+        contains('one observed interval of 28 days'),
+        isNot(contains('usual cycle')),
         contains('early estimate from one observed interval'),
       ),
     );

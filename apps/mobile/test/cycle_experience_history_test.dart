@@ -660,6 +660,8 @@ void main() {
       find.text('early estimate from one observed interval · upcoming'),
       findsOneWidget,
     );
+    expect(find.text('one interval · 28 days'), findsOneWidget);
+    expect(find.text('usual ~28 days'), findsNothing);
     expect(find.textContaining('rough estimate'), findsNothing);
     expect(find.text(' est.'), findsNothing);
   });
