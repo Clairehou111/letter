@@ -7,8 +7,10 @@ The previously empty PostHog project in the LetterHealth organization was
 renamed **Letter Within** (project ID `534876`, US Cloud). Its public project
 token is now in this worktree's ignored `apps/mobile/config/release.local.json`
 with host `https://us.i.posthog.com`. Do not copy the token into tracked specs.
-Build 14 still contains the empty-token configuration used for its archive;
-this local change affects only a later build made with this worktree's config.
+Build 14 contains the empty-token configuration used for its archive. Build 15
+was archived with the ignored release config containing the Letter Within
+PostHog project token and uploaded on 2026-10-02. Analytics remains off by
+default and needs an explicit in-app opt-in before the SDK is configured.
 
 App Store Connect App Privacy was updated and published on 2026-10-02 for the
 next analytics-enabled build. It now lists eight types: the existing Email

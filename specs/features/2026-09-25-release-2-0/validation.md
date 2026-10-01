@@ -93,6 +93,26 @@ recorded below.
   direct verification of those fixes and accurate App Review notes before a
   new submission; no reply or resubmission was made here.
 
+## 2026-10-02 Build 15 TestFlight handoff
+
+- Owner requested Build 15 before internal testers began Build 14. The source
+  was version-bumped and committed at `4ec9f74` as `1.0.0+15`; ignored release
+  config contains the Letter Within PostHog public token and the Apple
+  RevenueCat key. No secret values were committed or copied into this record.
+- Preflight on the source before the version-only bump: `flutter analyze
+  --no-pub` had no issues; the full `flutter test --no-pub` completed **688
+  passed, 1 existing skip, 0 failures**. `git diff --check` passed.
+- `tool/build_ios_release.sh --build-number=15` produced a signed
+  `app.letterwithin` archive and IPA with version `1.0.0 (15)`. Deep code
+  signature verification passed. IPA SHA-256:
+  `97e4098de80b23008d14c967b979c99889a1feebbc720add3ab71a0a5ff1df6f`.
+- Xcode Organizer reported **upload complete**. App Store Connect received
+  Build 15 at Oct 2, 2026 02:08 local time and completed processing. TestFlight
+  shows **Ready to Submit** and assignment to **Internal Testers** (2 testers).
+  Physical-device acceptance has not started; follow
+  `validation/testflight-1.0.0-build-15/README.md`. No App Review submission
+  occurred.
+
 ## 2026-10-01 Build 14 TestFlight handoff
 
 - Build source: local `main` commit `1d8f540` (the integrated release commit is
