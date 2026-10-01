@@ -25,10 +25,11 @@ The website's latest redesign source is
 `/Users/clairehou/pyProjects/letter-cycle-companion/src/routes/privacy.tsx`.
 Its optional analytics paragraph now uses the shorter phrase “basic technical
 information” and does not call out IP address or region in user-facing copy.
-The owner will publish the latest website page later. The live URL must be
-rechecked before the next App Review submission; the local file alone does not
-prove the live policy is current. Recheck the final archive's PostHog settings,
-SDK privacy manifest, and an opted-in sample event before submitting it.
+The redesigned privacy page was subsequently merged to website `main` at
+`79005b0`. The live URL must be rechecked before the next App Review
+submission; a repository commit alone does not prove the live policy is
+current. Recheck the final archive's PostHog settings, SDK privacy manifest,
+and an opted-in sample event before submitting it.
 Website commit `7f1f8cb` was pushed from an isolated pre-redesign checkout; it
 updates privacy copy but is not the latest redesigned page. Do not treat that
 commit or a deployment of it as acceptance of the website redesign.
@@ -55,8 +56,8 @@ shortcut for this disclosure review.
 The live policy at `https://letterwithin.app/privacy` was read on 2026-10-01.
 It then omitted optional product analytics. The App Store Connect declaration
 was published on 2026-10-02 as described above. The latest website redesign
-privacy page is prepared locally; the owner will publish it and verify the live
-page before the next App Review submission.
+privacy page is now in website `main`; the owner will verify the live page
+before the next App Review submission.
 
 Suggested policy copy for the website owner:
 
@@ -72,8 +73,8 @@ Suggested policy copy for the website owner:
 Website source is outside this release worktree at
 `/Users/clairehou/pyProjects/letter-cycle-companion/src/routes/privacy.tsx`;
 `/Users/clairehou/pyProjects/letter-cycle-companion/WEBSITE_REDESIGN_HANDOFF.md`
-is its website handoff. The local redesign file has the prepared copy; its
-publication remains with the website owner.
+is its website handoff. The redesign file and copy are in website `main`;
+production verification remains with the website owner.
 
 The five new App Store Connect types were marked linked because Apple includes
 device-based linkage in that field, the configured PostHog project does not
