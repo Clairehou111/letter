@@ -7,6 +7,36 @@ physical-device validation pending
 Original Release 2.0 validation run: 2026-09-30. The latest CR follow-up is
 recorded below.
 
+## 2026-10-02 owner scope and PostHog configuration
+
+- The owner retained the existing SP6/LV3 Care entry and the optional analytics
+  control. The temporary compile-time gate, asset exclusion, and hidden-control
+  work was discarded before commit; tracked source remains at Build 14 HEAD.
+  Clinical review remains open for SP6/LV3 art, locations, instructions, and
+  safety wording. The existing internal release requirement is not signed off.
+- PostHog's empty `Default project` in the LetterHealth organization was
+  renamed `Letter Within` (project ID `534876`, US Cloud). Its public project
+  token and US ingestion host were added to this worktree's Git-ignored
+  `apps/mobile/config/release.local.json`. Format, host, and required release
+  fields were checked; no events were sent. Build 14 remains unconfigured.
+- This is local configuration for a later archive, not a new build or device
+  validation. Publish accurate optional-analytics policy text and update App
+  Store Connect's privacy answers for the configured build before App Review.
+  The current public policy and answers still reflect dormant PostHog.
+- The owner will change prices directly in App Store Connect. Read-only checks
+  found `letter_monthly` US $6.99 (target $7.99), `letter_yearly` US $29.99
+  (target $39.99), and `letter_lifetime` US $99.99 (already at target). The
+  RevenueCat `letter_default` Offering already maps the monthly, annual, and
+  lifetime packages to those Apple product IDs; no RevenueCat price override
+  was made. Only US and Canada are currently available storefronts, and no
+  Apple or RevenueCat price was changed by this review.
+- App Store Connect's `1.0 Rejected` state refers to the September 30 review
+  of old Build 12, not Build 14. Apple cited Google Play wording in the binary
+  (2.3.10) and missing usable Privacy Policy / Terms of Use links in both the
+  subscription purchase flow and metadata (3.1.2(c)). A later candidate needs
+  direct verification of those fixes and accurate App Review notes before a
+  new submission; no reply or resubmission was made here.
+
 ## 2026-10-01 Build 14 TestFlight handoff
 
 - Build source: local `main` commit `1d8f540` (the integrated release commit is

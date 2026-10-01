@@ -1,5 +1,21 @@
 # App Privacy declaration draft
 
+## 2026-10-02 configured next-candidate state
+
+The owner kept the optional Anonymous analytics control and SP6/LV3 guidance.
+The previously empty PostHog project in the LetterHealth organization was
+renamed **Letter Within** (project ID `534876`, US Cloud). Its public project
+token is now in this worktree's ignored `apps/mobile/config/release.local.json`
+with host `https://us.i.posthog.com`. Do not copy the token into tracked specs.
+Build 14 still contains the empty-token configuration used for its archive;
+this local change affects only a later build made with this worktree's config.
+
+The live privacy policy and published App Store Connect privacy answers have
+not been updated for an analytics-enabled build. The future-build policy copy
+and data-type review below remain open before App Review submission. Confirm
+the final archive's PostHog settings, SDK privacy manifest, and actual event
+payloads before filing the answers.
+
 ## Release 2.0 recheck — 2026-10-01 (open)
 
 The declaration below describes the published Build 11/12 state, **not** the
