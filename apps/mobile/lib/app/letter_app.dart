@@ -710,13 +710,13 @@ class _OnboardingLoadErrorScreen extends StatelessWidget {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   const Icon(
-                    Icons.lock_outline,
+                    Icons.error_outline,
                     color: ExperienceColors.ember,
                     size: 38,
                   ),
                   const SizedBox(height: LetterSpacing.md),
                   const Text(
-                    'Letter Within could not open secure storage.',
+                    'Letter Within could not finish opening.',
                     textAlign: TextAlign.center,
                     style: TextStyle(
                       fontFamily: 'Georgia',

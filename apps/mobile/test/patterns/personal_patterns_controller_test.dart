@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter_test/flutter_test.dart';
 import 'package:letter_mobile/features/care/domain/care_memory.dart';
 import 'package:letter_mobile/features/care/domain/care_mode.dart';
@@ -12,6 +14,16 @@ final class _Source implements PatternSourceReader {
 
   @override
   Future<PatternSourceSnapshot> read() async => snapshot;
+}
+
+final class _SequencedSource implements PatternSourceReader {
+  _SequencedSource(this.responses);
+
+  final List<Future<PatternSourceSnapshot>> responses;
+  int _next = 0;
+
+  @override
+  Future<PatternSourceSnapshot> read() => responses[_next++];
 }
 
 CareRecord record(String id, CareMode mode) {
@@ -86,4 +98,31 @@ void main() {
       expect(controller.analysis.supportActions, isEmpty);
     },
   );
+
+  test('an older refresh cannot restore records after a newer read', () async {
+    final stale = Completer<PatternSourceSnapshot>();
+    final latest = Completer<PatternSourceSnapshot>();
+    final controller = PersonalPatternsController(
+      source: _SequencedSource([stale.future, latest.future]),
+    );
+    addTearDown(controller.dispose);
+
+    final firstRead = controller.refresh();
+    final secondRead = controller.refresh();
+    latest.complete(const PatternSourceSnapshot());
+    await secondRead;
+    expect(controller.sourceSnapshot.careRecords, isEmpty);
+
+    stale.complete(
+      PatternSourceSnapshot(
+        careRecords: [
+          record('one', CareMode.physical),
+          record('two', CareMode.physical),
+        ],
+      ),
+    );
+    await firstRead;
+    expect(controller.sourceSnapshot.careRecords, isEmpty);
+    expect(controller.analysis.supportActions, isEmpty);
+  });
 }

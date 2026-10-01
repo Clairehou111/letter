@@ -290,8 +290,6 @@ class _DetailsTarget extends StatelessWidget {
                   children: [
                     Text(
                       bleedingLine,
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
                       style: ExperienceType.headline(
                         ExperienceColors.ink,
                       ).copyWith(fontSize: 17, height: 1.25),
@@ -299,8 +297,6 @@ class _DetailsTarget extends StatelessWidget {
                     const SizedBox(height: 2),
                     Text(
                       startedLabel,
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
                       style: ExperienceType.body(
                         ExperienceColors.inkSoft,
                       ).copyWith(fontSize: 13.5, height: 1.35),
@@ -308,8 +304,6 @@ class _DetailsTarget extends StatelessWidget {
                     const SizedBox(height: ExperienceSpacing.xs),
                     Text(
                       'Flow, color, pain & observations',
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
                       style: ExperienceType.body(
                         ExperienceColors.ember,
                       ).copyWith(fontSize: 13.5, fontWeight: FontWeight.w600),

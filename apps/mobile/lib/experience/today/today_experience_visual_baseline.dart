@@ -398,6 +398,7 @@ class _TodayExperienceVisualState extends State<TodayExperienceVisual> {
   static const List<Color> _severityRamp = DegreeGraphics.severityRamp;
 
   bool get _moodSaveInFlight => _moodSavesInFlight > 0;
+  int _loadGeneration = 0;
 
   bool get _showCareRoute =>
       !_moodSaveInFlight && _mood != null && _heavyMoods.contains(_mood);
@@ -418,14 +419,17 @@ class _TodayExperienceVisualState extends State<TodayExperienceVisual> {
   }
 
   Future<void> _reload() async {
+    final generation = ++_loadGeneration;
     try {
       final snapshot = await widget.port.load();
-      if (!mounted) return;
+      if (!mounted || generation != _loadGeneration) return;
       _applySnapshot(snapshot);
     } on Object {
       // Honesty under every condition: a failed read is a failed read, not a
       // lifecycle state. The error hero is visually distinct from learning.
-      if (mounted) setState(() => _view = _CycleView.error);
+      if (mounted && generation == _loadGeneration) {
+        setState(() => _view = _CycleView.error);
+      }
     }
   }
 
@@ -523,6 +527,7 @@ class _TodayExperienceVisualState extends State<TodayExperienceVisual> {
 
   Future<void> _reloadFrom(TodayVisualSnapshot snapshot) async {
     if (!mounted) return;
+    ++_loadGeneration;
     _applySnapshot(snapshot);
   }
 
@@ -2907,21 +2912,19 @@ class _SymptomBrowserSheetState extends State<_SymptomBrowserSheet> {
                 style: _sans(13.5, color: _inkSoft),
               ),
               const SizedBox(height: 14),
-              SizedBox(
-                height: _minTouchTarget,
-                child: ListView.separated(
-                  scrollDirection: Axis.horizontal,
-                  itemCount: widget.groups.length,
-                  separatorBuilder: (_, _) => const SizedBox(width: 8),
-                  itemBuilder: (BuildContext context, int i) {
-                    return Center(
-                      child: _Chip(
+              SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                child: Row(
+                  children: <Widget>[
+                    for (var i = 0; i < widget.groups.length; i++) ...<Widget>[
+                      if (i > 0) const SizedBox(width: 8),
+                      _Chip(
                         label: widget.groups[i].name,
                         selected: _group == i,
                         onTap: () => setState(() => _group = i),
                       ),
-                    );
-                  },
+                    ],
+                  ],
                 ),
               ),
               const SizedBox(height: 10),

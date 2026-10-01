@@ -7,6 +7,96 @@ import 'package:letter_mobile/features/patterns/domain/patterns_experience_data.
 import 'package:letter_mobile/features/patterns/presentation/patterns_experience_screen.dart';
 
 void main() {
+  testWidgets('Patterns header and analysis stay reachable on a small phone', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(320, 568);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.reset);
+
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: LetterTheme.light,
+        home: MediaQuery(
+          data: const MediaQueryData(
+            size: Size(320, 568),
+            textScaler: TextScaler.linear(3.2),
+            disableAnimations: true,
+          ),
+          child: PatternsExperienceScreen(data: _patternsData()),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    final title = find.text('Patterns, held gently.');
+    final range = find.text('Jan 1 – Feb 25, 2026').first;
+    expect(tester.getSize(title).width, greaterThan(250));
+    expect(
+      tester.getTopLeft(range).dy,
+      greaterThan(tester.getBottomLeft(title).dy),
+    );
+    expect(find.byKey(const Key('patterns-header-scroll')), findsOneWidget);
+    expect(find.byKey(const Key('patterns-tabs-scroll')), findsOneWidget);
+    expect(tester.getSize(find.byType(MoodView)).height, greaterThan(160));
+
+    final headerScroll = find.byKey(const Key('patterns-header-scroll'));
+    final headerScrollable = find.descendant(
+      of: headerScroll,
+      matching: find.byType(Scrollable),
+    );
+    for (var i = 0; i < 12; i++) {
+      final position = tester.state<ScrollableState>(headerScrollable).position;
+      if (position.pixels >= position.maxScrollExtent - 1) break;
+      await tester.drag(headerScroll, const Offset(0, -400));
+      await tester.pumpAndSettle();
+    }
+    final position = tester.state<ScrollableState>(headerScrollable).position;
+    expect(position.pixels, closeTo(position.maxScrollExtent, 1));
+    final header = tester.getRect(
+      find.byKey(const Key('patterns-header-scroll')),
+    );
+    final subtitle = tester.getRect(
+      find.textContaining('2 completed cycles').first,
+    );
+    expect(subtitle.bottom, lessThanOrEqualTo(header.bottom + 1));
+
+    await tester.tap(find.byKey(const Key('patterns-tab-cycles')));
+    await tester.pumpAndSettle();
+    expect(find.byType(CyclesView), findsOneWidget);
+    await tester.drag(
+      find.byKey(const Key('patterns-tabs-scroll')),
+      const Offset(-400, 0),
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('patterns-tab-helped')));
+    await tester.pumpAndSettle();
+    expect(find.byType(HelpedView), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('Patterns keeps the normal header layout at standard text', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(390, 844);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.reset);
+
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: LetterTheme.light,
+        home: PatternsExperienceScreen(data: _patternsData()),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.byKey(const Key('patterns-header-scroll')), findsNothing);
+    final title = tester.getRect(find.text('Patterns, held gently.'));
+    final range = tester.getRect(find.text('Jan 1 – Feb 25, 2026').first);
+    expect(range.top, lessThan(title.bottom));
+    expect(tester.takeException(), isNull);
+  });
+
   testWidgets(
     'trend chart scales canvas labels with bounded accessibility geometry',
     (tester) async {

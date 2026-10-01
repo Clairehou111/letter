@@ -238,6 +238,7 @@ class _CareExperienceState extends State<CareExperience>
   // yet, load failed, or no controller wired. Every absence renders the
   // identical kit-free landing.
   ComfortExperienceSnapshot? _comfortSnapshot;
+  int _comfortLoadGeneration = 0;
 
   DateTime _now() => (widget.now ?? DateTime.now)();
 
@@ -266,9 +267,10 @@ class _CareExperienceState extends State<CareExperience>
   Future<void> _loadComfortSnapshot() async {
     final controller = widget.comfortExperienceController;
     if (controller == null) return;
+    final generation = ++_comfortLoadGeneration;
     try {
       final snapshot = await controller.load();
-      if (!mounted) return;
+      if (!mounted || generation != _comfortLoadGeneration) return;
       setState(() => _comfortSnapshot = snapshot);
     } catch (_) {
       // Fail quiet: no kit surface renders, errors never haptic, and the
@@ -2931,9 +2933,11 @@ class _KitTryNowButton extends StatelessWidget {
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: <Widget>[
-                    Text(
-                      'Try this now',
-                      style: ExperienceType.label(ExperienceColors.emberSoft),
+                    Flexible(
+                      child: Text(
+                        'Try this now',
+                        style: ExperienceType.label(ExperienceColors.emberSoft),
+                      ),
                     ),
                     const SizedBox(width: ExperienceSpacing.xs),
                     const Icon(
@@ -2972,10 +2976,12 @@ class _KitTryNowButton extends StatelessWidget {
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: <Widget>[
-                    Text(
-                      'Try this now',
-                      style: ExperienceType.label(
-                        ExperienceColors.careSkyBottom,
+                    Flexible(
+                      child: Text(
+                        'Try this now',
+                        style: ExperienceType.label(
+                          ExperienceColors.careSkyBottom,
+                        ),
                       ),
                     ),
                     const SizedBox(width: ExperienceSpacing.xs),

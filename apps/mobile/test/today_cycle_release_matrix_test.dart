@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:letter_mobile/experience/cycle/cycle_experience.dart';
@@ -9,6 +11,7 @@ import 'package:letter_mobile/features/capture/domain/capture_models.dart';
 import 'package:letter_mobile/features/care/data/in_memory_care_memory_repository.dart';
 import 'package:letter_mobile/features/check_in/data/in_memory_moment_check_in_repository.dart';
 import 'package:letter_mobile/features/cycle/data/in_memory_period_repository.dart';
+import 'package:letter_mobile/features/cycle/domain/bleeding_flow.dart';
 import 'package:letter_mobile/features/cycle/domain/cycle_prediction.dart';
 import 'package:letter_mobile/features/cycle/domain/local_date.dart';
 import 'package:letter_mobile/features/cycle/domain/period_record.dart';
@@ -48,6 +51,19 @@ List<PeriodRecord> regular() => [
     end: const LocalDate(2026, 9, 4),
   ),
 ];
+
+final class _QueuedPeriodRepository extends Fake implements PeriodRepository {
+  _QueuedPeriodRepository(this.reads);
+
+  final List<Future<List<PeriodRecord>>> reads;
+  int _next = 0;
+
+  @override
+  Future<List<PeriodRecord>> getAll() => reads[_next++];
+
+  @override
+  Future<List<BleedingDayRecord>> getAllFlowDays() async => [];
+}
 
 void expectBoth(
   List<PeriodRecord> records,
@@ -625,6 +641,85 @@ void main() {
     expect(find.text('9/25/2026 – 10/1/2026'), findsNothing);
     expect(tester.takeException(), isNull);
   });
+
+  testWidgets('Cycle ignores an older record read after a newer revision', (
+    tester,
+  ) async {
+    final stale = Completer<List<PeriodRecord>>();
+    final latest = Completer<List<PeriodRecord>>();
+    final periods = _QueuedPeriodRepository([stale.future, latest.future]);
+    final ring = TodayCycleRingModel.fromRecords(
+      records: regular(),
+      today: today,
+    );
+    Widget screen(int revision) => MaterialApp(
+      home: CycleExperience(
+        periodRepository: periods,
+        healthRecordRepository: InMemoryHealthRecordRepository(),
+        careMemoryRepository: InMemoryCareMemoryRepository(),
+        onCycleDataChanged: () {},
+        ringModel: ring,
+        revision: revision,
+        now: DateTime(2026, 10, 1, 12),
+      ),
+    );
+
+    await tester.pumpWidget(screen(0));
+    await tester.pumpWidget(screen(1));
+    latest.complete(regular());
+    await tester.pumpAndSettle();
+    expect(find.text('9/24/2026 – 10/2/2026'), findsOneWidget);
+
+    stale.complete([period('old', const LocalDate(2026, 9, 20))]);
+    await tester.pumpAndSettle();
+    expect(find.text('9/24/2026 – 10/2/2026'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets(
+    'Cycle shows a first estimate before a null shell model refreshes',
+    (tester) async {
+      final periods = InMemoryPeriodRepository(
+        seed: [
+          period(
+            'first',
+            const LocalDate(2026, 8, 1),
+            end: const LocalDate(2026, 8, 5),
+          ),
+        ],
+        clock: () => now,
+      );
+      final health = InMemoryHealthRecordRepository(clock: () => now);
+      final care = InMemoryCareMemoryRepository();
+      Widget screen(int revision) => MaterialApp(
+        home: CycleExperience(
+          periodRepository: periods,
+          healthRecordRepository: health,
+          careMemoryRepository: care,
+          onCycleDataChanged: () {},
+          ringModel: null,
+          revision: revision,
+          now: DateTime(2026, 10, 1, 12),
+        ),
+      );
+
+      await tester.pumpWidget(screen(0));
+      await tester.pumpAndSettle();
+      expect(find.text('9/19/2026 – 10/3/2026'), findsNothing);
+      await periods.create(
+        const PeriodDraft(
+          startDate: LocalDate(2026, 8, 29),
+          endDate: LocalDate(2026, 9, 2),
+        ),
+        today: today,
+      );
+      await tester.pumpWidget(screen(1));
+      await tester.pumpAndSettle();
+      expect(find.text('9/19/2026 – 10/3/2026'), findsOneWidget);
+      expect(find.text('one interval · 28 days'), findsOneWidget);
+      expect(tester.takeException(), isNull);
+    },
+  );
 
   testWidgets(
     'Today and Cycle expose matching estimate context at large text',

@@ -91,6 +91,7 @@ final class CycleExperience extends StatefulWidget {
 class _CycleExperienceState extends State<CycleExperience> {
   bool _loading = true;
   String? _loadError;
+  int _loadGeneration = 0;
 
   List<PeriodRecord> _periods = const <PeriodRecord>[];
   List<BleedingDayRecord> _flowDays = const <BleedingDayRecord>[];
@@ -146,6 +147,7 @@ class _CycleExperienceState extends State<CycleExperience> {
   }
 
   Future<void> _reload() async {
+    final generation = ++_loadGeneration;
     setState(() {
       _loading = true;
       _loadError = null;
@@ -153,7 +155,7 @@ class _CycleExperienceState extends State<CycleExperience> {
     try {
       final periods = await widget.periodRepository.getAll();
       final flowDays = await widget.periodRepository.getAllFlowDays();
-      if (!mounted) return;
+      if (!mounted || generation != _loadGeneration) return;
       periods.sort((a, b) => a.startDate.compareTo(b.startDate));
       setState(() {
         _periods = periods;
@@ -161,13 +163,13 @@ class _CycleExperienceState extends State<CycleExperience> {
         _loading = false;
       });
     } on PeriodWriteException catch (error) {
-      if (!mounted) return;
+      if (!mounted || generation != _loadGeneration) return;
       setState(() {
         _loading = false;
         _loadError = error.userMessage;
       });
     } catch (_) {
-      if (!mounted) return;
+      if (!mounted || generation != _loadGeneration) return;
       setState(() {
         _loading = false;
         _loadError =
@@ -187,10 +189,11 @@ class _CycleExperienceState extends State<CycleExperience> {
       CycleReadSnapshot.fromRecords(records: _periods, today: _today);
 
   TodayCycleRingModel? get _ringForLoadedRecords {
-    // The shell's model may still describe the previous repository revision
-    // while this destination has already reloaded an edited period. Use it as
-    // the availability signal, then render from this page's current records.
-    if (widget.ringModel == null) return null;
+    // The shell's model may still describe the previous repository revision.
+    // After a record change, even a null shell model may be stale because a
+    // second start can make the first early estimate available. Keep the
+    // initial availability state until a record revision requests a reload.
+    if (widget.ringModel == null && widget.revision == 0) return null;
     try {
       return TodayCycleRingModel.fromRecords(records: _periods, today: _today);
     } on TodayCycleRingException {

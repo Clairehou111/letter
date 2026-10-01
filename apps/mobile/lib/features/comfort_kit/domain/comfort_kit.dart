@@ -59,8 +59,27 @@ final class ComfortKitComposition {
   final List<ComfortKitItem> items;
 
   bool get isFormed => items.isNotEmpty;
-  List<ComfortKitItem> get visibleItems => List.unmodifiable(items.take(3));
-  List<ComfortKitItem> get replacementItems => List.unmodifiable(items.skip(3));
+
+  // Keep the evidence ranking intact while reserving one shelf place for the
+  // user's own words when Care actions would otherwise occupy all three.
+  List<ComfortKitItem> get visibleItems {
+    final visible = items.take(3).toList();
+    if (visible.length == 3 &&
+        visible.every((item) => item.kind == ComfortKitSourceKind.careAction)) {
+      for (final item in items.skip(3)) {
+        if (item.kind != ComfortKitSourceKind.careAction) {
+          visible[2] = item;
+          break;
+        }
+      }
+    }
+    return List.unmodifiable(visible);
+  }
+
+  List<ComfortKitItem> get replacementItems {
+    final visible = visibleItems;
+    return List.unmodifiable(items.where((item) => !visible.contains(item)));
+  }
 }
 
 final class ComfortKitAssembler {

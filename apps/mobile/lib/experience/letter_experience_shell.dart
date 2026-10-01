@@ -211,6 +211,7 @@ class _LetterExperienceShellState extends State<LetterExperienceShell>
   // remains the sole visible surface. No new shell-level error surface is
   // added in this visual session.
   String? _derivedError;
+  int _derivedLoadGeneration = 0;
   TodayCycleRingModel? _ringModel;
   GravityHorizonViewModel? _gravity;
   SpectrumLogViewModel? _spectrum;
@@ -311,6 +312,7 @@ class _LetterExperienceShellState extends State<LetterExperienceShell>
   // -------------------------------------------------------------------------
 
   Future<void> _loadDerived({bool quiet = false}) async {
+    final generation = ++_derivedLoadGeneration;
     if (!quiet || (_derivedError != null && _gravity == null)) {
       if (mounted) {
         setState(() {
@@ -371,7 +373,7 @@ class _LetterExperienceShellState extends State<LetterExperienceShell>
       final spectrum = _buildSpectrum(snapshot);
       final analysis = _buildAnalysis(snapshot);
 
-      if (!mounted) return;
+      if (!mounted || generation != _derivedLoadGeneration) return;
       setState(() {
         _ringModel = ring;
         if (gravity != null) _gravity = gravity;
@@ -391,7 +393,7 @@ class _LetterExperienceShellState extends State<LetterExperienceShell>
         });
       }
     } catch (_) {
-      if (!mounted) return;
+      if (!mounted || generation != _derivedLoadGeneration) return;
       setState(() {
         _derivedError =
             'Patterns could not read your records right now. '
@@ -1028,21 +1030,17 @@ class _SettingsBackSlot extends StatelessWidget {
           padding: const EdgeInsets.only(
             left: ExperienceSpacing.screenMargin - 12,
           ),
-          child: Semantics(
-            button: true,
-            label: 'Back',
-            child: IconButton(
-              onPressed: onBack,
-              icon: const Icon(Icons.arrow_back_ios_new),
-              color: ExperienceColors.inkSoft,
-              tooltip: 'Back',
-              constraints: const BoxConstraints(
-                minWidth: ExperienceSpacing.minTouchTarget,
-                minHeight: ExperienceSpacing.minTouchTarget,
-              ),
-              padding: EdgeInsets.zero,
-              visualDensity: VisualDensity.compact,
+          child: IconButton(
+            onPressed: onBack,
+            icon: const Icon(Icons.arrow_back_ios_new),
+            color: ExperienceColors.inkSoft,
+            tooltip: 'Back',
+            constraints: const BoxConstraints(
+              minWidth: ExperienceSpacing.minTouchTarget,
+              minHeight: ExperienceSpacing.minTouchTarget,
             ),
+            padding: EdgeInsets.zero,
+            visualDensity: VisualDensity.compact,
           ),
         ),
       ),

@@ -635,7 +635,8 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    expect(find.text('Plans could not be loaded'), findsOneWidget);
+    expect(find.text('Purchases unavailable'), findsOneWidget);
+    expect(find.textContaining('unavailable on this build'), findsOneWidget);
     expect(find.text('Try again'), findsOneWidget);
     expect(find.textContaining('desktop build'), findsNothing);
     expect(find.textContaining('Google Play'), findsNothing);
@@ -676,13 +677,13 @@ void main() {
       ),
     );
     await tester.pumpAndSettle();
-    expect(find.text('Plans could not be loaded'), findsOneWidget);
+    expect(find.text('Purchases unavailable'), findsOneWidget);
 
     await repository.identifyAuthenticatedUser(
       '550e8400-e29b-41d4-a716-446655440000',
     );
     await tester.pumpAndSettle();
-    expect(find.text('Plans could not be loaded'), findsNothing);
+    expect(find.text('Purchases unavailable'), findsNothing);
     expect(find.textContaining('\$29.99'), findsWidgets);
   });
 }

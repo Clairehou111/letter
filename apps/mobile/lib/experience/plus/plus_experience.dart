@@ -688,6 +688,10 @@ class _PlusExperienceState extends State<PlusExperience> {
   }
 
   Widget _buildPlansError() {
+    final storeUnavailable =
+        _plansError is EntitlementException &&
+        (_plansError! as EntitlementException).message ==
+            'Purchases are unavailable on this build.';
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(ExperienceSpacing.sm),
@@ -700,12 +704,16 @@ class _PlusExperienceState extends State<PlusExperience> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
           Text(
-            'Plans could not be loaded',
+            storeUnavailable
+                ? 'Purchases unavailable'
+                : 'Plans could not be loaded',
             style: ExperienceType.bodyStrong(ExperienceColors.ink),
           ),
           const SizedBox(height: ExperienceSpacing.xs),
           Text(
-            'Please try again. Your records and free features remain available.',
+            storeUnavailable
+                ? 'Purchases are unavailable on this build. Your records and free features remain available.'
+                : 'Please try again. Your records and free features remain available.',
             style: ExperienceType.bodySmall(ExperienceColors.inkSoft),
           ),
           const SizedBox(height: ExperienceSpacing.sm),

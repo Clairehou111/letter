@@ -22,6 +22,8 @@ final class PersonalPatternsController extends ChangeNotifier {
   final Set<String> _dismissedPatternIds = {};
   bool _isLoading = false;
   Object? _error;
+  int _refreshGeneration = 0;
+  int _loadGeneration = 0;
 
   PersonalPatternAnalysis get analysis {
     if (_dismissedPatternIds.isEmpty) {
@@ -43,21 +45,30 @@ final class PersonalPatternsController extends ChangeNotifier {
   Object? get error => _error;
 
   Future<void> load() async {
+    final loadGeneration = ++_loadGeneration;
+    final refreshGeneration = _refreshGeneration + 1;
     _isLoading = true;
     _error = null;
     notifyListeners();
     try {
       await refresh(notify: false);
     } catch (error) {
-      _error = error;
+      if (loadGeneration == _loadGeneration &&
+          refreshGeneration == _refreshGeneration) {
+        _error = error;
+      }
     } finally {
-      _isLoading = false;
-      notifyListeners();
+      if (loadGeneration == _loadGeneration) {
+        _isLoading = false;
+        notifyListeners();
+      }
     }
   }
 
   Future<void> refresh({bool notify = true}) async {
+    final generation = ++_refreshGeneration;
     final source = await _source.read();
+    if (generation != _refreshGeneration) return;
     _sourceSnapshot = source;
     _analysis = _engine.analyze(source, selectedCareMode: _selectedCareMode);
     _error = null;

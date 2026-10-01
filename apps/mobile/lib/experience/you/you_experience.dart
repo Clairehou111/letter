@@ -536,6 +536,7 @@ class _YouExperienceState extends State<YouExperience> {
             labelText: 'Cat name',
             hintText: 'Miso',
             helperText: 'Saved only on this device.',
+            helperMaxLines: 2,
             errorText: _careCompanionNameError,
           ),
         ),

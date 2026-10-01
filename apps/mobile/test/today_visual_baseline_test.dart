@@ -15,6 +15,7 @@ import 'package:letter_mobile/features/cycle/domain/local_date.dart';
 import 'package:letter_mobile/features/cycle/domain/period_record.dart';
 import 'package:letter_mobile/features/health_records/data/in_memory_health_record_repository.dart';
 import 'package:letter_mobile/features/health_records/domain/health_record.dart';
+import 'package:letter_mobile/features/today/today_cycle_context.dart';
 
 final class _DeferredMoodPort implements TodayVisualPort {
   _DeferredMoodPort(this.delegate, this.onSaveMood);
@@ -260,6 +261,56 @@ void main() {
     expect(find.text('We couldn’t read today’s notes'), findsOneWidget);
     expect(find.text('Try again'), findsOneWidget);
     expect(find.text('Getting to know you'), findsNothing);
+  });
+
+  testWidgets('an older Today read cannot replace a newer cycle revision', (
+    tester,
+  ) async {
+    final stale = Completer<TodayVisualSnapshot>();
+    final latest = Completer<TodayVisualSnapshot>();
+    var reads = 0;
+    final port = _LoadOnlyPort(
+      () => reads++ == 0 ? stale.future : latest.future,
+    );
+
+    await tester.pumpWidget(
+      MaterialApp(home: TodayExperienceVisual(port: port, revision: 0)),
+    );
+    await tester.pumpWidget(
+      MaterialApp(home: TodayExperienceVisual(port: port, revision: 1)),
+    );
+
+    final base = await _emptyPort().load();
+    final period = PeriodRecord(
+      id: 'latest',
+      startDate: const LocalDate(2026, 8, 14),
+      endDate: null,
+      createdAt: DateTime.utc(2026, 8, 14),
+      updatedAt: DateTime.utc(2026, 8, 14),
+    );
+    latest.complete(
+      TodayVisualSnapshot(
+        today: base.today,
+        containingPeriod: period,
+        openPeriod: period,
+        flowRecord: null,
+        mood: null,
+        symptoms: const [],
+        note: null,
+        cycleContext: TodayCycleContext.fromRecords(
+          records: [period],
+          today: base.today,
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+    expect(find.text('Period day 2'), findsOneWidget);
+
+    stale.complete(base);
+    await tester.pumpAndSettle();
+    expect(find.text('Period day 2'), findsOneWidget);
+    expect(find.text('A quiet beginning'), findsNothing);
+    expect(tester.takeException(), isNull);
   });
 
   testWidgets('reduced motion leaves the loading placeholder still', (

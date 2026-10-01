@@ -621,8 +621,7 @@ class _ReportsExperienceState extends State<ReportsExperience> {
               ),
               const SizedBox(height: ExperienceSpacing.xs),
               Text(
-                'Choose a range, look through what is inside, then export on '
-                'your terms. Nothing here is a diagnosis.',
+                'Choose a date range to review your entries.',
                 style: ExperienceType.bodySmall(ExperienceColors.inkSoft),
               ),
             ],

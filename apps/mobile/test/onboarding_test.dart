@@ -235,20 +235,15 @@ void main() {
     await pumpLetter(
       tester,
       repository,
-      readyFinder: find.text(
-        'Letter Within could not open secure storage.',
-      ),
+      readyFinder: find.text('Letter Within could not finish opening.'),
     );
 
     expect(
-      find.text('Letter Within could not open secure storage.'),
+      find.text('Letter Within could not finish opening.'),
       findsOneWidget,
     );
     await tester.tap(find.byKey(const Key('retry-onboarding-load')));
-    await pumpUntilFound(
-      tester,
-      find.byKey(const Key('onboarding-continue')),
-    );
+    await pumpUntilFound(tester, find.byKey(const Key('onboarding-continue')));
     expect(find.text("Read your body's letter."), findsOneWidget);
   });
 

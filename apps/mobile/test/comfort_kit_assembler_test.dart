@@ -166,6 +166,48 @@ void main() {
     expect(result.replacementItems.single.sourceId, 'action:d');
   });
 
+  test('keeps authored words on the shelf beside multiple Care actions', () {
+    final result = assembler.compose(
+      supportActions: [
+        _action(id: 'a', better: 3, pinned: false, day: 1),
+        _action(id: 'b', better: 2, pinned: false, day: 2),
+        _action(id: 'c', better: 1, pinned: true, day: 3),
+        _action(id: 'd', better: 1, pinned: false, day: 4),
+      ],
+      careReflections: const [],
+      cycleReflections: [
+        CycleReflection(
+          id: 'letter',
+          cycleStartDay: const LocalDate(2026, 1, 1).epochDay,
+          observation: null,
+          need: null,
+          whatHelped: null,
+          futureSelfNote: 'A warm drink helped me slow down.',
+          createdAt: DateTime.utc(2026, 1, 1),
+          updatedAt: DateTime.utc(2026, 1, 2),
+        ),
+      ],
+      quickNotes: const [],
+    );
+
+    expect(result.items.map((item) => item.sourceId), [
+      'action:b',
+      'action:a',
+      'action:c',
+      'action:d',
+      'cycle-reflection:letter',
+    ]);
+    expect(result.visibleItems.map((item) => item.sourceId), [
+      'action:b',
+      'action:a',
+      'cycle-reflection:letter',
+    ]);
+    expect(result.replacementItems.map((item) => item.sourceId), [
+      'action:c',
+      'action:d',
+    ]);
+  });
+
   test('formed kit is proactive only around the forecast window', () {
     final kit = assembler.compose(
       supportActions: [_action(id: 'care', better: 1, pinned: false)],

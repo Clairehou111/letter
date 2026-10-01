@@ -216,14 +216,68 @@ void main() {
       expect(tester.takeException(), isNull);
     },
   );
+
+  testWidgets('opened kit keeps authored words reachable after three actions', (
+    tester,
+  ) async {
+    final records = <CareRecord>[
+      _careRecord(
+        id: 'action-one',
+        actionId: 'care.one',
+        actionLabel: 'Rest into support',
+        occurredAt: DateTime.utc(2026, 9, 20),
+      ),
+      _careRecord(
+        id: 'action-two',
+        actionId: 'care.two',
+        actionLabel: 'Take a pause',
+        occurredAt: DateTime.utc(2026, 9, 21),
+      ),
+      _careRecord(
+        id: 'action-three',
+        actionId: 'care.three',
+        actionLabel: 'Find a quiet place',
+        occurredAt: DateTime.utc(2026, 9, 22),
+      ),
+    ];
+    final reflection = CycleReflection(
+      id: 'saved-words',
+      cycleStartDay: const LocalDate(2026, 9, 1).epochDay,
+      observation: null,
+      need: null,
+      whatHelped: null,
+      futureSelfNote: 'A warm drink helped me slow down.',
+      createdAt: DateTime.utc(2026, 9, 23),
+      updatedAt: DateTime.utc(2026, 9, 23),
+    );
+
+    await _pumpOpenedKit(
+      tester,
+      records: records,
+      cycleReflections: <CycleReflection>[reflection],
+      textScale: 2,
+    );
+
+    await _scrollUntilVisible(
+      tester,
+      find.text('A warm drink helped me slow down.'),
+    );
+    expect(find.text('A warm drink helped me slow down.'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
 }
 
-CareRecord _careRecord({required String id, required DateTime occurredAt}) {
+CareRecord _careRecord({
+  required String id,
+  required DateTime occurredAt,
+  String actionId = 'care.heavy.guided_scene',
+  String actionLabel = 'Rest into support',
+}) {
   return CareRecord(
     id: id,
     mode: CareMode.heavy,
-    actionId: 'care.heavy.guided_scene',
-    actionLabel: 'Rest into support',
+    actionId: actionId,
+    actionLabel: actionLabel,
     outcome: CareOutcome.better,
     occurredAt: occurredAt,
     createdAt: occurredAt,

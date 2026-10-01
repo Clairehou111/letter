@@ -494,99 +494,145 @@ class _PatternsExperienceScreenState extends State<PatternsExperienceScreen> {
             child: LayoutBuilder(
               builder: (context, cons) {
                 final pad = cons.maxWidth > 860 ? 42.0 : 22.0;
-                return Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    Padding(
-                      padding: EdgeInsets.fromLTRB(pad, 22, pad, 0),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          if (widget.onBack != null)
-                            Padding(
-                              padding: const EdgeInsets.only(bottom: 10),
-                              child: InkWell(
-                                borderRadius: BorderRadius.circular(8),
-                                onTap: widget.onBack,
-                                child: const Padding(
-                                  padding: EdgeInsets.symmetric(
-                                    horizontal: 6,
-                                    vertical: 6,
+                final compactLargeText =
+                    cons.maxWidth < 430 &&
+                    MediaQuery.textScalerOf(context).scale(16) > 22;
+                final header = Padding(
+                  padding: EdgeInsets.fromLTRB(pad, 22, pad, 0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      if (widget.onBack != null)
+                        Padding(
+                          padding: const EdgeInsets.only(bottom: 10),
+                          child: InkWell(
+                            borderRadius: BorderRadius.circular(8),
+                            onTap: widget.onBack,
+                            child: const Padding(
+                              padding: EdgeInsets.symmetric(
+                                horizontal: 6,
+                                vertical: 6,
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Icon(
+                                    Icons.arrow_back,
+                                    size: 15,
+                                    color: T.inkSoft,
                                   ),
-                                  child: Row(
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
-                                      Icon(
-                                        Icons.arrow_back,
-                                        size: 15,
-                                        color: T.inkSoft,
-                                      ),
-                                      SizedBox(width: 6),
-                                      Text(
-                                        'Back',
-                                        style: TextStyle(
-                                          fontSize: 13,
-                                          fontWeight: FontWeight.w700,
-                                          color: T.inkSoft,
-                                        ),
-                                      ),
-                                    ],
+                                  SizedBox(width: 6),
+                                  Text(
+                                    'Back',
+                                    style: TextStyle(
+                                      fontSize: 13,
+                                      fontWeight: FontWeight.w700,
+                                      color: T.inkSoft,
+                                    ),
                                   ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ),
+                      const Text('PATTERNS', style: _S.eyebrow),
+                      const SizedBox(height: 12),
+                      if (compactLargeText) ...[
+                        Text(
+                          'Patterns, held gently.',
+                          style: _S.display.copyWith(fontSize: 26),
+                        ),
+                        if (range != null) ...[
+                          const SizedBox(height: 12),
+                          ConstrainedBox(
+                            constraints: BoxConstraints(
+                              maxWidth: cons.maxWidth - 2 * pad,
+                            ),
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 10,
+                                vertical: 6,
+                              ),
+                              decoration: BoxDecoration(
+                                color: T.sand,
+                                borderRadius: BorderRadius.circular(20),
+                              ),
+                              child: Text(
+                                range,
+                                style: const TextStyle(
+                                  fontSize: 11.5,
+                                  color: T.inkSoft,
+                                  fontWeight: FontWeight.w700,
+                                  letterSpacing: 0.3,
                                 ),
                               ),
                             ),
-                          const Text('PATTERNS', style: _S.eyebrow),
-                          const SizedBox(height: 12),
-                          Row(
-                            crossAxisAlignment: CrossAxisAlignment.end,
-                            children: [
-                              Expanded(
+                          ),
+                        ],
+                      ] else
+                        Row(
+                          crossAxisAlignment: CrossAxisAlignment.end,
+                          children: [
+                            Expanded(
+                              child: Text(
+                                'Patterns, held gently.',
+                                style: _S.display.copyWith(
+                                  fontSize: cons.maxWidth > 860 ? 38 : 32,
+                                ),
+                              ),
+                            ),
+                            if (range != null) ...[
+                              const SizedBox(width: 16),
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 10,
+                                  vertical: 6,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: T.sand,
+                                  borderRadius: BorderRadius.circular(20),
+                                ),
                                 child: Text(
-                                  'Patterns, held gently.',
-                                  style: _S.display.copyWith(
-                                    fontSize: cons.maxWidth > 860 ? 38 : 32,
+                                  range,
+                                  style: const TextStyle(
+                                    fontSize: 11.5,
+                                    color: T.inkSoft,
+                                    fontWeight: FontWeight.w700,
+                                    letterSpacing: 0.3,
                                   ),
                                 ),
                               ),
-                              if (range != null) ...[
-                                const SizedBox(width: 16),
-                                Container(
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 10,
-                                    vertical: 6,
-                                  ),
-                                  decoration: BoxDecoration(
-                                    color: T.sand,
-                                    borderRadius: BorderRadius.circular(20),
-                                  ),
-                                  child: Text(
-                                    range,
-                                    style: const TextStyle(
-                                      fontSize: 11.5,
-                                      color: T.inkSoft,
-                                      fontWeight: FontWeight.w700,
-                                      letterSpacing: 0.3,
-                                    ),
-                                  ),
-                                ),
-                              ],
                             ],
-                          ),
-                          const SizedBox(height: 12),
-                          ConstrainedBox(
-                            constraints: const BoxConstraints(maxWidth: 640),
-                            child: Text(_subtitle, style: _S.bodyL),
-                          ),
-                        ],
+                          ],
+                        ),
+                      const SizedBox(height: 12),
+                      ConstrainedBox(
+                        constraints: const BoxConstraints(maxWidth: 640),
+                        child: Text(_subtitle, style: _S.bodyL),
                       ),
-                    ),
-                    const SizedBox(height: 26),
+                    ],
+                  ),
+                );
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    if (compactLargeText)
+                      Flexible(
+                        child: SingleChildScrollView(
+                          key: const Key('patterns-header-scroll'),
+                          child: header,
+                        ),
+                      )
+                    else
+                      header,
+                    SizedBox(height: compactLargeText ? 12 : 26),
                     Padding(
                       padding: EdgeInsets.symmetric(horizontal: pad),
                       child: _SegmentedNav(
                         labels: _tabs,
                         keys: _tabKeys,
                         index: _view,
+                        compactLargeText: compactLargeText,
                         onChanged: (i) => setState(() => _view = i),
                       ),
                     ),
@@ -626,68 +672,83 @@ class _PatternsExperienceScreenState extends State<PatternsExperienceScreen> {
 }
 
 class _SegmentedNav extends StatelessWidget {
+  static const _compactLabels = ['Cycles', 'Mood', 'Helped'];
   final List<String> labels;
   final List<Key> keys;
   final int index;
+  final bool compactLargeText;
   final ValueChanged<int> onChanged;
   const _SegmentedNav({
     required this.labels,
     required this.keys,
     required this.index,
+    required this.compactLargeText,
     required this.onChanged,
   });
 
   @override
   Widget build(BuildContext context) {
+    Widget tab(int i) => Semantics(
+      button: true,
+      selected: index == i,
+      label: labels[i],
+      child: InkWell(
+        key: keys[i],
+        borderRadius: BorderRadius.circular(12),
+        onTap: () => onChanged(i),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 10),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                compactLargeText ? _compactLabels[i] : labels[i],
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: compactLargeText ? 11.5 : 13.5,
+                  fontWeight: index == i ? FontWeight.w800 : FontWeight.w600,
+                  color: index == i ? T.ink : T.inkSoft,
+                  letterSpacing: 0.1,
+                ),
+              ),
+              const SizedBox(height: 7),
+              AnimatedContainer(
+                duration: MediaQuery.of(context).disableAnimations
+                    ? Duration.zero
+                    : const Duration(milliseconds: 260),
+                curve: Curves.easeOutCubic,
+                height: 3,
+                width: index == i ? 34 : 0,
+                decoration: BoxDecoration(
+                  color: T.coral,
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+
+    if (compactLargeText) {
+      return SingleChildScrollView(
+        key: const Key('patterns-tabs-scroll'),
+        scrollDirection: Axis.horizontal,
+        child: Row(
+          children: [
+            for (var i = 0; i < labels.length; i++) ...[
+              if (i > 0) const SizedBox(width: 8),
+              SizedBox(width: 170, child: tab(i)),
+            ],
+          ],
+        ),
+      );
+    }
     return Row(
       children: [
         for (var i = 0; i < labels.length; i++) ...[
           if (i > 0) const SizedBox(width: 8),
-          Expanded(
-            child: Semantics(
-              button: true,
-              selected: index == i,
-              label: labels[i],
-              child: InkWell(
-                key: keys[i],
-                borderRadius: BorderRadius.circular(12),
-                onTap: () => onChanged(i),
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 10),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text(
-                        labels[i],
-                        textAlign: TextAlign.center,
-                        style: TextStyle(
-                          fontSize: 13.5,
-                          fontWeight: index == i
-                              ? FontWeight.w800
-                              : FontWeight.w600,
-                          color: index == i ? T.ink : T.inkSoft,
-                          letterSpacing: 0.1,
-                        ),
-                      ),
-                      const SizedBox(height: 7),
-                      AnimatedContainer(
-                        duration: MediaQuery.of(context).disableAnimations
-                            ? Duration.zero
-                            : const Duration(milliseconds: 260),
-                        curve: Curves.easeOutCubic,
-                        height: 3,
-                        width: index == i ? 34 : 0,
-                        decoration: BoxDecoration(
-                          color: T.coral,
-                          borderRadius: BorderRadius.circular(2),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ),
-          ),
+          Expanded(child: tab(i)),
         ],
       ],
     );
