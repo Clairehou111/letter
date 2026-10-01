@@ -26,7 +26,9 @@ recorded below.
 - The owner reports updating the App Store Connect prices. The earlier read-only
   check found `letter_monthly` US $6.99 (target $7.99), `letter_yearly` US
   $29.99 (target $39.99), and `letter_lifetime` US $99.99 (already at target).
-  App Store Connect's new prices still need a fresh storefront/device check.
+  The current App Store Connect pricing pages now show monthly US $7.99 / CA
+  CAD $9.99 and yearly US $39.99 / CA CAD $49.99, with no upcoming price row.
+  A physical-device StoreKit purchase-sheet check remains pending.
   Only US and Canada were available storefronts at the earlier check.
 - RevenueCat's current `letter_default` Offering maps the monthly, annual, and
   lifetime packages to both the Apple and Test Store product IDs, all attached
@@ -41,6 +43,15 @@ recorded below.
   of localized StoreKit prices and purchase sheets remain required. The
   Offering verification also noted no attached RevenueCat-hosted paywall; the
   Flutter app uses its own Plus screen.
+- After the owner enabled App Store Connect API access, a dedicated App Manager
+  team API key was created and uploaded to RevenueCat's Letter Within App Store
+  app. RevenueCat reports both the new App Store Connect API key and the
+  existing In-App Purchase key as valid; the CLI independently reports both
+  configured. All three Apple products now have `Ready to Submit` store status.
+  RevenueCat's stored Apple price list still reads monthly USD $6.99, yearly
+  CNY 198, and no lifetime price immediately after setup. Do not use these
+  catalog records as a substitute for StoreKit product and purchase-sheet
+  verification. No new build, purchase, or App Review submission occurred.
 - App Store Connect's `1.0 Rejected` state refers to the September 30 review
   of old Build 12, not Build 14. Apple cited Google Play wording in the binary
   (2.3.10) and missing usable Privacy Policy / Terms of Use links in both the
