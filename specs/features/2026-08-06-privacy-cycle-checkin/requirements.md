@@ -2,6 +2,11 @@
 
 Status: approved 2026-08-06
 
+Release 2.0 supersession: the App Lock requirement and the notification-tap
+App Lock gate below are historical. Release 2.0 REQ-018 explicitly removes
+App Lock; Screen Cover and the local Cycle Check-in remain in scope. Do not
+interpret the historical gate as a missing Release 2.0 implementation.
+
 ## Scope
 
 - Cover health content in the app switcher whenever Letter Within becomes inactive.
@@ -31,4 +36,3 @@ Status: approved 2026-08-06
   notifications.
 - Cloud scheduling or analytics.
 - Pricing and entitlement changes.
-

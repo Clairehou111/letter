@@ -1,5 +1,50 @@
 # App Privacy declaration draft
 
+## Release 2.0 recheck — 2026-10-01 (open)
+
+The declaration below describes the published Build 11/12 state, **not** the
+current Release 2.0 source. Release 2.0 adds an optional, default-off
+`Anonymous analytics` control. When the person enables it and a PostHog project
+is configured, the app can send coarse product-use and settings-action events.
+The payload contract excludes account IDs, readable health records, cycle
+dates, symptoms, notes, and Care details. Consent withdrawal opts out and clears
+the pending event queue. Production PostHog settings must not be changed as a
+shortcut for this disclosure review.
+
+The live policy at `https://letterwithin.app/privacy` was read on 2026-10-01.
+Its `Can leave your device` list omits optional product analytics, while its
+`Stays on your device` list says app settings stay on-device without qualifying
+the analytics setting-action event. Before submitting the Release 2.0 app for
+review, publish matching policy language and update the App Store Connect App
+Privacy answers for the actual production build. Recheck the live page and
+declaration after publishing; this document is not proof that either changed.
+
+Suggested policy copy for the website owner:
+
+> Anonymous product analytics are off unless you turn them on in Settings. If
+> you opt in, Letter Within sends coarse app-use and settings-action events to
+> our analytics provider to help us understand which features work. These
+> events do not include your account ID, period dates, symptoms, notes, Care
+> details, or readable health records. Turning analytics off stops future
+> collection and clears events waiting to be sent from this device. Your
+> settings are stored on your device; when analytics is on, an event may report
+> that analytics was enabled or that Screen Cover changed. The Screen Cover
+> event does not send the setting's value or your health data.
+
+Website source is outside this release worktree at
+`/Users/clairehou/pyProjects/letter-cycle-companion/src/routes/privacy.tsx`;
+`/Users/clairehou/pyProjects/letter-cycle-companion/WEBSITE_REDESIGN_HANDOFF.md`
+is its website handoff. This is a prepared copy change, not a published edit.
+
+App Store Connect answers require a fresh data-type, purpose, linkage, and
+tracking review against the exact configured PostHog SDK and privacy manifest.
+Inspect automatic SDK/device fields and transport metadata before adopting the
+suggested policy wording as final legal copy.
+Do not assume that the historical "PostHog dormant" declaration below still
+describes the next archive.
+
+## Historical published declaration — 2026-09-25
+
 Status: published in App Store Connect on 2026-09-25.
 
 Apple requires a privacy policy URL and answers covering the app and integrated

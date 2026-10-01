@@ -1,8 +1,9 @@
 # Release 2.0 Implementation Plan
 
-Status: implementation substantially complete; report-entitlement correction,
-SP6/LV3 final review, regression revalidation, and physical-device validation
-pending
+Status: implementation and report-entitlement correction complete; automated
+regression revalidation current through 2026-10-01. SP6/LV3 qualified clinical
+review, public privacy-policy/App Store declaration alignment, and final
+physical-device validation remain pending before App Store review submission.
 
 1. Establish `release/2.0`, baseline analyzer/tests, and approved specifications.
 2. Add immutable Comfort Window evidence/result models and a pure deterministic

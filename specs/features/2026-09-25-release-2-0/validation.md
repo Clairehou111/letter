@@ -4,7 +4,84 @@ Status: automated and native-Simulator run complete; SP6/LV3 replacement art
 installed and visually verified; qualified clinical review and final
 physical-device validation pending
 
-Last automated run: 2026-09-30
+Original Release 2.0 validation run: 2026-09-30. The latest CR follow-up is
+recorded below.
+
+## 2026-10-01 integration sign-off (local source only)
+
+- Integrated the UI audit commit `128ea8e` with the Today/Cycle and privacy
+  follow-up. Cycle now computes the visible estimate from its completed local
+  read on first load as well as after revisions, so two eligible starts do not
+  briefly appear as forming while the shell's derived read is pending.
+  Generation checks keep older Cycle day-editor and backfill reads, Plus plan
+  retries, and the existing Today/Cycle/Shell/Care/Patterns reads from
+  replacing newer state. Rapid Today mood choices serialize repository writes
+  and keep only the latest choice visible.
+- Both ordinary and out-of-order paths were exercised: initial two-start
+  Cycle load, single revision and day-editor edit/delete, backfill day save,
+  rapid revisions ending in deletion, sequential and rapid mood saves,
+  ordinary Plus retry after a store error, account setup retry, Comfort Kit
+  authored-item display, and onboarding load/retry and privacy goldens.
+  The first integration full run exposed two stale Cycle test assumptions:
+  one fallback fixture contained a valid interval, and one day-editor test
+  needed to scroll to a now-lower row. Both tests were corrected and passed
+  alone and in the final full run.
+- Final `flutter analyze --no-pub`: no issues. Final
+  `flutter test --no-pub --concurrency=4 -r expanded`: **684 passed, 1 existing
+  skip, 0 failed**. `git diff --check`: clean. These results are from the
+  integrated worktree after all source and test edits.
+- The current source launched in an iOS 26.5 iPhone SE (3rd generation)
+  Simulator debug session using `tool/manual_qa_app.dart`'s synthetic
+  `tracker-cycle` frame. The Cycle ring and estimate rendered without a crash
+  or persistent drawing artifact. This is a native layout smoke check; it does
+  not exercise local encrypted storage, account login, or store transactions.
+  The committed UI audit evidence covers a formal-app iPhone 17 Plus sheet
+  and Comfort Kit, plus a Patterns large-text check. Onboarding was verified
+  with widget journeys and privacy goldens, not a fresh native screenshot in
+  this integration pass.
+- The published [privacy policy](https://letterwithin.app/privacy) still lists
+  app settings as local and omits optional product analytics from data that can
+  leave the device (rechecked 2026-10-01). The prepared disclosure wording and
+  App Store Connect review tasks are in
+  `artifacts/app-store/APP_PRIVACY_DRAFT.md`. Neither public page nor
+  production PostHog/RevenueCat configuration was changed.
+- Source is ready for an owner-authorized next candidate build, but this is
+  not App Review sign-off. The website owner and App Store Connect owner must
+  align policy and privacy answers with the configured PostHog SDK; a qualified
+  clinician must sign SP6/LV3 art, wording, pressure guidance, and safety copy;
+  device QA must verify login, real products/localized prices, purchase and
+  restore, notifications, and sharing on a physical iPhone. The Apple EULA
+  opens on Android too; it must get an Android-appropriate destination before
+  an Android subscription release, while it does not block this iOS code
+  integration. No archive, upload, push, deployment, or App Review submission
+  occurred.
+
+## 2026-10-01 CR follow-up
+
+- After the Today/Cycle audit and CR follow-up, `flutter analyze --no-pub`
+  reports no issues. `flutter test --no-pub --concurrency=4 -r expanded`
+  passed **677 tests with one existing skip**. An earlier concurrent full run
+  had one onboarding load-wait timeout; that test passed alone and in the
+  subsequent full run. This timing failure is recorded rather than erased.
+  Another review session was editing the same worktree during this run;
+  repeat the final gate after its changes are integrated and committed.
+- A controlled null-shell-model test verifies that Cycle shows its first
+  one-interval estimate after a record revision. Controlled out-of-order reads
+  verify that Today, Cycle, and Patterns keep the latest snapshot. Shell and
+  Care also reject older asynchronous derived/Kit loads. These checks do not
+  replace native end-to-end mutation testing.
+- The public privacy policy and the published App Store Connect privacy answers
+  still describe the earlier dormant-analytics release. The current opt-in
+  PostHog path requires policy and declaration alignment before App Store
+  review submission. The exact website copy and disclosure audit are tracked
+  in `artifacts/app-store/APP_PRIVACY_DRAFT.md`; the website has not been edited
+  in this release worktree.
+- The historical App Lock and complete free report-preview requirements are
+  marked as superseded in their original feature specifications. SP6/LV3
+  clinical approval and physical-device purchase/restore checks remain open.
+- The Plus Terms of Use link currently opens Apple's Standard EULA on every
+  platform. This is appropriate to recheck for the iOS submission and requires
+  a platform-appropriate destination before an Android subscription release.
 
 - `flutter test --no-pub --concurrency=4`: 646 passed, 1 skipped by its existing platform
   condition.

@@ -721,6 +721,90 @@ void main() {
     },
   );
 
+  testWidgets('Cycle shows two recorded starts on its first local load', (
+    tester,
+  ) async {
+    final periods = InMemoryPeriodRepository(
+      seed: [
+        period(
+          'first',
+          const LocalDate(2026, 8, 1),
+          end: const LocalDate(2026, 8, 5),
+        ),
+        period(
+          'second',
+          const LocalDate(2026, 8, 29),
+          end: const LocalDate(2026, 9, 2),
+        ),
+      ],
+      clock: () => now,
+    );
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: CycleExperience(
+          periodRepository: periods,
+          healthRecordRepository: InMemoryHealthRecordRepository(),
+          careMemoryRepository: InMemoryCareMemoryRepository(),
+          onCycleDataChanged: () {},
+          ringModel: null,
+          now: DateTime(2026, 10, 1, 12),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('9/19/2026 – 10/3/2026'), findsOneWidget);
+    expect(find.text('one interval · 28 days'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('Cycle keeps the deletion after consecutive older reads', (
+    tester,
+  ) async {
+    final initial = Completer<List<PeriodRecord>>();
+    final edited = Completer<List<PeriodRecord>>();
+    final deleted = Completer<List<PeriodRecord>>();
+    final periods = _QueuedPeriodRepository([
+      initial.future,
+      edited.future,
+      deleted.future,
+    ]);
+    Widget screen(int revision) => MaterialApp(
+      home: CycleExperience(
+        periodRepository: periods,
+        healthRecordRepository: InMemoryHealthRecordRepository(),
+        careMemoryRepository: InMemoryCareMemoryRepository(),
+        onCycleDataChanged: () {},
+        ringModel: null,
+        revision: revision,
+        now: DateTime(2026, 10, 1, 12),
+      ),
+    );
+
+    await tester.pumpWidget(screen(0));
+    await tester.pumpWidget(screen(1));
+    await tester.pumpWidget(screen(2));
+    deleted.complete([
+      period(
+        'first',
+        const LocalDate(2026, 8, 1),
+        end: const LocalDate(2026, 8, 5),
+      ),
+    ]);
+    await tester.pumpAndSettle();
+    expect(find.text('one interval · 28 days'), findsNothing);
+
+    edited.complete([
+      period('first', const LocalDate(2026, 8, 1)),
+      period('edited', const LocalDate(2026, 8, 29)),
+    ]);
+    initial.complete(regular());
+    await tester.pumpAndSettle();
+    expect(find.text('one interval · 28 days'), findsNothing);
+    expect(tester.takeException(), isNull);
+  });
+
   testWidgets(
     'Today and Cycle expose matching estimate context at large text',
     (tester) async {

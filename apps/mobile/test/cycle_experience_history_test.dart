@@ -364,7 +364,7 @@ void main() {
       find.text('Bleeding flow, last period'),
       400,
     );
-    await tester.ensureVisible(find.text('D1'));
+    await tester.scrollUntilVisible(find.text('D1'), 200);
     await tester.pumpAndSettle();
     await tester.tap(find.text('D1'));
     await tester.pumpAndSettle();
@@ -447,6 +447,46 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Record a new period start'), findsOneWidget);
+  });
+
+  testWidgets('backfill refreshes a saved day in the ordinary edit flow', (
+    tester,
+  ) async {
+    const date = LocalDate(2026, 7, 15);
+    final periods = InMemoryPeriodRepository(
+      seed: [
+        PeriodRecord(
+          id: 'current',
+          startDate: date,
+          endDate: date,
+          createdAt: DateTime.utc(2026),
+          updatedAt: DateTime.utc(2026),
+        ),
+      ],
+    );
+    await tester.pumpWidget(
+      MaterialApp(
+        home: CycleExperience(
+          periodRepository: periods,
+          healthRecordRepository: InMemoryHealthRecordRepository(),
+          careMemoryRepository: InMemoryCareMemoryRepository(),
+          onCycleDataChanged: () {},
+          now: DateTime(2026, 7, 15, 12),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Fill in days').first);
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('7/15/2026').last);
+    await tester.pumpAndSettle();
+    await tester.tap(find.bySemanticsLabel('Bleeding flow: Light'));
+    await tester.pumpAndSettle();
+
+    expect((await periods.getAllFlowDays()).single.flow, BleedingFlow.light);
+    expect(find.bySemanticsLabel(RegExp(r'7/15/2026: Light')), findsOneWidget);
+    expect(tester.takeException(), isNull);
   });
 
   testWidgets('Cycle reloads a Today period end when its revision changes', (

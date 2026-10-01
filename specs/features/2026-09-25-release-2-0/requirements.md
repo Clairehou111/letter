@@ -111,6 +111,10 @@ REQ-015: Free ranking is deterministic: repeated recent Better evidence,
 pinned Care, recent Better Care, future-self note, then explicitly kept Quick
 note; ties use recency. Plus may explain and refine cross-cycle ordering but
 must not make basic personalization paid-only.
+The full replacement list keeps that rank. If the three visible Kit slots
+would all be Care actions, the third slot shows the first eligible authored
+entry from the ranked list when one exists; the displaced action remains
+available in Replace.
 
 REQ-016: Rename `A note to self` to `Quick note`; add local history, edit,
 delete, and a detail-only Comfort Kit toggle. Preserve the existing Care

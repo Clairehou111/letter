@@ -99,6 +99,30 @@ void main() {
     expect(changes, greaterThan(0));
   });
 
+  test('rapid mood choices persist the last choice as one check-in', () async {
+    var id = 0;
+    final moods = InMemoryMomentCheckInRepository(
+      clock: () => timestamp,
+      idGenerator: () => 'mood-${id++}',
+    );
+    final port = buildPort(
+      periods: InMemoryPeriodRepository(clock: () => timestamp),
+      moods: moods,
+      symptoms: InMemoryHealthRecordRepository(clock: () => timestamp),
+    );
+
+    await Future.wait([
+      port.saveMood(MomentCheckInState.low),
+      port.saveMood(MomentCheckInState.calm),
+      port.saveMood(MomentCheckInState.good),
+    ]);
+
+    expect((await moods.getAll()).map((entry) => entry.state), [
+      MomentCheckInState.good,
+    ]);
+    expect((await port.load()).mood, MomentCheckInState.good);
+  });
+
   test(
     'period transitions and Cycle date edits remain reflected in Today',
     () async {

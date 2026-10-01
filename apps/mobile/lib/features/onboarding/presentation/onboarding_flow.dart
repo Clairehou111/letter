@@ -8,10 +8,8 @@ import 'privacy_explainer_sheet.dart';
 typedef CompleteOnboarding = Future<void> Function(OnboardingProfile profile);
 
 /// The first minute of Letter Within: promise → privacy → goals, spoken in
-/// the same warm daylight language as the Today screen that follows it —
-/// cream canvas, plum Georgia lockup, an ember progress track, and one ember
-/// primary action. Crossing this threshold never registers as leaving the
-/// product.
+/// the same Quiet Dusk language as Today: a plum canvas, Georgia lockup,
+/// ember progress track, and one ember primary action.
 class OnboardingFlow extends StatefulWidget {
   const OnboardingFlow({required this.onComplete, super.key});
 
@@ -24,7 +22,7 @@ class OnboardingFlow extends StatefulWidget {
 class _OnboardingFlowState extends State<OnboardingFlow> {
   static const _stepCount = 3;
 
-  /// Daylight max-content-width convention, centered on wide surfaces.
+  /// Centered maximum content width on wide surfaces.
   static const double _maxContentWidth = 440;
 
   int _step = 0;

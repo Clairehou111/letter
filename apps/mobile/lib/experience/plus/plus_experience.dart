@@ -139,6 +139,7 @@ class _PlusExperienceState extends State<PlusExperience> {
   List<LetterPlan>? _plans;
   Object? _plansError;
   bool _plansLoading = true;
+  int _plansLoadGeneration = 0;
   String? _selectedPlanId;
 
   bool _purchaseInFlight = false;
@@ -233,13 +234,14 @@ class _PlusExperienceState extends State<PlusExperience> {
   }
 
   Future<void> _loadPlans() async {
+    final generation = ++_plansLoadGeneration;
     setState(() {
       _plansLoading = true;
       _plansError = null;
     });
     try {
       final plans = await _repository.loadPlans();
-      if (!mounted) {
+      if (!mounted || generation != _plansLoadGeneration) {
         return;
       }
       setState(() {
@@ -248,7 +250,7 @@ class _PlusExperienceState extends State<PlusExperience> {
         _selectedPlanId = _defaultSelection(plans);
       });
     } catch (error) {
-      if (!mounted) {
+      if (!mounted || generation != _plansLoadGeneration) {
         return;
       }
       setState(() {

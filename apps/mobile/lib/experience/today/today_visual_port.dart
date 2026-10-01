@@ -142,6 +142,9 @@ final class RepositoryTodayVisualPort implements TodayVisualPort {
   })?
   saveComfortReminderPreference;
 
+  // A later tap must not race an earlier check-in's duplicate cleanup.
+  Future<void> _moodWrites = Future<void>.value();
+
   @override
   Future<TodayVisualSnapshot> load() async {
     final values = await Future.wait<Object>(<Future<Object>>[
@@ -234,7 +237,13 @@ final class RepositoryTodayVisualPort implements TodayVisualPort {
   }
 
   @override
-  Future<TodayVisualSnapshot> saveMood(MomentCheckInState state) async {
+  Future<TodayVisualSnapshot> saveMood(MomentCheckInState state) {
+    final result = _moodWrites.then((_) => _saveMood(state));
+    _moodWrites = result.then<void>((_) {}, onError: (Object _) {});
+    return result;
+  }
+
+  Future<TodayVisualSnapshot> _saveMood(MomentCheckInState state) async {
     final created = await checkInRepository.create(state, occurredAt: now());
     final date = today();
     for (final entry in await checkInRepository.getAll()) {

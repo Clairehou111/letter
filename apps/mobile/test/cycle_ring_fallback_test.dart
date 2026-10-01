@@ -61,8 +61,8 @@ void main() {
       final periods = <PeriodRecord>[
         _period(
           id: 'july',
-          start: const LocalDate(2026, 7, 8),
-          end: const LocalDate(2026, 7, 13),
+          start: const LocalDate(2026, 8, 13),
+          end: const LocalDate(2026, 8, 13),
         ),
         _period(
           id: 'august-14',

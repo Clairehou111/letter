@@ -655,6 +655,27 @@ void main() {
     ]);
   });
 
+  testWidgets('Plus retry loads plans after an ordinary store failure', (
+    tester,
+  ) async {
+    final repository = _RetryPlansRepository();
+    addTearDown(repository.dispose);
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: ExperienceFoundation.lightTheme(),
+        home: PlusExperience(entitlementRepository: repository),
+      ),
+    );
+    await tester.pumpAndSettle();
+    expect(find.text('Plans could not be loaded'), findsOneWidget);
+
+    await tester.tap(find.text('Try again'));
+    await tester.pumpAndSettle();
+    expect(find.text('Yearly'), findsOneWidget);
+    expect(find.text('Plans could not be loaded'), findsNothing);
+    expect(repository.loadCalls, 2);
+  });
+
   testWidgets('Plus reloads plans when account store setup finishes', (
     tester,
   ) async {
@@ -777,6 +798,17 @@ final class _RefreshEntitlementRepository extends LocalEntitlementRepository {
   Future<EntitlementState> refresh() async {
     refreshCalls += 1;
     return refreshState;
+  }
+}
+
+final class _RetryPlansRepository extends LocalEntitlementRepository {
+  int loadCalls = 0;
+
+  @override
+  Future<List<LetterPlan>> loadPlans() async {
+    loadCalls += 1;
+    if (loadCalls == 1) throw StateError('temporary store failure');
+    return letterPlans;
   }
 }
 

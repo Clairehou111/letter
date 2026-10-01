@@ -281,6 +281,7 @@ class _TodayExperienceVisualState extends State<TodayExperienceVisual> {
   // but the route stays hidden while a save is in flight and never appears
   // from a failed save.
   int _moodSavesInFlight = 0;
+  int _moodSelectionGeneration = 0;
 
   // A line the app remembers from earlier Care check-backs. Composed
   // upstream through the factual evidence gate; shown verbatim, never
@@ -504,17 +505,18 @@ class _TodayExperienceVisualState extends State<TodayExperienceVisual> {
   // -------------------------------------------------------------------------
 
   Future<void> _selectMood(MomentCheckInState mood) async {
+    final generation = ++_moodSelectionGeneration;
     setState(() {
       _mood = mood;
       _moodSavesInFlight++;
     });
     try {
       final snapshot = await widget.port.saveMood(mood);
-      if (!mounted) return;
+      if (!mounted || generation != _moodSelectionGeneration) return;
       await _reloadFrom(snapshot);
       _acknowledge('Mood noted — ${mood.label}', saved: true);
     } on Object {
-      if (mounted) {
+      if (mounted && generation == _moodSelectionGeneration) {
         await _reload();
         _acknowledge("Letter Within couldn't save that. Try again.");
       }

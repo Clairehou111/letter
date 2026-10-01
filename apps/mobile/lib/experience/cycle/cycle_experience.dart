@@ -72,9 +72,8 @@ final class CycleExperience extends StatefulWidget {
   /// health-record changes, so every derived surface refreshes.
   final VoidCallback onCycleDataChanged;
 
-  /// The working ring model when history supports one (≥3 period starts).
-  /// Null means the destination renders its honest empty / ring-forming
-  /// states from the records themselves — never an invented phase.
+  /// The shell's derived model may arrive after this destination's records.
+  /// Cycle computes its displayed estimate from its own loaded snapshot.
   final TodayCycleRingModel? ringModel;
 
   /// A read revision from the persistent shell. Cycle remains mounted across
@@ -189,11 +188,8 @@ class _CycleExperienceState extends State<CycleExperience> {
       CycleReadSnapshot.fromRecords(records: _periods, today: _today);
 
   TodayCycleRingModel? get _ringForLoadedRecords {
-    // The shell's model may still describe the previous repository revision.
-    // After a record change, even a null shell model may be stale because a
-    // second start can make the first early estimate available. Keep the
-    // initial availability state until a record revision requests a reload.
-    if (widget.ringModel == null && widget.revision == 0) return null;
+    // The shell's model can lag the initial read as well as a later edit.
+    // This destination has a complete local snapshot once _reload finishes.
     try {
       return TodayCycleRingModel.fromRecords(records: _periods, today: _today);
     } on TodayCycleRingException {
@@ -1324,6 +1320,7 @@ class _DayEditorSheet extends StatefulWidget {
 class _DayEditorSheetState extends State<_DayEditorSheet> {
   bool _loading = true;
   String? _loadError;
+  int _loadGeneration = 0;
 
   List<PeriodRecord> _periods = const <PeriodRecord>[];
   BleedingDayRecord? _flowRecord;
@@ -1363,11 +1360,12 @@ class _DayEditorSheetState extends State<_DayEditorSheet> {
   }
 
   Future<void> _reload() async {
+    final generation = ++_loadGeneration;
     try {
       final periods = await widget.periodRepository.getAll();
       final flowDays = await widget.periodRepository.getAllFlowDays();
       final records = await widget.healthRecordRepository.getAll();
-      if (!mounted) return;
+      if (!mounted || generation != _loadGeneration) return;
       periods.sort((a, b) => a.startDate.compareTo(b.startDate));
       BleedingDayRecord? flowRecord;
       for (final day in flowDays) {
@@ -1397,7 +1395,7 @@ class _DayEditorSheetState extends State<_DayEditorSheet> {
         _loadError = null;
       });
     } catch (_) {
-      if (!mounted) return;
+      if (!mounted || generation != _loadGeneration) return;
       setState(() {
         _loading = false;
         _loadError =
@@ -2037,6 +2035,7 @@ class _BackfillSheetState extends State<_BackfillSheet> {
   int? _expandedDay;
   bool _spottingNoteShown = false;
   bool _created = false;
+  int _daysLoadGeneration = 0;
 
   @override
   void initState() {
@@ -2050,10 +2049,15 @@ class _BackfillSheetState extends State<_BackfillSheet> {
   Future<void> _reloadDays() async {
     final period = _period;
     if (period == null) return;
+    final generation = ++_daysLoadGeneration;
     try {
       final flowDays = await widget.periodRepository.getAllFlowDays();
       final records = await widget.healthRecordRepository.getAll();
-      if (!mounted) return;
+      if (!mounted ||
+          generation != _daysLoadGeneration ||
+          _period?.id != period.id) {
+        return;
+      }
       setState(() {
         _flowByDay = <int, BleedingDayRecord>{
           for (final day in flowDays)

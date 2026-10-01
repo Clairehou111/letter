@@ -7,6 +7,12 @@ and encrypted local export/import
 Superseded in part by
 `../2026-07-31-unified-record-and-navigation/requirements.md`, which defines the
 compliant Twin Matrix preview and prohibits mirrored observations.
+For Release 2.0, REQ-005's complete pre-generation report preview is also
+superseded by `../2026-09-25-release-2-0/requirements.md` REQ-017: the free
+in-app factual view is limited to the most recent three months, longer views
+and all generated files require paid Plus, and the exact selected range must
+be shown before generation. REQ-005 remains historical context for the
+original export concept, not a current free-preview requirement.
 
 ## Goal
 
