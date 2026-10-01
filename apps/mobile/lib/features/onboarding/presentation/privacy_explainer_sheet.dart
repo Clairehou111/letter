@@ -77,7 +77,7 @@ class PrivacyExplainerSheet extends StatelessWidget {
               title: 'You stay in control',
               body:
                   'You can change privacy choices, make an encrypted backup, '
-                  'export records, or delete them from the You tab.',
+                  'export records, or delete them from Settings.',
             ),
             const SizedBox(height: ExperienceSpacing.xs),
             Semantics(

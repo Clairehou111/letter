@@ -492,7 +492,7 @@ class _PrivacyStep extends StatelessWidget {
         ),
         const _PrivacyFact(
           icon: Icons.lock_outline,
-          text: 'Encrypted backup and restore are available from the You tab.',
+          text: 'Encrypted backup and restore are available from Settings.',
         ),
         const _PrivacyFact(
           icon: Icons.account_circle_outlined,

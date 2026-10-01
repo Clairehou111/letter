@@ -299,13 +299,13 @@ Primary navigation:
 1. `Today`
 2. `Cycle`
 3. `Care`
-4. `Letters`
-5. `You`
+4. `Patterns`
 
 `Today` is the default home and current-moment record. `Care` occupies the
-central navigation position for acute support. `Letters` contains cycle
+central navigation position for acute support. `Patterns` contains cycle
 stories, cross-cycle patterns, and report entry; it does not disguise medical
-evidence behind poetic copy.
+evidence behind poetic copy. Account, privacy, backup, and preferences remain
+available through Settings from the daylight screens.
 
 ### Three Signature Views
 

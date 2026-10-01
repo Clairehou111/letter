@@ -300,6 +300,51 @@ class _TrackerCaptureSurfaceState extends State<_TrackerCaptureSurface> {
     );
   }
 
+  void _openSettings() {
+    Navigator.of(context).push(
+      MaterialPageRoute<void>(
+        builder: (routeContext) => Scaffold(
+          backgroundColor: ExperienceColors.canvas,
+          body: SafeArea(
+            bottom: false,
+            child: Column(
+              children: <Widget>[
+                SizedBox(
+                  height: ExperienceSpacing.minTouchTarget,
+                  child: Align(
+                    alignment: Alignment.centerLeft,
+                    child: Padding(
+                      padding: const EdgeInsets.only(
+                        left: ExperienceSpacing.screenMargin - 12,
+                      ),
+                      child: IconButton(
+                        onPressed: () => Navigator.of(routeContext).maybePop(),
+                        icon: const Icon(Icons.arrow_back_ios_new),
+                        color: ExperienceColors.inkSoft,
+                        tooltip: 'Back',
+                        constraints: const BoxConstraints(
+                          minWidth: ExperienceSpacing.minTouchTarget,
+                          minHeight: ExperienceSpacing.minTouchTarget,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+                Expanded(
+                  child: YouExperience(
+                    port: _QaYouPort(),
+                    backupPort: const _QaBackupPort(),
+                    now: () => _now,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
   static List<HealthRecord> _trackerHealthRows() {
     HealthRecord row(
       String id,
@@ -474,7 +519,37 @@ class _TrackerCaptureSurfaceState extends State<_TrackerCaptureSurface> {
     ];
 
     return Scaffold(
-      body: IndexedStack(index: _index, children: pages),
+      body: SafeArea(
+        bottom: false,
+        child: Column(
+          children: <Widget>[
+            SizedBox(
+              height: ExperienceSpacing.minTouchTarget,
+              child: Align(
+                alignment: Alignment.centerRight,
+                child: Padding(
+                  padding: const EdgeInsets.only(
+                    right: ExperienceSpacing.screenMargin - 12,
+                  ),
+                  child: IconButton(
+                    onPressed: _openSettings,
+                    icon: const Icon(Icons.settings_outlined),
+                    color: ExperienceColors.inkSoft,
+                    tooltip: 'Settings',
+                    constraints: const BoxConstraints(
+                      minWidth: ExperienceSpacing.minTouchTarget,
+                      minHeight: ExperienceSpacing.minTouchTarget,
+                    ),
+                  ),
+                ),
+              ),
+            ),
+            Expanded(
+              child: IndexedStack(index: _index, children: pages),
+            ),
+          ],
+        ),
+      ),
       bottomNavigationBar: NavigationBar(
         height: 80,
         backgroundColor: ExperienceColors.surface,
@@ -500,7 +575,6 @@ class _TrackerCaptureSurfaceState extends State<_TrackerCaptureSurface> {
             label: 'Care',
           ),
           NavigationDestination(icon: Icon(Icons.bar_chart), label: 'Patterns'),
-          NavigationDestination(icon: Icon(Icons.person_outline), label: 'You'),
         ],
       ),
     );

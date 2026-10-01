@@ -144,7 +144,7 @@ history and interpretation are premium.
 - A lapsed user may read existing local records and generated material.
 - Plus controls creating or refreshing advanced analysis, not ownership of
   material already generated on the device.
-- Provide Restore Purchases and Manage Subscription from You or Settings.
+- Provide Restore Purchases and Manage Subscription from Settings.
 - The free product is the primary demonstration. A short trial alone cannot
   prove value that compounds across cycles.
 - After sufficient history exists, offer one honest Personal Patterns preview
