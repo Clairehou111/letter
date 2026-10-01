@@ -23,13 +23,24 @@ recorded below.
   validation. Publish accurate optional-analytics policy text and update App
   Store Connect's privacy answers for the configured build before App Review.
   The current public policy and answers still reflect dormant PostHog.
-- The owner will change prices directly in App Store Connect. Read-only checks
-  found `letter_monthly` US $6.99 (target $7.99), `letter_yearly` US $29.99
-  (target $39.99), and `letter_lifetime` US $99.99 (already at target). The
-  RevenueCat `letter_default` Offering already maps the monthly, annual, and
-  lifetime packages to those Apple product IDs; no RevenueCat price override
-  was made. Only US and Canada are currently available storefronts, and no
-  Apple or RevenueCat price was changed by this review.
+- The owner reports updating the App Store Connect prices. The earlier read-only
+  check found `letter_monthly` US $6.99 (target $7.99), `letter_yearly` US
+  $29.99 (target $39.99), and `letter_lifetime` US $99.99 (already at target).
+  App Store Connect's new prices still need a fresh storefront/device check.
+  Only US and Canada were available storefronts at the earlier check.
+- RevenueCat's current `letter_default` Offering maps the monthly, annual, and
+  lifetime packages to both the Apple and Test Store product IDs, all attached
+  to the `letter_plus` entitlement. The Test Store products were updated in
+  place through the official RevenueCat CLI: `letter_monthly` USD $6.99 to
+  $7.99, `letter_yearly` USD $29.99 to $39.99, and `letter_lifetime` USD $79.99
+  to $99.99. Read-back of all three prices succeeded, and Offering verification
+  still showed the same current Offering, product IDs, and entitlement. This
+  changes Test Store prices only; Apple production prices come from App Store
+  Connect/StoreKit. RevenueCat's Offering verification still returned an old
+  Apple monthly USD $6.99 price and a yearly CNY price, so fresh device checks
+  of localized StoreKit prices and purchase sheets remain required. The
+  Offering verification also noted no attached RevenueCat-hosted paywall; the
+  Flutter app uses its own Plus screen.
 - App Store Connect's `1.0 Rejected` state refers to the September 30 review
   of old Build 12, not Build 14. Apple cited Google Play wording in the binary
   (2.3.10) and missing usable Privacy Policy / Terms of Use links in both the
