@@ -7,6 +7,25 @@ physical-device validation pending
 Original Release 2.0 validation run: 2026-09-30. The latest CR follow-up is
 recorded below.
 
+## 2026-10-01 Build 14 TestFlight handoff
+
+- Build source: local `main` commit `1d8f540` (the integrated release commit is
+  `4d67694`). Version is `1.0.0+14`; bundle ID is `app.letterwithin`.
+- Final build preflight: `flutter analyze --no-pub` reported no issues;
+  `flutter test --no-pub --concurrency=4 -r expanded` passed **684 tests,
+  1 existing skip, 0 failures**. The signed IPA and archive report version
+  1.0.0 (14), and deep code-signature verification passed. IPA SHA-256:
+  `1ef6f7a8eb5d142aa51967c4744ed46c9ebb010486bb5b3b816ca17883f477a0`.
+- Xcode Organizer reported **Letter Within 1.0.0 (14) uploaded**. App Store
+  Connect's TestFlight Build Uploads row showed it received at Oct 1, 2026
+  11:26 PM local time. After processing, the TestFlight build detail showed
+  **Ready to Submit** and the existing Internal Testers group with two testers.
+  This TestFlight status is not an App Review submission, and no physical-iPhone
+  case has been executed in this handoff.
+- The ordered physical-device cases and evidence format are in
+  `physical-iphone-build-14-checklist.md`. No App Review submission, website
+  edit, production PostHog/RevenueCat change, or git push occurred.
+
 ## 2026-10-01 integration sign-off (local source only)
 
 - Integrated the UI audit commit `128ea8e` with the Today/Cycle and privacy
