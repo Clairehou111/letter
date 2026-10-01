@@ -10,11 +10,28 @@ with host `https://us.i.posthog.com`. Do not copy the token into tracked specs.
 Build 14 still contains the empty-token configuration used for its archive;
 this local change affects only a later build made with this worktree's config.
 
-The live privacy policy and published App Store Connect privacy answers have
-not been updated for an analytics-enabled build. The future-build policy copy
-and data-type review below remain open before App Review submission. Confirm
-the final archive's PostHog settings, SDK privacy manifest, and actual event
-payloads before filing the answers.
+App Store Connect App Privacy was updated and published on 2026-10-02 for the
+next analytics-enabled build. It now lists eight types: the existing Email
+Address, User ID, and Purchase History, plus Coarse Location, Device ID,
+Product Interaction, Other Usage Data, and Other Diagnostic Data. All five new
+types are marked linked under Apple's account/device/details test, and not
+used for tracking. This label does not claim that a real-world name or account
+is attached to PostHog events. Coarse Location, Device ID, Product Interaction,
+and Other Usage Data are marked for Analytics; Other Diagnostic Data is marked
+for App Functionality. The published page was reread after the changes and
+showed no pending setup items. No build or App Review submission followed.
+
+The website's latest redesign source is
+`/Users/clairehou/pyProjects/letter-cycle-companion/src/routes/privacy.tsx`.
+Its optional analytics paragraph now uses the shorter phrase “basic technical
+information” and does not call out IP address or region in user-facing copy.
+The owner will publish the latest website page later. The live URL must be
+rechecked before the next App Review submission; the local file alone does not
+prove the live policy is current. Recheck the final archive's PostHog settings,
+SDK privacy manifest, and an opted-in sample event before submitting it.
+Website commit `7f1f8cb` was pushed from an isolated pre-redesign checkout; it
+updates privacy copy but is not the latest redesigned page. Do not treat that
+commit or a deployment of it as acceptance of the website redesign.
 
 The next source candidate also adds `plan_catalog_load` with fixed success or
 failure categories to diagnose missing plans. It sends only when analytics is
@@ -36,37 +53,35 @@ the pending event queue. Production PostHog settings must not be changed as a
 shortcut for this disclosure review.
 
 The live policy at `https://letterwithin.app/privacy` was read on 2026-10-01.
-Its `Can leave your device` list omits optional product analytics, while its
-`Stays on your device` list says app settings stay on-device without qualifying
-the analytics setting-action event. Before submitting the Release 2.0 app for
-review, publish matching policy language and update the App Store Connect App
-Privacy answers for the actual production build. Recheck the live page and
-declaration after publishing; this document is not proof that either changed.
+It then omitted optional product analytics. The App Store Connect declaration
+was published on 2026-10-02 as described above. The latest website redesign
+privacy page is prepared locally; the owner will publish it and verify the live
+page before the next App Review submission.
 
 Suggested policy copy for the website owner:
 
-> App analytics and diagnostics are off unless you turn them on in Settings. If
-> you opt in, Letter Within sends limited feature-use, settings-action, and
-> reliability events to PostHog to help us find problems such as plans failing
-> to load. These events use a random app identifier but do not include your
-> account ID, period dates, symptoms, notes, Care details, or readable health
-> records. Turning analytics off stops future
-> collection and clears events waiting to be sent from this device. Your
-> settings are stored on your device; when analytics is on, an event may report
-> that analytics was enabled or that Screen Cover changed. The Screen Cover
-> event does not send the setting's value or your health data.
+> The Help improve Letter Within setting is off until you turn it on. If
+> enabled, the app sends limited app-use and error-category events to PostHog
+> to help us improve the app and investigate problems. This can include a broad
+> Care-use count. Events carry a random app identifier and basic technical
+> information, but no account ID or readable health records. Turning the
+> setting off stops new events and clears those waiting on your device. Contact
+> us to request deletion of events already sent. We do not use analytics for
+> advertising or session recording.
 
 Website source is outside this release worktree at
 `/Users/clairehou/pyProjects/letter-cycle-companion/src/routes/privacy.tsx`;
 `/Users/clairehou/pyProjects/letter-cycle-companion/WEBSITE_REDESIGN_HANDOFF.md`
-is its website handoff. This is a prepared copy change, not a published edit.
+is its website handoff. The local redesign file has the prepared copy; its
+publication remains with the website owner.
 
-App Store Connect answers require a fresh data-type, purpose, linkage, and
-tracking review against the exact configured PostHog SDK and privacy manifest.
-Inspect automatic SDK/device fields and transport metadata before adopting the
-suggested policy wording as final legal copy.
-Do not assume that the historical "PostHog dormant" declaration below still
-describes the next archive.
+The five new App Store Connect types were marked linked because Apple includes
+device-based linkage in that field, the configured PostHog project does not
+discard IPs, and its anonymous distinct ID persists across events. This does
+not mean the app sends an account ID or real-world name to PostHog. Inspect an
+actual opted-in event and the final archive's SDK/device fields before treating
+these answers as final for that archive. The historical
+"PostHog dormant" declaration below does not describe the next archive.
 
 ## Historical published declaration — 2026-09-25
 
