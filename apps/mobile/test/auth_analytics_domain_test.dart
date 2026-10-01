@@ -42,6 +42,21 @@ void main() {
         'schema_version': 1,
       });
     });
+
+    test('plan load diagnostics serialize only fixed categories', () {
+      final payload = AnalyticsPayload(
+        event: const PlanCatalogLoadEvent.failed(
+          PlanCatalogFailureReason.accountNotReady,
+        ),
+        timestamp: _t(),
+      );
+      expect(payload.toRecord(), {
+        'event_name': 'plan_catalog_load',
+        'schema_version': 1,
+        'result': 'failed',
+        'reason': 'accountNotReady',
+      });
+    });
   });
 
   group('DevAnalyticsService', () {

@@ -26,6 +26,14 @@ void main() {
           timestamp: DateTime.utc(2026),
         ),
       );
+      await service.track(
+        AnalyticsPayload(
+          event: const PlanCatalogLoadEvent.failed(
+            PlanCatalogFailureReason.offeringRequestFailed,
+          ),
+          timestamp: DateTime.utc(2026),
+        ),
+      );
       expect(client.captured, isEmpty);
       expect(client.configured, isFalse);
 

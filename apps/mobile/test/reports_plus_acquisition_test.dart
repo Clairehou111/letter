@@ -598,10 +598,13 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      expect(analytics.events, hasLength(1));
-      expect(analytics.events.single.event, isA<PaywallViewedEvent>());
-      expect(analytics.events.single.event.toProperties(), const {
+      expect(analytics.events, hasLength(2));
+      expect(analytics.events.first.event, isA<PaywallViewedEvent>());
+      expect(analytics.events.first.event.toProperties(), const {
         'context': 'patternReport',
+      });
+      expect(analytics.events.last.event.toProperties(), const {
+        'result': 'loaded',
       });
     },
   );
@@ -659,21 +662,32 @@ void main() {
     tester,
   ) async {
     final repository = _RetryPlansRepository();
+    final analytics = _RecordingAnalyticsService();
     addTearDown(repository.dispose);
     await tester.pumpWidget(
-      MaterialApp(
-        theme: ExperienceFoundation.lightTheme(),
-        home: PlusExperience(entitlementRepository: repository),
+      AnalyticsScope(
+        service: analytics,
+        child: MaterialApp(
+          theme: ExperienceFoundation.lightTheme(),
+          home: PlusExperience(entitlementRepository: repository),
+        ),
       ),
     );
     await tester.pumpAndSettle();
     expect(find.text('Plans could not be loaded'), findsOneWidget);
+    expect(analytics.events.last.event.toProperties(), const {
+      'result': 'failed',
+      'reason': 'unknown',
+    });
 
     await tester.tap(find.text('Try again'));
     await tester.pumpAndSettle();
     expect(find.text('Yearly'), findsOneWidget);
     expect(find.text('Plans could not be loaded'), findsNothing);
     expect(repository.loadCalls, 2);
+    expect(analytics.events.last.event.toProperties(), const {
+      'result': 'loaded',
+    });
   });
 
   testWidgets('Plus reloads plans when account store setup finishes', (

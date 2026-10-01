@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:developer' as developer;
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -201,6 +202,29 @@ class _PlusExperienceState extends State<PlusExperience> {
     );
   }
 
+  analytics.PlanCatalogFailureReason _planLoadReason(Object error) {
+    if (error is! EntitlementException) {
+      return analytics.PlanCatalogFailureReason.unknown;
+    }
+    return switch (error.planLoadFailureCode) {
+      PlanLoadFailureCode.accountNotReady =>
+        analytics.PlanCatalogFailureReason.accountNotReady,
+      PlanLoadFailureCode.storeNotSelected =>
+        analytics.PlanCatalogFailureReason.storeNotSelected,
+      PlanLoadFailureCode.apiKeyMissing =>
+        analytics.PlanCatalogFailureReason.apiKeyMissing,
+      PlanLoadFailureCode.storeSetupFailed =>
+        analytics.PlanCatalogFailureReason.storeSetupFailed,
+      PlanLoadFailureCode.storeConfigurationError =>
+        analytics.PlanCatalogFailureReason.storeConfigurationError,
+      PlanLoadFailureCode.offeringRequestFailed =>
+        analytics.PlanCatalogFailureReason.offeringRequestFailed,
+      PlanLoadFailureCode.emptyOffering =>
+        analytics.PlanCatalogFailureReason.emptyOffering,
+      null => analytics.PlanCatalogFailureReason.unknown,
+    };
+  }
+
   @override
   void initState() {
     super.initState();
@@ -249,6 +273,7 @@ class _PlusExperienceState extends State<PlusExperience> {
         _plansLoading = false;
         _selectedPlanId = _defaultSelection(plans);
       });
+      _track(const analytics.PlanCatalogLoadEvent.loaded());
     } catch (error) {
       if (!mounted || generation != _plansLoadGeneration) {
         return;
@@ -258,6 +283,9 @@ class _PlusExperienceState extends State<PlusExperience> {
         _plansError = error;
         _plansLoading = false;
       });
+      final reason = _planLoadReason(error);
+      developer.log('plan_catalog_load failed: ${reason.name}', name: 'plus');
+      _track(analytics.PlanCatalogLoadEvent.failed(reason));
     }
   }
 

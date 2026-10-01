@@ -7,6 +7,40 @@ physical-device validation pending
 Original Release 2.0 validation run: 2026-09-30. The latest CR follow-up is
 recorded below.
 
+## 2026-10-02 Plus plan loading investigation and diagnostic candidate
+
+- The supplied screenshot showed the old “Purchases are not offered by this
+  desktop build” fallback. That copy was removed from the source by `ea43409`
+  during Build 13 preparation; it is absent from Build 14 source. The old
+  fallback represented a missing authenticated UUID, selected mobile store,
+  or public store key. It did not prove that the iPhone was treated as a
+  desktop device. A network or offering request error followed a different
+  path. The screenshot alone cannot identify which preflight value was absent.
+- A fresh iOS 26.5 iPhone 17 Pro Max Simulator ran the native debug manual QA
+  app with a temporary RevenueCat Test Store public key and a test UUID. Plus
+  loaded all three current products: yearly US$39.99, monthly US$7.99, and
+  lifetime US$99.99. This verifies the Test Store catalog and current Flutter
+  load path; it is not a run of the signed Build 14 IPA or a real StoreKit
+  purchase.
+- The next source candidate adds fixed plan-load outcome and failure reason
+  codes. A failure writes only its code to the local device log. If the user
+  has enabled app analytics, `plan_catalog_load` also sends a typed success or
+  failure event through PostHog. No account ID, product price, receipt, health
+  record, or raw SDK exception is included in the event. PostHog still uses a
+  random distinct ID, and Apple requires consent for usage collection even
+  when considered anonymous. The Settings wording now describes the benefit
+  and the provider more plainly. The privacy policy and App Store Connect
+  answers must be revised before an analytics-configured build is submitted.
+- No new archive, upload, purchase, App Review submission, or website change
+  occurred. Build 14 remains unchanged; a physical iPhone run is still needed
+  to determine whether its real StoreKit offering loads and purchase sheet
+  shows the updated prices.
+- Source verification after the diagnostic and Settings copy changes:
+  `flutter analyze --no-pub` found no issues; full
+  `flutter test --no-pub --concurrency=4 -r expanded` passed **688 tests,
+  1 existing skip, 0 failures**; `git diff --check` passed. These are local
+  source checks, not signed IPA or physical-device validation.
+
 ## 2026-10-02 owner scope and PostHog configuration
 
 - The owner retained the existing SP6/LV3 Care entry and the optional analytics

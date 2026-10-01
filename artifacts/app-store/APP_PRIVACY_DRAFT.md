@@ -16,6 +16,14 @@ and data-type review below remain open before App Review submission. Confirm
 the final archive's PostHog settings, SDK privacy manifest, and actual event
 payloads before filing the answers.
 
+The next source candidate also adds `plan_catalog_load` with fixed success or
+failure categories to diagnose missing plans. It sends only when analytics is
+enabled; a fixed reason code is also written to the local device log on failure.
+The PostHog SDK uses an anonymous distinct ID even without person profiles, so
+do not describe these events as identifier-free. Review SDK-added device and
+network properties in the final archive and disclose the relevant diagnostic,
+usage, and identifier types in App Store Connect as applicable.
+
 ## Release 2.0 recheck — 2026-10-01 (open)
 
 The declaration below describes the published Build 11/12 state, **not** the
@@ -37,11 +45,12 @@ declaration after publishing; this document is not proof that either changed.
 
 Suggested policy copy for the website owner:
 
-> Anonymous product analytics are off unless you turn them on in Settings. If
-> you opt in, Letter Within sends coarse app-use and settings-action events to
-> our analytics provider to help us understand which features work. These
-> events do not include your account ID, period dates, symptoms, notes, Care
-> details, or readable health records. Turning analytics off stops future
+> App analytics and diagnostics are off unless you turn them on in Settings. If
+> you opt in, Letter Within sends limited feature-use, settings-action, and
+> reliability events to PostHog to help us find problems such as plans failing
+> to load. These events use a random app identifier but do not include your
+> account ID, period dates, symptoms, notes, Care details, or readable health
+> records. Turning analytics off stops future
 > collection and clears events waiting to be sent from this device. Your
 > settings are stored on your device; when analytics is on, an event may report
 > that analytics was enabled or that Screen Cover changed. The Screen Cover

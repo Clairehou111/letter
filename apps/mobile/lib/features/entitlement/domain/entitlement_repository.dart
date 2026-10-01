@@ -14,10 +14,21 @@ class PurchaseResult {
   final String? message;
 }
 
+enum PlanLoadFailureCode {
+  accountNotReady,
+  storeNotSelected,
+  apiKeyMissing,
+  storeSetupFailed,
+  storeConfigurationError,
+  offeringRequestFailed,
+  emptyOffering,
+}
+
 class EntitlementException implements Exception {
-  const EntitlementException(this.message);
+  const EntitlementException(this.message, {this.planLoadFailureCode});
 
   final String message;
+  final PlanLoadFailureCode? planLoadFailureCode;
 
   @override
   String toString() => 'EntitlementException($message)';

@@ -214,12 +214,19 @@ final class RevenueCatEntitlementRepository implements EntitlementRepository {
   Future<List<LetterPlan>> loadPlans() async {
     if (!isConfigured) {
       _set(_state.copyWithMessage('Purchases are unavailable on this build.'));
-      throw const EntitlementException(
+      throw EntitlementException(
         'Purchases are unavailable on this build.',
+        planLoadFailureCode: !_isUuid(_appUserId)
+            ? PlanLoadFailureCode.accountNotReady
+            : store == null
+            ? PlanLoadFailureCode.storeNotSelected
+            : PlanLoadFailureCode.apiKeyMissing,
       );
     }
+    var requestingOffering = false;
     try {
       await _configure();
+      requestingOffering = true;
       final offers = await _client.loadPlans();
       final byId = {for (final offer in offers) offer.productId: offer};
       final plans = [
@@ -239,7 +246,10 @@ final class RevenueCatEntitlementRepository implements EntitlementRepository {
             ),
       ];
       if (plans.isEmpty) {
-        throw const EntitlementException('Plans are temporarily unavailable.');
+        throw const EntitlementException(
+          'Plans are temporarily unavailable.',
+          planLoadFailureCode: PlanLoadFailureCode.emptyOffering,
+        );
       }
       return plans;
     } on EntitlementException catch (error) {
@@ -250,7 +260,13 @@ final class RevenueCatEntitlementRepository implements EntitlementRepository {
           message: error.message,
         ),
       );
-      rethrow;
+      if (error.planLoadFailureCode != null) rethrow;
+      throw EntitlementException(
+        error.message,
+        planLoadFailureCode: requestingOffering
+            ? PlanLoadFailureCode.offeringRequestFailed
+            : PlanLoadFailureCode.storeSetupFailed,
+      );
     } on Object catch (error) {
       assert(() {
         debugPrint('RevenueCat plan loading failed: $error');
@@ -265,10 +281,18 @@ final class RevenueCatEntitlementRepository implements EntitlementRepository {
             message: message,
           ),
         );
-        throw const EntitlementException(message);
+        throw const EntitlementException(
+          message,
+          planLoadFailureCode: PlanLoadFailureCode.storeConfigurationError,
+        );
       }
       _markUnavailable(error);
-      throw const EntitlementException('Plans are temporarily unavailable.');
+      throw EntitlementException(
+        'Plans are temporarily unavailable.',
+        planLoadFailureCode: requestingOffering
+            ? PlanLoadFailureCode.offeringRequestFailed
+            : PlanLoadFailureCode.storeSetupFailed,
+      );
     }
   }
 

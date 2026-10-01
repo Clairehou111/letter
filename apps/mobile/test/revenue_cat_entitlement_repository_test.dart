@@ -25,6 +25,7 @@ class FakeRevenueCatClient implements RevenueCatClient {
     ),
   ];
   Object? loadError;
+  Object? configureError;
   Object? purchaseError;
   Object? clearError;
   String? configuredUserId;
@@ -36,6 +37,7 @@ class FakeRevenueCatClient implements RevenueCatClient {
     required String apiKey,
     required String appUserId,
   }) async {
+    if (configureError != null) throw configureError!;
     configuredUserId = appUserId;
   }
 
@@ -182,6 +184,89 @@ void main() {
     expect(plans, isEmpty);
     expect(result.outcome, PurchaseOutcome.unavailable);
     expect(repo.current.status, EntitlementStatus.freeOrUnknown);
+    await repo.dispose();
+  });
+
+  test(
+    'plan load identifies account setup separately from connectivity',
+    () async {
+      final repo = RevenueCatEntitlementRepository(
+        appUserId: '',
+        appleApiKey: 'rc_apple_key',
+        googleApiKey: '',
+        store: RevenueCatStore.apple,
+        client: FakeRevenueCatClient(),
+      );
+      await expectLater(
+        repo.loadPlans(),
+        throwsA(
+          isA<EntitlementException>().having(
+            (error) => error.planLoadFailureCode,
+            'planLoadFailureCode',
+            PlanLoadFailureCode.accountNotReady,
+          ),
+        ),
+      );
+      await repo.dispose();
+    },
+  );
+
+  test(
+    'plan load reports missing store key before making an SDK call',
+    () async {
+      final repo = RevenueCatEntitlementRepository(
+        appUserId: '2c1a7f42-2d87-4ad6-8d89-b6b68b429127',
+        appleApiKey: '',
+        googleApiKey: '',
+        store: RevenueCatStore.apple,
+        client: FakeRevenueCatClient(),
+      );
+      await expectLater(
+        repo.loadPlans(),
+        throwsA(
+          isA<EntitlementException>().having(
+            (error) => error.planLoadFailureCode,
+            'planLoadFailureCode',
+            PlanLoadFailureCode.apiKeyMissing,
+          ),
+        ),
+      );
+      await repo.dispose();
+    },
+  );
+
+  test('plan load separates store setup errors from offering errors', () async {
+    final client = FakeRevenueCatClient()
+      ..configureError = StateError('setup failed');
+    final repo = RevenueCatEntitlementRepository(
+      appUserId: '2c1a7f42-2d87-4ad6-8d89-b6b68b429127',
+      appleApiKey: 'rc_apple_key',
+      googleApiKey: '',
+      store: RevenueCatStore.apple,
+      client: client,
+    );
+    await expectLater(
+      repo.loadPlans(),
+      throwsA(
+        isA<EntitlementException>().having(
+          (error) => error.planLoadFailureCode,
+          'planLoadFailureCode',
+          PlanLoadFailureCode.storeSetupFailed,
+        ),
+      ),
+    );
+    client.configureError = null;
+    client.loadError = StateError('request failed');
+    await expectLater(
+      repo.loadPlans(),
+      throwsA(
+        isA<EntitlementException>().having(
+          (error) => error.planLoadFailureCode,
+          'planLoadFailureCode',
+          PlanLoadFailureCode.offeringRequestFailed,
+        ),
+      ),
+    );
     await repo.dispose();
   });
 

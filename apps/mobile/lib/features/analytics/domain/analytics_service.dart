@@ -108,6 +108,41 @@ final class PurchaseFlowOutcomeEvent extends AnalyticsEvent {
   };
 }
 
+enum PlanCatalogLoadResult { loaded, failed }
+
+enum PlanCatalogFailureReason {
+  accountNotReady,
+  storeNotSelected,
+  apiKeyMissing,
+  storeSetupFailed,
+  storeConfigurationError,
+  offeringRequestFailed,
+  emptyOffering,
+  unknown,
+}
+
+/// Fixed operational categories only. Never include SDK errors or store data.
+final class PlanCatalogLoadEvent extends AnalyticsEvent {
+  const PlanCatalogLoadEvent.loaded()
+    : result = PlanCatalogLoadResult.loaded,
+      reason = null;
+
+  const PlanCatalogLoadEvent.failed(this.reason)
+    : result = PlanCatalogLoadResult.failed;
+
+  final PlanCatalogLoadResult result;
+  final PlanCatalogFailureReason? reason;
+
+  @override
+  String get name => 'plan_catalog_load';
+
+  @override
+  Map<String, Object> toProperties() => {
+    'result': result.name,
+    if (reason case final reason?) 'reason': reason.name,
+  };
+}
+
 String _purchaseOfferName(PurchaseOffer value) {
   return switch (value) {
     PurchaseOffer.annual => 'annual',

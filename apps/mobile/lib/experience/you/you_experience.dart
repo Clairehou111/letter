@@ -371,15 +371,14 @@ class _YouExperienceState extends State<YouExperience> {
         divider,
         _ToggleRow(
           key: const Key('analytics-consent-toggle'),
-          title: 'Anonymous analytics',
+          title: 'Help improve Letter Within',
           description: analyticsOn
-              ? 'On — only anonymous, coarse product-use information is '
-                    'shared. Never period dates, symptoms, notes, Care '
-                    'details, or your identity.'
-              : 'Off — analytics is optional. Turning it on shares only '
-                    'anonymous, coarse product-use information — never '
-                    'period dates, symptoms, notes, Care details, or your '
-                    'identity.',
+              ? 'On — limited feature-use and error events go to PostHog '
+                    'with a random app identifier. No health entries or '
+                    'account ID.'
+              : 'Off — optionally share limited feature-use and error events '
+                    'to help fix issues like plans failing to load. No health '
+                    'entries or account ID.',
           value: analyticsOn,
           onChanged: (value) => _savePrivacy(
             _privacy.copyWith(
