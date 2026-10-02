@@ -72,7 +72,14 @@ bool isPlusPreviewCapability(LetterCapability capability) {
 }
 
 class EntitlementState {
-  const EntitlementState({required this.status, this.planId, this.message});
+  const EntitlementState({
+    required this.status,
+    this.planId,
+    this.message,
+    this.expiresAt,
+    this.willRenew,
+    this.activeSubscriptions = const [],
+  });
 
   final EntitlementStatus status;
 
@@ -82,6 +89,17 @@ class EntitlementState {
 
   /// Safe, non-health explanation for an unavailable or failed store state.
   final String? message;
+
+  /// Store-reported end of the current subscription period. Null for lifetime
+  /// access or when the store has not supplied a date.
+  final DateTime? expiresAt;
+
+  /// Whether the store currently expects another renewal. Null if unknown.
+  final bool? willRenew;
+
+  /// Each store-reported active subscription. Test stores and purchases on
+  /// different platforms can leave more than one product active at once.
+  final List<ActivePlanPeriod> activeSubscriptions;
 
   bool get hasPremiumAccess =>
       status == EntitlementStatus.activeIntro ||
@@ -96,6 +114,18 @@ class EntitlementState {
   }
 }
 
+class ActivePlanPeriod {
+  const ActivePlanPeriod({
+    required this.productId,
+    this.expiresAt,
+    this.willRenew,
+  });
+
+  final String productId;
+  final DateTime? expiresAt;
+  final bool? willRenew;
+}
+
 /// Store-facing plan catalog. Prices are display copy only; the store remains
 /// the source of truth at purchase time.
 class LetterPlan {
@@ -106,7 +136,6 @@ class LetterPlan {
     required this.effectiveMonthlyLabel,
     required this.referencePriceLabel,
     this.available = true,
-    this.highlight,
   });
 
   final String id;
@@ -115,7 +144,6 @@ class LetterPlan {
   final String effectiveMonthlyLabel;
   final String referencePriceLabel;
   final bool available;
-  final String? highlight;
 }
 
 const letterPlans = [
@@ -123,27 +151,23 @@ const letterPlans = [
     id: 'letter_yearly',
     title: 'Yearly',
     priceLabel: '\$39.99 / year',
-    effectiveMonthlyLabel: '\$3.33 / mo',
+    effectiveMonthlyLabel: 'Renews yearly until canceled',
     referencePriceLabel: '\$39.99 / year',
-    highlight: 'Best for learning your pattern',
   ),
   LetterPlan(
     id: 'letter_monthly',
     title: 'Monthly',
     priceLabel: '\$7.99 / month',
-    effectiveMonthlyLabel: '\$7.99 / mo',
+    effectiveMonthlyLabel: 'Renews monthly until canceled',
     referencePriceLabel: '\$7.99 / month',
   ),
   LetterPlan(
     id: 'letter_lifetime',
     title: 'Lifetime',
     priceLabel: '\$99.99 once',
-    effectiveMonthlyLabel: 'One payment',
+    effectiveMonthlyLabel: 'Lifetime access',
     referencePriceLabel: '\$99.99 once',
-    highlight: 'One payment, keeps working offline',
   ),
 ];
 
 const introOfferLabel = 'Letter Within Plus';
-const introRenewalNote =
-    'Store pricing and renewal terms are shown before purchase.';

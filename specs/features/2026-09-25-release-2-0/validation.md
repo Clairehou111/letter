@@ -173,6 +173,17 @@ recorded below.
   cover both management-link cases; real Apple plan changes still need a
   physical iPhone. Final local analyze and `git diff --check` passed, and the
   full Flutter suite passed **701 tests, 1 existing skip, 0 failures**.
+- A subsequent local follow-up moved Monthly ↔ Yearly changes into Plus itself:
+  the active screen shows only the current plan until **Change plan** is
+  opened, then offers the alternative subscription through the store purchase
+  sheet. **Manage or cancel subscription** remains a separate store-link
+  action. The complete app on the isolated iOS 26.5 simulator changed an
+  active Test Store Monthly purchase to Yearly and reopened with Yearly active;
+  canceling a proposed Yearly → Monthly change kept Yearly active. This is
+  RevenueCat Test Store coverage, not Apple sandbox billing or effective-date
+  verification. The same follow-up removed redundant Lifetime/offline claims
+  and shortened visible Plus and Settings copy while retaining subscription
+  renewal terms and privacy details where needed.
 
 ## 2026-10-01 Build 14 TestFlight handoff
 
@@ -404,6 +415,14 @@ recorded below.
   pass.
 
 ## Release Boundaries
+
+- Plus shows the store-reported current plan and next renewal date, or the
+  access-end date when renewal is off. Overlapping active Monthly and Yearly
+  products are listed separately with their dates. The 2026-10-02 RevenueCat
+  Test Store account showed both products active after a Yearly → Monthly
+  purchase; the single entitlement still named Yearly. This test environment
+  does not establish an Apple crossgrade. Confirm actual same-group timing,
+  price, and management on Apple sandbox/TestFlight before release.
 
 - No real user data appears in fixtures or screenshots.
 - SP6 and LV3 remain visible optional traditional point-location self-care

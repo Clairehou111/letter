@@ -291,9 +291,16 @@ void main() {
         260,
         scrollable: find.byType(Scrollable).first,
       );
+      await tester.ensureVisible(find.text('Backup & restore'));
+      await tester.pumpAndSettle();
       expect(find.text('Create a backup'), findsNothing);
       await tester.tap(find.text('Backup & restore'));
       await tester.pumpAndSettle();
+      await tester.scrollUntilVisible(
+        find.text('Create a backup'),
+        180,
+        scrollable: find.byType(Scrollable).first,
+      );
       expect(find.text('Create a backup'), findsOneWidget);
       expect(find.text('Restore from a backup'), findsOneWidget);
       expect(tester.takeException(), isNull);

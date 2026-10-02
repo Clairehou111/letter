@@ -241,3 +241,62 @@ crossgrade, charge, renewal date, or management destination. The latter still
 requires an Apple sandbox/TestFlight purchase on a physical iPhone. Test Store
 Monthly subscriptions renew on an accelerated schedule and expire after five
 renewals, so this test entitlement is temporary.
+
+## 2026-10-02 Plus copy and Test Store plan-change follow-up
+
+The previous no-link result reflected the old **Change or manage plan** action,
+which depended entirely on a store-management URL. The local source now shows
+**Change plan** on an active Monthly or Yearly screen. Opening it reveals the
+other subscription and its store price; **Manage or cancel subscription** is a
+separate action. The active-plan screen no longer preemptively explains
+cancellation or repeats the price. The free catalog no longer claims that only
+Lifetime works offline. Subscription cards still state renewal cadence and
+link to the privacy policy and terms. Settings' Plus, report, analytics,
+Comfort Window, and About summaries were shortened without changing their
+controls or underlying behavior.
+
+On the **complete app** in the isolated `Letter Apple Sandbox QA 2026-10-02`
+iOS 26.5 simulator, an authenticated app account opened active **Monthly**,
+selected **Change plan → Yearly → Continue with Yearly**, and used RevenueCat
+Test Store's **Test valid purchase**. Reopening Plus showed active **Yearly**.
+The tester then opened **Change plan → Monthly** and canceled the Test Store
+purchase dialog; Yearly remained active and Plus showed **Purchase canceled**.
+This verified that the Yearly purchase became visible and that cancellation
+left the existing access intact. It did not establish that Test Store replaced
+the earlier Monthly subscription. Repository tests also cover a deferred
+store response without dropping an existing entitlement.
+
+### Yearly to Monthly follow-up
+
+A later **Yearly → Monthly** Test Store purchase returned the Yearly product
+as the single `letter_plus` entitlement, so the previous Plus view kept
+showing Yearly and its current-period date. Read-only inspection of this
+test customer's RevenueCat profile showed **both Annual and Monthly active**,
+with separate renewal times; the customer history contained new Monthly
+purchases and renewals after the Annual purchase. This is overlapping Test
+Store purchase history, not evidence of a scheduled Apple crossgrade. The
+complete-app source now reads the active subscription products separately,
+shows both plans and their own renewal/access-end times when they overlap,
+and removes the further switch action in that state. A period ending within
+24 hours includes the local time so accelerated Test Store renewals can be
+distinguished. The singular date for an auto-renewing plan is the **next
+renewal**, not its final expiry. A canceled plan instead shows its access-end
+date. If the SDK still reports a plan active with a past period date, Plus
+labels that timestamp as the last reported period end instead of claiming
+an upcoming renewal. Widget tests cover the ordinary single-plan state,
+overlap, and that stale-period case.
+This source change is not in Build 15; an Apple sandbox run is still needed
+to validate actual same-group crossgrade timing and billing.
+
+Final complete-app simulator check after hot reload showed **Multiple plans
+active**, `Monthly · Last reported period ended Fri, Oct 2, 2026 at 12:41 PM`,
+and `Yearly · Renews on Fri, Oct 2, 2026 at 1:13 PM`. The past Monthly
+timestamp came from the SDK's latest reported period; the app did not treat
+it as a future renewal. Final source checks: `flutter analyze --no-pub`
+passed, complete `flutter test --no-pub --concurrency=4 -r expanded` passed
+**710 tests with 1 existing skip**, and `git diff --check` passed.
+
+This remains a debug Test Store result. A physical iPhone with TestFlight and
+Apple sandbox must still confirm the real subscription sheet, effective date,
+charge, restore, and management URL. Build 15 has none of these new changes;
+its account-deletion failure remains open until a later build is uploaded.

@@ -304,9 +304,7 @@ class _YouExperienceState extends State<YouExperience> {
             const SizedBox(height: ExperienceSpacing.md),
             _RouteRow(
               title: 'Clinician reports',
-              body:
-                  'Choose a date range, preview exactly what is included, '
-                  'and export a PDF or CSV — always with your say over notes.',
+              body: 'Preview and export a report for your clinician.',
               onTap: widget.onOpenReports!,
             ),
           ],
@@ -315,9 +313,7 @@ class _YouExperienceState extends State<YouExperience> {
             _RouteRow(
               title: 'Letter Within Plus',
               body:
-                  'Care, safety, tracking, predictions, and backup are free. '
-                  'Plus adds personal patterns, long-term '
-                  'comparisons, and clinician reports.',
+                  'Personal patterns, cycle comparisons, and clinician reports.',
               onTap: widget.onOpenPlus!,
             ),
           ],
@@ -378,12 +374,10 @@ class _YouExperienceState extends State<YouExperience> {
           key: const Key('analytics-consent-toggle'),
           title: 'Help improve Letter Within',
           description: analyticsOn
-              ? 'On — limited feature-use and error events go to PostHog '
-                    'with a random app identifier. No health entries or '
-                    'account ID.'
-              : 'Off — optionally share limited feature-use and error events '
-                    'to help fix issues like plans failing to load. No health '
-                    'entries or account ID.',
+              ? 'On — share app usage and error reports. Health entries are '
+                    'not included.'
+              : 'Off — turn on to share app usage and error reports. Health '
+                    'entries are not included.',
           value: analyticsOn,
           onChanged: (value) => _savePrivacy(
             _privacy.copyWith(
@@ -459,8 +453,7 @@ class _YouExperienceState extends State<YouExperience> {
       title: 'Comfort Window',
       children: <Widget>[
         Text(
-          'One neutral notification can arrive before your estimated harder '
-          'days. It never includes symptoms or cycle dates.',
+          'Get a reminder before days that may feel harder.',
           style: ExperienceType.bodySmall(ExperienceColors.inkSoft),
         ),
         const Padding(
@@ -567,7 +560,7 @@ class _YouExperienceState extends State<YouExperience> {
     return const _DisclosureSectionCard(
       key: Key('about-support-disclosure'),
       title: 'About & support',
-      summary: 'Local storage, honest estimates, and recovery guidance.',
+      summary: 'Privacy, estimates, and support.',
       children: <Widget>[
         _AboutRow(
           title: 'Local-first',
@@ -732,11 +725,6 @@ class _AccountSectionState extends State<_AccountSection> {
           Text(
             auth.email ?? 'This device is connected to your account.',
             style: ExperienceType.bodySmall(ExperienceColors.inkSoft),
-          ),
-          const SizedBox(height: ExperienceSpacing.xs),
-          Text(
-            'Your records are stored on this device first.',
-            style: ExperienceType.caption(ExperienceColors.inkSoft),
           ),
           const SizedBox(height: ExperienceSpacing.sm),
           Wrap(

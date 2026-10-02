@@ -559,13 +559,9 @@ void main() {
     );
     await tester.pumpAndSettle();
     expect(find.text('Export as PDF for a clinician'), findsOneWidget);
-    expect(
-      tester
-          .widget<Text>(find.text('Best for learning your pattern'))
-          .style
-          ?.color,
-      ExperienceColors.emberSoft,
-    );
+    expect(find.text('Best for learning your pattern'), findsNothing);
+    expect(find.textContaining('keeps working offline'), findsNothing);
+    expect(find.text('Renews yearly until canceled'), findsOneWidget);
     expect(find.textContaining('PREVIEW'), findsNothing);
     expect(find.text('Restore a previous purchase'), findsOneWidget);
     expect(find.textContaining('may vary by region'), findsNothing);
@@ -579,7 +575,7 @@ void main() {
     expect(monthlyTop, lessThan(lifetimeTop));
   });
 
-  testWidgets('active lifetime purchase describes continuing Plus access', (
+  testWidgets('active lifetime purchase shows the plan without filler', (
     tester,
   ) async {
     final repository = LocalEntitlementRepository(
@@ -600,17 +596,16 @@ void main() {
     expect(find.text('Plus is active'), findsOneWidget);
     expect(find.text('Lifetime'), findsOneWidget);
     expect(find.textContaining('\$99.99'), findsNothing);
-    expect(
-      find.textContaining('Plus access is yours for life'),
-      findsOneWidget,
-    );
+    expect(find.textContaining('Plus access is yours for life'), findsNothing);
     expect(find.textContaining('Cancelled access'), findsNothing);
-    expect(find.text('Change or manage plan'), findsNothing);
+    expect(find.text('Change plan'), findsNothing);
     expect(find.text('Restore a previous purchase'), findsNothing);
     expect(find.textContaining('may vary by region'), findsNothing);
   });
 
-  testWidgets('active subscription retains cancellation copy', (tester) async {
+  testWidgets('active subscription reveals the alternative on request', (
+    tester,
+  ) async {
     final repository = LocalEntitlementRepository(
       initial: const EntitlementState(
         status: EntitlementStatus.activePaid,
@@ -629,18 +624,159 @@ void main() {
     expect(find.text('Plus is active'), findsOneWidget);
     expect(find.text('Monthly'), findsOneWidget);
     expect(find.textContaining('\$7.99'), findsNothing);
-    expect(find.textContaining('Cancelled access'), findsOneWidget);
+    expect(find.textContaining('Cancelled access'), findsNothing);
+    expect(find.text('Yearly'), findsNothing);
     expect(find.textContaining('one-time purchase'), findsNothing);
     expect(find.text('Restore a previous purchase'), findsNothing);
-    final changePlan = find.text('Change or manage plan');
+    final changePlan = find.text('Change plan');
     expect(changePlan, findsOneWidget);
     await tester.ensureVisible(changePlan);
     await tester.tap(changePlan);
     await tester.pumpAndSettle();
-    expect(
-      find.textContaining('Plan changes are unavailable for this purchase'),
-      findsOneWidget,
+    expect(find.text('Switch to Yearly'), findsOneWidget);
+    expect(find.textContaining('\$39.99'), findsOneWidget);
+    expect(find.textContaining('Renews yearly until canceled'), findsOneWidget);
+    expect(find.text('Manage subscription'), findsNothing);
+    expect(find.textContaining('unavailable in this store'), findsNothing);
+  });
+
+  testWidgets('active subscription shows the store-reported renewal date', (
+    tester,
+  ) async {
+    final repository = LocalEntitlementRepository(
+      initial: EntitlementState(
+        status: EntitlementStatus.activePaid,
+        planId: 'letter_monthly',
+        expiresAt: DateTime.utc(2030, 11, 2),
+        willRenew: true,
+      ),
     );
+    addTearDown(repository.dispose);
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: ExperienceFoundation.lightTheme(),
+        home: PlusExperience(entitlementRepository: repository),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('Renews on Sat, Nov 2, 2030'), findsOneWidget);
+    expect(find.textContaining('Access until'), findsNothing);
+  });
+
+  testWidgets('canceled subscription shows access end, not renewal', (
+    tester,
+  ) async {
+    final repository = LocalEntitlementRepository(
+      initial: EntitlementState(
+        status: EntitlementStatus.activePaid,
+        planId: 'letter_yearly',
+        expiresAt: DateTime.utc(2030, 11, 2),
+        willRenew: false,
+      ),
+    );
+    addTearDown(repository.dispose);
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: ExperienceFoundation.lightTheme(),
+        home: PlusExperience(entitlementRepository: repository),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('Access until Sat, Nov 2, 2030'), findsOneWidget);
+    expect(find.textContaining('Renews on'), findsNothing);
+  });
+
+  testWidgets('overlapping store plans show both dates without switch action', (
+    tester,
+  ) async {
+    final repository = LocalEntitlementRepository(
+      initial: EntitlementState(
+        status: EntitlementStatus.activePaid,
+        planId: 'letter_yearly',
+        activeSubscriptions: [
+          ActivePlanPeriod(
+            productId: 'letter_yearly',
+            expiresAt: DateTime.utc(2030, 11, 2),
+            willRenew: true,
+          ),
+          ActivePlanPeriod(
+            productId: 'letter_monthly',
+            expiresAt: DateTime.utc(2030, 10, 2),
+            willRenew: true,
+          ),
+        ],
+      ),
+    );
+    addTearDown(repository.dispose);
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: ExperienceFoundation.lightTheme(),
+        home: PlusExperience(entitlementRepository: repository),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('Multiple plans active'), findsOneWidget);
+    expect(find.textContaining('Yearly · Renews on'), findsOneWidget);
+    expect(find.textContaining('Monthly · Renews on'), findsOneWidget);
+    expect(find.text('Change plan'), findsNothing);
+  });
+
+  testWidgets('active store state with a past period keeps the reported date', (
+    tester,
+  ) async {
+    final repository = LocalEntitlementRepository(
+      initial: EntitlementState(
+        status: EntitlementStatus.activePaid,
+        planId: 'letter_monthly',
+        expiresAt: DateTime.now().toUtc().subtract(const Duration(minutes: 2)),
+        willRenew: true,
+      ),
+    );
+    addTearDown(repository.dispose);
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: ExperienceFoundation.lightTheme(),
+        home: PlusExperience(entitlementRepository: repository),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.textContaining('Last reported period ended'), findsOneWidget);
+    expect(find.textContaining('Renews on'), findsNothing);
+  });
+
+  testWidgets('plan change remains usable at compact width and large text', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(320, 640);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.reset);
+    final repository = LocalEntitlementRepository(
+      initial: EntitlementState(
+        status: EntitlementStatus.activePaid,
+        planId: 'letter_yearly',
+        expiresAt: DateTime.utc(2030, 11, 2),
+        willRenew: true,
+      ),
+    );
+    addTearDown(repository.dispose);
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: ExperienceFoundation.lightTheme(),
+        home: MediaQuery(
+          data: const MediaQueryData(textScaler: TextScaler.linear(2)),
+          child: PlusExperience(entitlementRepository: repository),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Change plan'));
+    await tester.pumpAndSettle();
+    expect(find.text('Switch to Monthly'), findsOneWidget);
+    expect(tester.takeException(), isNull);
   });
 
   testWidgets('active monthly plan opens the store management link', (
@@ -666,11 +802,51 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    final changePlan = find.text('Change or manage plan');
-    await tester.ensureVisible(changePlan);
-    await tester.tap(changePlan);
+    final manage = find.text('Manage subscription');
+    await tester.ensureVisible(manage);
+    await tester.tap(manage);
     await tester.pumpAndSettle();
     expect(openedUrls, <Uri>[managementUrl]);
+  });
+
+  testWidgets('active Monthly switches to Yearly in the normal sheet flow', (
+    tester,
+  ) async {
+    final repository = LocalEntitlementRepository(
+      initial: const EntitlementState(
+        status: EntitlementStatus.activePaid,
+        planId: 'letter_monthly',
+      ),
+    );
+    addTearDown(repository.dispose);
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: ExperienceFoundation.lightTheme(),
+        home: Scaffold(
+          body: Builder(
+            builder: (context) => TextButton(
+              onPressed: () => PlusExperience.open(
+                context,
+                entitlementRepository: repository,
+              ),
+              child: const Text('Open Plus'),
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.tap(find.text('Open Plus'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Change plan'));
+    await tester.pumpAndSettle();
+    final purchase = find.text('Switch to Yearly');
+    await tester.ensureVisible(purchase);
+    await tester.tap(purchase);
+    await tester.pump();
+    await tester.pump(const Duration(seconds: 1));
+    expect(repository.current.planId, 'letter_yearly');
+    expect(repository.current.hasPremiumAccess, isTrue);
+    expect(find.text('Open Plus'), findsOneWidget);
   });
 
   testWidgets('empty Restore result covers subscriptions and lifetime', (
@@ -758,8 +934,8 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    expect(find.text('Purchases unavailable'), findsOneWidget);
-    expect(find.textContaining('unavailable on this build'), findsOneWidget);
+    expect(find.text('Plans are unavailable'), findsOneWidget);
+    expect(find.text('Please try again after an app update.'), findsOneWidget);
     expect(find.text('Try again'), findsOneWidget);
     expect(find.textContaining('desktop build'), findsNothing);
     expect(find.textContaining('Google Play'), findsNothing);

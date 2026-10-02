@@ -42,7 +42,12 @@ class LocalEntitlementRepository implements EntitlementRepository {
       );
     }
     _set(
-      EntitlementState(status: EntitlementStatus.activeIntro, planId: plan.id),
+      EntitlementState(
+        status: _state.hasPremiumAccess
+            ? EntitlementStatus.activePaid
+            : EntitlementStatus.activeIntro,
+        planId: plan.id,
+      ),
     );
     return PurchaseResult(outcome: PurchaseOutcome.activated, state: _state);
   }

@@ -150,6 +150,7 @@ class _PlusExperienceState extends State<PlusExperience> {
   bool _restoreInFlight = false;
   bool _completing = false;
   bool _trackedView = false;
+  bool _showPlanChoices = false;
 
   /// One calm feedback line at a time — acknowledgments and honest failures.
   /// Errors are visual + textual only; errors never haptic.
@@ -277,7 +278,9 @@ class _PlusExperienceState extends State<PlusExperience> {
       setState(() {
         _plans = plans;
         _plansLoading = false;
-        _selectedPlanId = _defaultSelection(plans);
+        _selectedPlanId = _showPlanChoices
+            ? _alternativeSubscriptionId(plans)
+            : _defaultSelection(plans);
       });
       _track(const analytics.PlanCatalogLoadEvent.loaded());
     } catch (error) {
@@ -313,10 +316,16 @@ class _PlusExperienceState extends State<PlusExperience> {
     if (available.isEmpty) {
       return null;
     }
-    final highlighted = available
-        .where((plan) => plan.highlight != null)
-        .toList();
-    return (highlighted.isNotEmpty ? highlighted.first : available.first).id;
+    return available.first.id;
+  }
+
+  String? _alternativeSubscriptionId(List<LetterPlan> plans) {
+    final otherId = _entitlement.planId == 'letter_monthly'
+        ? 'letter_yearly'
+        : 'letter_monthly';
+    return plans.any((plan) => plan.id == otherId && plan.available)
+        ? otherId
+        : null;
   }
 
   void _setFeedback(String line, {required bool isError}) {
@@ -352,7 +361,9 @@ class _PlusExperienceState extends State<PlusExperience> {
 
   Future<void> _purchaseSelected() async {
     final planId = _selectedPlanId;
-    if (planId == null || _purchaseInFlight) {
+    if (planId == null ||
+        _purchaseInFlight ||
+        (_entitlement.hasPremiumAccess && planId == _entitlement.planId)) {
       return;
     }
     _clearFeedback();
@@ -366,18 +377,34 @@ class _PlusExperienceState extends State<PlusExperience> {
       switch (result.outcome) {
         case PurchaseOutcome.activated:
           _trackPurchase(planId, analytics.PurchaseOutcome.completed);
-          await _completeActivated();
+          final hasOverlappingPlans =
+              result.state.activeSubscriptions
+                  .map((subscription) => subscription.productId)
+                  .toSet()
+                  .length >
+              1;
+          if (_showPlanChoices &&
+              (result.state.planId != planId || hasOverlappingPlans)) {
+            _setFeedback(
+              hasOverlappingPlans
+                  ? 'Both plans are active in this store.'
+                  : 'The store still shows your current plan. Check again '
+                        'after its next renewal.',
+              isError: false,
+            );
+          } else {
+            await _completeActivated();
+          }
         case PurchaseOutcome.pending:
           _trackPurchase(planId, analytics.PurchaseOutcome.pending);
           _setFeedback(
-            'The store is confirming your purchase. '
-            'Nothing else is needed right now.',
+            'Waiting for the store to confirm your purchase.',
             isError: false,
           );
         case PurchaseOutcome.cancelled:
           _trackPurchase(planId, analytics.PurchaseOutcome.cancelled);
           // Cancellation never becomes failure and never grants access.
-          _setFeedback('No charge was made. Nothing changed.', isError: false);
+          _setFeedback('Purchase canceled.', isError: false);
         case PurchaseOutcome.failed:
           _trackPurchase(planId, analytics.PurchaseOutcome.failed);
           _setFeedback(
@@ -464,13 +491,22 @@ class _PlusExperienceState extends State<PlusExperience> {
     final url = _managementUrl;
     if (url == null) {
       _setFeedback(
-        'Plan changes are unavailable for this purchase in the current '
-        'store environment.',
+        'Subscription settings are unavailable in this store.',
         isError: false,
       );
       return;
     }
     await _openExternalLink(url);
+  }
+
+  void _togglePlanChoices() {
+    setState(() {
+      _showPlanChoices = !_showPlanChoices;
+      _selectedPlanId = _showPlanChoices
+          ? _alternativeSubscriptionId(_plans ?? const <LetterPlan>[])
+          : _defaultSelection(_plans ?? const <LetterPlan>[]);
+      _feedbackLine = null;
+    });
   }
 
   Future<void> _openExternalLink(Uri url) async {
@@ -528,15 +564,6 @@ class _PlusExperienceState extends State<PlusExperience> {
           ],
           const SizedBox(height: ExperienceSpacing.sm),
           _buildFeedback(),
-          if (!hasPremium) ...<Widget>[
-            const SizedBox(height: ExperienceSpacing.sm),
-            Text(
-              'Care, safety, tracking, prediction, and backup are free. '
-              'Losing Plus never removes anything you recorded.',
-              textAlign: TextAlign.center,
-              style: ExperienceType.caption(ExperienceColors.inkSoft),
-            ),
-          ],
         ],
       ),
     );
@@ -565,43 +592,25 @@ class _PlusExperienceState extends State<PlusExperience> {
 
   _StatusCopy? _statusCopy() {
     return switch (_entitlement.status) {
-      EntitlementStatus.activeIntro => const _StatusCopy(
-        title: 'Plus is active — introductory period',
-        body: 'You are inside your introductory billing period.',
-        tone: _StatusTone.positive,
-      ),
-      EntitlementStatus.activePaid => const _StatusCopy(
-        title: 'Plus is active',
-        body: 'Your full report history and export tools are available.',
-        tone: _StatusTone.positive,
-      ),
+      EntitlementStatus.activeIntro || EntitlementStatus.activePaid => null,
       EntitlementStatus.gracePeriod => const _StatusCopy(
         title: 'Plus continues for now',
-        body:
-            'The store is resolving a billing issue. Your access continues, '
-            'and your records are untouched.',
+        body: 'The store is resolving a billing issue.',
         tone: _StatusTone.neutral,
       ),
       EntitlementStatus.pending => const _StatusCopy(
         title: 'A store request is in progress',
-        body:
-            'Nothing is settled yet. This page updates the moment the '
-            'store confirms.',
+        body: '',
         tone: _StatusTone.neutral,
       ),
       EntitlementStatus.lapsed => const _StatusCopy(
         title: 'Plus has ended',
-        body:
-            'Everything you recorded stays readable. Premium depth '
-            'pauses — it is never deleted. You can restart any time below.',
+        body: 'Your records are still here. Choose a plan to restart Plus.',
         tone: _StatusTone.neutral,
       ),
       EntitlementStatus.offlineUnknown => const _StatusCopy(
         title: 'We could not check your subscription',
-        body:
-            'The store could not verify this build or connection. Premium '
-            'depth pauses until verification succeeds; your records are '
-            'fully available.',
+        body: 'Please try again when the store is available.',
         tone: _StatusTone.caution,
       ),
       // Never subscribed, or store unavailable offline. Copy must not claim
@@ -627,12 +636,6 @@ class _PlusExperienceState extends State<PlusExperience> {
         if (!_accountRequired) ...<Widget>[
           const SizedBox(height: ExperienceSpacing.md),
           _buildPurchaseButton(),
-          const SizedBox(height: ExperienceSpacing.xs),
-          Text(
-            introRenewalNote,
-            textAlign: TextAlign.center,
-            style: ExperienceType.caption(ExperienceColors.inkSoft),
-          ),
           const SizedBox(height: ExperienceSpacing.xs),
           Wrap(
             alignment: WrapAlignment.center,
@@ -693,17 +696,17 @@ class _PlusExperienceState extends State<PlusExperience> {
             accountRequired
                 ? 'Connect an account for Plus'
                 : storeUnavailable
-                ? 'Purchases unavailable'
+                ? 'Plans are unavailable'
                 : 'Plans could not be loaded',
             style: ExperienceType.bodyStrong(ExperienceColors.ink),
           ),
           const SizedBox(height: ExperienceSpacing.xs),
           Text(
             accountRequired
-                ? 'Your records are still available on this device. Create or connect an account to view plans and restore purchases.'
+                ? 'Create or connect an account to view plans and restore purchases.'
                 : storeUnavailable
-                ? 'Purchases are unavailable on this build. Your records and free features remain available.'
-                : 'Please try again. Your records and free features remain available.',
+                ? 'Please try again after an app update.'
+                : 'Please try again.',
             style: ExperienceType.bodySmall(ExperienceColors.inkSoft),
           ),
           const SizedBox(height: ExperienceSpacing.sm),
@@ -782,8 +785,14 @@ class _PlusExperienceState extends State<PlusExperience> {
     final selected = plans
         .where((plan) => plan.id == _selectedPlanId && plan.available)
         .firstOrNull;
-    final enabled = selected != null && !_purchaseInFlight && !_plansLoading;
-    final outcome = widget.outcomeContext?.headline ?? 'Start $introOfferLabel';
+    final enabled =
+        selected != null &&
+        !_purchaseInFlight &&
+        !_plansLoading &&
+        (!_entitlement.hasPremiumAccess || selected.id != _entitlement.planId);
+    final outcome = _showPlanChoices && _entitlement.hasPremiumAccess
+        ? 'Continue with ${selected?.title ?? 'a plan'}'
+        : widget.outcomeContext?.headline ?? 'Start $introOfferLabel';
     final label = _purchaseInFlight
         ? 'Talking to the store…'
         : selected == null
@@ -877,44 +886,217 @@ class _PlusExperienceState extends State<PlusExperience> {
   }
 
   // -------------------------------------------------------------------------
-  // Active section — plan details and an honest cancellation note.
+  // Active section — current access and actions.
   // Existing subscribers never see acquisition copy.
   // -------------------------------------------------------------------------
 
   Widget _buildActiveSection() {
     final plans = _plans ?? const <LetterPlan>[];
     final isLifetime = _entitlement.planId == 'letter_lifetime';
-    final currentPlan = plans
-        .where((plan) => plan.id == _entitlement.planId)
+    final subscriptions = _entitlement.activeSubscriptions;
+    final hasOverlappingPlans =
+        subscriptions
+            .map((subscription) => subscription.productId)
+            .toSet()
+            .length >
+        1;
+    final periodLabel = _currentPeriodLabel();
+    final currentPlan =
+        plans.where((plan) => plan.id == _entitlement.planId).firstOrNull ??
+        letterPlans.where((plan) => plan.id == _entitlement.planId).firstOrNull;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: <Widget>[
+        if (_entitlement.status != EntitlementStatus.gracePeriod) ...<Widget>[
+          Row(
+            children: <Widget>[
+              const Icon(
+                Icons.check_circle_rounded,
+                size: 18,
+                color: ExperienceColors.phaseOvulation,
+              ),
+              const SizedBox(width: ExperienceSpacing.xs),
+              Expanded(
+                child: Text(
+                  'Plus is active',
+                  style: ExperienceType.bodySmall(ExperienceColors.inkSoft),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: ExperienceSpacing.xs),
+        ],
+        Wrap(
+          crossAxisAlignment: WrapCrossAlignment.center,
+          spacing: ExperienceSpacing.sm,
+          children: <Widget>[
+            Text(
+              hasOverlappingPlans
+                  ? 'Multiple plans active'
+                  : currentPlan?.title ?? 'Plus',
+              style: ExperienceType.headline(ExperienceColors.ink),
+            ),
+            if (!isLifetime && !hasOverlappingPlans)
+              TextButton(
+                onPressed: _togglePlanChoices,
+                child: Text(_showPlanChoices ? 'Done' : 'Change plan'),
+              ),
+          ],
+        ),
+        if (_entitlement.status == EntitlementStatus.activeIntro)
+          Text(
+            'Introductory period',
+            style: ExperienceType.bodySmall(ExperienceColors.inkSoft),
+          ),
+        if (hasOverlappingPlans) ...<Widget>[
+          const SizedBox(height: ExperienceSpacing.xs),
+          for (final subscription in subscriptions)
+            Padding(
+              padding: const EdgeInsets.only(bottom: ExperienceSpacing.xs),
+              child: Text(
+                '${letterPlans.where((plan) => plan.id == subscription.productId).firstOrNull?.title ?? subscription.productId} · '
+                '${_periodLabel(subscription.expiresAt, subscription.willRenew) ?? 'Active'}',
+                style: ExperienceType.bodySmall(ExperienceColors.inkSoft),
+              ),
+            ),
+        ] else if (periodLabel != null) ...<Widget>[
+          const SizedBox(height: ExperienceSpacing.xs),
+          Text(
+            periodLabel,
+            style: ExperienceType.bodySmall(ExperienceColors.inkSoft),
+          ),
+        ],
+        if (_managementUrl != null && !isLifetime)
+          Align(
+            alignment: Alignment.centerLeft,
+            child: TextButton.icon(
+              onPressed: _openManagement,
+              icon: const Icon(Icons.open_in_new_rounded, size: 16),
+              label: const Text('Manage subscription'),
+            ),
+          ),
+        if (!isLifetime && !hasOverlappingPlans) ...<Widget>[
+          if (_showPlanChoices) ...<Widget>[
+            const SizedBox(height: ExperienceSpacing.sm),
+            const Divider(height: 1, color: ExperienceColors.hairline),
+            const SizedBox(height: ExperienceSpacing.sm),
+            _buildPlanChangeSection(),
+          ],
+        ],
+      ],
+    );
+  }
+
+  String? _currentPeriodLabel() {
+    if (_entitlement.planId == 'letter_lifetime' ||
+        _entitlement.status == EntitlementStatus.gracePeriod) {
+      return null;
+    }
+    return _periodLabel(_entitlement.expiresAt, _entitlement.willRenew);
+  }
+
+  String? _periodLabel(DateTime? endsAt, bool? willRenew) {
+    if (endsAt == null) {
+      return null;
+    }
+    final localDate = endsAt.toLocal();
+    final localizations = MaterialLocalizations.of(context);
+    final date =
+        '${localizations.formatMediumDate(localDate)}, '
+        '${localizations.formatYear(localDate)}';
+    final hoursUntil = endsAt.difference(DateTime.now().toUtc()).inHours;
+    final dateAndTime = hoursUntil > -24 && hoursUntil < 24
+        ? '$date at ${localizations.formatTimeOfDay(TimeOfDay.fromDateTime(localDate))}'
+        : date;
+    if (!endsAt.isAfter(DateTime.now().toUtc())) {
+      return 'Last reported period ended $dateAndTime';
+    }
+    return switch (willRenew) {
+      true => 'Renews on $dateAndTime',
+      false => 'Access until $dateAndTime',
+      null => 'Current period ends $dateAndTime',
+    };
+  }
+
+  Widget _buildPlanChangeSection() {
+    final alternative = (_plans ?? const <LetterPlan>[])
+        .where((plan) => plan.id == _selectedPlanId && plan.available)
         .firstOrNull;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: <Widget>[
-        Text('Your plan', style: ExperienceType.headline(ExperienceColors.ink)),
-        const SizedBox(height: ExperienceSpacing.xs),
-        Text(
-          currentPlan == null
-              ? 'An active Plus plan is linked to this device.'
-              : currentPlan.title,
-          style: ExperienceType.body(ExperienceColors.ink),
-        ),
-        const SizedBox(height: ExperienceSpacing.xs),
-        Text(
-          isLifetime
-              ? 'Your Plus access is yours for life. Everything you recorded '
-                    'stays readable.'
-              : 'Change between Monthly and Yearly, or cancel, in your store '
-                    'subscription settings. Cancelled access continues until '
-                    'the period ends; your records stay readable.',
-          style: ExperienceType.bodySmall(ExperienceColors.inkSoft),
-        ),
-        if (!isLifetime) ...<Widget>[
-          const SizedBox(height: ExperienceSpacing.sm),
-          _PlusSecondaryButton(
-            label: 'Change or manage plan',
-            onPressed: _openManagement,
+        if (_plansLoading)
+          const _PlansSkeleton()
+        else if (_plansError != null)
+          _buildPlansError()
+        else if (alternative == null)
+          Text(
+            'No other subscription is available right now.',
+            style: ExperienceType.bodySmall(ExperienceColors.inkSoft),
+          )
+        else
+          Semantics(
+            button: true,
+            enabled: !_purchaseInFlight,
+            label:
+                'Switch to ${alternative.title}, ${alternative.priceLabel}, '
+                '${alternative.effectiveMonthlyLabel}',
+            child: Material(
+              color: ExperienceColors.surfaceWarm,
+              borderRadius: ExperienceRadius.cardRadius,
+              child: InkWell(
+                borderRadius: ExperienceRadius.cardRadius,
+                onTap: _purchaseInFlight ? null : _purchaseSelected,
+                child: Container(
+                  constraints: const BoxConstraints(minHeight: 76),
+                  padding: const EdgeInsets.all(ExperienceSpacing.sm),
+                  decoration: BoxDecoration(
+                    borderRadius: ExperienceRadius.cardRadius,
+                    border: Border.all(color: ExperienceColors.hairline),
+                  ),
+                  child: Row(
+                    children: <Widget>[
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          mainAxisSize: MainAxisSize.min,
+                          children: <Widget>[
+                            Text(
+                              _purchaseInFlight
+                                  ? 'Opening store…'
+                                  : 'Switch to ${alternative.title}',
+                              style: ExperienceType.bodyStrong(
+                                ExperienceColors.ink,
+                              ),
+                            ),
+                            const SizedBox(height: ExperienceSpacing.xs),
+                            Text(
+                              '${alternative.priceLabel} · '
+                              '${alternative.effectiveMonthlyLabel}',
+                              style: ExperienceType.bodySmall(
+                                ExperienceColors.inkSoft,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(width: ExperienceSpacing.sm),
+                      if (_purchaseInFlight)
+                        const EmberLoadingIndicator(
+                          size: 20,
+                          semanticLabel: 'Purchase in progress',
+                        )
+                      else
+                        const Icon(
+                          Icons.arrow_forward_rounded,
+                          color: ExperienceColors.ember,
+                        ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
           ),
-        ],
       ],
     );
   }
@@ -1001,11 +1183,13 @@ class _StatusBanner extends StatelessWidget {
                   copy.title,
                   style: ExperienceType.bodyStrong(ExperienceColors.ink),
                 ),
-                const SizedBox(height: 2),
-                Text(
-                  copy.body,
-                  style: ExperienceType.bodySmall(ExperienceColors.inkSoft),
-                ),
+                if (copy.body.isNotEmpty) ...<Widget>[
+                  const SizedBox(height: 2),
+                  Text(
+                    copy.body,
+                    style: ExperienceType.bodySmall(ExperienceColors.inkSoft),
+                  ),
+                ],
                 if (trailingMessage != null) ...<Widget>[
                   const SizedBox(height: 4),
                   Text(
@@ -1042,9 +1226,9 @@ class _PlanCard extends StatelessWidget {
         ? Duration.zero
         : ExperienceMotion.chipSelect;
     return Semantics(
-      button: true,
-      selected: selected,
-      enabled: tappable,
+      button: onSelected != null,
+      selected: onSelected == null ? null : selected,
+      enabled: onSelected == null ? null : tappable,
       label: plan.available
           ? '${plan.title}, ${plan.priceLabel}'
           : '${plan.title}, not available right now',
@@ -1077,72 +1261,44 @@ class _PlanCard extends StatelessWidget {
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: <Widget>[
-                  Padding(
-                    padding: const EdgeInsets.only(top: 2),
-                    child: Container(
-                      width: 22,
-                      height: 22,
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        border: Border.all(
-                          color: selected
-                              ? ExperienceColors.ember
-                              : ExperienceColors.inkFaint,
-                          width: 2,
+                  if (onSelected != null) ...<Widget>[
+                    Padding(
+                      padding: const EdgeInsets.only(top: 2),
+                      child: Container(
+                        width: 22,
+                        height: 22,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          border: Border.all(
+                            color: selected
+                                ? ExperienceColors.ember
+                                : ExperienceColors.inkFaint,
+                            width: 2,
+                          ),
+                          gradient: selected
+                              ? ExperienceColors.emberGradient
+                              : null,
                         ),
-                        gradient: selected
-                            ? ExperienceColors.emberGradient
+                        child: selected
+                            ? const Icon(
+                                Icons.check,
+                                size: 13,
+                                color: Colors.white,
+                              )
                             : null,
                       ),
-                      child: selected
-                          ? const Icon(
-                              Icons.check,
-                              size: 13,
-                              color: Colors.white,
-                            )
-                          : null,
                     ),
-                  ),
-                  const SizedBox(width: 12),
+                    const SizedBox(width: 12),
+                  ],
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: <Widget>[
-                        Wrap(
-                          spacing: 8,
-                          runSpacing: 4,
-                          crossAxisAlignment: WrapCrossAlignment.center,
-                          children: <Widget>[
-                            Text(
-                              plan.title,
-                              style: ExperienceType.bodyStrong(
-                                ExperienceColors.ink,
-                              ),
-                            ),
-                            if (plan.highlight != null)
-                              Container(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 8,
-                                  vertical: 3,
-                                ),
-                                decoration: BoxDecoration(
-                                  color: ExperienceColors.ember.withValues(
-                                    alpha: 0.08,
-                                  ),
-                                  borderRadius: ExperienceRadius.chipRadius,
-                                  border: Border.all(
-                                    color: ExperienceColors.emberSoft
-                                        .withValues(alpha: 0.7),
-                                  ),
-                                ),
-                                child: Text(
-                                  plan.highlight!,
-                                  style: ExperienceType.caption(
-                                    ExperienceColors.emberSoft,
-                                  ),
-                                ),
-                              ),
-                          ],
+                        Text(
+                          plan.title,
+                          style: ExperienceType.bodyStrong(
+                            ExperienceColors.ink,
+                          ),
                         ),
                         const SizedBox(height: 2),
                         Text(

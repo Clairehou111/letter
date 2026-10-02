@@ -31,6 +31,9 @@ class RevenueCatCustomerState {
     this.isIntro = false,
     this.isGracePeriod = false,
     this.managementUrl,
+    this.expiresAt,
+    this.willRenew,
+    this.activeSubscriptions = const [],
   });
 
   final bool hasActiveEntitlement;
@@ -39,6 +42,9 @@ class RevenueCatCustomerState {
   final bool isIntro;
   final bool isGracePeriod;
   final String? managementUrl;
+  final DateTime? expiresAt;
+  final bool? willRenew;
+  final List<ActivePlanPeriod> activeSubscriptions;
 }
 
 /// Small SDK port so domain behavior is testable without a platform channel.
@@ -154,6 +160,43 @@ final class PurchasesFlutterRevenueCatClient implements RevenueCatClient {
       }.contains(id),
       orElse: () => '',
     );
+    final activeSubscriptions = info.subscriptionsByProductIdentifier.values
+        .where(
+          (subscription) =>
+              subscription.isActive &&
+              const {
+                'letter_monthly',
+                'letter_yearly',
+              }.contains(subscription.productIdentifier),
+        )
+        .map(
+          (subscription) => ActivePlanPeriod(
+            productId: subscription.productIdentifier,
+            expiresAt: DateTime.tryParse(
+              subscription.expiresDate ?? '',
+            )?.toUtc(),
+            willRenew: subscription.willRenew,
+          ),
+        )
+        .toList();
+    if (activeSubscriptions.isEmpty) {
+      for (final id in info.activeSubscriptions) {
+        if (!const {'letter_monthly', 'letter_yearly'}.contains(id)) {
+          continue;
+        }
+        activeSubscriptions.add(
+          ActivePlanPeriod(
+            productId: id,
+            expiresAt: DateTime.tryParse(
+              info.allExpirationDates[id] ?? '',
+            )?.toUtc(),
+            willRenew: id == active?.productIdentifier
+                ? active?.willRenew
+                : null,
+          ),
+        );
+      }
+    }
     return RevenueCatCustomerState(
       hasActiveEntitlement: active != null && active.isActive,
       hasPurchasedLetterProduct: purchased.isNotEmpty,
@@ -165,6 +208,9 @@ final class PurchasesFlutterRevenueCatClient implements RevenueCatClient {
           active.isActive &&
           active.billingIssueDetectedAt != null,
       managementUrl: info.managementURL,
+      expiresAt: DateTime.tryParse(active?.expirationDate ?? '')?.toUtc(),
+      willRenew: active?.willRenew,
+      activeSubscriptions: activeSubscriptions,
     );
   }
 }
@@ -241,12 +287,11 @@ final class RevenueCatEntitlementRepository implements EntitlementRepository {
               title: plan.title,
               priceLabel: offer.priceLabel,
               effectiveMonthlyLabel: switch (plan.id) {
-                'letter_monthly' => 'Monthly billing',
-                'letter_yearly' => 'Annual billing',
-                _ => 'One payment',
+                'letter_monthly' => 'Renews monthly until canceled',
+                'letter_yearly' => 'Renews yearly until canceled',
+                _ => 'Lifetime access',
               },
               referencePriceLabel: plan.referencePriceLabel,
-              highlight: plan.highlight,
             ),
       ];
       if (plans.isEmpty) {
@@ -319,7 +364,9 @@ final class RevenueCatEntitlementRepository implements EntitlementRepository {
       return _failedResult('That plan is unavailable.');
     }
     _stateBeforeOperation = _state;
-    _set(const EntitlementState(status: EntitlementStatus.pending));
+    if (!_state.hasPremiumAccess) {
+      _set(const EntitlementState(status: EntitlementStatus.pending));
+    }
     try {
       await _configure();
       final customer = await _client.purchase(planId);
@@ -439,6 +486,12 @@ final class RevenueCatEntitlementRepository implements EntitlementRepository {
     _managementUrl = customer.managementUrl == null
         ? null
         : Uri.tryParse(customer.managementUrl!);
+    if (purchase &&
+        _stateBeforeOperation.hasPremiumAccess &&
+        !customer.hasActiveEntitlement) {
+      _set(_stateBeforeOperation);
+      return PurchaseResult(outcome: PurchaseOutcome.pending, state: _state);
+    }
     final status = customer.hasActiveEntitlement
         ? (customer.isGracePeriod
               ? EntitlementStatus.gracePeriod
@@ -450,7 +503,15 @@ final class RevenueCatEntitlementRepository implements EntitlementRepository {
         : customer.hasPurchasedLetterProduct
         ? EntitlementStatus.lapsed
         : EntitlementStatus.freeOrUnknown;
-    _set(EntitlementState(status: status, planId: customer.productId));
+    _set(
+      EntitlementState(
+        status: status,
+        planId: customer.productId,
+        expiresAt: customer.expiresAt,
+        willRenew: customer.willRenew,
+        activeSubscriptions: customer.activeSubscriptions,
+      ),
+    );
     return PurchaseResult(
       outcome: _state.hasPremiumAccess
           ? PurchaseOutcome.activated
@@ -485,6 +546,9 @@ final class RevenueCatEntitlementRepository implements EntitlementRepository {
         status: EntitlementStatus.offlineUnknown,
         planId: _state.planId,
         message: _safeMessage(error),
+        expiresAt: _state.expiresAt,
+        willRenew: _state.willRenew,
+        activeSubscriptions: _state.activeSubscriptions,
       ),
     );
   }
@@ -498,6 +562,9 @@ final class RevenueCatEntitlementRepository implements EntitlementRepository {
         status: previous.status,
         planId: previous.planId,
         message: message,
+        expiresAt: previous.expiresAt,
+        willRenew: previous.willRenew,
+        activeSubscriptions: previous.activeSubscriptions,
       ),
     );
   }
@@ -520,6 +587,12 @@ bool _isUuid(String value) => RegExp(
 ).hasMatch(value);
 
 extension on EntitlementState {
-  EntitlementState copyWithMessage(String message) =>
-      EntitlementState(status: status, planId: planId, message: message);
+  EntitlementState copyWithMessage(String message) => EntitlementState(
+    status: status,
+    planId: planId,
+    message: message,
+    expiresAt: expiresAt,
+    willRenew: willRenew,
+    activeSubscriptions: activeSubscriptions,
+  );
 }

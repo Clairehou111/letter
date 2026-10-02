@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter/services.dart';
 import 'package:purchases_flutter/purchases_flutter.dart';
@@ -9,6 +11,7 @@ class FakeRevenueCatClient implements RevenueCatClient {
   FakeRevenueCatClient({this.purchaseState, this.restoreState});
 
   RevenueCatCustomerState? purchaseState;
+  Completer<RevenueCatCustomerState>? purchaseCompleter;
   RevenueCatCustomerState? restoreState;
   List<RevenueCatPlanOffer> offers = const [
     RevenueCatPlanOffer(
@@ -70,6 +73,7 @@ class FakeRevenueCatClient implements RevenueCatClient {
   Future<RevenueCatCustomerState> purchase(String productId) async {
     purchasedProductId = productId;
     if (purchaseError != null) throw purchaseError!;
+    if (purchaseCompleter != null) return purchaseCompleter!.future;
     if (purchaseState == null) {
       throw const EntitlementException('Purchase failed.');
     }
@@ -132,6 +136,44 @@ void main() {
     client.restoreState = active(productId: 'letter_yearly');
     expect((await repo.refresh()).status, EntitlementStatus.activePaid);
     await repo.dispose();
+  });
+
+  test('refresh carries the subscription period and renewal status', () async {
+    final endsAt = DateTime.utc(2030, 11, 2);
+    final client = FakeRevenueCatClient(
+      restoreState: RevenueCatCustomerState(
+        hasActiveEntitlement: true,
+        hasPurchasedLetterProduct: true,
+        productId: 'letter_monthly',
+        expiresAt: endsAt,
+        willRenew: false,
+        activeSubscriptions: [
+          ActivePlanPeriod(productId: 'letter_monthly', expiresAt: endsAt),
+          ActivePlanPeriod(
+            productId: 'letter_yearly',
+            expiresAt: DateTime.utc(2030, 12, 2),
+          ),
+        ],
+      ),
+    );
+    final repo = RevenueCatEntitlementRepository(
+      appUserId: '2c1a7f42-2d87-4ad6-8d89-b6b68b429127',
+      appleApiKey: 'apple-key',
+      googleApiKey: '',
+      store: RevenueCatStore.apple,
+      client: client,
+    );
+    addTearDown(repo.dispose);
+
+    final state = await repo.refresh();
+
+    expect(state.expiresAt, endsAt);
+    expect(state.willRenew, isFalse);
+    expect(state.activeSubscriptions.map((plan) => plan.productId), [
+      'letter_monthly',
+      'letter_yearly',
+    ]);
+    expect(state.hasPremiumAccess, isTrue);
   });
 
   test('clearing the account logs out RevenueCat and removes access', () async {
@@ -374,6 +416,67 @@ void main() {
     expect(result.state.status, EntitlementStatus.pending);
     expect(result.state.hasPremiumAccess, isFalse);
     await repo.dispose();
+  });
+
+  test(
+    'changing an active plan keeps access during and after store wait',
+    () async {
+      final purchaseCompleter = Completer<RevenueCatCustomerState>();
+      final client = FakeRevenueCatClient(
+        restoreState: active(productId: 'letter_monthly'),
+      )..purchaseCompleter = purchaseCompleter;
+      final repo = RevenueCatEntitlementRepository(
+        appUserId: '2c1a7f42-2d87-4ad6-8d89-b6b68b429127',
+        appleApiKey: 'key',
+        googleApiKey: '',
+        store: RevenueCatStore.apple,
+        client: client,
+      );
+      addTearDown(repo.dispose);
+      await repo.refresh();
+      final observed = <EntitlementState>[];
+      final subscription = repo.watch().listen(observed.add);
+      addTearDown(subscription.cancel);
+
+      final purchase = repo.purchase('letter_yearly');
+      await Future<void>.delayed(Duration.zero);
+      expect(repo.current.planId, 'letter_monthly');
+      expect(repo.current.hasPremiumAccess, isTrue);
+      purchaseCompleter.complete(
+        const RevenueCatCustomerState(
+          hasActiveEntitlement: false,
+          hasPurchasedLetterProduct: true,
+          productId: 'letter_yearly',
+        ),
+      );
+      final result = await purchase;
+      expect(result.outcome, PurchaseOutcome.pending);
+      expect(repo.current.planId, 'letter_monthly');
+      expect(observed.every((state) => state.hasPremiumAccess), isTrue);
+    },
+  );
+
+  test('a deferred crossgrade keeps the current subscription active', () async {
+    final client = FakeRevenueCatClient(
+      restoreState: active(productId: 'letter_monthly'),
+      purchaseState: active(productId: 'letter_monthly'),
+    );
+    final repo = RevenueCatEntitlementRepository(
+      appUserId: '2c1a7f42-2d87-4ad6-8d89-b6b68b429127',
+      appleApiKey: 'key',
+      googleApiKey: '',
+      store: RevenueCatStore.apple,
+      client: client,
+    );
+    addTearDown(repo.dispose);
+    await repo.refresh();
+
+    final result = await repo.purchase('letter_yearly');
+
+    expect(client.purchasedProductId, 'letter_yearly');
+    expect(result.outcome, PurchaseOutcome.activated);
+    expect(repo.current.planId, 'letter_monthly');
+    expect(repo.current.hasPremiumAccess, isTrue);
   });
 
   test('restore maps an active paid entitlement', () async {
