@@ -1139,6 +1139,7 @@ Future<T?> showExperienceSheet<T>(
 }) {
   return showModalBottomSheet<T>(
     context: context,
+    useSafeArea: true,
     isScrollControlled: isScrollControlled,
     isDismissible: !dominant,
     enableDrag: !dominant,
