@@ -449,3 +449,27 @@ dialog was dismissed with **Keep account**; no deletion occurred. Final checks:
 `flutter analyze --no-pub` passed; focused Settings/config tests passed;
 complete `flutter test --no-pub --concurrency=4 -r expanded` passed **717 tests
 with 1 existing skip**; `git diff --check` passed.
+
+## 2026-10-02 offline Plus follow-up
+
+An entitlement refresh error previously replaced a confirmed active Plus state
+with `offlineUnknown`. Paid Patterns and report export then appeared locked even
+though the store had not reported a lapse. The local repository now retains
+confirmed access through a failed refresh or Restore, and accepts an actual
+store-confirmed lapse after reconnection. Switching or clearing the Letter
+Within account still clears access; delayed purchase, Restore, and refresh
+results from the old account cannot reinstate it. A never-confirmed account
+remains free while offline.
+
+Deterministic tests exercise connected purchase state → store read failure →
+paid capabilities and local CSV export → confirmed lapse, plus account switch,
+sign-out races, and the prior-auth offline local-data gate. These are code-level
+network-failure tests, not an Airplane Mode run. The isolated iOS simulator did
+not expose a reliable independent network cutoff during this check, and no
+physical iPhone was connected. A05 requires a cold offline launch and real
+Apple Sandbox/TestFlight verification before declaring offline Plus signed off.
+This source change is not in TestFlight Build 15.
+Final local checks: `flutter analyze --no-pub` passed; focused entitlement,
+report, and auth-gate tests passed **40 tests**; complete
+`flutter test --no-pub --concurrency=4 -r compact` passed **723 tests with 1
+existing skip**; `git diff --check` passed.

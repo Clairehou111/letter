@@ -13,6 +13,7 @@ import 'package:letter_mobile/features/cycle/data/in_memory_period_repository.da
 import 'package:letter_mobile/features/cycle/domain/local_date.dart';
 import 'package:letter_mobile/features/cycle/domain/period_record.dart';
 import 'package:letter_mobile/features/entitlement/data/local_entitlement_repository.dart';
+import 'package:letter_mobile/features/entitlement/data/revenue_cat_entitlement_repository.dart';
 import 'package:letter_mobile/features/entitlement/domain/entitlement.dart';
 import 'package:letter_mobile/features/entitlement/domain/entitlement_repository.dart';
 import 'package:letter_mobile/features/health_records/data/in_memory_health_record_repository.dart';
@@ -36,6 +37,40 @@ final class _RecordingShareAdapter implements LocalFileShareAdapter {
     file = value;
     return result;
   }
+}
+
+final class _OfflineRevenueCatClient implements RevenueCatClient {
+  bool offline = false;
+  bool active = true;
+
+  @override
+  Future<void> configure({
+    required String apiKey,
+    required String appUserId,
+  }) async {}
+
+  @override
+  Future<void> clearUser() async {}
+
+  @override
+  Future<List<RevenueCatPlanOffer>> loadPlans() async => const [];
+
+  @override
+  Future<RevenueCatCustomerState> currentCustomerState() async {
+    if (offline) throw StateError('offline');
+    return RevenueCatCustomerState(
+      hasActiveEntitlement: active,
+      hasPurchasedLetterProduct: true,
+      productId: 'letter_monthly',
+    );
+  }
+
+  @override
+  Future<RevenueCatCustomerState> purchase(String productId) =>
+      currentCustomerState();
+
+  @override
+  Future<RevenueCatCustomerState> restore() => currentCustomerState();
 }
 
 PeriodRecord _period(String id, LocalDate start, {LocalDate? end}) =>
@@ -189,6 +224,54 @@ void main() {
     expect(pdfShare.file, isA<LocalPdfFile>());
     expect(utf8.decode(pdfShare.file!.bytes.take(4).toList()), '%PDF');
   });
+
+  test(
+    'confirmed Plus can export offline, then respects a confirmed lapse',
+    () async {
+      final client = _OfflineRevenueCatClient();
+      final entitlement = RevenueCatEntitlementRepository(
+        appUserId: '2c1a7f42-2d87-4ad6-8d89-b6b68b429127',
+        appleApiKey: 'apple-key',
+        googleApiKey: '',
+        store: RevenueCatStore.apple,
+        client: client,
+      );
+      addTearDown(entitlement.dispose);
+      await entitlement.refresh();
+      client.offline = true;
+
+      final offlineShare = _RecordingShareAdapter();
+      final offlineReceipt =
+          await port(offlineShare, entitlementRepository: entitlement).export(
+            range: const SummaryDateRange(
+              start: LocalDate(2026, 7, 1),
+              end: LocalDate(2026, 7, 30),
+            ),
+            selectedNoteIds: const {},
+            format: ReportExportFormat.rawCsv,
+          );
+      expect(offlineReceipt.outcome, ExperienceFileOutcome.shared);
+      expect(offlineShare.file, isA<LocalCsvFile>());
+
+      client.offline = false;
+      client.active = false;
+      final afterLapseShare = _RecordingShareAdapter();
+      final afterLapseReceipt =
+          await port(
+            afterLapseShare,
+            entitlementRepository: entitlement,
+          ).export(
+            range: const SummaryDateRange(
+              start: LocalDate(2026, 7, 1),
+              end: LocalDate(2026, 7, 30),
+            ),
+            selectedNoteIds: const {},
+            format: ReportExportFormat.rawCsv,
+          );
+      expect(afterLapseReceipt.outcome, ExperienceFileOutcome.failed);
+      expect(afterLapseShare.file, isNull);
+    },
+  );
 
   test(
     'preserves the local file across share dismissal and reports native failures honestly',

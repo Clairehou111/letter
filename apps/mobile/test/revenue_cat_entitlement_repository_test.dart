@@ -29,7 +29,11 @@ class FakeRevenueCatClient implements RevenueCatClient {
   ];
   Object? loadError;
   Object? configureError;
+  Object? customerError;
+  Completer<RevenueCatCustomerState>? customerCompleter;
   Object? purchaseError;
+  Object? restoreError;
+  Completer<RevenueCatCustomerState>? restoreCompleter;
   Object? clearError;
   String? configuredUserId;
   String? purchasedProductId;
@@ -62,6 +66,8 @@ class FakeRevenueCatClient implements RevenueCatClient {
   @override
   Future<RevenueCatCustomerState> currentCustomerState() async {
     customerStateCalls += 1;
+    if (customerError != null) throw customerError!;
+    if (customerCompleter != null) return customerCompleter!.future;
     return restoreState ??
         const RevenueCatCustomerState(
           hasActiveEntitlement: false,
@@ -83,6 +89,8 @@ class FakeRevenueCatClient implements RevenueCatClient {
   @override
   Future<RevenueCatCustomerState> restore() async {
     restoreCalls += 1;
+    if (restoreError != null) throw restoreError!;
+    if (restoreCompleter != null) return restoreCompleter!.future;
     if (restoreState == null) {
       throw const EntitlementException('Restore failed.');
     }
@@ -183,6 +191,162 @@ void main() {
     );
     expect(state.hasPremiumAccess, isTrue);
   });
+
+  test(
+    'offline refresh retains confirmed Plus until the store reports a lapse',
+    () async {
+      final client = FakeRevenueCatClient(
+        restoreState: RevenueCatCustomerState(
+          hasActiveEntitlement: true,
+          hasPurchasedLetterProduct: true,
+          productId: 'letter_monthly',
+          expiresAt: DateTime.utc(2030, 11, 2),
+          willRenew: true,
+        ),
+      );
+      final repo = RevenueCatEntitlementRepository(
+        appUserId: '2c1a7f42-2d87-4ad6-8d89-b6b68b429127',
+        appleApiKey: 'apple-key',
+        googleApiKey: '',
+        store: RevenueCatStore.apple,
+        client: client,
+      );
+      addTearDown(repo.dispose);
+      await repo.refresh();
+      client.customerError = StateError('offline');
+
+      final offline = await repo.refresh();
+      expect(offline.status, EntitlementStatus.activePaid);
+      expect(offline.planId, 'letter_monthly');
+      expect(offline.expiresAt, DateTime.utc(2030, 11, 2));
+      expect(offline.canUse(LetterCapability.personalPatterns), isTrue);
+      expect(offline.canUse(LetterCapability.clinicianReports), isTrue);
+
+      client.customerError = null;
+      client.restoreState = const RevenueCatCustomerState(
+        hasActiveEntitlement: false,
+        hasPurchasedLetterProduct: true,
+        productId: 'letter_monthly',
+      );
+      final reconnected = await repo.refresh();
+      expect(reconnected.status, EntitlementStatus.lapsed);
+      expect(reconnected.hasPremiumAccess, isFalse);
+    },
+  );
+
+  test('offline restore retains confirmed Lifetime access', () async {
+    final client = FakeRevenueCatClient(
+      restoreState: active(productId: 'letter_lifetime'),
+    );
+    final repo = RevenueCatEntitlementRepository(
+      appUserId: '2c1a7f42-2d87-4ad6-8d89-b6b68b429127',
+      appleApiKey: 'apple-key',
+      googleApiKey: '',
+      store: RevenueCatStore.apple,
+      client: client,
+    );
+    addTearDown(repo.dispose);
+    await repo.refresh();
+    client.restoreError = StateError('offline');
+
+    final offline = await repo.restorePurchases();
+    expect(offline.status, EntitlementStatus.activePaid);
+    expect(offline.planId, 'letter_lifetime');
+    expect(offline.canUse(LetterCapability.clinicianReports), isTrue);
+  });
+
+  test(
+    'offline account switch cannot inherit the previous account Plus',
+    () async {
+      final client = FakeRevenueCatClient(
+        restoreState: active(productId: 'letter_lifetime'),
+      );
+      final repo = RevenueCatEntitlementRepository(
+        appUserId: '2c1a7f42-2d87-4ad6-8d89-b6b68b429127',
+        appleApiKey: 'apple-key',
+        googleApiKey: '',
+        store: RevenueCatStore.apple,
+        client: client,
+      );
+      addTearDown(repo.dispose);
+      await repo.refresh();
+      client.configureError = StateError('offline');
+
+      await repo.identifyAuthenticatedUser(
+        '550e8400-e29b-41d4-a716-446655440000',
+      );
+      expect(repo.current.hasPremiumAccess, isFalse);
+      expect(repo.current.canUse(LetterCapability.personalPatterns), isFalse);
+
+      client.configureError = null;
+      client.restoreState = const RevenueCatCustomerState(
+        hasActiveEntitlement: false,
+        hasPurchasedLetterProduct: false,
+      );
+      await repo.identifyAuthenticatedUser(
+        '550e8400-e29b-41d4-a716-446655440000',
+      );
+      expect(repo.current.status, EntitlementStatus.freeOrUnknown);
+    },
+  );
+
+  test(
+    'a delayed old-account refresh cannot restore Plus after sign-out',
+    () async {
+      final client = FakeRevenueCatClient(
+        restoreState: active(productId: 'letter_lifetime'),
+      );
+      final repo = RevenueCatEntitlementRepository(
+        appUserId: '2c1a7f42-2d87-4ad6-8d89-b6b68b429127',
+        appleApiKey: 'apple-key',
+        googleApiKey: '',
+        store: RevenueCatStore.apple,
+        client: client,
+      );
+      addTearDown(repo.dispose);
+      await repo.refresh();
+      final delayedCustomer = Completer<RevenueCatCustomerState>();
+      client.customerCompleter = delayedCustomer;
+
+      final pendingRefresh = repo.refresh();
+      await Future<void>.delayed(Duration.zero);
+      await repo.clearAuthenticatedUser();
+      delayedCustomer.complete(active(productId: 'letter_lifetime'));
+      await pendingRefresh;
+
+      expect(repo.current.status, EntitlementStatus.freeOrUnknown);
+      expect(repo.current.canUse(LetterCapability.clinicianReports), isFalse);
+    },
+  );
+
+  test(
+    'delayed old-account purchase and restore cannot grant Plus after sign-out',
+    () async {
+      final client = FakeRevenueCatClient();
+      final repo = RevenueCatEntitlementRepository(
+        appUserId: '2c1a7f42-2d87-4ad6-8d89-b6b68b429127',
+        appleApiKey: 'apple-key',
+        googleApiKey: '',
+        store: RevenueCatStore.apple,
+        client: client,
+      );
+      addTearDown(repo.dispose);
+      final delayedPurchase = Completer<RevenueCatCustomerState>();
+      final delayedRestore = Completer<RevenueCatCustomerState>();
+      client.purchaseCompleter = delayedPurchase;
+      client.restoreCompleter = delayedRestore;
+
+      final purchase = repo.purchase('letter_monthly');
+      final restore = repo.restorePurchases();
+      await Future<void>.delayed(Duration.zero);
+      await repo.clearAuthenticatedUser();
+      delayedPurchase.complete(active(productId: 'letter_monthly'));
+      delayedRestore.complete(active(productId: 'letter_yearly'));
+      expect((await purchase).state.hasPremiumAccess, isFalse);
+      expect((await restore).hasPremiumAccess, isFalse);
+      expect(repo.current.status, EntitlementStatus.freeOrUnknown);
+    },
+  );
 
   test('clearing the account logs out RevenueCat and removes access', () async {
     final client = FakeRevenueCatClient(restoreState: active());

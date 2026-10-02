@@ -236,6 +236,7 @@ final class RevenueCatEntitlementRepository implements EntitlementRepository {
        );
 
   String _appUserId;
+  int _identityGeneration = 0;
   final String appleApiKey;
   final String googleApiKey;
   final RevenueCatStore? store;
@@ -375,6 +376,7 @@ final class RevenueCatEntitlementRepository implements EntitlementRepository {
     if (!letterPlans.any((plan) => plan.id == planId)) {
       return _failedResult('That plan is unavailable.');
     }
+    final identityGeneration = _identityGeneration;
     _stateBeforeOperation = _state;
     if (!_state.hasPremiumAccess) {
       _set(const EntitlementState(status: EntitlementStatus.pending));
@@ -382,8 +384,14 @@ final class RevenueCatEntitlementRepository implements EntitlementRepository {
     try {
       await _configure();
       final customer = await _client.purchase(planId);
+      if (identityGeneration != _identityGeneration) {
+        return PurchaseResult(outcome: PurchaseOutcome.failed, state: _state);
+      }
       return _applyCustomer(customer, purchase: true);
     } on PlatformException catch (error) {
+      if (identityGeneration != _identityGeneration) {
+        return PurchaseResult(outcome: PurchaseOutcome.failed, state: _state);
+      }
       if (PurchasesErrorHelper.getErrorCode(error) ==
           PurchasesErrorCode.purchaseCancelledError) {
         _restorePreviousState();
@@ -394,6 +402,9 @@ final class RevenueCatEntitlementRepository implements EntitlementRepository {
       }
       return _failedResult('The purchase could not be completed.');
     } on Object catch (error) {
+      if (identityGeneration != _identityGeneration) {
+        return PurchaseResult(outcome: PurchaseOutcome.failed, state: _state);
+      }
       return _failedResult(_safeMessage(error));
     }
   }
@@ -414,13 +425,18 @@ final class RevenueCatEntitlementRepository implements EntitlementRepository {
       );
       return _state;
     }
+    final identityGeneration = _identityGeneration;
     _stateBeforeOperation = _state;
-    _set(const EntitlementState(status: EntitlementStatus.pending));
+    if (!_state.hasPremiumAccess) {
+      _set(const EntitlementState(status: EntitlementStatus.pending));
+    }
     try {
       await _configure();
-      return _applyCustomer(await _client.restore()).state;
+      final customer = await _client.restore();
+      if (identityGeneration != _identityGeneration) return _state;
+      return _applyCustomer(customer).state;
     } on Object catch (error) {
-      _markUnavailable(error);
+      if (identityGeneration == _identityGeneration) _markUnavailable(error);
       return _state;
     }
   }
@@ -430,11 +446,14 @@ final class RevenueCatEntitlementRepository implements EntitlementRepository {
     if (!isConfigured) {
       return _state;
     }
+    final identityGeneration = _identityGeneration;
     try {
       await _configure();
-      return _applyCustomer(await _client.currentCustomerState()).state;
+      final customer = await _client.currentCustomerState();
+      if (identityGeneration != _identityGeneration) return _state;
+      return _applyCustomer(customer).state;
     } on Object catch (error) {
-      _markUnavailable(error);
+      if (identityGeneration == _identityGeneration) _markUnavailable(error);
       return _state;
     }
   }
@@ -445,6 +464,9 @@ final class RevenueCatEntitlementRepository implements EntitlementRepository {
   @override
   Future<void> identifyAuthenticatedUser(String userId) async {
     if (!_isUuid(userId)) {
+      _identityGeneration += 1;
+      _appUserId = '';
+      _managementUrl = null;
       _set(
         const EntitlementState(
           status: EntitlementStatus.freeOrUnknown,
@@ -456,7 +478,15 @@ final class RevenueCatEntitlementRepository implements EntitlementRepository {
     if (userId == _appUserId && _state.hasPremiumAccess) {
       return;
     }
-    _appUserId = userId;
+    if (userId != _appUserId) {
+      // A confirmed purchase belongs to the previous account. Never carry it
+      // into a new identity if store reconciliation fails while offline.
+      _appUserId = userId;
+      _identityGeneration += 1;
+      _managementUrl = null;
+      _set(const EntitlementState(status: EntitlementStatus.freeOrUnknown));
+    }
+    final identityGeneration = _identityGeneration;
     if (!isConfigured) {
       _set(
         const EntitlementState(
@@ -468,15 +498,17 @@ final class RevenueCatEntitlementRepository implements EntitlementRepository {
     }
     try {
       await _configure();
-      _applyCustomer(await _client.currentCustomerState());
+      final customer = await _client.currentCustomerState();
+      if (identityGeneration == _identityGeneration) _applyCustomer(customer);
     } on Object catch (error) {
-      _markUnavailable(error);
+      if (identityGeneration == _identityGeneration) _markUnavailable(error);
     }
   }
 
   @override
   Future<void> clearAuthenticatedUser() async {
     final hadAuthenticatedUser = _isUuid(_appUserId);
+    _identityGeneration += 1;
     _appUserId = '';
     _managementUrl = null;
     _set(const EntitlementState(status: EntitlementStatus.freeOrUnknown));
@@ -553,6 +585,13 @@ final class RevenueCatEntitlementRepository implements EntitlementRepository {
   }
 
   void _markUnavailable(Object error) {
+    if (_state.hasPremiumAccess) {
+      // A failed network read is not a store-confirmed revocation. The SDK
+      // supplies a fresh or cached CustomerInfo when it can; retain the last
+      // confirmed access until a successful read says otherwise.
+      _set(_state.copyWithMessage(_safeMessage(error)));
+      return;
+    }
     _set(
       EntitlementState(
         status: EntitlementStatus.offlineUnknown,
