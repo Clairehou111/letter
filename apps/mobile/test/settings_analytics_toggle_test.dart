@@ -76,7 +76,7 @@ void main() {
     expect(find.text('support@letterwithin.app'), findsOneWidget);
   });
 
-  testWidgets('account deletion warns about store billing and restore', (
+  testWidgets('iOS account deletion uses store-neutral billing copy', (
     tester,
   ) async {
     tester.view.physicalSize = const Size(390, 844);
@@ -84,7 +84,9 @@ void main() {
     addTearDown(tester.view.reset);
     await tester.pumpWidget(
       MaterialApp(
-        theme: ExperienceFoundation.lightTheme(),
+        theme: ExperienceFoundation.lightTheme().copyWith(
+          platform: TargetPlatform.iOS,
+        ),
         home: Scaffold(
           body: YouExperience(
             port: _YouPort(),
@@ -101,10 +103,46 @@ void main() {
       find.textContaining('keeps renewing until you cancel'),
       findsOneWidget,
     );
+    expect(find.textContaining('If you have a subscription'), findsOneWidget);
+    expect(find.textContaining('App Store'), findsNothing);
+    expect(find.textContaining('Google Play'), findsNothing);
     expect(find.textContaining('Restore a previous purchase'), findsOneWidget);
     await tester.tap(find.text('Keep account'));
     await tester.pumpAndSettle();
     expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('Android account deletion uses store-neutral billing copy', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(390, 844);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.reset);
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: ExperienceFoundation.lightTheme().copyWith(
+          platform: TargetPlatform.android,
+        ),
+        home: Scaffold(
+          body: YouExperience(
+            port: _YouPort(),
+            backupPort: const _BackupPort(),
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Delete server account'));
+    await tester.pumpAndSettle();
+    expect(
+      find.textContaining('keeps renewing until you cancel'),
+      findsOneWidget,
+    );
+    expect(find.textContaining('If you have a subscription'), findsOneWidget);
+    expect(find.textContaining('Google Play'), findsNothing);
+    expect(find.textContaining('App Store'), findsNothing);
+    expect(find.textContaining('Restore a previous purchase'), findsOneWidget);
   });
 
   testWidgets('Comfort reminder opt-in stays on before evidence is reliable', (

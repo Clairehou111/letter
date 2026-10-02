@@ -382,7 +382,7 @@ account deletion. The next physical-iPhone Apple Sandbox case must buy with
 P1, delete the app account, create a new account, and use Restore with that
 same Sandbox Apple Account. Do not make a second Apple purchase to work around
 a failed restore. The local deletion confirmation now explains that account
-deletion does not cancel an App Store or Google Play subscription and points to
+deletion does not cancel a recurring subscription and points to
 Restore on a new account. `flutter analyze --no-pub`, the focused Settings
 test, and `git diff --check` passed for that copy change.
 
@@ -434,3 +434,18 @@ single-subscription cases without requiring concurrent store activity.
 Final checks: `flutter analyze --no-pub` passed; complete
 `flutter test --no-pub --concurrency=4 -r expanded` passed **716 tests with
 1 existing skip**; `git diff --check` passed.
+
+## 2026-10-02 account deletion copy correction
+
+The local account-deletion confirmation had reintroduced “App Store or Google
+Play” in text shown on iPhone. It now uses store-neutral billing and Restore
+copy. The mobile source also no longer includes the Play Store name in its
+configuration error text. iOS and Android widget tests assert that the dialog
+shows no other store brand. This correction is not in TestFlight Build 15 and
+needs a fresh iPhone build before App Review resubmission. The complete app
+was hot-restarted on the isolated iOS simulator: the deletion confirmation
+showed the neutral subscription/Restore text, with no other store brand. The
+dialog was dismissed with **Keep account**; no deletion occurred. Final checks:
+`flutter analyze --no-pub` passed; focused Settings/config tests passed;
+complete `flutter test --no-pub --concurrency=4 -r expanded` passed **717 tests
+with 1 existing skip**; `git diff --check` passed.

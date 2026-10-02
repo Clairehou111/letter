@@ -57,7 +57,7 @@ void main() {
         requireAppleRevenueCat: false,
         requireGoogleRevenueCat: true,
       ),
-      ['LETTER_REVENUECAT_GOOGLE_API_KEY (must use the goog_ Play Store key)'],
+      ['LETTER_REVENUECAT_GOOGLE_API_KEY (must use the goog_ RevenueCat key)'],
     );
   });
 

@@ -669,8 +669,8 @@ class _AccountSectionState extends State<_AccountSection> {
         content: Text(
           'This deletes your Letter Within account. Records on this device '
           'remain here until the app is deleted.\n\n'
-          'An App Store or Google Play subscription keeps renewing until you '
-          'cancel it in store settings. On a new account, use Restore a '
+          'If you have a subscription, it keeps renewing until you cancel it '
+          'in store settings. On a new account, use Restore a '
           'previous purchase to recover eligible Plus access.',
           style: ExperienceType.body(ExperienceColors.ink),
         ),

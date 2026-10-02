@@ -58,7 +58,7 @@ final class AppConfig {
     if (requireGoogleRevenueCat &&
         revenueCatGoogleApiKey.isNotEmpty &&
         !revenueCatGoogleApiKey.startsWith('goog_'))
-      'LETTER_REVENUECAT_GOOGLE_API_KEY (must use the goog_ Play Store key)',
+      'LETTER_REVENUECAT_GOOGLE_API_KEY (must use the goog_ RevenueCat key)',
   ];
 
   static const authRedirectUrl = 'app.letterwithin://login-callback';
