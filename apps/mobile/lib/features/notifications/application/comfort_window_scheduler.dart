@@ -35,6 +35,15 @@ final class ComfortWindowScheduler {
       await _notificationPort.cancelComfortReminder();
       return;
     }
+    // Ask when the person opts in, even if the forecast is not ready yet.
+    // Later data changes reconcile without prompting and can then schedule.
+    NotificationAuthorization? authorization;
+    if (requestPermission) {
+      authorization = await _notificationPort.authorizationStatus();
+      if (authorization == NotificationAuthorization.unknown) {
+        authorization = await _notificationPort.requestAuthorization();
+      }
+    }
     final now = _now().toLocal();
     final today = LocalDate.fromDateTime(now);
     final periods = CyclePredictionEngine.recordsThrough(
@@ -66,11 +75,7 @@ final class ComfortWindowScheduler {
       return;
     }
 
-    var authorization = await _notificationPort.authorizationStatus();
-    if (authorization == NotificationAuthorization.unknown &&
-        requestPermission) {
-      authorization = await _notificationPort.requestAuthorization();
-    }
+    authorization ??= await _notificationPort.authorizationStatus();
     if (authorization != NotificationAuthorization.granted) {
       await _notificationPort.cancelComfortReminder();
       return;

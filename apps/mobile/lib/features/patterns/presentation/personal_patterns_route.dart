@@ -29,7 +29,6 @@ class PersonalPatternsRoute extends StatefulWidget {
     this.now,
     this.showBack = true,
     this.onOpenCycle,
-    this.onOpenAccount,
     super.key,
   });
 
@@ -39,7 +38,6 @@ class PersonalPatternsRoute extends StatefulWidget {
   final DateTime Function()? now;
   final bool showBack;
   final VoidCallback? onOpenCycle;
-  final VoidCallback? onOpenAccount;
 
   @override
   State<PersonalPatternsRoute> createState() => _PersonalPatternsRouteState();
@@ -179,11 +177,7 @@ class _PersonalPatternsRouteState extends State<PersonalPatternsRoute> {
           onSeePlans: () {
             final repository = EntitlementScope.repositoryOf(context);
             if (repository != null) {
-              PlusExperience.open(
-                context,
-                entitlementRepository: repository,
-                onOpenAccount: widget.onOpenAccount,
-              );
+              PlusExperience.open(context, entitlementRepository: repository);
             }
           },
         );
@@ -202,11 +196,7 @@ class _PersonalPatternsRouteState extends State<PersonalPatternsRoute> {
           onOpenPlans: () {
             final repository = EntitlementScope.repositoryOf(context);
             if (repository != null) {
-              PlusExperience.open(
-                context,
-                entitlementRepository: repository,
-                onOpenAccount: widget.onOpenAccount,
-              );
+              PlusExperience.open(context, entitlementRepository: repository);
             }
           },
         ),

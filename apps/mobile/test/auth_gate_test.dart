@@ -211,21 +211,8 @@ void main() {
 
     await tester.tap(find.byTooltip('Settings').first);
     await tester.pumpAndSettle();
-    final plus = find.text('Letter Within Plus');
-    await tester.drag(find.byType(YouExperience), const Offset(0, -500));
-    await tester.pumpAndSettle();
-    await tester.drag(find.byType(YouExperience), const Offset(0, -500));
-    await tester.pumpAndSettle();
-    await tester.drag(find.byType(YouExperience), const Offset(0, -500));
-    await tester.pumpAndSettle();
-    await tester.tap(plus);
-    await tester.pumpAndSettle();
-    expect(find.text('Connect an account for Plus'), findsOneWidget);
-    await tester.tap(find.text('Open account settings'));
-    await tester.pumpAndSettle();
-    expect(find.text('Connect an account for Plus'), findsNothing);
-
     final connect = find.text('Create or connect an account');
+    expect(connect, findsOneWidget);
     await tester.ensureVisible(connect);
     await tester.tap(connect);
     await tester.pumpAndSettle();

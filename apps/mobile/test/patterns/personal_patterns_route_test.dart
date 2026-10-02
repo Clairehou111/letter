@@ -345,7 +345,7 @@ void main() {
     expect(find.byKey(const Key('open-locked-patterns')), findsOneWidget);
   });
 
-  testWidgets('accountless Patterns Plus links to account settings', (
+  testWidgets('accountless Patterns Plus points to Settings Account', (
     tester,
   ) async {
     final entitlement = RevenueCatEntitlementRepository(
@@ -359,7 +359,6 @@ void main() {
       careMemory: InMemoryCareMemoryRepository(),
       periods: InMemoryPeriodRepository(),
     );
-    var accountOpens = 0;
     await tester.pumpWidget(
       MaterialApp(
         theme: LetterTheme.light,
@@ -370,7 +369,6 @@ void main() {
             source: source,
             showBack: false,
             previewRepository: InMemoryPersonalPatternPreviewRepository(true),
-            onOpenAccount: () => accountOpens++,
           ),
         ),
       ),
@@ -379,9 +377,11 @@ void main() {
     await tester.tap(find.byKey(const Key('locked-see-plans')));
     await tester.pumpAndSettle();
     expect(find.text('Connect an account for Plus'), findsOneWidget);
-    await tester.tap(find.text('Open account settings'));
-    await tester.pumpAndSettle();
-    expect(accountOpens, 1);
+    expect(
+      find.text('Open Settings → Account to create or connect an account.'),
+      findsOneWidget,
+    );
+    expect(find.text('Open account settings'), findsNothing);
   });
 
   testWidgets('renders intentional zero- and one-period states', (

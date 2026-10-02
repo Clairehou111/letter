@@ -59,6 +59,48 @@ void main() {
   });
 
   test(
+    'early opt-in asks permission and schedules once evidence matures',
+    () async {
+      final fixture = _fixture();
+      final preferences = InMemoryComfortReminderPreferenceRepository();
+      await preferences.save(
+        ComfortReminderPreference(
+          enabled: true,
+          leadDays: 2,
+          updatedAt: fixture.now,
+        ),
+      );
+      final source = _PatternSource(
+        PatternSourceSnapshot(
+          periods: fixture.periods,
+          momentCheckIns: const [],
+        ),
+      );
+      final notifications = _FakeComfortNotificationPort(
+        authorization: NotificationAuthorization.unknown,
+        requestedAuthorization: NotificationAuthorization.granted,
+      );
+      final scheduler = ComfortWindowScheduler(
+        InMemoryPeriodRepository(seed: fixture.periods),
+        source,
+        preferences,
+        notifications,
+        now: () => fixture.now,
+      );
+
+      await scheduler.reconcile(requestPermission: true);
+      expect(notifications.requestCount, 1);
+      expect(notifications.scheduledAt, isNull);
+      expect((await preferences.load()).enabled, isTrue);
+
+      source.snapshot = fixture.source;
+      await scheduler.reconcile();
+      expect(notifications.requestCount, 1);
+      expect(notifications.scheduledAt, DateTime(2026, 5, 22, 9));
+    },
+  );
+
+  test(
     'does not schedule when notification permission is unavailable',
     () async {
       final fixture = _fixture();
@@ -130,9 +172,12 @@ final class _PatternSource implements PatternSourceReader {
 final class _FakeComfortNotificationPort implements ComfortNotificationPort {
   _FakeComfortNotificationPort({
     this.authorization = NotificationAuthorization.granted,
+    this.requestedAuthorization,
   });
 
   NotificationAuthorization authorization;
+  final NotificationAuthorization? requestedAuthorization;
+  int requestCount = 0;
   DateTime? scheduledAt;
   String? title;
   String? body;
@@ -150,8 +195,11 @@ final class _FakeComfortNotificationPort implements ComfortNotificationPort {
   }
 
   @override
-  Future<NotificationAuthorization> requestAuthorization() async =>
-      authorization;
+  Future<NotificationAuthorization> requestAuthorization() async {
+    requestCount++;
+    authorization = requestedAuthorization ?? authorization;
+    return authorization;
+  }
 
   @override
   Future<void> scheduleComfortReminder({

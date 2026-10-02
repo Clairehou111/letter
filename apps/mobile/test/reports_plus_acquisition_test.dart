@@ -1064,7 +1064,7 @@ void main() {
     expect(find.textContaining('\$29.99'), findsWidgets);
   });
 
-  testWidgets('Plus sends an accountless user to account settings', (
+  testWidgets('Plus points an accountless user to Settings Account', (
     tester,
   ) async {
     tester.view.physicalSize = const Size(390, 844);
@@ -1078,7 +1078,6 @@ void main() {
       client: _ReadyRevenueCatClient(),
     );
     addTearDown(repository.dispose);
-    var accountOpenCount = 0;
     await tester.pumpWidget(
       MaterialApp(
         theme: ExperienceFoundation.lightTheme(),
@@ -1088,7 +1087,6 @@ void main() {
               onPressed: () => PlusExperience.open(
                 context,
                 entitlementRepository: repository,
-                onOpenAccount: () => accountOpenCount++,
               ),
               child: const Text('Open Plus'),
             ),
@@ -1101,11 +1099,11 @@ void main() {
     expect(find.text('Connect an account for Plus'), findsOneWidget);
     expect(find.text('Restore a previous purchase'), findsNothing);
     expect(find.text('Choose a plan'), findsNothing);
-
-    await tester.tap(find.text('Open account settings'));
-    await tester.pumpAndSettle();
-    expect(accountOpenCount, 1);
-    expect(find.text('Open Plus'), findsOneWidget);
+    expect(
+      find.text('Open Settings → Account to create or connect an account.'),
+      findsOneWidget,
+    );
+    expect(find.text('Open account settings'), findsNothing);
   });
 }
 

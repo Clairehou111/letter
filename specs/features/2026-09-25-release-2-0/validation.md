@@ -118,7 +118,7 @@ recorded below.
   path to connect a new account. Local fixes and regression tests are recorded
   in the Build 15 validation file; they are **not in the uploaded binary**.
 - An isolated iPhone 17 Pro simulator with a synthetic deleted-account state
-  confirmed Plus → Account settings → replacement-account entry and Back,
+  confirmed Settings → Account → replacement-account entry and Back,
   while a local mood record remained visible. This uses a fake store client;
   it does not verify a live Supabase account, RevenueCat Test Store, Apple
   purchase, or restore. The ordered account/subscription cases are in
@@ -318,9 +318,10 @@ recorded below.
   lift, confidence, tie-breaking, projection, and suppression fixtures pass.
 - Current-cycle exclusion, record edit/delete recomputation, time-zone changes,
   restart determinism, and reminder cancellation pass.
-- Today and Settings reminder tests cover reliable-gate silence, explicit
-  opt-in, stored `Not now`, 0/1/2-day timing, 09:00 copy, disabling, and 200%
-  text scaling.
+- Today and Settings reminder tests cover reliable-gate scheduling silence,
+  early opt-in retained until evidence matures, automatic scheduling then,
+  stored `Not now`, 0/1/2-day timing, 09:00 copy, disabling, and 200% text
+  scaling.
 - Comfort Kit eligibility, ordering, lifecycle, remove/replace/suppress, and
   entitlement boundaries pass.
 - Quick note history/edit/delete and explicit Kit inclusion pass; all free text

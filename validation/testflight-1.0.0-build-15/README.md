@@ -72,21 +72,23 @@ deletion. The server account itself cannot be recovered; local records remain
 on the device.
 
 The local `main` fix separates the missing-account state from store
-configuration failures, routes Plus to Account settings, and adds an explicit
-new-account connection path that keeps local records sealed from an unrelated
-sign-in. It has not been uploaded to TestFlight. Retest delete account → Plus →
-Account settings → cancel, then create a new account → Plus plans → restore on
-the next build. Keep Build 15 marked failed for this path.
+configuration failures and adds an explicit **Settings → Account** connection
+path that keeps local records sealed from an unrelated sign-in. Plus points
+to that location without hosting an account action. It has not been uploaded
+to TestFlight. Retest delete account → Settings → Account → cancel, then create
+a new account → Plus plans → restore on the next build. Keep Build 15 marked
+failed for this path.
 
-The isolated `Letter Account QA 2026-10-02` iPhone 17 Pro simulator ran the
-synthetic deleted-account scenario with a local mood record and fake store
-client. Patterns → Plus showed the account-required message and account action;
-settings showed the new account action; the connection form explained deleted
+The isolated `Letter Account QA 2026-10-02` iPhone 17 Pro simulator earlier ran
+the synthetic deleted-account scenario with a local mood record and fake store
+client. Patterns → Plus showed the account-required message and then an account
+action; Settings showed the new account action; the connection form explained deleted
 account replacement; cancelling returned to the local record with its value
 still present. This confirms the interface and local-only state path, **not**
 real Supabase account creation, RevenueCat Test Store, or Apple billing. The
 focused auth/Plus/repository test suite passed; the full local test result is
-recorded in the release validation spec.
+recorded in the release validation spec. The later local UI change removed
+the Plus account action; current tests start reconnection in Settings → Account.
 
 Separately, a clean `Letter Apple Sandbox QA 2026-10-02` iPhone 17 Pro simulator
 ran the existing manual QA entry with the ignored Apple RevenueCat public key
@@ -316,7 +318,7 @@ repository and widget regressions cover both cases. These changes are local
 and require a later build.
 
 Build 15's deleted-account route remains a known failure. The local
-account-required Plus route, account connection screen, cancel path, and
+account-required Plus copy, Account connection screen, cancel path, and
 explicit relinking of on-device records have widget and isolated simulator
 coverage, but real account deletion followed by new Supabase registration and
 Apple purchase restore is still unverified in TestFlight. The next Apple
@@ -331,3 +333,35 @@ This remains a debug Test Store result. A physical iPhone with TestFlight and
 Apple sandbox must still confirm the real subscription sheet, effective date,
 charge, restore, and management URL. Build 15 has none of these new changes;
 its account-deletion failure remains open until a later build is uploaded.
+
+## Local follow-up: Account, Comfort Window, and support
+
+The current local source puts the deleted-account reconnection action in
+**Settings → Account**. The Plus account-required state points there without
+hosting a separate account action. The account connection and cancel flow is
+covered by the existing full-app widget test. Build 15 still contains the old
+behavior; the revised path needs a later TestFlight build for device acceptance.
+
+Settings now saves Comfort Window reminder opt-in and lead time even before a
+reliable forecast exists. It requests iOS notification permission on explicit
+opt-in. While evidence is insufficient, the switch stays on and no reminder is
+scheduled; later eligible local evidence triggers scheduling automatically.
+Turning the switch off cancels the pending reminder. The early-opt-in UI,
+controller persistence, and deferred scheduler path have separate tests.
+**About & support** now shows `support@letterwithin.app`.
+
+On the next device build, test Account reconnection after deletion and the
+early Comfort Window opt-in, including notification permission, later
+eligibility, and disabling. The complete-app simulator can exercise the current
+UI, while delivery at the scheduled time still needs an iPhone check.
+
+The authenticated **Letter Apple Sandbox QA 2026-10-02** complete-app simulator
+was hot-restarted with this source. Settings displayed the unchecked but enabled
+Comfort Window switch with the early-opt-in explanation, and the expanded
+About & support section visibly displayed `support@letterwithin.app`. The
+simulator account was preserved; no account deletion or notification-permission
+change was made during this visual check. The deleted-account state and
+pre-eligibility opt-in were exercised in non-concurrent widget/controller and
+scheduler tests. Final local checks: `flutter analyze --no-pub` passed;
+complete `flutter test --no-pub --concurrency=4 -r expanded` passed
+**715 tests with 1 existing skip**; `git diff --check` passed.

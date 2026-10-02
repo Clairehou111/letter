@@ -87,11 +87,13 @@ it opens ordinary Care and must not imply that a personalized Kit exists.
 Reminder copy states the selected lead and the 09:00 local delivery time.
 
 REQ-011C: Settings is the durable management surface for the Comfort Window
-reminder. It shows the saved on/off preference and timing, allows changing or
-turning it off, and disables first-time opt-in until the complete reliability
-gate passes. If an earlier enabled preference remains while current evidence is
-not reliable enough, Settings says that nothing is scheduled; it does not imply
-delivery. System notification settings remain authoritative.
+reminder. It shows the saved on/off preference and timing, and allows opting in,
+changing timing, or turning it off at any time. Explicit opt-in requests system
+notification permission. A reminder is scheduled only when the complete
+reliability gate passes; if evidence is not yet reliable enough, Settings says
+that the preference is on but nothing is currently scheduled. When later local
+records make the estimate eligible, the saved preference applies automatically.
+System notification settings remain authoritative.
 
 REQ-012: Every result records its algorithm version, source cycle ids, offsets,
 coverage, support, lift, confidence, and projected range. Record edits and

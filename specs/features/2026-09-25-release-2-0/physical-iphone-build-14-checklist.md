@@ -88,8 +88,10 @@ entries or private notes to a bug tracker.
     the sheet. Confirm existing generated files remain readable after an
     entitlement change if a controlled lapse is available. Check that a no-card
     preview, if active, cannot generate files.
-11. **D11 — Reminder and notification.** Verify reminder opt-in is disabled
-    until a reliable Clearer Comfort Window exists, and “Not now” persists.
+11. **D11 — Reminder and notification.** On a current build, verify reminder
+    opt-in is available before a reliable Clearer Comfort Window exists; the
+    saved preference remains on but no notification is scheduled yet. “Not now”
+    persists.
     With a qualified synthetic fixture or naturally eligible history, enable
     the 0/1/2-day lead options, grant iOS notification permission, and check
     Settings' saved state and 09:00 local copy. Check actual delivery at the

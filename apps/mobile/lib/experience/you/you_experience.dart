@@ -417,9 +417,7 @@ class _YouExperienceState extends State<YouExperience> {
         title: 'Comfort Window',
         children: <Widget>[
           Text(
-            _comfortError ??
-                'A reminder is not available until your local records show '
-                    'a clearer repeating pattern.',
+            _comfortError ?? 'Reminder settings are unavailable right now.',
             style: ExperienceType.bodySmall(
               _comfortError == null
                   ? ExperienceColors.inkSoft
@@ -436,18 +434,19 @@ class _YouExperienceState extends State<YouExperience> {
 
     final reminder = snapshot.reminder;
     final canConfigure = snapshot.canConfigureReminder;
-    final canToggle = !_comfortSaving && (canConfigure || reminder.enabled);
+    final canToggle = !_comfortSaving && widget.saveComfortReminder != null;
     final description = reminder.enabled
         ? canConfigure
-              ? 'Preference on — '
+              ? 'On — '
                     '${comfortReminderLeadLabel(reminder.leadDays)} at 09:00 '
                     'local time. System notification settings control delivery.'
-              : 'Preference on, but nothing is scheduled while the current '
-                    'estimate is not reliable enough.'
+              : 'On — no reminder is scheduled yet. One will be scheduled '
+                    'when your local estimate is reliable enough and '
+                    'notifications are allowed.'
         : canConfigure
-        ? 'Off — no Comfort Window notifications.'
-        : 'Unavailable until your local records show a Clearer repeating '
-              'pattern and the period estimate is reliable.';
+        ? 'Off — no Comfort Window reminder is scheduled.'
+        : 'Off — turn on now; a reminder will be scheduled when your local '
+              'estimate is reliable enough.';
 
     return _SectionCard(
       title: 'Comfort Window',
@@ -470,7 +469,7 @@ class _YouExperienceState extends State<YouExperience> {
                     _saveComfort(enabled: value, leadDays: reminder.leadDays)
               : null,
         ),
-        if (canConfigure) ...<Widget>[
+        if (widget.saveComfortReminder != null) ...<Widget>[
           const Padding(
             padding: EdgeInsets.symmetric(vertical: ExperienceSpacing.xs),
             child: Divider(height: 1, color: ExperienceColors.hairline),
@@ -582,6 +581,8 @@ class _YouExperienceState extends State<YouExperience> {
               'Restarting the app is safe at any point — your records '
               'stay on this device.',
         ),
+        SizedBox(height: ExperienceSpacing.sm),
+        _AboutRow(title: 'Contact support', body: 'support@letterwithin.app'),
       ],
     );
   }

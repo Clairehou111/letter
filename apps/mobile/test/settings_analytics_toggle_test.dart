@@ -48,13 +48,58 @@ void main() {
     expect(tester.widget<Switch>(toggle).value, isFalse);
   });
 
-  testWidgets('Comfort reminder stays disabled without reliable evidence', (
+  testWidgets('About & support shows the support email', (tester) async {
+    tester.view.physicalSize = const Size(390, 844);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.reset);
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: ExperienceFoundation.lightTheme(),
+        home: Scaffold(
+          body: YouExperience(
+            port: _YouPort(),
+            backupPort: const _BackupPort(),
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    final about = find.byKey(const Key('about-support-disclosure'));
+    await tester.scrollUntilVisible(
+      about,
+      300,
+      scrollable: find.byType(Scrollable).first,
+    );
+    await tester.tap(find.text('About & support'));
+    await tester.pumpAndSettle();
+    expect(find.text('support@letterwithin.app'), findsOneWidget);
+  });
+
+  testWidgets('Comfort reminder opt-in stays on before evidence is reliable', (
     tester,
   ) async {
     tester.view.physicalSize = const Size(390, 844);
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.reset);
-    final snapshot = _comfortSnapshot(reliable: false);
+    var snapshot = _comfortSnapshot(reliable: false);
+    final saves = <(bool, int)>[];
+
+    Future<ComfortExperienceSnapshot> save({
+      required bool enabled,
+      required int leadDays,
+    }) async {
+      saves.add((enabled, leadDays));
+      snapshot = _comfortSnapshot(
+        reliable: false,
+        reminder: ComfortReminderPreference(
+          enabled: enabled,
+          leadDays: leadDays,
+          updatedAt: DateTime.utc(2026, 9, 25),
+        ),
+      );
+      return snapshot;
+    }
 
     await tester.pumpWidget(
       MaterialApp(
@@ -64,9 +109,7 @@ void main() {
             port: _YouPort(),
             backupPort: const _BackupPort(),
             loadComfortExperience: () async => snapshot,
-            saveComfortReminder:
-                ({required bool enabled, required int leadDays}) async =>
-                    snapshot,
+            saveComfortReminder: save,
           ),
         ),
       ),
@@ -81,8 +124,23 @@ void main() {
     );
     final toggle = find.descendant(of: row, matching: find.byType(Switch));
     expect(tester.widget<Switch>(toggle).value, isFalse);
-    expect(tester.widget<Switch>(toggle).onChanged, isNull);
-    expect(find.textContaining('Unavailable until'), findsOneWidget);
+    expect(tester.widget<Switch>(toggle).onChanged, isNotNull);
+    expect(find.textContaining('turn on now'), findsOneWidget);
+    await tester.ensureVisible(toggle);
+    await tester.pumpAndSettle();
+    await tester.tap(toggle);
+    await tester.pumpAndSettle();
+    expect(saves.single, (true, 2));
+    expect(tester.widget<Switch>(toggle).value, isTrue);
+    expect(find.textContaining('no reminder is scheduled yet'), findsOneWidget);
+    final timing = find.byKey(const Key('comfort-reminder-timing'));
+    expect(timing, findsOneWidget);
+    expect(
+      tester.widget<InkWell>(
+        find.descendant(of: timing, matching: find.byType(InkWell)),
+      ).onTap,
+      isNotNull,
+    );
   });
 
   testWidgets('Comfort reminder timing is explicit and reversible', (
@@ -137,7 +195,7 @@ void main() {
     await tester.tap(toggle);
     await tester.pumpAndSettle();
     expect(saves.last, (true, 2));
-    expect(find.textContaining('Preference on'), findsOneWidget);
+    expect(find.textContaining('On —'), findsOneWidget);
 
     final timing = find.text('Timing');
     await tester.scrollUntilVisible(

@@ -118,10 +118,6 @@ final class ComfortExperienceController {
     if (leadDays < 0 || leadDays > 2) {
       throw ArgumentError.value(leadDays, 'leadDays');
     }
-    final current = await load();
-    if (enabled && !current.canConfigureReminder) {
-      throw StateError('A reminder requires Clearer local evidence.');
-    }
     await reminderRepository.save(
       ComfortReminderPreference(
         enabled: enabled,

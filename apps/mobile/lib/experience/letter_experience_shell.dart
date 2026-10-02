@@ -562,7 +562,6 @@ class _LetterExperienceShellState extends State<LetterExperienceShell>
     PlusExperience.open(
       context,
       entitlementRepository: widget.entitlementRepository,
-      onOpenAccount: _openAccountSettings,
     );
   }
 
@@ -578,7 +577,6 @@ class _LetterExperienceShellState extends State<LetterExperienceShell>
       context,
       entitlementRepository: widget.entitlementRepository,
       outcomeContext: outcomeContext,
-      onOpenAccount: _openAccountSettings,
     );
   }
 
@@ -619,12 +617,6 @@ class _LetterExperienceShellState extends State<LetterExperienceShell>
   /// unchanged: account, protection & preferences (including the
   /// screen-cover toggle), backup & restore, and the Plus and Reports
   /// entry points.
-  void _openAccountSettings() {
-    if (!mounted) return;
-    Navigator.of(context).popUntil((route) => route.isFirst);
-    _openSettings();
-  }
-
   void _openSettings() {
     if (_settingsRoute?.isActive ?? false) return;
     ExperienceHaptics.pick();
@@ -953,7 +945,6 @@ class _LetterExperienceShellState extends State<LetterExperienceShell>
       preparationRepository: widget.preparationRepository,
       now: _now,
       onOpenCycle: () => _selectDestination(_cycleIndex),
-      onOpenAccount: _openAccountSettings,
     );
   }
 

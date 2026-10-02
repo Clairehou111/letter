@@ -16,6 +16,30 @@ import 'package:letter_mobile/features/onboarding/domain/onboarding_profile.dart
 import 'support/widget_test_pump.dart';
 
 void main() {
+  test('saves Comfort reminder opt-in before a pattern is reliable', () async {
+    final reminders = InMemoryComfortReminderPreferenceRepository();
+    var changed = 0;
+    final controller = ComfortExperienceController(
+      patternSource: const _StaticPatternSource(PatternSourceSnapshot()),
+      careMemory: InMemoryCareMemoryRepository(),
+      quickNotes: InMemoryCaptureNoteStore(),
+      kitRepository: InMemoryComfortKitRepository(),
+      reminderRepository: reminders,
+      onReminderChanged: () async {
+        changed++;
+      },
+      now: () => DateTime(2026, 9, 26, 12),
+    );
+
+    final snapshot = await controller.saveReminder(enabled: true, leadDays: 1);
+
+    expect(snapshot.canConfigureReminder, isFalse);
+    expect(snapshot.reminder.enabled, isTrue);
+    expect(snapshot.reminder.leadDays, 1);
+    expect((await reminders.load()).enabled, isTrue);
+    expect(changed, 1);
+  });
+
   testWidgets('real Care destination loads the wired Comfort Kit controller', (
     tester,
   ) async {

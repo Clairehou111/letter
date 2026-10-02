@@ -101,12 +101,10 @@ class PlusExperience extends StatefulWidget {
     required this.entitlementRepository,
     this.outcomeContext,
     this.openLegalUrl,
-    this.onOpenAccount,
   });
 
   final EntitlementRepository entitlementRepository;
   final Future<bool> Function(Uri url)? openLegalUrl;
-  final VoidCallback? onOpenAccount;
 
   /// Additive outcome context. Null means a deliberate Settings/Patterns
   /// entry: the headline is the plain product name and no outcome is invented.
@@ -119,14 +117,12 @@ class PlusExperience extends StatefulWidget {
     BuildContext context, {
     required EntitlementRepository entitlementRepository,
     PlusOutcomeContext? outcomeContext,
-    VoidCallback? onOpenAccount,
   }) async {
     final result = await showExperienceSheet<PlusCommitResult>(
       context,
       child: PlusExperience(
         entitlementRepository: entitlementRepository,
         outcomeContext: outcomeContext,
-        onOpenAccount: onOpenAccount,
       ),
     );
     return result ?? const PlusCommitResult.dismissed();
@@ -703,26 +699,16 @@ class _PlusExperienceState extends State<PlusExperience> {
           const SizedBox(height: ExperienceSpacing.xs),
           Text(
             accountRequired
-                ? 'Create or connect an account to view plans and restore purchases.'
+                ? 'Open Settings → Account to create or connect an account.'
                 : storeUnavailable
                 ? 'Please try again after an app update.'
                 : 'Please try again.',
             style: ExperienceType.bodySmall(ExperienceColors.inkSoft),
           ),
-          const SizedBox(height: ExperienceSpacing.sm),
-          if (accountRequired && widget.onOpenAccount != null)
-            _PlusSecondaryButton(
-              label: 'Open account settings',
-              onPressed: () {
-                final onOpenAccount = widget.onOpenAccount!;
-                Navigator.of(context).pop(const PlusCommitResult.unchanged());
-                WidgetsBinding.instance.addPostFrameCallback((_) {
-                  onOpenAccount();
-                });
-              },
-            )
-          else if (!accountRequired)
+          if (!accountRequired) ...<Widget>[
+            const SizedBox(height: ExperienceSpacing.sm),
             _PlusSecondaryButton(label: 'Try again', onPressed: _loadPlans),
+          ],
         ],
       ),
     );
