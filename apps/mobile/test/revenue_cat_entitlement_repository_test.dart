@@ -311,6 +311,97 @@ void main() {
   );
 
   test(
+    'an older same-account refresh cannot revoke a completed purchase',
+    () async {
+      final client = FakeRevenueCatClient(purchaseState: active());
+      final repo = RevenueCatEntitlementRepository(
+        appUserId: '2c1a7f42-2d87-4ad6-8d89-b6b68b429127',
+        appleApiKey: 'apple-key',
+        googleApiKey: '',
+        store: RevenueCatStore.apple,
+        client: client,
+      );
+      addTearDown(repo.dispose);
+      final oldRead = Completer<RevenueCatCustomerState>();
+      client.customerCompleter = oldRead;
+
+      final refresh = repo.refresh();
+      await Future<void>.delayed(Duration.zero);
+      expect(
+        (await repo.purchase('letter_yearly')).outcome,
+        PurchaseOutcome.activated,
+      );
+      oldRead.complete(
+        const RevenueCatCustomerState(
+          hasActiveEntitlement: false,
+          hasPurchasedLetterProduct: false,
+        ),
+      );
+      await refresh;
+
+      expect(repo.current.status, EntitlementStatus.activePaid);
+      expect(repo.current.planId, 'letter_yearly');
+    },
+  );
+
+  test(
+    'an older same-account refresh cannot revoke a completed restore',
+    () async {
+      final client = FakeRevenueCatClient(restoreState: active());
+      final repo = RevenueCatEntitlementRepository(
+        appUserId: '2c1a7f42-2d87-4ad6-8d89-b6b68b429127',
+        appleApiKey: 'apple-key',
+        googleApiKey: '',
+        store: RevenueCatStore.apple,
+        client: client,
+      );
+      addTearDown(repo.dispose);
+      final oldRead = Completer<RevenueCatCustomerState>();
+      client.customerCompleter = oldRead;
+
+      final refresh = repo.refresh();
+      await Future<void>.delayed(Duration.zero);
+      expect(
+        (await repo.restorePurchases()).status,
+        EntitlementStatus.activePaid,
+      );
+      oldRead.complete(
+        const RevenueCatCustomerState(
+          hasActiveEntitlement: false,
+          hasPurchasedLetterProduct: false,
+        ),
+      );
+      await refresh;
+
+      expect(repo.current.status, EntitlementStatus.activePaid);
+    },
+  );
+
+  test(
+    'a current same-account refresh still applies a store revocation',
+    () async {
+      final client = FakeRevenueCatClient(restoreState: active());
+      final repo = RevenueCatEntitlementRepository(
+        appUserId: '2c1a7f42-2d87-4ad6-8d89-b6b68b429127',
+        appleApiKey: 'apple-key',
+        googleApiKey: '',
+        store: RevenueCatStore.apple,
+        client: client,
+      );
+      addTearDown(repo.dispose);
+      await repo.refresh();
+      client.restoreState = const RevenueCatCustomerState(
+        hasActiveEntitlement: false,
+        hasPurchasedLetterProduct: true,
+        productId: 'letter_yearly',
+      );
+
+      expect((await repo.refresh()).status, EntitlementStatus.lapsed);
+      expect(repo.current.hasPremiumAccess, isFalse);
+    },
+  );
+
+  test(
     'delayed old-account purchase and restore cannot grant Plus after sign-out',
     () async {
       final client = FakeRevenueCatClient();

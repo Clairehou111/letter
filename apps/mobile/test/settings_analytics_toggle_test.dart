@@ -212,6 +212,14 @@ void main() {
           .onTap,
       isNotNull,
     );
+    await tester.ensureVisible(timing);
+    await tester.tap(timing);
+    await tester.pumpAndSettle();
+    expect(find.text('Choose a quiet reminder'), findsOneWidget);
+    await tester.tap(find.text('1 day before'));
+    await tester.tap(find.byKey(const Key('save-comfort-reminder')));
+    await tester.pumpAndSettle();
+    expect(saves.last, (true, 1));
   });
 
   testWidgets('Comfort reminder timing is explicit and reversible', (

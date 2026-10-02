@@ -237,6 +237,9 @@ final class RevenueCatEntitlementRepository implements EntitlementRepository {
 
   String _appUserId;
   int _identityGeneration = 0;
+  int _readGeneration = 0;
+  int _purchaseRevision = 0;
+  int _restoreGeneration = 0;
   final String appleApiKey;
   final String googleApiKey;
   final RevenueCatStore? store;
@@ -381,6 +384,8 @@ final class RevenueCatEntitlementRepository implements EntitlementRepository {
       return _failedResult('That plan is unavailable.');
     }
     final identityGeneration = _identityGeneration;
+    // An older read must not replace the result of this store transaction.
+    _readGeneration += 1;
     _stateBeforeOperation = _state;
     if (!_state.hasPremiumAccess) {
       _set(const EntitlementState(status: EntitlementStatus.pending));
@@ -391,6 +396,8 @@ final class RevenueCatEntitlementRepository implements EntitlementRepository {
       if (identityGeneration != _identityGeneration) {
         return PurchaseResult(outcome: PurchaseOutcome.failed, state: _state);
       }
+      _purchaseRevision += 1;
+      _readGeneration += 1;
       return _applyCustomer(customer, purchase: true);
     } on PlatformException catch (error) {
       if (identityGeneration != _identityGeneration) {
@@ -430,6 +437,9 @@ final class RevenueCatEntitlementRepository implements EntitlementRepository {
       return _state;
     }
     final identityGeneration = _identityGeneration;
+    final purchaseRevision = _purchaseRevision;
+    final restoreGeneration = ++_restoreGeneration;
+    _readGeneration += 1;
     _stateBeforeOperation = _state;
     if (!_state.hasPremiumAccess) {
       _set(const EntitlementState(status: EntitlementStatus.pending));
@@ -438,9 +448,18 @@ final class RevenueCatEntitlementRepository implements EntitlementRepository {
       await _configure();
       final customer = await _client.restore();
       if (identityGeneration != _identityGeneration) return _state;
+      if (purchaseRevision != _purchaseRevision ||
+          restoreGeneration != _restoreGeneration) {
+        return _state;
+      }
+      _readGeneration += 1;
       return _applyCustomer(customer).state;
     } on Object catch (error) {
-      if (identityGeneration == _identityGeneration) _markUnavailable(error);
+      if (identityGeneration == _identityGeneration &&
+          purchaseRevision == _purchaseRevision &&
+          restoreGeneration == _restoreGeneration) {
+        _markUnavailable(error);
+      }
       return _state;
     }
   }
@@ -451,13 +470,20 @@ final class RevenueCatEntitlementRepository implements EntitlementRepository {
       return _state;
     }
     final identityGeneration = _identityGeneration;
+    final readGeneration = ++_readGeneration;
     try {
       await _configure();
       final customer = await _client.currentCustomerState();
-      if (identityGeneration != _identityGeneration) return _state;
+      if (identityGeneration != _identityGeneration ||
+          readGeneration != _readGeneration) {
+        return _state;
+      }
       return _applyCustomer(customer).state;
     } on Object catch (error) {
-      if (identityGeneration == _identityGeneration) _markUnavailable(error);
+      if (identityGeneration == _identityGeneration &&
+          readGeneration == _readGeneration) {
+        _markUnavailable(error);
+      }
       return _state;
     }
   }
@@ -491,6 +517,7 @@ final class RevenueCatEntitlementRepository implements EntitlementRepository {
       _set(const EntitlementState(status: EntitlementStatus.freeOrUnknown));
     }
     final identityGeneration = _identityGeneration;
+    final readGeneration = ++_readGeneration;
     if (!isConfigured) {
       _set(
         const EntitlementState(
@@ -503,9 +530,15 @@ final class RevenueCatEntitlementRepository implements EntitlementRepository {
     try {
       await _configure();
       final customer = await _client.currentCustomerState();
-      if (identityGeneration == _identityGeneration) _applyCustomer(customer);
+      if (identityGeneration == _identityGeneration &&
+          readGeneration == _readGeneration) {
+        _applyCustomer(customer);
+      }
     } on Object catch (error) {
-      if (identityGeneration == _identityGeneration) _markUnavailable(error);
+      if (identityGeneration == _identityGeneration &&
+          readGeneration == _readGeneration) {
+        _markUnavailable(error);
+      }
     }
   }
 

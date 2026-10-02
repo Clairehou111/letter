@@ -258,7 +258,7 @@ class _YouExperienceState extends State<YouExperience> {
 
   Future<void> _chooseComfortTiming() async {
     final snapshot = _comfort;
-    if (snapshot == null || !snapshot.canConfigureReminder) return;
+    if (snapshot == null) return;
     final result = await showComfortReminderSheet(
       context,
       enabled: snapshot.reminder.enabled,

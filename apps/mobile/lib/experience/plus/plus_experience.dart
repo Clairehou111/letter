@@ -393,6 +393,7 @@ class _PlusExperienceState extends State<PlusExperience> {
     final planId = _selectedPlanId;
     if (planId == null ||
         _purchaseInFlight ||
+        _restoreInFlight ||
         _ownedPlanIds(_entitlement).contains(planId)) {
       return;
     }
@@ -486,7 +487,7 @@ class _PlusExperienceState extends State<PlusExperience> {
   }
 
   Future<void> _restorePurchases() async {
-    if (_restoreInFlight) {
+    if (_restoreInFlight || _purchaseInFlight) {
       return;
     }
     _clearFeedback();
@@ -683,43 +684,46 @@ class _PlusExperienceState extends State<PlusExperience> {
           const SizedBox(height: ExperienceSpacing.md),
           _buildPurchaseButton(),
           const SizedBox(height: ExperienceSpacing.xs),
-          Wrap(
-            alignment: WrapAlignment.center,
-            spacing: ExperienceSpacing.sm,
-            children: <Widget>[
-              Semantics(
-                link: true,
-                child: TextButton(
-                  onPressed: () => _openExternalLink(
-                    Uri.parse('https://letterwithin.app/privacy'),
-                  ),
-                  child: const Text('Privacy Policy'),
-                ),
-              ),
-              Semantics(
-                link: true,
-                child: TextButton(
-                  onPressed: () => _openExternalLink(
-                    Uri.parse(
-                      'https://www.apple.com/legal/internet-services/itunes/dev/stdeula/',
-                    ),
-                  ),
-                  child: const Text('Terms of Use'),
-                ),
-              ),
-            ],
-          ),
+          _buildLegalLinks(),
           const SizedBox(height: ExperienceSpacing.sm),
           _PlusSecondaryButton(
             label: _restoreInFlight
                 ? 'Checking with the store…'
                 : 'Restore a previous purchase',
-            onPressed: _restoreInFlight ? null : _restorePurchases,
+            onPressed: _restoreInFlight || _purchaseInFlight
+                ? null
+                : _restorePurchases,
           ),
         ],
       ],
     );
   }
+
+  Widget _buildLegalLinks() => Wrap(
+    alignment: WrapAlignment.center,
+    spacing: ExperienceSpacing.sm,
+    children: <Widget>[
+      Semantics(
+        link: true,
+        child: TextButton(
+          onPressed: () =>
+              _openExternalLink(Uri.parse('https://letterwithin.app/privacy')),
+          child: const Text('Privacy Policy'),
+        ),
+      ),
+      Semantics(
+        link: true,
+        child: TextButton(
+          onPressed: () => _openExternalLink(
+            Uri.parse(
+              'https://www.apple.com/legal/internet-services/itunes/dev/stdeula/',
+            ),
+          ),
+          child: const Text('Terms of Use'),
+        ),
+      ),
+    ],
+  );
 
   Widget _buildPlansError() {
     final accountRequired = _accountRequired;
@@ -834,6 +838,7 @@ class _PlusExperienceState extends State<PlusExperience> {
     final enabled =
         selected != null &&
         !_purchaseInFlight &&
+        !_restoreInFlight &&
         !_plansLoading &&
         !_ownedPlanIds(_entitlement).contains(selected.id);
     final outcome = _showPlanChoices && _entitlement.hasPremiumAccess
@@ -1106,6 +1111,8 @@ class _PlusExperienceState extends State<PlusExperience> {
           if (_entitlement.planId != 'letter_lifetime') ...<Widget>[
             const SizedBox(height: ExperienceSpacing.xs),
             _buildPurchaseButton(),
+            const SizedBox(height: ExperienceSpacing.xs),
+            _buildLegalLinks(),
           ],
           if (_selectedPlanId == 'letter_lifetime' &&
               _entitlement.activeSubscriptions.isNotEmpty) ...<Widget>[

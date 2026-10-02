@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -14,7 +16,7 @@ import 'package:letter_mobile/features/analytics/presentation/analytics_scope.da
 import 'package:letter_mobile/features/entitlement/data/local_entitlement_repository.dart';
 import 'package:letter_mobile/features/entitlement/data/revenue_cat_entitlement_repository.dart';
 import 'package:letter_mobile/features/entitlement/domain/entitlement.dart';
-import 'package:letter_mobile/features/entitlement/domain/entitlement_repository.dart';
+import 'package:letter_mobile/features/entitlement/domain/entitlement_repository.dart' as billing;
 import 'package:letter_mobile/features/entitlement/presentation/entitlement_scope.dart';
 import 'package:letter_mobile/features/health_records/domain/health_record.dart';
 import 'package:letter_mobile/features/summary_export/domain/cycle_care_summary.dart';
@@ -27,7 +29,7 @@ void main() {
     ReportExperiencePort? port,
     VoidCallback? onOpenCycle,
     bool canUseClinicianReports = false,
-    EntitlementRepository? entitlementRepository,
+    billing.EntitlementRepository? entitlementRepository,
     bool hasPlusPreviewAccess = false,
   }) async {
     tester.view.physicalSize = const Size(390, 844);
@@ -672,6 +674,7 @@ void main() {
   testWidgets('active subscription offers three plans except the current one', (
     tester,
   ) async {
+    final openedUrls = <Uri>[];
     final repository = LocalEntitlementRepository(
       initial: const EntitlementState(
         status: EntitlementStatus.activePaid,
@@ -682,7 +685,13 @@ void main() {
     await tester.pumpWidget(
       MaterialApp(
         theme: ExperienceFoundation.lightTheme(),
-        home: PlusExperience(entitlementRepository: repository),
+        home: PlusExperience(
+          entitlementRepository: repository,
+          openLegalUrl: (url) async {
+            openedUrls.add(url);
+            return true;
+          },
+        ),
       ),
     );
     await tester.pumpAndSettle();
@@ -706,6 +715,20 @@ void main() {
     expect(find.textContaining('\$39.99'), findsWidgets);
     expect(find.textContaining('Renews yearly until canceled'), findsOneWidget);
     expect(find.text('Choose a plan'), findsOneWidget);
+    final privacyLink = find.text('Privacy Policy');
+    final termsLink = find.text('Terms of Use');
+    expect(privacyLink, findsOneWidget);
+    expect(termsLink, findsOneWidget);
+    await tester.ensureVisible(privacyLink);
+    await tester.tap(privacyLink);
+    await tester.ensureVisible(termsLink);
+    await tester.tap(termsLink);
+    expect(openedUrls, <Uri>[
+      Uri.parse('https://letterwithin.app/privacy'),
+      Uri.parse(
+        'https://www.apple.com/legal/internet-services/itunes/dev/stdeula/',
+      ),
+    ]);
     final monthlyCard = find.byKey(const Key('plus-plan-letter_monthly'));
     expect(
       tester
@@ -990,6 +1013,37 @@ void main() {
       find.text('No active Plus purchase was found for this store account.'),
       findsOneWidget,
     );
+  });
+
+  testWidgets('Restore is disabled while a purchase is waiting for the store', (
+    tester,
+  ) async {
+    final repository = _PendingPurchaseRepository();
+    addTearDown(repository.dispose);
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: ExperienceFoundation.lightTheme(),
+        home: PlusExperience(entitlementRepository: repository),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byKey(const Key('plus-plan-letter_monthly')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.textContaining('Start Letter Within Plus'));
+    await tester.pump();
+    final restoreButton = tester.widget<OutlinedButton>(
+      find.ancestor(
+        of: find.text('Restore a previous purchase'),
+        matching: find.byType(OutlinedButton),
+      ),
+    );
+    expect(restoreButton.onPressed, isNull);
+    expect(repository.restoreCalls, 0);
+
+    repository.completePurchase();
+    await tester.pumpAndSettle();
+    expect(repository.current.hasPremiumAccess, isFalse);
   });
 
   testWidgets(
@@ -1300,6 +1354,28 @@ final class _RetryPlansRepository extends LocalEntitlementRepository {
     if (loadCalls == 1) throw StateError('temporary store failure');
     return letterPlans;
   }
+}
+
+final class _PendingPurchaseRepository extends LocalEntitlementRepository {
+  final Completer<billing.PurchaseResult> _purchase =
+      Completer<billing.PurchaseResult>();
+  int restoreCalls = 0;
+
+  @override
+  Future<billing.PurchaseResult> purchase(String planId) => _purchase.future;
+
+  @override
+  Future<EntitlementState> restorePurchases() async {
+    restoreCalls += 1;
+    return current;
+  }
+
+  void completePurchase() => _purchase.complete(
+    billing.PurchaseResult(
+      outcome: billing.PurchaseOutcome.cancelled,
+      state: current,
+    ),
+  );
 }
 
 final class _RecordingAnalyticsService implements AnalyticsService {
