@@ -28,10 +28,9 @@ The website's latest redesign source is
 Its optional analytics paragraph now uses the shorter phrase “basic technical
 information” and does not call out IP address or region in user-facing copy.
 The redesigned privacy page was subsequently merged to website `main` at
-`79005b0`. The live URL must be rechecked before the next App Review
-submission; a repository commit alone does not prove the live policy is
-current. Recheck the final archive's PostHog settings, SDK privacy manifest,
-and an opted-in sample event before submitting it.
+`79005b0`. On 2026-10-02 the live URL was reloaded and showed the October 2
+optional-analytics copy. Recheck the final archive's PostHog settings, SDK
+privacy manifest, and an opted-in sample event before submitting it.
 Website commit `7f1f8cb` was pushed from an isolated pre-redesign checkout; it
 updates privacy copy but is not the latest redesigned page. Do not treat that
 commit or a deployment of it as acceptance of the website redesign.
@@ -58,8 +57,8 @@ shortcut for this disclosure review.
 The live policy at `https://letterwithin.app/privacy` was read on 2026-10-01.
 It then omitted optional product analytics. The App Store Connect declaration
 was published on 2026-10-02 as described above. The latest website redesign
-privacy page is now in website `main`; the owner will verify the live page
-before the next App Review submission.
+privacy page is now in website `main` and was observed live on 2026-10-02.
+Repeat the live comparison for the final App Review candidate.
 
 Suggested policy copy for the website owner:
 

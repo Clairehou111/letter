@@ -92,11 +92,11 @@ explicit action-time approval.
   1 existing skipped, 0 failed**), and `flutter build ios --simulator --debug
   --no-pub`. Its tests cover immediate success, ordinary dismissal, delayed
   success, and a native completion that never returns.
-- The public privacy page at `https://letterwithin.app/privacy` still needs
-  its owner to publish the current copy from
-  `/Users/clairehou/pyProjects/letter-cycle-companion/src/routes/privacy.tsx`
-  and verify it against App Store Connect's published privacy answers and the
-  optional PostHog behavior before App Review.
+- On 2026-10-02 the public `https://letterwithin.app/privacy` page was
+  reloaded and showed the October 2 optional-analytics copy from the current
+  website design. App Store Connect App Privacy showed its published eight
+  data types and the same privacy URL. A final archive and an opted-in event
+  still need comparison with those disclosures before App Review.
 - SP6/LV3 locator, copy, pressure instruction, and safety text remain without
   qualified clinical sign-off while present in the build.
 - Mac TestFlight on Apple Silicon is an iOS app compatibility environment; it

@@ -1,9 +1,28 @@
 # App Store metadata draft
 
-Status: submitted to App Review on 2026-09-25. After an automated 3.1.2
-metadata rejection, the Standard Apple EULA link was added to the App
-Description and the same five-item package was resubmitted. All five items now
-show `Waiting for Review`.
+Status as reread in App Store Connect on **2026-10-02**: version 1.0 is
+**Rejected** and still has **Build 12** attached. Apple's September 30 message
+cites 2.3.10 (remove Google Play references from the iOS binary) and 3.1.2(c)
+(functional Privacy Policy and Terms of Use links in the purchase flow, plus
+working metadata links). Apple asks for a screen recording confirming the
+purchase-flow links in the App Review reply and the same details in Review
+Notes. The monthly, yearly, lifetime, and subscription-group items remain in
+the five-item submission as Ready for Review. The published App Privacy page
+has eight data types and points to `https://letterwithin.app/privacy`.
+
+The ten uploaded iPhone screenshots are the 2026-09-24 v3 set. Recheck them
+against the final UI and replace stale frames before resubmission. Build 16 is
+internal TestFlight only and is not the final App Review candidate; it has a
+known Mac report-sharing defect fixed in later source. Keep Build 12 attached
+until a fully verified replacement archive is ready, then select the new build
+as the final App Store Connect step. Do not press Update Review, send an App
+Review reply claiming completion, or press Resubmit before the replacement
+build, current screen recording, and release gates are verified.
+
+Historical submission state: on 2026-09-25 an automated 3.1.2 metadata
+rejection led to adding the Standard Apple EULA link to the App Description
+and resubmitting the same five-item package. The older status statements below
+describe that event, not the current App Store Connect state.
 
 This draft matches the approved ten-frame screenshot set and the United States
 + Canada launch boundary. Build `1.0.0+12` is attached to version 1.0. The

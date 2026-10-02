@@ -3,6 +3,12 @@
 Status: **the rejected six-frame v1 set was removed; the owner-approved
 ten-frame v3 set was uploaded and verified on 2026-09-24**
 
+2026-10-02 release recheck: App Store Connect still displays these ten v3
+frames on the rejected 1.0 listing. The app's Plus, Account, Care, and other
+screens have changed since capture. Treat v3 as the uploaded historical set;
+audit each frame against the final UI and replace stale frames before the next
+App Review submission. Do not fabricate UI or use private health data.
+
 The files under `iphone-69/final/` preserve the removed six-image v1 audit
 trail. They must not be treated as approved launch masters. The owner rejected
 the set because the first Care frame and Patterns frame were obsolete, the
