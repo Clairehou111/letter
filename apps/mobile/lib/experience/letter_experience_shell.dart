@@ -558,6 +558,7 @@ class _LetterExperienceShellState extends State<LetterExperienceShell>
   }
 
   void _openPlus() {
+    if (!mounted) return;
     PlusExperience.open(
       context,
       entitlementRepository: widget.entitlementRepository,
@@ -568,6 +569,11 @@ class _LetterExperienceShellState extends State<LetterExperienceShell>
   Future<PlusCommitResult?> _openPlusWithContext(
     PlusOutcomeContext outcomeContext,
   ) {
+    if (!mounted) {
+      return Future<PlusCommitResult?>.value(
+        const PlusCommitResult.dismissed(),
+      );
+    }
     return PlusExperience.open(
       context,
       entitlementRepository: widget.entitlementRepository,
@@ -614,6 +620,7 @@ class _LetterExperienceShellState extends State<LetterExperienceShell>
   /// screen-cover toggle), backup & restore, and the Plus and Reports
   /// entry points.
   void _openAccountSettings() {
+    if (!mounted) return;
     Navigator.of(context).popUntil((route) => route.isFirst);
     _openSettings();
   }

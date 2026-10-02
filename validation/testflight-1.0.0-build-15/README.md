@@ -152,7 +152,7 @@ Plus still showed the lifetime entitlement. This confirms the debug SDK/Test
 Store purchase persistence and Restore path across a relaunch.
 
 The active Lifetime screen also exposed subscription cancellation copy. The
-local source now gives Lifetime a one-time purchase explanation and omits the
+local source now describes continuing Lifetime Plus access and omits the
 subscription-management button for that plan. Deterministic widget tests cover
 both Lifetime and monthly active copy; this correction is not in Build 15.
 
@@ -165,5 +165,52 @@ sequence on a future build with the local account-deletion fix.
 Final local checks for this QA-entry change: `flutter analyze --no-pub` found
 no issues; the complete `flutter test --no-pub --concurrency=4 -r compact`
 suite passed **697 tests, 1 existing skip, 0 failures** after the copy fix; and
-`git diff --check` passed. The simulator has been left on the Plus sheet with
-the purchased Test Store Lifetime product available to Restore again.
+`git diff --check` passed.
+
+## 2026-10-02 full-app account and Restore follow-up
+
+The `Letter Account QA 2026-10-02` simulator ran the **full app** with the
+owner-confirmed disposable Letter Within account. With the ordinary Apple
+RevenueCat key, all three Apple prices loaded; pressing Start Plus still
+requested Apple Sandbox authentication. Signing into the device's normal
+iCloud Apple Account did not turn this into a Test Store purchase. The app must
+be launched with a Test Store `test_` public key for that development path.
+
+The same full app was then rebuilt with the ignored local Test Store config.
+It loaded the Test Store catalog and displayed the native **Test Store
+Purchase** simulation, without an Apple account prompt. A valid Lifetime test
+purchase activated Plus; reopening the sheet showed **Plus is active** and
+the **Lifetime** plan, with no redundant Restore button. Signing out moved
+the app to its authentication gate, where neither local records nor Plus or
+Restore were reachable. Signing back into the same account reopened its local
+records and **automatically restored the active Lifetime entitlement without
+tapping Restore**. This directly verifies that the normal account return path
+loads a purchase already linked to the same RevenueCat app-user ID. Restore
+remains available on the free Plus screen as a recovery action if that lookup
+does not show an expected purchase.
+
+During rapid sign-out/Plus actions, Flutter reported an unmounted shell
+context. The local source now closes pushed routes when the account gate
+closes and guards delayed Plus/account callbacks. A deterministic stale-action
+test passes. The empty Restore response now says **Plus purchase** so it also
+covers Lifetime. The redundant region/billing-variation footnote and the
+repeated price on the active-plan view have been removed; purchase options
+still use prices from the store catalog. These fixes are
+local and not in TestFlight Build 15.
+
+The active Monthly or Yearly screen now always offers **Change or manage
+plan**. When RevenueCat supplies the store-management URL, it opens that
+destination directly; when the current store environment supplies none, the
+screen explains that a plan change is unavailable there. This includes the
+RevenueCat Test Store, whose purchase simulation does not prove Apple's
+Monthly-to-Yearly crossgrade. Lifetime remains a separate non-consumable
+purchase rather than a subscription-group plan. Widget tests cover both the
+store-link and no-link paths. The Lifetime active copy now emphasizes ongoing
+Plus access without repeating billing terms. These changes are not in Build
+15 and still need TestFlight verification on a physical iPhone.
+
+Final source checks after this follow-up: `flutter analyze --no-pub` passed;
+`flutter test --no-pub --concurrency=4 -r compact` passed **701 tests, 1
+existing skip, 0 failures**; `git diff --check` passed. Apple StoreKit
+purchase/restore and subscription management still require a physical iPhone
+TestFlight run.

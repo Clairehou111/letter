@@ -180,6 +180,12 @@ class _LetterAppState extends State<LetterApp> with WidgetsBindingObserver {
       if (mounted) {
         setState(() => _authState = state);
         _rootContentRevision.value += 1;
+        if (widget.requireAuthentication && !state.canOpenLocalData) {
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (!mounted || _authState.canOpenLocalData) return;
+            _navigatorKey.currentState?.popUntil((route) => route.isFirst);
+          });
+        }
       }
       unawaited(_syncAccountBoundServices(state));
     });

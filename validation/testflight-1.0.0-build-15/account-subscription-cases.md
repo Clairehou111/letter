@@ -55,7 +55,8 @@ product loading and a no-purchase Restore result.
 | A03 Restore without purchase | In A, tap Restore before buying. | Clear “no purchase found” or equivalent result; no Plus entitlement, no false “unavailable on this build” if products loaded. |
 | A04 Purchase | With sandbox Apple tester **P1**, buy one product in A. Confirm the Apple purchase sheet and billing terms before accepting. | Purchase succeeds, `letter_plus` unlocks, paid Patterns becomes accessible, and the other free data remains intact. Capture product and displayed localized price. |
 | A05 Relaunch and offline | Force close and reopen; then temporarily disconnect network and reopen once more. | Active Plus returns on a connected launch. Offline state does not claim the user has permanently lost Plus or delete records. Reconnect and refresh. |
-| A06 Restore same account | In A, sign out or reinstall only if local-record backup is understood; sign back into A and tap Restore using P1. | Purchase reappears without another payment. The app restores only the intended entitlement. |
+| A05a Change subscription | With an active Monthly Apple subscription, open Plus → Change or manage plan. In the App Store subscription settings, inspect Yearly and its effective date and charge before confirming. Return to Plus after the store records the change. | The app opens Apple's management destination. Monthly and Yearly change within their subscription group; confirm the actual transition timing and entitlement after store reconciliation. If no management link appears, record the message and store state. Lifetime is a separate purchase, so do not treat it as a subscription-group upgrade. |
+| A06 Return to same account | In A, sign out, inspect the login screen, then sign back into A. Confirm whether Plus reappears automatically. Tap Restore only if the purchase is missing; the active Plus view does not show Restore. Test reinstall separately only after exporting an encrypted local-record backup. | Sign-out exposes neither records nor Restore. Returning to A restores access to its on-device records and normally reloads its Plus entitlement without another payment or manual Restore. If automatic lookup fails, the free Plus view offers Restore. |
 | A07 Free account B | Sign out of A and sign in to a distinct B on the **same installation**. Inspect all tabs before purchasing. | A's local health records are closed to B, not shown as B's records. B does not inherit A's Plus merely from local data. Record any mismatch or entitlement transfer instead of assuming policy. |
 | A08 B's own records | On a clean install or separate device for B, enter distinct synthetic records, relaunch, then inspect all free tabs and Plus. | B sees B's records; free tracking and Care work without Plus; paid Patterns stays locked until B has entitlement. |
 | A09 Cross-account restore | In B, tap Restore while signed into P1, then repeat with a separate unpaid sandbox tester **P2** where possible. | Note the actual RevenueCat transfer/restore policy result. P2 must not manufacture a purchase. No A health data appears in B. Do not treat Apple tester identity and Letter Within account identity as the same thing. |
@@ -64,7 +65,7 @@ product loading and a no-purchase Restore result.
 | A12 Cancel and reconnect | Open the new-account screen from settings, go Back, check local records, then reopen and connect a **new** account B. Inspect Plus before restoring. | Cancel leaves deleted-account local records readable. Explicit connection links those records to B; they do not silently open during an unrelated sign-in. B begins without Plus unless its own store entitlement or the configured transfer policy grants it. |
 | A13 Restore after deletion | With B connected, tap Restore first with P2, then with P1 only if testing transfer is intended. | P2 reports no purchase; P1 follows the configured RevenueCat transfer policy. No duplicate charge. Record exact message and entitlement state. |
 | A14 Network failure and retry | With a connected account, disable network, open Plus and tap retry; reconnect and retry. | Offline state is distinguishable from missing account and missing build configuration. Plans load again after reconnect. |
-| A15 Sign-out and return | Sign out of B, inspect the auth gate, then sign back into B. | Signed-out state does not expose B's records. Returning to B restores access to B's local records and correct Plus state. |
+| A15 Sign-out and return | Sign out of B, inspect the auth gate, then sign back into B. | Signed-out state exposes neither B's records nor Plus/Restore. Returning to B restores access to B's local records and looks up B's Plus state automatically. |
 
 ## Simulator and store coverage
 
@@ -81,6 +82,10 @@ product loading and a no-purchase Restore result.
   A09 and A13 on a physical iPhone with the configured Apple products before
   App Review. A10–A12 need a build containing the local deletion fix; Build 15
   is already known to fail them.
+- Updating the installed app keeps its local container. Deleting the app
+  removes the local encrypted health database; signing back in only recovers
+  the account and linked Plus entitlement, not those local records. Use the
+  explicit encrypted backup export/import for records before a reinstall.
 
 ## Result record
 

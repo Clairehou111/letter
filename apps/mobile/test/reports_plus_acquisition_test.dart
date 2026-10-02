@@ -567,6 +567,8 @@ void main() {
       ExperienceColors.emberSoft,
     );
     expect(find.textContaining('PREVIEW'), findsNothing);
+    expect(find.text('Restore a previous purchase'), findsOneWidget);
+    expect(find.textContaining('may vary by region'), findsNothing);
     expect(find.textContaining('What Plus'), findsNothing);
     expect(find.textContaining('Remembered help'), findsNothing);
     expect(find.textContaining('Deeper patterns'), findsNothing);
@@ -577,7 +579,7 @@ void main() {
     expect(monthlyTop, lessThan(lifetimeTop));
   });
 
-  testWidgets('active lifetime purchase has one-time billing copy', (
+  testWidgets('active lifetime purchase describes continuing Plus access', (
     tester,
   ) async {
     final repository = LocalEntitlementRepository(
@@ -596,9 +598,16 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Plus is active'), findsOneWidget);
-    expect(find.textContaining('one-time purchase'), findsOneWidget);
+    expect(find.text('Lifetime'), findsOneWidget);
+    expect(find.textContaining('\$99.99'), findsNothing);
+    expect(
+      find.textContaining('Plus access is yours for life'),
+      findsOneWidget,
+    );
     expect(find.textContaining('Cancelled access'), findsNothing);
-    expect(find.text('Manage subscription'), findsNothing);
+    expect(find.text('Change or manage plan'), findsNothing);
+    expect(find.text('Restore a previous purchase'), findsNothing);
+    expect(find.textContaining('may vary by region'), findsNothing);
   });
 
   testWidgets('active subscription retains cancellation copy', (tester) async {
@@ -618,8 +627,74 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Plus is active'), findsOneWidget);
+    expect(find.text('Monthly'), findsOneWidget);
+    expect(find.textContaining('\$7.99'), findsNothing);
     expect(find.textContaining('Cancelled access'), findsOneWidget);
     expect(find.textContaining('one-time purchase'), findsNothing);
+    expect(find.text('Restore a previous purchase'), findsNothing);
+    final changePlan = find.text('Change or manage plan');
+    expect(changePlan, findsOneWidget);
+    await tester.ensureVisible(changePlan);
+    await tester.tap(changePlan);
+    await tester.pumpAndSettle();
+    expect(
+      find.textContaining('Plan changes are unavailable for this purchase'),
+      findsOneWidget,
+    );
+  });
+
+  testWidgets('active monthly plan opens the store management link', (
+    tester,
+  ) async {
+    final managementUrl = Uri.parse(
+      'https://apps.apple.com/account/subscriptions',
+    );
+    final repository = _ManagedEntitlementRepository(managementUrl);
+    addTearDown(repository.dispose);
+    final openedUrls = <Uri>[];
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: ExperienceFoundation.lightTheme(),
+        home: PlusExperience(
+          entitlementRepository: repository,
+          openLegalUrl: (url) async {
+            openedUrls.add(url);
+            return true;
+          },
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    final changePlan = find.text('Change or manage plan');
+    await tester.ensureVisible(changePlan);
+    await tester.tap(changePlan);
+    await tester.pumpAndSettle();
+    expect(openedUrls, <Uri>[managementUrl]);
+  });
+
+  testWidgets('empty Restore result covers subscriptions and lifetime', (
+    tester,
+  ) async {
+    final repository = LocalEntitlementRepository();
+    addTearDown(repository.dispose);
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: ExperienceFoundation.lightTheme(),
+        home: PlusExperience(entitlementRepository: repository),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    final restore = find.text('Restore a previous purchase');
+    await tester.ensureVisible(restore);
+    await tester.tap(restore);
+    await tester.pumpAndSettle();
+
+    expect(
+      find.text('No active Plus purchase was found for this store account.'),
+      findsOneWidget,
+    );
   });
 
   testWidgets(
@@ -888,6 +963,21 @@ class _RecordingExportPort implements ReportExperiencePort {
       localPath: '/Documents/letter/$fileName',
     );
   }
+}
+
+final class _ManagedEntitlementRepository extends LocalEntitlementRepository {
+  _ManagedEntitlementRepository(this.url)
+    : super(
+        initial: const EntitlementState(
+          status: EntitlementStatus.activePaid,
+          planId: 'letter_monthly',
+        ),
+      );
+
+  final Uri url;
+
+  @override
+  Future<Uri?> managementUrl() async => url;
 }
 
 final class _RefreshEntitlementRepository extends LocalEntitlementRepository {

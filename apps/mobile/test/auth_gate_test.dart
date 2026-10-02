@@ -93,6 +93,44 @@ void main() {
     await pumpUntilFound(tester, find.byType(AuthScreen));
 
     expect(find.byType(AuthScreen), findsOneWidget);
+    expect(find.byType(LetterExperienceShell), findsNothing);
+    expect(find.text('Restore a previous purchase'), findsNothing);
+  });
+
+  testWidgets('a stale Plus action after sign-out cannot reopen the shell', (
+    tester,
+  ) async {
+    final auth = DevAuthService(
+      initialState: const AuthState(
+        status: AuthStatus.authenticated,
+        userId: 'dev-user-001',
+      ),
+    );
+    await tester.pumpWidget(
+      LetterApp(
+        authService: auth,
+        requireAuthentication: true,
+        periodRepository: InMemoryPeriodRepository(),
+        onboardingRepository: _AuthGateOnboardingRepository(
+          profile: OnboardingProfile(),
+        ),
+      ),
+    );
+    await pumpUntilFound(tester, find.byType(LetterExperienceShell));
+    await tester.tap(find.byTooltip('Settings').first);
+    await tester.pumpAndSettle();
+    final openPlus = tester
+        .widget<YouExperience>(find.byType(YouExperience))
+        .onOpenPlus!;
+
+    await auth.signOut();
+    await pumpUntilFound(tester, find.byType(AuthScreen));
+    openPlus();
+    await tester.pumpAndSettle();
+
+    expect(tester.takeException(), isNull);
+    expect(find.byType(AuthScreen), findsOneWidget);
+    expect(find.text('Letter Within Plus'), findsNothing);
   });
 
   testWidgets('prior-auth offline state does not reopen the sign-in gate', (

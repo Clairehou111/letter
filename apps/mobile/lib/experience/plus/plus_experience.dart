@@ -2,7 +2,6 @@ import 'dart:async';
 import 'dart:developer' as developer;
 
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../features/entitlement/domain/entitlement.dart';
@@ -158,6 +157,7 @@ class _PlusExperienceState extends State<PlusExperience> {
   bool _feedbackIsError = false;
 
   Uri? _managementUrl;
+  int _managementUrlLoadGeneration = 0;
 
   EntitlementRepository get _repository => widget.entitlementRepository;
 
@@ -242,6 +242,7 @@ class _PlusExperienceState extends State<PlusExperience> {
           (_plansError! as EntitlementException).planLoadFailureCode ==
               PlanLoadFailureCode.accountNotReady;
       setState(() => _entitlement = state);
+      unawaited(_loadManagementUrl());
       // The app can open its shell while account-bound store reconciliation
       // finishes. If plans were requested before the user ID reached the store
       // adapter, retry once that unavailable state clears.
@@ -295,14 +296,15 @@ class _PlusExperienceState extends State<PlusExperience> {
   }
 
   Future<void> _loadManagementUrl() async {
+    final generation = ++_managementUrlLoadGeneration;
     try {
       final url = await _repository.managementUrl();
-      if (!mounted) {
+      if (!mounted || generation != _managementUrlLoadGeneration) {
         return;
       }
       setState(() => _managementUrl = url);
     } catch (_) {
-      // The management destination is optional; absence hides the row.
+      // The action remains visible and explains when this store has no link.
     }
   }
 
@@ -433,7 +435,7 @@ class _PlusExperienceState extends State<PlusExperience> {
       } else {
         _setFeedback(
           state.message ??
-              'No active subscription was found for this store account.',
+              'No active Plus purchase was found for this store account.',
           isError: false,
         );
       }
@@ -461,66 +463,17 @@ class _PlusExperienceState extends State<PlusExperience> {
   Future<void> _openManagement() async {
     final url = _managementUrl;
     if (url == null) {
+      _setFeedback(
+        'Plan changes are unavailable for this purchase in the current '
+        'store environment.',
+        isError: false,
+      );
       return;
     }
-    await showExperienceSheet<void>(
-      context,
-      child: Builder(
-        builder: (sheetContext) {
-          return Padding(
-            padding: const EdgeInsets.fromLTRB(
-              ExperienceSpacing.screenMargin,
-              0,
-              ExperienceSpacing.screenMargin,
-              ExperienceSpacing.lg,
-            ),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: <Widget>[
-                Text(
-                  'Manage your subscription',
-                  style: ExperienceType.headline(ExperienceColors.ink),
-                ),
-                const SizedBox(height: ExperienceSpacing.xs),
-                Text(
-                  'Cancellations and payment changes happen in the store. '
-                  'Cancelled access continues until the period ends, and your '
-                  'records stay readable either way.',
-                  style: ExperienceType.bodySmall(ExperienceColors.inkSoft),
-                ),
-                const SizedBox(height: ExperienceSpacing.sm),
-                SelectableText(
-                  url.toString(),
-                  style: ExperienceType.caption(ExperienceColors.inkSoft),
-                ),
-                const SizedBox(height: ExperienceSpacing.md),
-                _PlusSecondaryButton(
-                  label: 'Copy store link',
-                  onPressed: () async {
-                    await Clipboard.setData(
-                      ClipboardData(text: url.toString()),
-                    );
-                    if (!sheetContext.mounted) {
-                      return;
-                    }
-                    Navigator.of(sheetContext).pop();
-                    _setFeedback(
-                      'Link copied — open it in your browser '
-                      'to manage your subscription.',
-                      isError: false,
-                    );
-                  },
-                ),
-              ],
-            ),
-          );
-        },
-      ),
-    );
+    await _openExternalLink(url);
   }
 
-  Future<void> _openLegalLink(Uri url) async {
+  Future<void> _openExternalLink(Uri url) async {
     try {
       final opener =
           widget.openLegalUrl ??
@@ -581,13 +534,6 @@ class _PlusExperienceState extends State<PlusExperience> {
               'Care, safety, tracking, prediction, and backup are free. '
               'Losing Plus never removes anything you recorded.',
               textAlign: TextAlign.center,
-              style: ExperienceType.caption(ExperienceColors.inkSoft),
-            ),
-          ],
-          if (!_accountRequired) ...<Widget>[
-            const SizedBox(height: ExperienceSpacing.md),
-            Text(
-              yearlyVsLifetimeNote,
               style: ExperienceType.caption(ExperienceColors.inkSoft),
             ),
           ],
@@ -695,7 +641,7 @@ class _PlusExperienceState extends State<PlusExperience> {
               Semantics(
                 link: true,
                 child: TextButton(
-                  onPressed: () => _openLegalLink(
+                  onPressed: () => _openExternalLink(
                     Uri.parse('https://letterwithin.app/privacy'),
                   ),
                   child: const Text('Privacy Policy'),
@@ -704,7 +650,7 @@ class _PlusExperienceState extends State<PlusExperience> {
               Semantics(
                 link: true,
                 child: TextButton(
-                  onPressed: () => _openLegalLink(
+                  onPressed: () => _openExternalLink(
                     Uri.parse(
                       'https://www.apple.com/legal/internet-services/itunes/dev/stdeula/',
                     ),
@@ -931,7 +877,7 @@ class _PlusExperienceState extends State<PlusExperience> {
   }
 
   // -------------------------------------------------------------------------
-  // Active section — manage, restore, and an honest cancellation note.
+  // Active section — plan details and an honest cancellation note.
   // Existing subscribers never see acquisition copy.
   // -------------------------------------------------------------------------
 
@@ -949,33 +895,26 @@ class _PlusExperienceState extends State<PlusExperience> {
         Text(
           currentPlan == null
               ? 'An active Plus plan is linked to this device.'
-              : '${currentPlan.title} · ${currentPlan.priceLabel}',
+              : currentPlan.title,
           style: ExperienceType.body(ExperienceColors.ink),
         ),
         const SizedBox(height: ExperienceSpacing.xs),
         Text(
           isLifetime
-              ? 'Lifetime is a one-time purchase; it does not renew. '
-                    'Everything you recorded stays readable.'
-              : 'Manage or cancel any time in the store. Cancelled access '
-                    'continues until the period ends, and everything you '
-                    'recorded stays readable after that.',
+              ? 'Your Plus access is yours for life. Everything you recorded '
+                    'stays readable.'
+              : 'Change between Monthly and Yearly, or cancel, in your store '
+                    'subscription settings. Cancelled access continues until '
+                    'the period ends; your records stay readable.',
           style: ExperienceType.bodySmall(ExperienceColors.inkSoft),
         ),
-        if (!isLifetime && _managementUrl != null) ...<Widget>[
+        if (!isLifetime) ...<Widget>[
           const SizedBox(height: ExperienceSpacing.sm),
           _PlusSecondaryButton(
-            label: 'Manage subscription',
+            label: 'Change or manage plan',
             onPressed: _openManagement,
           ),
         ],
-        const SizedBox(height: ExperienceSpacing.sm),
-        _PlusSecondaryButton(
-          label: _restoreInFlight
-              ? 'Checking with the store…'
-              : 'Restore a previous purchase',
-          onPressed: _restoreInFlight ? null : _restorePurchases,
-        ),
       ],
     );
   }

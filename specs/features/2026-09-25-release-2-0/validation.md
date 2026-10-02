@@ -153,11 +153,26 @@ recorded below.
   activation previously popped its root page to a black screen. These results
   verify the SDK/Test Store path only; Apple StoreKit and TestFlight purchase
   and restore remain blocked pending physical iPhone validation. The final
-  active Lifetime UI now uses one-time purchase copy rather than subscription
+  active Lifetime UI now describes continuing Plus access rather than subscription
   cancellation copy, with deterministic Lifetime and monthly widget checks. The
   local `flutter analyze --no-pub` and `git diff --check` passed; the complete
   `flutter test --no-pub --concurrency=4 -r compact` suite passed **697 tests,
   1 existing skip, 0 failures**.
+- A later full-app Test Store run used the disposable authenticated app
+  account. Lifetime test purchase activated Plus, the active sheet omitted
+  Restore, sign-out reached the login gate, and the same app account reopened
+  its on-device records **and Lifetime access without tapping Restore**. A
+  sign-out/Plus timing test exposed an unmounted shell callback; route closure
+  and mounted guards are now covered by a deterministic regression test. The
+  empty Restore message now covers both subscriptions and Lifetime, and the
+  redundant region footnote and active-plan price were removed. Active Monthly
+  and Yearly now always show a **Change or manage plan** action; it opens the
+  RevenueCat store-management URL when one exists and explains when the current
+  store environment supplies no link. Lifetime stays a separate one-time
+  product and its active copy emphasizes continuing Plus access. Widget tests
+  cover both management-link cases; real Apple plan changes still need a
+  physical iPhone. Final local analyze and `git diff --check` passed, and the
+  full Flutter suite passed **701 tests, 1 existing skip, 0 failures**.
 
 ## 2026-10-01 Build 14 TestFlight handoff
 

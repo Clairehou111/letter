@@ -31,6 +31,8 @@ class FakeRevenueCatClient implements RevenueCatClient {
   String? configuredUserId;
   String? purchasedProductId;
   var clearUserCalls = 0;
+  var customerStateCalls = 0;
+  var restoreCalls = 0;
 
   @override
   Future<void> configure({
@@ -55,12 +57,14 @@ class FakeRevenueCatClient implements RevenueCatClient {
   }
 
   @override
-  Future<RevenueCatCustomerState> currentCustomerState() async =>
-      restoreState ??
-      const RevenueCatCustomerState(
-        hasActiveEntitlement: false,
-        hasPurchasedLetterProduct: false,
-      );
+  Future<RevenueCatCustomerState> currentCustomerState() async {
+    customerStateCalls += 1;
+    return restoreState ??
+        const RevenueCatCustomerState(
+          hasActiveEntitlement: false,
+          hasPurchasedLetterProduct: false,
+        );
+  }
 
   @override
   Future<RevenueCatCustomerState> purchase(String productId) async {
@@ -74,6 +78,7 @@ class FakeRevenueCatClient implements RevenueCatClient {
 
   @override
   Future<RevenueCatCustomerState> restore() async {
+    restoreCalls += 1;
     if (restoreState == null) {
       throw const EntitlementException('Restore failed.');
     }
@@ -146,6 +151,32 @@ void main() {
     expect(client.clearUserCalls, 1);
     expect(repo.current.status, EntitlementStatus.freeOrUnknown);
   });
+
+  test(
+    'signing back into the same account reloads Plus without Restore',
+    () async {
+      const userId = '2c1a7f42-2d87-4ad6-8d89-b6b68b429127';
+      final client = FakeRevenueCatClient(restoreState: active());
+      final repo = RevenueCatEntitlementRepository(
+        appUserId: '',
+        appleApiKey: 'apple-key',
+        googleApiKey: '',
+        store: RevenueCatStore.apple,
+        client: client,
+      );
+      addTearDown(repo.dispose);
+
+      await repo.identifyAuthenticatedUser(userId);
+      expect(repo.current.status, EntitlementStatus.activePaid);
+      await repo.clearAuthenticatedUser();
+      expect(repo.current.status, EntitlementStatus.freeOrUnknown);
+
+      await repo.identifyAuthenticatedUser(userId);
+      expect(repo.current.status, EntitlementStatus.activePaid);
+      expect(client.customerStateCalls, 2);
+      expect(client.restoreCalls, 0);
+    },
+  );
 
   test('store logout failure still removes app-level premium access', () async {
     final client = FakeRevenueCatClient(restoreState: active())
