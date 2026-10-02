@@ -214,3 +214,30 @@ Final source checks after this follow-up: `flutter analyze --no-pub` passed;
 existing skip, 0 failures**; `git diff --check` passed. Apple StoreKit
 purchase/restore and subscription management still require a physical iPhone
 TestFlight run.
+
+## 2026-10-02 full-app Monthly plan-change simulator run
+
+The `Letter Apple Sandbox QA 2026-10-02` iOS 26.5 simulator was updated from
+the manual QA shell to the **complete app** at local `main` commit `cd7b3d8`,
+using the ignored local RevenueCat Test Store debug key. An authenticated
+Letter Within account completed the real onboarding and opened Settings →
+Letter Within Plus. That account already held the earlier Test Store Lifetime
+purchase, so it could not exercise the Monthly screen. Its RevenueCat customer
+profile showed one Test Store Lifetime transaction and no Apple transaction.
+With the owner's explicit authorization, customer `05f4…3c0a` and its Test
+Store purchase history were deleted in RevenueCat; the Supabase login and
+on-device records were not deleted.
+
+After signing back into the **complete app**, Plus showed the free catalog
+with Yearly US$39.99, Monthly US$7.99, and Lifetime US$99.99. The tester
+selected Monthly and completed Test Store's **Test valid purchase**. Reopening
+Plus showed **Plus is active → Monthly**, no active-plan price or Restore
+button, and the **Change or manage plan** action. Tapping that action produced
+“Plan changes are unavailable for this purchase in the current store
+environment.” The Test Store purchase did not provide a subscription
+management URL. This run verifies the full-app free-to-Monthly transition and
+the no-link management state. It does **not** verify an Apple Monthly-to-Yearly
+crossgrade, charge, renewal date, or management destination. The latter still
+requires an Apple sandbox/TestFlight purchase on a physical iPhone. Test Store
+Monthly subscriptions renew on an accelerated schedule and expire after five
+renewals, so this test entitlement is temporary.
