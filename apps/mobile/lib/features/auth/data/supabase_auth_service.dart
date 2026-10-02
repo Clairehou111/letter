@@ -25,6 +25,8 @@ final class SupabaseAuthService implements AuthService {
   static const _priorSignInKey = 'letter.auth.prior-sign-in';
   static const _priorUserIdKey = 'letter.auth.prior-user-id';
   static const _accountDeletedKey = 'letter.auth.account-deleted';
+  static const _replacementRequestedKey =
+      'letter.auth.deleted-account-replacement-requested';
   static const _authRequestTimeout = Duration(seconds: 20);
 
   final supabase.SupabaseClient _client;
@@ -35,6 +37,7 @@ final class SupabaseAuthService implements AuthService {
   AuthState _state;
   Future<void> _transitionQueue = Future<void>.value();
   bool _disposed = false;
+  bool _replacementCancelled = false;
 
   static AuthState _fromSession(supabase.Session? session) {
     final user = session?.user;
@@ -91,6 +94,41 @@ final class SupabaseAuthService implements AuthService {
       return;
     }
     if (deletedMarker.value == 'true') {
+      final replacementRequest = await _readStorage(_replacementRequestedKey);
+      final owner = await _readStorage(_priorUserIdKey);
+      if (!replacementRequest.failed &&
+          !owner.failed &&
+          !_replacementCancelled &&
+          replacementRequest.value == 'true' &&
+          owner.value != null &&
+          owner.value != session.user.id) {
+        final ownerStored = await _writeStorage(
+          _priorUserIdKey,
+          session.user.id,
+        );
+        final priorSignInStored = await _writeStorage(_priorSignInKey, 'true');
+        if (ownerStored && priorSignInStored && !_replacementCancelled) {
+          final stillRequested = await _readStorage(_replacementRequestedKey);
+          if (!stillRequested.failed &&
+              stillRequested.value == 'true' &&
+              !_replacementCancelled) {
+            final deletedMarkerCleared = await _deleteStorage(
+              _accountDeletedKey,
+            );
+            if (deletedMarkerCleared && !_replacementCancelled) {
+              await _deleteStorage(_replacementRequestedKey);
+              if (!_disposed) _set(_fromSession(session));
+              return;
+            }
+            if (deletedMarkerCleared) {
+              await _writeStorage(_accountDeletedKey, 'true');
+            }
+          }
+        }
+        if (ownerStored) {
+          await _writeStorage(_priorUserIdKey, owner.value!);
+        }
+      }
       if (_disposed) return;
       _set(const AuthState(status: AuthStatus.localOnlyAfterAccountDeletion));
       try {
@@ -179,6 +217,15 @@ final class SupabaseAuthService implements AuthService {
     } on Object {
       // Account ownership is a privacy boundary. Fail closed if it cannot be
       // persisted, otherwise another account could open the same local data.
+      return false;
+    }
+  }
+
+  Future<bool> _deleteStorage(String key) async {
+    try {
+      await _storage.delete(key: key);
+      return true;
+    } on Object {
       return false;
     }
   }
@@ -288,6 +335,7 @@ final class SupabaseAuthService implements AuthService {
       );
     }
     await _writeStorage(_accountDeletedKey, 'true');
+    await _deleteStorage(_replacementRequestedKey);
     // The server identity is gone, but health records were never uploaded and
     // remain useful on this installation. Clear the invalid provider session
     // while preserving the local owner marker and offline access gate.
@@ -298,6 +346,23 @@ final class SupabaseAuthService implements AuthService {
     }
     if (_disposed) return;
     _set(const AuthState(status: AuthStatus.localOnlyAfterAccountDeletion));
+  }
+
+  @override
+  Future<void> beginAccountConnectionAfterDeletion() async {
+    if (!_state.hasDeletedServerAccount ||
+        !await _writeStorage(_replacementRequestedKey, 'true')) {
+      throw StateError('A new account cannot be connected right now.');
+    }
+    _replacementCancelled = false;
+  }
+
+  @override
+  Future<void> cancelAccountConnectionAfterDeletion() async {
+    if (_state.hasDeletedServerAccount) {
+      _replacementCancelled = true;
+      await _deleteStorage(_replacementRequestedKey);
+    }
   }
 
   Future<void> _closeLocalGate() async {

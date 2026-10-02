@@ -109,9 +109,27 @@ recorded below.
 - Xcode Organizer reported **upload complete**. App Store Connect received
   Build 15 at Oct 2, 2026 02:08 local time and completed processing. TestFlight
   shows **Ready to Submit** and assignment to **Internal Testers** (2 testers).
-  Physical-device acceptance has not started; follow
+  Physical-device acceptance is in progress; follow
   `validation/testflight-1.0.0-build-15/README.md`. No App Review submission
   occurred.
+- Subsequent physical TestFlight testing found that after deleting the server
+  account, Plus mislabeled missing account identity as purchases being
+  unavailable on this build, Restore repeated the message, and Settings had no
+  path to connect a new account. Local fixes and regression tests are recorded
+  in the Build 15 validation file; they are **not in the uploaded binary**.
+- An isolated iPhone 17 Pro simulator with a synthetic deleted-account state
+  confirmed Plus → Account settings → replacement-account entry and Back,
+  while a local mood record remained visible. This uses a fake store client;
+  it does not verify a live Supabase account, RevenueCat Test Store, Apple
+  purchase, or restore. The ordered account/subscription cases are in
+  `validation/testflight-1.0.0-build-15/account-subscription-cases.md`.
+- For the local deletion fix, `flutter analyze --no-pub` reported no issues;
+  the full `flutter test --no-pub` passed **695 tests, 1 existing skip, 0
+  failures**. Focused auth, Plus, Supabase and RevenueCat tests also passed.
+- A second clean simulator with the real Apple RevenueCat public key loaded
+  yearly US$39.99, monthly US$7.99, and lifetime US$99.99 from Apple sandbox.
+  Tapping purchase opened the Sandbox Apple Account sign-in dialog. Sandbox
+  purchase, entitlement unlock, and restore remain pending tester sign-in.
 
 ## 2026-10-01 Build 14 TestFlight handoff
 

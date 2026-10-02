@@ -70,5 +70,12 @@ abstract interface class AuthService {
   /// Local records remain available offline on this installation.
   Future<void> deleteAccount();
 
+  /// Explicitly allows a new server identity to take ownership of the local
+  /// records left after account deletion. Normal sign-in cannot do this.
+  Future<void> beginAccountConnectionAfterDeletion();
+
+  /// Revokes the pending connection if the sign-in screen is dismissed.
+  Future<void> cancelAccountConnectionAfterDeletion();
+
   Future<void> dispose();
 }

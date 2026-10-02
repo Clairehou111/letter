@@ -108,6 +108,8 @@ class _LetterAppState extends State<LetterApp> with WidgetsBindingObserver {
   late final CareUsageAnalytics _careUsageAnalytics;
   late final StreamSubscription<AuthState> _authSubscription;
   late final StreamSubscription<EntitlementState> _entitlementSubscription;
+  Future<void> _entitlementAccountSync = Future<void>.value();
+  int _entitlementAccountRevision = 0;
   AuthState _authState = const AuthState(status: AuthStatus.signedOut);
   bool _authLoaded = false;
   late final OnboardingRepository _repository;
@@ -514,17 +516,43 @@ class _LetterAppState extends State<LetterApp> with WidgetsBindingObserver {
     await _syncEntitlementForAccount(state);
   }
 
-  Future<void> _syncEntitlementForAccount(AuthState state) async {
+  Future<void> _connectAccountAfterDeletion() async {
+    await _authService.beginAccountConnectionAfterDeletion();
     try {
-      final userId = state.userId;
-      if (state.canOpenLocalData && userId != null) {
-        await _entitlementRepository.identifyAuthenticatedUser(userId);
-      } else {
-        await _entitlementRepository.clearAuthenticatedUser();
-      }
-    } on Object {
-      // Store reconciliation never blocks local records or acute Care.
+      final navigator = _navigatorKey.currentState;
+      if (navigator == null) return;
+      await navigator.push<void>(
+        MaterialPageRoute<void>(
+          builder: (routeContext) => AuthScreen(
+            service: _authService,
+            appleSignInEnabled: widget.appleSignInEnabled,
+            onClose: () => Navigator.of(routeContext).maybePop(),
+            onAuthenticated: () => Navigator.of(routeContext).maybePop(),
+          ),
+        ),
+      );
+    } finally {
+      await _authService.cancelAccountConnectionAfterDeletion();
     }
+  }
+
+  Future<void> _syncEntitlementForAccount(AuthState state) {
+    final revision = ++_entitlementAccountRevision;
+    final task = _entitlementAccountSync.then((_) async {
+      if (revision != _entitlementAccountRevision) return;
+      try {
+        final userId = state.userId;
+        if (state.canOpenLocalData && userId != null) {
+          await _entitlementRepository.identifyAuthenticatedUser(userId);
+        } else {
+          await _entitlementRepository.clearAuthenticatedUser();
+        }
+      } on Object {
+        // Store reconciliation never blocks local records or acute Care.
+      }
+    });
+    _entitlementAccountSync = task;
+    return task;
   }
 
   Future<void> _trackOperationally(AnalyticsEvent event) async {
@@ -592,6 +620,7 @@ class _LetterAppState extends State<LetterApp> with WidgetsBindingObserver {
           readPrivacy: () => _privacyPreferences,
           persistPrivacy: _updatePrivacyPreferences,
         ),
+        onConnectAccount: _connectAccountAfterDeletion,
         onCycleDataChanged: _reconcileLocalPredictions,
         onCareUsed: _careUsageAnalytics.recordCareUse,
         readTransaction: _healthReadTransaction,

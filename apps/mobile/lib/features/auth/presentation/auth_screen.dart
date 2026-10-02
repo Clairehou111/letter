@@ -13,11 +13,15 @@ class AuthScreen extends StatefulWidget {
   const AuthScreen({
     required this.service,
     this.appleSignInEnabled = false,
+    this.onClose,
+    this.onAuthenticated,
     super.key,
   });
 
   final AuthService service;
   final bool appleSignInEnabled;
+  final VoidCallback? onClose;
+  final VoidCallback? onAuthenticated;
 
   @override
   State<AuthScreen> createState() => _AuthScreenState();
@@ -31,6 +35,22 @@ class _AuthScreenState extends State<AuthScreen> {
   bool _passwordMode = false;
   bool _obscurePassword = true;
   String? _error;
+  StreamSubscription<AuthState>? _authSubscription;
+  bool _didNotifyAuthenticated = false;
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.onAuthenticated != null) {
+      _authSubscription = widget.service.watch().listen((state) {
+        if (!mounted || !state.isAuthenticated || _didNotifyAuthenticated) {
+          return;
+        }
+        _didNotifyAuthenticated = true;
+        widget.onAuthenticated!();
+      });
+    }
+  }
 
   bool get _showApple =>
       widget.appleSignInEnabled &&
@@ -40,6 +60,7 @@ class _AuthScreenState extends State<AuthScreen> {
 
   @override
   void dispose() {
+    _authSubscription?.cancel();
     _email.dispose();
     _password.dispose();
     super.dispose();
@@ -114,6 +135,17 @@ class _AuthScreenState extends State<AuthScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
+                  if (widget.onClose != null) ...[
+                    Align(
+                      alignment: Alignment.centerLeft,
+                      child: IconButton(
+                        tooltip: 'Back to your records',
+                        onPressed: _working ? null : widget.onClose,
+                        icon: const Icon(Icons.arrow_back),
+                      ),
+                    ),
+                    const SizedBox(height: ExperienceSpacing.sm),
+                  ],
                   const LetterBrandLockup(),
                   const SizedBox(height: ExperienceSpacing.xl),
                   Text(
@@ -122,8 +154,10 @@ class _AuthScreenState extends State<AuthScreen> {
                   ),
                   const SizedBox(height: ExperienceSpacing.sm),
                   Text(
-                    'Create one account for purchases and account recovery. '
-                    'Your cycle, symptoms, Letters, and Care records stay on this device.',
+                    widget.service.current.hasDeletedServerAccount
+                        ? 'The deleted account cannot be recovered. Create or sign in to another account to use Plus. Your records stay on this device and can be linked to the account you connect here.'
+                        : 'Create one account for purchases and account recovery. '
+                              'Your cycle, symptoms, Letters, and Care records stay on this device.',
                     style: ExperienceType.body(ExperienceColors.inkSoft),
                   ),
                   if (widget.service.current.hasLocalDataAccountMismatch) ...[
@@ -454,10 +488,12 @@ class _AuthScreenState extends State<AuthScreen> {
                         const SizedBox(width: ExperienceSpacing.sm),
                         Expanded(
                           child: Text(
-                            'Signing in does not upload your health history. '
-                            'If another account previously created records on '
-                            'this device, those records stay closed—not '
-                            'deleted—until that account signs in again.',
+                            widget.service.current.hasDeletedServerAccount
+                                ? 'Signing in does not upload your health history. Use an account you control; the deleted account cannot be restored.'
+                                : 'Signing in does not upload your health history. '
+                                      'If another account previously created records on '
+                                      'this device, those records stay closed—not '
+                                      'deleted—until that account signs in again.',
                             style: ExperienceType.bodySmall(
                               ExperienceColors.ink,
                             ),

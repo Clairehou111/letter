@@ -58,6 +58,16 @@ final class DevAuthService implements AuthService {
     _set(const AuthState(status: AuthStatus.localOnlyAfterAccountDeletion));
   }
 
+  @override
+  Future<void> beginAccountConnectionAfterDeletion() async {
+    if (!_state.hasDeletedServerAccount) {
+      throw StateError('No deleted account is awaiting connection.');
+    }
+  }
+
+  @override
+  Future<void> cancelAccountConnectionAfterDeletion() async {}
+
   void expireSession() {
     _set(
       AuthState(

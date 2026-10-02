@@ -213,10 +213,14 @@ final class RevenueCatEntitlementRepository implements EntitlementRepository {
   @override
   Future<List<LetterPlan>> loadPlans() async {
     if (!isConfigured) {
-      _set(_state.copyWithMessage('Purchases are unavailable on this build.'));
+      final accountNotReady = !_isUuid(_appUserId);
+      final message = accountNotReady
+          ? 'Connect an account to view plans and restore purchases.'
+          : 'Purchases are unavailable on this build.';
+      _set(_state.copyWithMessage(message));
       throw EntitlementException(
-        'Purchases are unavailable on this build.',
-        planLoadFailureCode: !_isUuid(_appUserId)
+        message,
+        planLoadFailureCode: accountNotReady
             ? PlanLoadFailureCode.accountNotReady
             : store == null
             ? PlanLoadFailureCode.storeNotSelected
@@ -305,7 +309,11 @@ final class RevenueCatEntitlementRepository implements EntitlementRepository {
   @override
   Future<PurchaseResult> purchase(String planId) async {
     if (!isConfigured) {
-      return _unavailableResult('Purchases are unavailable on this build.');
+      return _unavailableResult(
+        !_isUuid(_appUserId)
+            ? 'Connect an account before purchasing Plus.'
+            : 'Purchases are unavailable on this build.',
+      );
     }
     if (!letterPlans.any((plan) => plan.id == planId)) {
       return _failedResult('That plan is unavailable.');
@@ -338,7 +346,13 @@ final class RevenueCatEntitlementRepository implements EntitlementRepository {
   @override
   Future<EntitlementState> restorePurchases() async {
     if (!isConfigured) {
-      _set(_state.copyWithMessage('Purchases are unavailable on this build.'));
+      _set(
+        _state.copyWithMessage(
+          !_isUuid(_appUserId)
+              ? 'Connect an account before restoring purchases.'
+              : 'Purchases are unavailable on this build.',
+        ),
+      );
       return _state;
     }
     _stateBeforeOperation = _state;
@@ -404,15 +418,14 @@ final class RevenueCatEntitlementRepository implements EntitlementRepository {
   @override
   Future<void> clearAuthenticatedUser() async {
     final hadAuthenticatedUser = _isUuid(_appUserId);
+    _appUserId = '';
+    _managementUrl = null;
+    _set(const EntitlementState(status: EntitlementStatus.freeOrUnknown));
     try {
       if (hadAuthenticatedUser) await _client.clearUser();
     } on Object {
       // Store logout may fail offline. Letter Within must still revoke local access;
       // the next authenticated UUID is reconciled through RevenueCat.logIn.
-    } finally {
-      _appUserId = '';
-      _managementUrl = null;
-      _set(const EntitlementState(status: EntitlementStatus.freeOrUnknown));
     }
   }
 

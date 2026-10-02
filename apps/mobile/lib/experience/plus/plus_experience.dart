@@ -102,10 +102,12 @@ class PlusExperience extends StatefulWidget {
     required this.entitlementRepository,
     this.outcomeContext,
     this.openLegalUrl,
+    this.onOpenAccount,
   });
 
   final EntitlementRepository entitlementRepository;
   final Future<bool> Function(Uri url)? openLegalUrl;
+  final VoidCallback? onOpenAccount;
 
   /// Additive outcome context. Null means a deliberate Settings/Patterns
   /// entry: the headline is the plain product name and no outcome is invented.
@@ -118,12 +120,14 @@ class PlusExperience extends StatefulWidget {
     BuildContext context, {
     required EntitlementRepository entitlementRepository,
     PlusOutcomeContext? outcomeContext,
+    VoidCallback? onOpenAccount,
   }) async {
     final result = await showExperienceSheet<PlusCommitResult>(
       context,
       child: PlusExperience(
         entitlementRepository: entitlementRepository,
         outcomeContext: outcomeContext,
+        onOpenAccount: onOpenAccount,
       ),
     );
     return result ?? const PlusCommitResult.dismissed();
@@ -235,15 +239,16 @@ class _PlusExperienceState extends State<PlusExperience> {
       }
       final waitingForAccount =
           _plansError is EntitlementException &&
-          (_plansError! as EntitlementException).message ==
-              'Purchases are unavailable on this build.';
+          (_plansError! as EntitlementException).planLoadFailureCode ==
+              PlanLoadFailureCode.accountNotReady;
       setState(() => _entitlement = state);
       // The app can open its shell while account-bound store reconciliation
       // finishes. If plans were requested before the user ID reached the store
       // adapter, retry once that unavailable state clears.
       if (waitingForAccount &&
           !_plansLoading &&
-          state.message != 'Purchases are unavailable on this build.') {
+          state.message !=
+              'Connect an account to view plans and restore purchases.') {
         unawaited(_loadPlans());
       }
     });
@@ -579,11 +584,13 @@ class _PlusExperienceState extends State<PlusExperience> {
               style: ExperienceType.caption(ExperienceColors.inkSoft),
             ),
           ],
-          const SizedBox(height: ExperienceSpacing.md),
-          Text(
-            yearlyVsLifetimeNote,
-            style: ExperienceType.caption(ExperienceColors.inkSoft),
-          ),
+          if (!_accountRequired) ...<Widget>[
+            const SizedBox(height: ExperienceSpacing.md),
+            Text(
+              yearlyVsLifetimeNote,
+              style: ExperienceType.caption(ExperienceColors.inkSoft),
+            ),
+          ],
         ],
       ),
     );
@@ -671,53 +678,56 @@ class _PlusExperienceState extends State<PlusExperience> {
           _buildPlansError()
         else
           _buildPlanList(),
-        const SizedBox(height: ExperienceSpacing.md),
-        _buildPurchaseButton(),
-        const SizedBox(height: ExperienceSpacing.xs),
-        Text(
-          introRenewalNote,
-          textAlign: TextAlign.center,
-          style: ExperienceType.caption(ExperienceColors.inkSoft),
-        ),
-        const SizedBox(height: ExperienceSpacing.xs),
-        Wrap(
-          alignment: WrapAlignment.center,
-          spacing: ExperienceSpacing.sm,
-          children: <Widget>[
-            Semantics(
-              link: true,
-              child: TextButton(
-                onPressed: () => _openLegalLink(
-                  Uri.parse('https://letterwithin.app/privacy'),
-                ),
-                child: const Text('Privacy Policy'),
-              ),
-            ),
-            Semantics(
-              link: true,
-              child: TextButton(
-                onPressed: () => _openLegalLink(
-                  Uri.parse(
-                    'https://www.apple.com/legal/internet-services/itunes/dev/stdeula/',
+        if (!_accountRequired) ...<Widget>[
+          const SizedBox(height: ExperienceSpacing.md),
+          _buildPurchaseButton(),
+          const SizedBox(height: ExperienceSpacing.xs),
+          Text(
+            introRenewalNote,
+            textAlign: TextAlign.center,
+            style: ExperienceType.caption(ExperienceColors.inkSoft),
+          ),
+          const SizedBox(height: ExperienceSpacing.xs),
+          Wrap(
+            alignment: WrapAlignment.center,
+            spacing: ExperienceSpacing.sm,
+            children: <Widget>[
+              Semantics(
+                link: true,
+                child: TextButton(
+                  onPressed: () => _openLegalLink(
+                    Uri.parse('https://letterwithin.app/privacy'),
                   ),
+                  child: const Text('Privacy Policy'),
                 ),
-                child: const Text('Terms of Use'),
               ),
-            ),
-          ],
-        ),
-        const SizedBox(height: ExperienceSpacing.sm),
-        _PlusSecondaryButton(
-          label: _restoreInFlight
-              ? 'Checking with the store…'
-              : 'Restore a previous purchase',
-          onPressed: _restoreInFlight ? null : _restorePurchases,
-        ),
+              Semantics(
+                link: true,
+                child: TextButton(
+                  onPressed: () => _openLegalLink(
+                    Uri.parse(
+                      'https://www.apple.com/legal/internet-services/itunes/dev/stdeula/',
+                    ),
+                  ),
+                  child: const Text('Terms of Use'),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: ExperienceSpacing.sm),
+          _PlusSecondaryButton(
+            label: _restoreInFlight
+                ? 'Checking with the store…'
+                : 'Restore a previous purchase',
+            onPressed: _restoreInFlight ? null : _restorePurchases,
+          ),
+        ],
       ],
     );
   }
 
   Widget _buildPlansError() {
+    final accountRequired = _accountRequired;
     final storeUnavailable =
         _plansError is EntitlementException &&
         (_plansError! as EntitlementException).message ==
@@ -734,24 +744,45 @@ class _PlusExperienceState extends State<PlusExperience> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
           Text(
-            storeUnavailable
+            accountRequired
+                ? 'Connect an account for Plus'
+                : storeUnavailable
                 ? 'Purchases unavailable'
                 : 'Plans could not be loaded',
             style: ExperienceType.bodyStrong(ExperienceColors.ink),
           ),
           const SizedBox(height: ExperienceSpacing.xs),
           Text(
-            storeUnavailable
+            accountRequired
+                ? 'Your records are still available on this device. Create or connect an account to view plans and restore purchases.'
+                : storeUnavailable
                 ? 'Purchases are unavailable on this build. Your records and free features remain available.'
                 : 'Please try again. Your records and free features remain available.',
             style: ExperienceType.bodySmall(ExperienceColors.inkSoft),
           ),
           const SizedBox(height: ExperienceSpacing.sm),
-          _PlusSecondaryButton(label: 'Try again', onPressed: _loadPlans),
+          if (accountRequired && widget.onOpenAccount != null)
+            _PlusSecondaryButton(
+              label: 'Open account settings',
+              onPressed: () {
+                final onOpenAccount = widget.onOpenAccount!;
+                Navigator.of(context).pop(const PlusCommitResult.unchanged());
+                WidgetsBinding.instance.addPostFrameCallback((_) {
+                  onOpenAccount();
+                });
+              },
+            )
+          else if (!accountRequired)
+            _PlusSecondaryButton(label: 'Try again', onPressed: _loadPlans),
         ],
       ),
     );
   }
+
+  bool get _accountRequired =>
+      _plansError is EntitlementException &&
+      (_plansError! as EntitlementException).planLoadFailureCode ==
+          PlanLoadFailureCode.accountNotReady;
 
   Widget _buildPlanList() {
     final plans = _plans ?? const <LetterPlan>[];

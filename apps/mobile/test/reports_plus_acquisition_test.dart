@@ -712,14 +712,60 @@ void main() {
       ),
     );
     await tester.pumpAndSettle();
-    expect(find.text('Purchases unavailable'), findsOneWidget);
+    expect(find.text('Connect an account for Plus'), findsOneWidget);
+    expect(find.text('Restore a previous purchase'), findsNothing);
+    expect(find.text('Choose a plan'), findsNothing);
 
     await repository.identifyAuthenticatedUser(
       '550e8400-e29b-41d4-a716-446655440000',
     );
     await tester.pumpAndSettle();
-    expect(find.text('Purchases unavailable'), findsNothing);
+    expect(find.text('Connect an account for Plus'), findsNothing);
     expect(find.textContaining('\$29.99'), findsWidgets);
+  });
+
+  testWidgets('Plus sends an accountless user to account settings', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(390, 844);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.reset);
+    final repository = RevenueCatEntitlementRepository(
+      appUserId: '',
+      appleApiKey: 'appl_public_key',
+      googleApiKey: '',
+      store: RevenueCatStore.apple,
+      client: _ReadyRevenueCatClient(),
+    );
+    addTearDown(repository.dispose);
+    var accountOpenCount = 0;
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: ExperienceFoundation.lightTheme(),
+        home: Builder(
+          builder: (context) => Scaffold(
+            body: TextButton(
+              onPressed: () => PlusExperience.open(
+                context,
+                entitlementRepository: repository,
+                onOpenAccount: () => accountOpenCount++,
+              ),
+              child: const Text('Open Plus'),
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.tap(find.text('Open Plus'));
+    await tester.pumpAndSettle();
+    expect(find.text('Connect an account for Plus'), findsOneWidget);
+    expect(find.text('Restore a previous purchase'), findsNothing);
+    expect(find.text('Choose a plan'), findsNothing);
+
+    await tester.tap(find.text('Open account settings'));
+    await tester.pumpAndSettle();
+    expect(accountOpenCount, 1);
+    expect(find.text('Open Plus'), findsOneWidget);
   });
 }
 

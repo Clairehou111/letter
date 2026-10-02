@@ -25,8 +25,8 @@
 
 ## Physical iPhone run
 
-Status: **not started**. Internal testers had not begun Build 14 testing when
-Build 15 was requested. Use synthetic local records and a disposable app
+Status: **in progress**. A tester found the account-deletion/Plus failure below
+on Build 15. Use synthetic local records and a disposable app
 account. Record device model, iOS version, TestFlight build number, tester and
 app-account aliases, local time, Pass/Fail/Blocked, and redacted evidence.
 
@@ -59,3 +59,46 @@ substituting **Build 15** for Build 14 throughout. Add these Build 15 checks:
    sign-off; retain this as an open release gate while the feature remains.
 
 Do not submit Build 15 for App Review based on upload or automated tests alone.
+
+## Observed TestFlight finding — account deletion and Plus
+
+On 2026-10-02, a tester deleted the server account in Build 15 and then opened
+Plus. The sheet showed “Purchases unavailable” and “Purchases are unavailable on
+this build”; Restore repeated the same message. The account screen offered no
+way to create or connect another account. This is a **Build 15 failure**, not
+evidence of a missing RevenueCat key or an App Store catalog failure: the
+entitlement repository no longer has an authenticated account UUID after
+deletion. The server account itself cannot be recovered; local records remain
+on the device.
+
+The local `main` fix separates the missing-account state from store
+configuration failures, routes Plus to Account settings, and adds an explicit
+new-account connection path that keeps local records sealed from an unrelated
+sign-in. It has not been uploaded to TestFlight. Retest delete account → Plus →
+Account settings → cancel, then create a new account → Plus plans → restore on
+the next build. Keep Build 15 marked failed for this path.
+
+The isolated `Letter Account QA 2026-10-02` iPhone 17 Pro simulator ran the
+synthetic deleted-account scenario with a local mood record and fake store
+client. Patterns → Plus showed the account-required message and account action;
+settings showed the new account action; the connection form explained deleted
+account replacement; cancelling returned to the local record with its value
+still present. This confirms the interface and local-only state path, **not**
+real Supabase account creation, RevenueCat Test Store, or Apple billing. The
+focused auth/Plus/repository test suite passed; the full local test result is
+recorded in the release validation spec.
+
+Separately, a clean `Letter Apple Sandbox QA 2026-10-02` iPhone 17 Pro simulator
+ran the existing manual QA entry with the ignored Apple RevenueCat public key
+and a synthetic RevenueCat app-user ID. The actual Apple sandbox catalog loaded
+three products: yearly **US$39.99**, monthly **US$7.99**, and lifetime
+**US$99.99**. A purchase attempt opened Apple's Sandbox Apple Account sign-in
+dialog. Purchase, entitlement unlock, and restore are pending sandbox tester
+sign-in; do not mark these cases passed from catalog display alone. This QA
+entry bypasses Supabase auth and therefore cannot validate the deleted-account
+reconnection path by itself.
+
+Run the ordered [account and subscription cases](account-subscription-cases.md)
+on the next build. The RevenueCat Test Store can separately check development
+SDK purchase/restore, while TestFlight's Apple sandbox remains necessary for
+the actual Apple products, prices, and payment sheet.

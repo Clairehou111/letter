@@ -10,6 +10,7 @@ import 'package:letter_mobile/features/care/domain/care_mode.dart';
 import 'package:letter_mobile/features/cycle/data/in_memory_period_repository.dart';
 import 'package:letter_mobile/features/cycle/domain/local_date.dart';
 import 'package:letter_mobile/features/entitlement/data/local_entitlement_repository.dart';
+import 'package:letter_mobile/features/entitlement/data/revenue_cat_entitlement_repository.dart';
 import 'package:letter_mobile/features/entitlement/domain/entitlement.dart';
 import 'package:letter_mobile/features/entitlement/presentation/entitlement_scope.dart';
 import 'package:letter_mobile/features/cycle/domain/period_record.dart';
@@ -342,6 +343,45 @@ void main() {
     await tester.tap(find.byKey(const Key('personal-patterns-locked-back')));
     await tester.pumpAndSettle();
     expect(find.byKey(const Key('open-locked-patterns')), findsOneWidget);
+  });
+
+  testWidgets('accountless Patterns Plus links to account settings', (
+    tester,
+  ) async {
+    final entitlement = RevenueCatEntitlementRepository(
+      appUserId: '',
+      appleApiKey: 'appl_test_key',
+      googleApiKey: '',
+      store: RevenueCatStore.apple,
+    );
+    final source = RepositoryPatternSource(
+      healthRecords: InMemoryHealthRecordRepository(),
+      careMemory: InMemoryCareMemoryRepository(),
+      periods: InMemoryPeriodRepository(),
+    );
+    var accountOpens = 0;
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: LetterTheme.light,
+        home: EntitlementScope(
+          repository: entitlement,
+          initialState: entitlement.current,
+          child: PersonalPatternsRoute(
+            source: source,
+            showBack: false,
+            previewRepository: InMemoryPersonalPatternPreviewRepository(true),
+            onOpenAccount: () => accountOpens++,
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('locked-see-plans')));
+    await tester.pumpAndSettle();
+    expect(find.text('Connect an account for Plus'), findsOneWidget);
+    await tester.tap(find.text('Open account settings'));
+    await tester.pumpAndSettle();
+    expect(accountOpens, 1);
   });
 
   testWidgets('renders intentional zero- and one-period states', (

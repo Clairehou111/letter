@@ -131,6 +131,7 @@ class LetterExperienceShell extends StatefulWidget {
     required this.reportPort,
     required this.youPort,
     required this.onCycleDataChanged,
+    this.onConnectAccount,
     super.key,
     this.backupPort,
     this.navigationRequest,
@@ -153,6 +154,7 @@ class LetterExperienceShell extends StatefulWidget {
   final ReportExperiencePort reportPort;
   final BackupExperiencePort? backupPort;
   final YouExperiencePort youPort;
+  final Future<void> Function()? onConnectAccount;
   final ValueListenable<LetterDestination?>? navigationRequest;
   final bool hasPlusPreviewAccess;
 
@@ -223,6 +225,7 @@ class _LetterExperienceShellState extends State<LetterExperienceShell>
   late final RecoveryReceiptController _recoveryReceiptController;
 
   bool _screenCoverActive = false;
+  Route<void>? _settingsRoute;
 
   DateTime _now() => widget.now?.call() ?? DateTime.now();
 
@@ -558,6 +561,7 @@ class _LetterExperienceShellState extends State<LetterExperienceShell>
     PlusExperience.open(
       context,
       entitlementRepository: widget.entitlementRepository,
+      onOpenAccount: _openAccountSettings,
     );
   }
 
@@ -568,6 +572,7 @@ class _LetterExperienceShellState extends State<LetterExperienceShell>
       context,
       entitlementRepository: widget.entitlementRepository,
       outcomeContext: outcomeContext,
+      onOpenAccount: _openAccountSettings,
     );
   }
 
@@ -608,30 +613,38 @@ class _LetterExperienceShellState extends State<LetterExperienceShell>
   /// unchanged: account, protection & preferences (including the
   /// screen-cover toggle), backup & restore, and the Plus and Reports
   /// entry points.
+  void _openAccountSettings() {
+    Navigator.of(context).popUntil((route) => route.isFirst);
+    _openSettings();
+  }
+
   void _openSettings() {
+    if (_settingsRoute?.isActive ?? false) return;
     ExperienceHaptics.pick();
-    Navigator.of(context).push(
-      MaterialPageRoute<void>(
-        builder: (routeContext) => Theme(
-          data: ExperienceFoundation.lightTheme(),
-          child: Scaffold(
-            backgroundColor: ExperienceColors.canvas,
-            body: SafeArea(
-              bottom: false,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: <Widget>[
-                  _SettingsBackSlot(
-                    onBack: () => Navigator.of(routeContext).maybePop(),
-                  ),
-                  Expanded(child: _buildYou()),
-                ],
-              ),
+    final route = MaterialPageRoute<void>(
+      builder: (routeContext) => Theme(
+        data: ExperienceFoundation.lightTheme(),
+        child: Scaffold(
+          backgroundColor: ExperienceColors.canvas,
+          body: SafeArea(
+            bottom: false,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: <Widget>[
+                _SettingsBackSlot(
+                  onBack: () => Navigator.of(routeContext).maybePop(),
+                ),
+                Expanded(child: _buildYou()),
+              ],
             ),
           ),
         ),
       ),
     );
+    _settingsRoute = route;
+    Navigator.of(context).push(route).whenComplete(() {
+      if (identical(_settingsRoute, route)) _settingsRoute = null;
+    });
   }
 
   // -------------------------------------------------------------------------
@@ -933,6 +946,7 @@ class _LetterExperienceShellState extends State<LetterExperienceShell>
       preparationRepository: widget.preparationRepository,
       now: _now,
       onOpenCycle: () => _selectDestination(_cycleIndex),
+      onOpenAccount: _openAccountSettings,
     );
   }
 
@@ -944,6 +958,7 @@ class _LetterExperienceShellState extends State<LetterExperienceShell>
     return YouExperience(
       key: const ValueKey<String>('destination-you'),
       port: widget.youPort,
+      onConnectAccount: widget.onConnectAccount,
       backupPort: widget.backupPort ?? const _UnavailableBackupPort(),
       onOpenPlus: _openPlus,
       onOpenReports: _openReports,

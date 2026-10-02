@@ -17,6 +17,7 @@ class YouExperience extends StatefulWidget {
     required this.backupPort,
     this.onOpenPlus,
     this.onOpenReports,
+    this.onConnectAccount,
     this.onCycleDataChanged,
     this.loadComfortExperience,
     this.saveComfortReminder,
@@ -36,6 +37,7 @@ class YouExperience extends StatefulWidget {
 
   /// Route into Reports.
   final VoidCallback? onOpenReports;
+  final Future<void> Function()? onConnectAccount;
 
   /// Fired after a committed import so ring, gravity, and charts refresh
   /// coherently across destinations.
@@ -281,7 +283,10 @@ class _YouExperienceState extends State<YouExperience> {
         children: <Widget>[
           _buildHeader(),
           const SizedBox(height: ExperienceSpacing.lg),
-          _AccountSection(port: widget.port),
+          _AccountSection(
+            port: widget.port,
+            onConnectAccount: widget.onConnectAccount,
+          ),
           const SizedBox(height: ExperienceSpacing.md),
           _buildProtectionCard(),
           if (widget.loadComfortExperience != null) ...<Widget>[
@@ -595,9 +600,10 @@ class _YouExperienceState extends State<YouExperience> {
 // ---------------------------------------------------------------------------
 
 class _AccountSection extends StatefulWidget {
-  const _AccountSection({required this.port});
+  const _AccountSection({required this.port, this.onConnectAccount});
 
   final YouExperiencePort port;
+  final Future<void> Function()? onConnectAccount;
 
   @override
   State<_AccountSection> createState() => _AccountSectionState();
@@ -797,10 +803,18 @@ class _AccountSectionState extends State<_AccountSection> {
           ),
           const SizedBox(height: ExperienceSpacing.xs),
           Text(
-            'The server account was deleted. The records that never left '
-            'this device remain here until the app itself is deleted.',
+            'The deleted server account cannot be restored. Your records '
+            'remain on this device. Create or sign in to another account '
+            'to use Plus; that account will be linked to these on-device records.',
             style: ExperienceType.bodySmall(ExperienceColors.inkSoft),
           ),
+          if (widget.onConnectAccount != null) ...<Widget>[
+            const SizedBox(height: ExperienceSpacing.sm),
+            _PrimaryButton(
+              label: 'Create or connect an account',
+              onPressed: _busy ? null : () => _run(widget.onConnectAccount!),
+            ),
+          ],
         ];
     }
   }

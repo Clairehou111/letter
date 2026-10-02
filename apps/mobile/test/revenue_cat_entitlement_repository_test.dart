@@ -200,12 +200,23 @@ void main() {
       await expectLater(
         repo.loadPlans(),
         throwsA(
-          isA<EntitlementException>().having(
-            (error) => error.planLoadFailureCode,
-            'planLoadFailureCode',
-            PlanLoadFailureCode.accountNotReady,
-          ),
+          isA<EntitlementException>()
+              .having(
+                (error) => error.planLoadFailureCode,
+                'planLoadFailureCode',
+                PlanLoadFailureCode.accountNotReady,
+              )
+              .having(
+                (error) => error.message,
+                'message',
+                contains('Connect an account'),
+              ),
         ),
+      );
+      final restored = await repo.restorePurchases();
+      expect(
+        restored.message,
+        'Connect an account before restoring purchases.',
       );
       await repo.dispose();
     },

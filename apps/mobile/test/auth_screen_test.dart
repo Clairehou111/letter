@@ -67,6 +67,30 @@ void main() {
     );
   });
 
+  testWidgets('deleted-account sign-in explains how local records reconnect', (
+    tester,
+  ) async {
+    final service = _ThrowingAuthService(
+      StateError('unused'),
+      authState: const AuthState(
+        status: AuthStatus.localOnlyAfterAccountDeletion,
+      ),
+    );
+    await tester.pumpWidget(
+      MaterialApp(
+        home: AuthScreen(service: service, onClose: () {}),
+      ),
+    );
+
+    expect(
+      find.textContaining('deleted account cannot be recovered'),
+      findsOneWidget,
+    );
+    expect(find.textContaining('can be linked to the account'), findsOneWidget);
+    expect(find.textContaining('stay closed'), findsNothing);
+    expect(find.byTooltip('Back to your records'), findsOneWidget);
+  });
+
   testWidgets('an existing account can sign in with a password', (
     tester,
   ) async {
@@ -242,16 +266,26 @@ void main() {
 }
 
 final class _ThrowingAuthService implements AuthService {
-  _ThrowingAuthService(this.error);
+  _ThrowingAuthService(
+    this.error, {
+    this.authState = const AuthState(status: AuthStatus.signedOut),
+  });
 
   final Object error;
+  final AuthState authState;
   final _controller = StreamController<AuthState>.broadcast();
 
   @override
-  AuthState get current => const AuthState(status: AuthStatus.signedOut);
+  AuthState get current => authState;
 
   @override
   Future<void> deleteAccount() async {}
+
+  @override
+  Future<void> beginAccountConnectionAfterDeletion() async {}
+
+  @override
+  Future<void> cancelAccountConnectionAfterDeletion() async {}
 
   @override
   Future<void> dispose() => _controller.close();
