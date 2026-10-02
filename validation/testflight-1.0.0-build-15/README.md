@@ -130,3 +130,35 @@ Run the ordered [account and subscription cases](account-subscription-cases.md)
 on the next build. The RevenueCat Test Store can separately check development
 SDK purchase/restore, while TestFlight's Apple sandbox remains necessary for
 the actual Apple products, prices, and payment sheet.
+
+## 2026-10-02 isolated simulator Test Store restore
+
+The clean `Letter Apple Sandbox QA 2026-10-02` iOS 26.5 simulator ran the debug
+manual QA entry with an ignored local RevenueCat **Test Store** public key and
+a synthetic UUID. No Test Store key was placed in a release build. The Test
+Store catalog loaded yearly US$39.99, monthly US$7.99, and lifetime US$99.99.
+Before purchase, Restore returned “No active subscription was found for this
+store account.”
+
+The tester selected Lifetime and used Test Store's **Test valid purchase**
+action. The original manual QA shell displayed Plus as its root page, while
+the production Plus flow closes its sheet on successful activation; that QA
+navigation mismatch left a black root screen. A QA-only `LETTER_QA_STORE_FLOW`
+flag now opens Plus through its production sheet route. After rebuilding and
+relaunching with the same synthetic UUID, Restore closed the sheet normally;
+reopening Plus displayed **Plus is active** and **Lifetime · US$99.99**.
+Repeating Restore while active returned to the shell normally, and reopening
+Plus still showed the lifetime entitlement. This confirms the debug SDK/Test
+Store purchase persistence and Restore path across a relaunch.
+
+This run does **not** validate Apple's Sandbox Apple Account login, StoreKit
+transaction, App Store receipt, an actual TestFlight build, or Supabase account
+reconnection. Both Apple Sandbox simulator sign-ins remain blocked as described
+above; B15-02 still requires the physical iPhone TestFlight purchase/restore
+sequence on a future build with the local account-deletion fix.
+
+Final local checks for this QA-entry change: `flutter analyze --no-pub` found
+no issues; the complete `flutter test --no-pub --concurrency=4 -r expanded`
+suite passed **695 tests, 1 existing skip, 0 failures**; and
+`git diff --check` passed. The simulator has been left on the Plus sheet with
+the purchased Test Store Lifetime product available to Restore again.

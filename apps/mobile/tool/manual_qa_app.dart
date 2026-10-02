@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:letter_mobile/config/app_config.dart';
 import 'package:letter_mobile/experience/care/care_body_scene.dart';
@@ -47,6 +49,11 @@ const String _captureFrame = String.fromEnvironment(
   'LETTER_CAPTURE_FRAME',
   defaultValue: '',
 );
+const String _qaRevenueCatAppUserId = String.fromEnvironment(
+  'LETTER_QA_REVENUECAT_APP_USER_ID',
+  defaultValue: '00000000-0000-4000-8000-000000000019',
+);
+const bool _qaStoreFlow = bool.fromEnvironment('LETTER_QA_STORE_FLOW');
 
 void main() {
   runApp(const _ManualQaApp());
@@ -912,7 +919,7 @@ class _QaShellState extends State<_QaShell> {
       AppConfig.fromEnvironment.revenueCatAppleApiKey.isEmpty
       ? LocalEntitlementRepository()
       : RevenueCatEntitlementRepository(
-          appUserId: '00000000-0000-4000-8000-000000000019',
+          appUserId: _qaRevenueCatAppUserId,
           appleApiKey: AppConfig.fromEnvironment.revenueCatAppleApiKey,
           googleApiKey: '',
           store: RevenueCatStore.apple,
@@ -936,10 +943,12 @@ class _QaShellState extends State<_QaShell> {
         onCycleDataChanged: () {},
         now: _now,
       ),
-      SafeArea(
-        bottom: false,
-        child: PlusExperience(entitlementRepository: _entitlement),
-      ),
+      _qaStoreFlow
+          ? const SizedBox.shrink()
+          : SafeArea(
+              bottom: false,
+              child: PlusExperience(entitlementRepository: _entitlement),
+            ),
       ReportsExperience(
         port: _QaReportPort(
           SummaryExportInput(
@@ -966,7 +975,15 @@ class _QaShellState extends State<_QaShell> {
       body: IndexedStack(index: _index, children: pages),
       bottomNavigationBar: NavigationBar(
         selectedIndex: _index,
-        onDestinationSelected: (value) => setState(() => _index = value),
+        onDestinationSelected: (value) {
+          if (_qaStoreFlow && value == 1) {
+            unawaited(
+              PlusExperience.open(context, entitlementRepository: _entitlement),
+            );
+            return;
+          }
+          setState(() => _index = value);
+        },
         destinations: const <NavigationDestination>[
           NavigationDestination(icon: Icon(Icons.water_drop), label: 'Cycle'),
           NavigationDestination(icon: Icon(Icons.add_circle), label: 'Plus'),

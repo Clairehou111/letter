@@ -144,6 +144,18 @@ recorded below.
   authentication failure. Apple sandbox purchase is blocked at system sign-in
   on both simulators; no physical iPhone is connected to the Mac. Purchase,
   entitlement unlock, and post-purchase restore remain unverified.
+- A separate debug-only RevenueCat Test Store run used a synthetic UUID on the
+  clean simulator. Restore before purchase found no active subscription. After
+  Test Store's valid Lifetime purchase and a relaunch, Restore activated Plus;
+  reopening the sheet showed **Plus is active** and **Lifetime · US$99.99**.
+  Repeated Restore retained access. The manual QA entry was adjusted behind a
+  `LETTER_QA_STORE_FLOW` flag to open the production sheet route; successful
+  activation previously popped its root page to a black screen. These results
+  verify the SDK/Test Store path only; Apple StoreKit and TestFlight purchase
+  and restore remain blocked pending physical iPhone validation. The final
+  local `flutter analyze --no-pub` and `git diff --check` passed; the complete
+  `flutter test --no-pub --concurrency=4 -r expanded` suite passed **695 tests,
+  1 existing skip, 0 failures**.
 
 ## 2026-10-01 Build 14 TestFlight handoff
 
