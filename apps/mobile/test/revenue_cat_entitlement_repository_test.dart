@@ -14,18 +14,9 @@ class FakeRevenueCatClient implements RevenueCatClient {
   Completer<RevenueCatCustomerState>? purchaseCompleter;
   RevenueCatCustomerState? restoreState;
   List<RevenueCatPlanOffer> offers = const [
-    RevenueCatPlanOffer(
-      productId: 'letter_monthly',
-      priceLabel: 'CA\$9.99 / month',
-    ),
-    RevenueCatPlanOffer(
-      productId: 'letter_yearly',
-      priceLabel: 'CA\$39.99 / year',
-    ),
-    RevenueCatPlanOffer(
-      productId: 'letter_lifetime',
-      priceLabel: 'CA\$99.99 once',
-    ),
+    RevenueCatPlanOffer(productId: 'letter_monthly', priceLabel: 'CA\$9.99'),
+    RevenueCatPlanOffer(productId: 'letter_yearly', priceLabel: 'CA\$39.99'),
+    RevenueCatPlanOffer(productId: 'letter_lifetime', priceLabel: 'CA\$99.99'),
   ];
   Object? loadError;
   Object? configureError;
@@ -545,6 +536,8 @@ void main() {
       'letter_lifetime',
     ]);
     expect(plans[0].priceLabel, 'CA\$39.99 / year');
+    expect(plans[1].priceLabel, 'CA\$9.99 / month');
+    expect(plans[2].priceLabel, 'CA\$99.99 once');
     await repo.dispose();
   });
 

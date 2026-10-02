@@ -290,7 +290,11 @@ final class RevenueCatEntitlementRepository implements EntitlementRepository {
             LetterPlan(
               id: plan.id,
               title: plan.title,
-              priceLabel: offer.priceLabel,
+              priceLabel: switch (plan.id) {
+                'letter_monthly' => '${offer.priceLabel} / month',
+                'letter_yearly' => '${offer.priceLabel} / year',
+                _ => '${offer.priceLabel} once',
+              },
               effectiveMonthlyLabel: switch (plan.id) {
                 'letter_monthly' => 'Renews monthly until canceled',
                 'letter_yearly' => 'Renews yearly until canceled',

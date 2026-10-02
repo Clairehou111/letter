@@ -600,6 +600,12 @@ class _PlusExperienceState extends State<PlusExperience> {
             _buildActiveSection(),
           ] else ...<Widget>[
             const SizedBox(height: ExperienceSpacing.sm),
+            Text(
+              'Plus includes preparation, personal patterns, and extended reports.',
+              textAlign: TextAlign.center,
+              style: ExperienceType.bodySmall(ExperienceColors.inkSoft),
+            ),
+            const SizedBox(height: ExperienceSpacing.sm),
             _buildPurchaseSection(),
           ],
           const SizedBox(height: ExperienceSpacing.sm),

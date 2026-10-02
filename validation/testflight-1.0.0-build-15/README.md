@@ -473,3 +473,39 @@ Final local checks: `flutter analyze --no-pub` passed; focused entitlement,
 report, and auth-gate tests passed **40 tests**; complete
 `flutter test --no-pub --concurrency=4 -r compact` passed **723 tests with 1
 existing skip**; `git diff --check` passed.
+
+## 2026-10-02 subscription disclosure and privacy alignment
+
+The live App Store Connect subscription localizations for Monthly and Yearly,
+and the Lifetime non-consumable, all say “Unlock Plus preparation, patterns,
+and extended reports.” Their customer-facing names identify Letter Within Plus
+and the plan. RevenueCat `letter_default` maps the three matching Apple and
+Test Store product IDs; its Offering metadata is empty. The app renders its own
+plan names and benefit copy, and reads the localized amount from the store.
+The local Plus sheet now adds one concise benefit sentence and appends the
+billing period to that store amount, so both the card and purchase button show
+the complete recurring price. No store amount is hard-coded into the release
+paywall. This copy change requires the next app build; changing RevenueCat
+product display names alone would not change this sheet.
+
+The App Store Connect group currently places Monthly at level 1 and Yearly at
+level 2, although both promise the same Plus capabilities. Apple uses levels
+to determine upgrade/downgrade timing; this deserves a configuration review
+before the real Monthly↔Yearly sandbox case. No group-level change was made in
+this code/copy pass.
+
+App Store Connect points to `https://letterwithin.app/privacy` and its privacy
+answers were published. The live page at that URL still showed the August 9
+policy without the optional analytics and diagnostic section during this
+check. The newer website source is
+`/Users/clairehou/pyProjects/letter-cycle-companion/src/routes/privacy.tsx`;
+the website owner will publish it before App Review. Because the app and App
+Store Connect already use the same stable URL, publishing new content at that
+URL needs no new app binary. Before submission, compare the **live** page,
+the in-app opt-in text, and the published App Store Connect data categories.
+The current website source calls all Plus purchases “subscriptions”; revise
+that sentence to cover the one-time Lifetime product as well.
+The latest code checks passed: `flutter analyze --no-pub`, the focused Plus
+and entitlement suite (**66 tests**), the full `flutter test --no-pub
+--concurrency=4 -r compact` suite (**723 passed, 1 existing skip**), and
+`git diff --check`.

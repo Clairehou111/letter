@@ -559,6 +559,12 @@ void main() {
     );
     await tester.pumpAndSettle();
     expect(find.text('Export as PDF for a clinician'), findsOneWidget);
+    expect(
+      find.text(
+        'Plus includes preparation, personal patterns, and extended reports.',
+      ),
+      findsOneWidget,
+    );
     expect(find.text('Best for learning your pattern'), findsNothing);
     expect(find.textContaining('keeps working offline'), findsNothing);
     expect(find.text('Renews yearly until canceled'), findsOneWidget);
