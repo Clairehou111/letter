@@ -76,6 +76,37 @@ void main() {
     expect(find.text('support@letterwithin.app'), findsOneWidget);
   });
 
+  testWidgets('account deletion warns about store billing and restore', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(390, 844);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.reset);
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: ExperienceFoundation.lightTheme(),
+        home: Scaffold(
+          body: YouExperience(
+            port: _YouPort(),
+            backupPort: const _BackupPort(),
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Delete server account'));
+    await tester.pumpAndSettle();
+    expect(
+      find.textContaining('keeps renewing until you cancel'),
+      findsOneWidget,
+    );
+    expect(find.textContaining('Restore a previous purchase'), findsOneWidget);
+    await tester.tap(find.text('Keep account'));
+    await tester.pumpAndSettle();
+    expect(tester.takeException(), isNull);
+  });
+
   testWidgets('Comfort reminder opt-in stays on before evidence is reliable', (
     tester,
   ) async {
@@ -136,9 +167,11 @@ void main() {
     final timing = find.byKey(const Key('comfort-reminder-timing'));
     expect(timing, findsOneWidget);
     expect(
-      tester.widget<InkWell>(
-        find.descendant(of: timing, matching: find.byType(InkWell)),
-      ).onTap,
+      tester
+          .widget<InkWell>(
+            find.descendant(of: timing, matching: find.byType(InkWell)),
+          )
+          .onTap,
       isNotNull,
     );
   });

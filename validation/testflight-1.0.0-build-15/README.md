@@ -365,3 +365,23 @@ pre-eligibility opt-in were exercised in non-concurrent widget/controller and
 scheduler tests. Final local checks: `flutter analyze --no-pub` passed;
 complete `flutter test --no-pub --concurrency=4 -r expanded` passed
 **715 tests with 1 existing skip**; `git diff --check` passed.
+
+## 2026-10-02 account deletion and Test Store entitlement
+
+After deleting the server account, signing up again with the same email or
+Apple identity creates a new Supabase UUID. That UUID is the RevenueCat App
+User ID, so the old Test Store Monthly/Yearly entitlement does not appear on
+the new customer. This is expected for Test Store: its simulated purchases have
+no Apple or Google purchase history for cross-ID Restore. RevenueCat support
+[confirms Test Store restore/sync is unsupported](https://community.revenuecat.com/sdks-51/are-syncpurchases-and-restorepurchases-sdk-calls-meant-to-work-on-the-revenuecat-test-store-7779?postid=26311).
+The RevenueCat project was read-only checked: **Transfer to new App User ID**
+is selected and no separate sandbox restore behavior is enabled.
+
+This Test Store result does not establish how an Apple purchase behaves after
+account deletion. The next physical-iPhone Apple Sandbox case must buy with
+P1, delete the app account, create a new account, and use Restore with that
+same Sandbox Apple Account. Do not make a second Apple purchase to work around
+a failed restore. The local deletion confirmation now explains that account
+deletion does not cancel an App Store or Google Play subscription and points to
+Restore on a new account. `flutter analyze --no-pub`, the focused Settings
+test, and `git diff --check` passed for that copy change.

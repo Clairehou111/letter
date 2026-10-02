@@ -667,9 +667,11 @@ class _AccountSectionState extends State<_AccountSection> {
           style: ExperienceType.headline(ExperienceColors.ink),
         ),
         content: Text(
-          'This permanently deletes your Letter Within account on the '
-          'server. Records that never left this device remain here, '
-          'available offline, until the app itself is deleted.',
+          'This deletes your Letter Within account. Records on this device '
+          'remain here until the app is deleted.\n\n'
+          'An App Store or Google Play subscription keeps renewing until you '
+          'cancel it in store settings. On a new account, use Restore a '
+          'previous purchase to recover eligible Plus access.',
           style: ExperienceType.body(ExperienceColors.ink),
         ),
         actions: <Widget>[

@@ -69,6 +69,17 @@ product loading and a no-purchase Restore result.
 
 ## Simulator and store coverage
 
+RevenueCat Test Store purchases are tied to the simulated customer ID and do
+not provide an Apple or Google purchase history for cross-ID Restore. Deleting
+the Letter Within server account creates a new Supabase UUID even when the same
+email or Apple identity is used again, so a Test Store Monthly/Yearly purchase
+does not automatically appear on the new customer. A fresh Test Store purchase
+is only simulated and must not be treated as evidence that a real customer
+needs to pay again. Test A13 with an Apple Sandbox purchase and the same
+Sandbox Apple Account on a physical iPhone. The RevenueCat project currently
+uses **Transfer to new App User ID**, with no sandbox override (read-only
+dashboard check, 2026-10-02).
+
 - A local simulator scenario can exercise A10–A12 UI, state transitions, local
   record ownership and error wording immediately. Widget and repository tests
   cover normal and delayed logout/login ordering. A synthetic store client is
