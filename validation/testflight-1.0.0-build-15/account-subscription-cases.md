@@ -11,6 +11,41 @@ Build 15 has a known failure at A10–A12: after server account deletion, Plus
 incorrectly says purchases are unavailable on this build and offers no path to
 another account. Run those cases on a later build containing the local fix.
 
+## Physical iPhone setup for Apple Sandbox
+
+1. Use an iPhone with TestFlight Build 15 and an **authenticated, disposable**
+   Letter Within account A. The installation where A was already deleted in
+   Build 15 cannot reach the purchase flow; use another test installation, or
+   wait for a build containing the account-connection fix. Do not clear local
+   records merely to make a test pass.
+2. Confirm the Sandbox Apple Account **P1** is listed in App Store Connect →
+   Users and Access → Sandbox and has completed any Apple email verification.
+   The Letter Within account A and Apple sandbox tester P1 are separate.
+3. TestFlight purchases are automatically sandbox transactions. To use P1's
+   specific sandbox settings on an iPhone, Apple instructs testers to sign out
+   of the **production Apple Account under Media & Purchases**, then open
+   Settings → Developer → Sandbox Apple Account and sign in as P1. Use a
+   dedicated test iPhone if available: signing out of Media & Purchases can
+   interrupt access to purchased content in other apps. Do not sign out of the
+   device's main Apple Account or enter P1 in Sign in with Apple for the app.
+4. Return to Letter Within → Plus. Run A01 and A03, then A04. Confirm the Apple
+   purchase sheet shows the intended product and billing terms; note an
+   “Environment: Sandbox” label if Apple displays one. Wait for the app to
+   update, then verify `letter_plus` in the paid Patterns
+   entry and run A05–A06. Record the exact step and screenshot if a prompt
+   closes without confirmation; do not call that a successful purchase.
+5. For a clean no-purchase comparison, use a separate sandbox tester P2 and
+   app account B, ideally on a separate test installation. Run A07–A09 only
+   after A's purchase/restore result is recorded. A10–A13 require a later
+   binary with the deletion fix.
+
+Apple's [TestFlight sandbox instructions](https://developer.apple.com/help/app-store-connect/test-a-beta-version/testing-subscriptions-and-in-app-purchases-in-testflight/)
+and [sandbox account setup](https://developer.apple.com/help/app-store-connect/test-in-app-purchases/create-a-sandbox-apple-account/)
+describe the account separation and device steps. On 2026-10-02, two verified
+Sandbox testers could not stay signed in on two iOS 26.5 simulators; Apple
+purchase and restore therefore remain **unverified**, despite successful Apple
+product loading and a no-purchase Restore result.
+
 ## Suggested order
 
 | Case | Steps | Expected result |
