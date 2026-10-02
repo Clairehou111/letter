@@ -139,8 +139,11 @@ recorded below.
 - The owner verified the first App Store Connect Sandbox tester email. A
   second independently verified tester reached Apple's verification-code
   prompt, but the same iOS 26.5 simulator still returned to **Sign In** and
-  logged an authentication failure. A clean simulator comparison remains
-  pending; no physical iPhone is connected to the Mac.
+  logged an authentication failure. The second tester also returned to
+  **Sign In** on a separate clean iOS 26.5 simulator, whose system log recorded
+  authentication failure. Apple sandbox purchase is blocked at system sign-in
+  on both simulators; no physical iPhone is connected to the Mac. Purchase,
+  entitlement unlock, and post-purchase restore remain unverified.
 
 ## 2026-10-01 Build 14 TestFlight handoff
 

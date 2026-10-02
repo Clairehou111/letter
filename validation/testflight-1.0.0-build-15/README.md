@@ -106,9 +106,9 @@ attempt prompted for an Apple Account, but returned to Plus without a purchase
 confirmation or entitlement. `Settings → Developer → Sandbox Apple Account`
 still showed **Sign In** after a login attempt. Sanitized simulator store logs
 contained `AMSErrorDomain Code=100` (authentication failed). The Sandbox Apple
-Account credential and simulator auth environment need verification before
-repeating purchase. No purchase, entitlement unlock, or post-purchase restore
-has passed; no credential or account identifier is recorded here.
+Account and simulator authentication state were then checked separately. No
+purchase, entitlement unlock, or post-purchase restore has passed; no credential
+or account identifier is recorded here.
 
 The owner confirmed the tester exists under App Store Connect **Users and
 Access → Sandbox** and completed Apple's email verification. Retrying that
@@ -116,10 +116,15 @@ tester still left `Settings → Developer` at **Sign In**. A second independentl
 verified sandbox tester advanced through Apple's verification-code prompt on
 the same simulator, then also returned to **Sign In**; sanitized recent store
 logs again contained `AMSErrorDomain Code=100`. This points to Apple sandbox
-authentication on that simulator, not a failed entitlement update. One final
-comparison is pending on the separate clean simulator before classifying the
-simulator path as blocked. A physical iPhone is not currently connected to
-this Mac.
+authentication on that simulator, not a failed entitlement update. The second
+tester was then tried on the separate clean `Letter Apple Sandbox QA` simulator:
+its `Settings → Developer → Sandbox Apple Account` also returned to **Sign In**
+without a visible error, and its sanitized system log recorded “The
+authentication failed.” The Apple sandbox transaction path is **blocked on both
+iOS 26.5 simulators**. Do not count purchase or restore as passed. A physical
+iPhone is not currently connected to this Mac; validate with TestFlight on an
+iPhone with an authenticated app account. Build 15's deleted-account install
+cannot exercise this until a later build contains the local account fix.
 
 Run the ordered [account and subscription cases](account-subscription-cases.md)
 on the next build. The RevenueCat Test Store can separately check development
