@@ -153,8 +153,10 @@ recorded below.
   activation previously popped its root page to a black screen. These results
   verify the SDK/Test Store path only; Apple StoreKit and TestFlight purchase
   and restore remain blocked pending physical iPhone validation. The final
+  active Lifetime UI now uses one-time purchase copy rather than subscription
+  cancellation copy, with deterministic Lifetime and monthly widget checks. The
   local `flutter analyze --no-pub` and `git diff --check` passed; the complete
-  `flutter test --no-pub --concurrency=4 -r expanded` suite passed **695 tests,
+  `flutter test --no-pub --concurrency=4 -r compact` suite passed **697 tests,
   1 existing skip, 0 failures**.
 
 ## 2026-10-01 Build 14 TestFlight handoff

@@ -937,6 +937,7 @@ class _PlusExperienceState extends State<PlusExperience> {
 
   Widget _buildActiveSection() {
     final plans = _plans ?? const <LetterPlan>[];
+    final isLifetime = _entitlement.planId == 'letter_lifetime';
     final currentPlan = plans
         .where((plan) => plan.id == _entitlement.planId)
         .firstOrNull;
@@ -953,12 +954,15 @@ class _PlusExperienceState extends State<PlusExperience> {
         ),
         const SizedBox(height: ExperienceSpacing.xs),
         Text(
-          'Manage or cancel any time in the store. Cancelled access '
-          'continues until the period ends, and everything you '
-          'recorded stays readable after that.',
+          isLifetime
+              ? 'Lifetime is a one-time purchase; it does not renew. '
+                    'Everything you recorded stays readable.'
+              : 'Manage or cancel any time in the store. Cancelled access '
+                    'continues until the period ends, and everything you '
+                    'recorded stays readable after that.',
           style: ExperienceType.bodySmall(ExperienceColors.inkSoft),
         ),
-        if (_managementUrl != null) ...<Widget>[
+        if (!isLifetime && _managementUrl != null) ...<Widget>[
           const SizedBox(height: ExperienceSpacing.sm),
           _PlusSecondaryButton(
             label: 'Manage subscription',

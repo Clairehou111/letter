@@ -577,6 +577,51 @@ void main() {
     expect(monthlyTop, lessThan(lifetimeTop));
   });
 
+  testWidgets('active lifetime purchase has one-time billing copy', (
+    tester,
+  ) async {
+    final repository = LocalEntitlementRepository(
+      initial: const EntitlementState(
+        status: EntitlementStatus.activePaid,
+        planId: 'letter_lifetime',
+      ),
+    );
+    addTearDown(repository.dispose);
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: ExperienceFoundation.lightTheme(),
+        home: PlusExperience(entitlementRepository: repository),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('Plus is active'), findsOneWidget);
+    expect(find.textContaining('one-time purchase'), findsOneWidget);
+    expect(find.textContaining('Cancelled access'), findsNothing);
+    expect(find.text('Manage subscription'), findsNothing);
+  });
+
+  testWidgets('active subscription retains cancellation copy', (tester) async {
+    final repository = LocalEntitlementRepository(
+      initial: const EntitlementState(
+        status: EntitlementStatus.activePaid,
+        planId: 'letter_monthly',
+      ),
+    );
+    addTearDown(repository.dispose);
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: ExperienceFoundation.lightTheme(),
+        home: PlusExperience(entitlementRepository: repository),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('Plus is active'), findsOneWidget);
+    expect(find.textContaining('Cancelled access'), findsOneWidget);
+    expect(find.textContaining('one-time purchase'), findsNothing);
+  });
+
   testWidgets(
     'locked report ranges keep the pattern report analytics context',
     (tester) async {

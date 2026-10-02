@@ -151,6 +151,11 @@ Repeating Restore while active returned to the shell normally, and reopening
 Plus still showed the lifetime entitlement. This confirms the debug SDK/Test
 Store purchase persistence and Restore path across a relaunch.
 
+The active Lifetime screen also exposed subscription cancellation copy. The
+local source now gives Lifetime a one-time purchase explanation and omits the
+subscription-management button for that plan. Deterministic widget tests cover
+both Lifetime and monthly active copy; this correction is not in Build 15.
+
 This run does **not** validate Apple's Sandbox Apple Account login, StoreKit
 transaction, App Store receipt, an actual TestFlight build, or Supabase account
 reconnection. Both Apple Sandbox simulator sign-ins remain blocked as described
@@ -158,7 +163,7 @@ above; B15-02 still requires the physical iPhone TestFlight purchase/restore
 sequence on a future build with the local account-deletion fix.
 
 Final local checks for this QA-entry change: `flutter analyze --no-pub` found
-no issues; the complete `flutter test --no-pub --concurrency=4 -r expanded`
-suite passed **695 tests, 1 existing skip, 0 failures**; and
+no issues; the complete `flutter test --no-pub --concurrency=4 -r compact`
+suite passed **697 tests, 1 existing skip, 0 failures** after the copy fix; and
 `git diff --check` passed. The simulator has been left on the Plus sheet with
 the purchased Test Store Lifetime product available to Restore again.
