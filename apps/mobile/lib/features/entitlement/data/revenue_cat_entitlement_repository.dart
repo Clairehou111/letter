@@ -307,11 +307,13 @@ final class RevenueCatEntitlementRepository implements EntitlementRepository {
       return plans;
     } on EntitlementException catch (error) {
       _set(
-        EntitlementState(
-          status: EntitlementStatus.freeOrUnknown,
-          planId: _state.planId,
-          message: error.message,
-        ),
+        _state.hasPremiumAccess
+            ? _state.copyWithMessage(error.message)
+            : EntitlementState(
+                status: EntitlementStatus.freeOrUnknown,
+                planId: _state.planId,
+                message: error.message,
+              ),
       );
       if (error.planLoadFailureCode != null) rethrow;
       throw EntitlementException(
@@ -328,18 +330,24 @@ final class RevenueCatEntitlementRepository implements EntitlementRepository {
       if (_isStoreConfigurationError(error)) {
         const message = 'Plans are not configured for this build.';
         _set(
-          EntitlementState(
-            status: EntitlementStatus.freeOrUnknown,
-            planId: _state.planId,
-            message: message,
-          ),
+          _state.hasPremiumAccess
+              ? _state.copyWithMessage(message)
+              : EntitlementState(
+                  status: EntitlementStatus.freeOrUnknown,
+                  planId: _state.planId,
+                  message: message,
+                ),
         );
         throw const EntitlementException(
           message,
           planLoadFailureCode: PlanLoadFailureCode.storeConfigurationError,
         );
       }
-      _markUnavailable(error);
+      if (_state.hasPremiumAccess) {
+        _set(_state.copyWithMessage('Plans are temporarily unavailable.'));
+      } else {
+        _markUnavailable(error);
+      }
       throw EntitlementException(
         'Plans are temporarily unavailable.',
         planLoadFailureCode: requestingOffering

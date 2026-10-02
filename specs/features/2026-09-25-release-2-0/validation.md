@@ -426,6 +426,11 @@ recorded below.
   purchase; the single entitlement still named Yearly. This test environment
   does not establish an Apple crossgrade. Confirm actual same-group timing,
   price, and management on Apple sandbox/TestFlight before release.
+- A later plan/entitlement audit added non-concurrent tests for a catalog
+  failure while Plus is already active. The store-backed repository now keeps
+  the confirmed entitlement when only offerings fail. Lifetime access with
+  a separate active subscription also retains a management link and shows a
+  billing overlap notice. Neither change is in TestFlight Build 15.
 
 - No real user data appears in fixtures or screenshots.
 - SP6 and LV3 remain visible optional traditional point-location self-care

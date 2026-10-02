@@ -894,12 +894,15 @@ class _PlusExperienceState extends State<PlusExperience> {
     final plans = _plans ?? const <LetterPlan>[];
     final isLifetime = _entitlement.planId == 'letter_lifetime';
     final subscriptions = _entitlement.activeSubscriptions;
+    final hasSubscriptionAlongsideLifetime =
+        isLifetime && subscriptions.isNotEmpty;
     final hasOverlappingPlans =
+        !isLifetime &&
         subscriptions
-            .map((subscription) => subscription.productId)
-            .toSet()
-            .length >
-        1;
+                .map((subscription) => subscription.productId)
+                .toSet()
+                .length >
+            1;
     ActivePlanPeriod? latestSubscription;
     for (final subscription in subscriptions) {
       if (latestSubscription == null ||
@@ -970,6 +973,13 @@ class _PlusExperienceState extends State<PlusExperience> {
             'Introductory period',
             style: ExperienceType.bodySmall(ExperienceColors.inkSoft),
           ),
+        if (hasSubscriptionAlongsideLifetime) ...<Widget>[
+          const SizedBox(height: ExperienceSpacing.xs),
+          Text(
+            'A separate subscription is also active in the store.',
+            style: ExperienceType.bodySmall(ExperienceColors.inkSoft),
+          ),
+        ],
         if (hasOverlappingPlans) ...<Widget>[
           const SizedBox(height: ExperienceSpacing.xs),
           if (accessThrough != null)
@@ -990,7 +1000,8 @@ class _PlusExperienceState extends State<PlusExperience> {
             style: ExperienceType.bodySmall(ExperienceColors.inkSoft),
           ),
         ],
-        if (_managementUrl != null && !isLifetime)
+        if (_managementUrl != null &&
+            (!isLifetime || hasSubscriptionAlongsideLifetime))
           Align(
             alignment: Alignment.centerLeft,
             child: TextButton.icon(

@@ -603,6 +603,41 @@ void main() {
     expect(find.textContaining('may vary by region'), findsNothing);
   });
 
+  testWidgets('lifetime access still reveals a separate active subscription', (
+    tester,
+  ) async {
+    final repository = _ManagedEntitlementRepository(
+      Uri.parse('https://apps.apple.com/account/subscriptions'),
+      initial: EntitlementState(
+        status: EntitlementStatus.activePaid,
+        planId: 'letter_lifetime',
+        activeSubscriptions: [
+          ActivePlanPeriod(
+            productId: 'letter_monthly',
+            expiresAt: DateTime.utc(2030, 11, 2),
+            willRenew: true,
+          ),
+        ],
+      ),
+    );
+    addTearDown(repository.dispose);
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: ExperienceFoundation.lightTheme(),
+        home: PlusExperience(entitlementRepository: repository),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('Lifetime'), findsOneWidget);
+    expect(
+      find.text('A separate subscription is also active in the store.'),
+      findsOneWidget,
+    );
+    expect(find.text('Change plan'), findsNothing);
+    expect(find.text('Manage subscription'), findsOneWidget);
+  });
+
   testWidgets('active subscription reveals the alternative on request', (
     tester,
   ) async {
@@ -1151,12 +1186,14 @@ class _RecordingExportPort implements ReportExperiencePort {
 }
 
 final class _ManagedEntitlementRepository extends LocalEntitlementRepository {
-  _ManagedEntitlementRepository(this.url)
+  _ManagedEntitlementRepository(this.url, {EntitlementState? initial})
     : super(
-        initial: const EntitlementState(
-          status: EntitlementStatus.activePaid,
-          planId: 'letter_monthly',
-        ),
+        initial:
+            initial ??
+            const EntitlementState(
+              status: EntitlementStatus.activePaid,
+              planId: 'letter_monthly',
+            ),
       );
 
   final Uri url;

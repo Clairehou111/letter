@@ -384,6 +384,43 @@ void main() {
     await repo.dispose();
   });
 
+  test(
+    'catalog failure does not revoke an already confirmed Plus plan',
+    () async {
+      final client = FakeRevenueCatClient(
+        restoreState: RevenueCatCustomerState(
+          hasActiveEntitlement: true,
+          hasPurchasedLetterProduct: true,
+          productId: 'letter_monthly',
+          expiresAt: DateTime.utc(2030, 11, 2),
+          willRenew: true,
+        ),
+      );
+      final repo = RevenueCatEntitlementRepository(
+        appUserId: '2c1a7f42-2d87-4ad6-8d89-b6b68b429127',
+        appleApiKey: 'key',
+        googleApiKey: '',
+        store: RevenueCatStore.apple,
+        client: client,
+      );
+      addTearDown(repo.dispose);
+      await repo.refresh();
+      client.loadError = StateError('catalog offline');
+
+      await expectLater(repo.loadPlans(), throwsA(isA<EntitlementException>()));
+
+      expect(repo.current.hasPremiumAccess, isTrue);
+      expect(repo.current.planId, 'letter_monthly');
+      expect(repo.current.expiresAt, DateTime.utc(2030, 11, 2));
+      expect(repo.current.willRenew, isTrue);
+
+      client.loadError = const EntitlementException('Empty catalog.');
+      await expectLater(repo.loadPlans(), throwsA(isA<EntitlementException>()));
+      expect(repo.current.hasPremiumAccess, isTrue);
+      expect(repo.current.planId, 'letter_monthly');
+    },
+  );
+
   test('purchase maps active intro without using reference pricing', () async {
     final client = FakeRevenueCatClient(purchaseState: active(intro: true));
     final repo = RevenueCatEntitlementRepository(

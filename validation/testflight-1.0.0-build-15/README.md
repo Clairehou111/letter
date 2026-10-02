@@ -304,6 +304,29 @@ Final checks for this follow-up: `flutter analyze --no-pub` passed, the
 complete `flutter test --no-pub --concurrency=4 -r expanded` suite passed
 **710 tests with 1 existing skip**, and `git diff --check` passed.
 
+## Plan and entitlement scenario audit
+
+The later local source audit found that a failing plan-catalog request could
+replace an already-confirmed paid entitlement with an unavailable state.
+Catalog failure now leaves the active Plus plan, period end, and renewal flag
+intact; a non-paying user still sees the catalog error. The active Lifetime
+screen now warns if a separate subscription is also active and keeps the
+store-management link visible when RevenueCat supplies one. Non-concurrent
+repository and widget regressions cover both cases. These changes are local
+and require a later build.
+
+Build 15's deleted-account route remains a known failure. The local
+account-required Plus route, account connection screen, cancel path, and
+explicit relinking of on-device records have widget and isolated simulator
+coverage, but real account deletion followed by new Supabase registration and
+Apple purchase restore is still unverified in TestFlight. The next Apple
+Sandbox run must also cover Monthly/Yearly effective timing, cancellation
+through access end, renewal/expiration, restore to the same app account, and
+cross-account restore under the project's transfer behavior.
+Final local checks for this audit: `flutter analyze --no-pub` passed;
+complete `flutter test --no-pub --concurrency=4 -r expanded` passed
+**712 tests with 1 existing skip**; `git diff --check` passed.
+
 This remains a debug Test Store result. A physical iPhone with TestFlight and
 Apple sandbox must still confirm the real subscription sheet, effective date,
 charge, restore, and management URL. Build 15 has none of these new changes;
