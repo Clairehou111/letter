@@ -433,11 +433,12 @@ recorded below.
   a separate active subscription also retains a management link and shows a
   billing overlap notice. Neither change is in TestFlight Build 15.
 - The next local Plus follow-up keeps **Change plan** available for active
-  Monthly, Yearly, and Lifetime users, including when the store reports two
-  active products. It opens the same Monthly, Yearly, Lifetime selector as the
-  free offer. The displayed current product is disabled; the other two use
-  the existing purchase flow. A short notice appears when buying Lifetime
-  alongside an active subscription or adding a subscription to Lifetime.
+  subscriptions, including when the store reports two active products. It
+  opens the same Monthly, Yearly, Lifetime selector as the free offer. Every
+  already active product is disabled; when both subscriptions are active,
+  only Lifetime remains selectable. Lifetime owners can **View plans** and
+  prices, but all three options are disabled and there is no purchase button.
+  A short notice appears when buying Lifetime alongside an active subscription.
   This replaces the earlier one-alternative and overlap-blocked selector
   described in the historical validation notes above. It is not in Build 15.
 

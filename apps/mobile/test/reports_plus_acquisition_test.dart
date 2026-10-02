@@ -598,26 +598,30 @@ void main() {
     expect(find.textContaining('\$99.99'), findsNothing);
     expect(find.textContaining('Plus access is yours for life'), findsNothing);
     expect(find.textContaining('Cancelled access'), findsNothing);
-    expect(find.text('Change plan'), findsOneWidget);
+    expect(find.text('View plans'), findsOneWidget);
     expect(find.text('Restore a previous purchase'), findsNothing);
     expect(find.textContaining('may vary by region'), findsNothing);
-    await tester.tap(find.text('Change plan'));
+    await tester.tap(find.text('View plans'));
     await tester.pumpAndSettle();
     expect(find.byKey(const Key('plus-plan-letter_monthly')), findsOneWidget);
     expect(find.byKey(const Key('plus-plan-letter_yearly')), findsOneWidget);
     expect(find.byKey(const Key('plus-plan-letter_lifetime')), findsOneWidget);
+    expect(find.text('Current plan'), findsOneWidget);
+    expect(find.text('Included with Lifetime'), findsNWidgets(2));
+    expect(find.textContaining('\$99.99'), findsOneWidget);
     await tester.ensureVisible(
       find.byKey(const Key('plus-plan-letter_lifetime')),
     );
     await tester.tap(find.byKey(const Key('plus-plan-letter_lifetime')));
     await tester.pumpAndSettle();
-    expect(find.text('Choose a plan'), findsOneWidget);
+    expect(find.text('Choose a plan'), findsNothing);
     await tester.ensureVisible(
       find.byKey(const Key('plus-plan-letter_monthly')),
     );
     await tester.tap(find.byKey(const Key('plus-plan-letter_monthly')));
     await tester.pumpAndSettle();
-    expect(find.textContaining('Continue with Monthly'), findsOneWidget);
+    expect(find.textContaining('Continue with Monthly'), findsNothing);
+    expect(find.textContaining('Continue with Yearly'), findsNothing);
   });
 
   testWidgets('lifetime access still reveals a separate active subscription', (
@@ -651,8 +655,12 @@ void main() {
       find.text('A separate subscription is also active in the store.'),
       findsOneWidget,
     );
-    expect(find.text('Change plan'), findsOneWidget);
+    expect(find.text('View plans'), findsOneWidget);
     expect(find.text('Manage subscription'), findsOneWidget);
+    await tester.tap(find.text('View plans'));
+    await tester.pumpAndSettle();
+    expect(find.text('Included with Lifetime'), findsNWidgets(2));
+    expect(find.text('Choose a plan'), findsNothing);
   });
 
   testWidgets('active subscription offers three plans except the current one', (
@@ -699,7 +707,7 @@ void main() {
             find.descendant(of: monthlyCard, matching: find.byType(Opacity)),
           )
           .opacity,
-      0.55,
+      0.72,
     );
     await tester.ensureVisible(
       find.byKey(const Key('plus-plan-letter_lifetime')),
@@ -808,12 +816,19 @@ void main() {
     expect(find.byKey(const Key('plus-plan-letter_yearly')), findsOneWidget);
     expect(find.byKey(const Key('plus-plan-letter_lifetime')), findsOneWidget);
     expect(find.text('Current plan'), findsOneWidget);
+    expect(find.text('Already active'), findsOneWidget);
     await tester.ensureVisible(
       find.byKey(const Key('plus-plan-letter_yearly')),
     );
     await tester.tap(find.byKey(const Key('plus-plan-letter_yearly')));
     await tester.pumpAndSettle();
-    expect(find.textContaining('Continue with Yearly'), findsOneWidget);
+    expect(find.text('Choose a plan'), findsOneWidget);
+    await tester.ensureVisible(
+      find.byKey(const Key('plus-plan-letter_lifetime')),
+    );
+    await tester.tap(find.byKey(const Key('plus-plan-letter_lifetime')));
+    await tester.pumpAndSettle();
+    expect(find.textContaining('Continue with Lifetime'), findsOneWidget);
   });
 
   testWidgets('active store state with a past period keeps the reported date', (

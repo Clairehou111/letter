@@ -240,7 +240,11 @@ class _PlusExperienceState extends State<PlusExperience> {
               PlanLoadFailureCode.accountNotReady;
       setState(() {
         _entitlement = state;
-        if (_showPlanChoices && _selectedPlanId == _currentPlanId(state)) {
+        if (state.hasPremiumAccess && state.planId == 'letter_lifetime') {
+          _showPlanChoices = false;
+        }
+        if (_selectedPlanId != null &&
+            _ownedPlanIds(state).contains(_selectedPlanId)) {
           _selectedPlanId = null;
         }
       });
@@ -338,6 +342,22 @@ class _PlusExperienceState extends State<PlusExperience> {
     return latest?.productId ?? state.planId;
   }
 
+  Set<String> _ownedPlanIds(EntitlementState state) {
+    if (!state.hasPremiumAccess) return const <String>{};
+    if (state.planId == 'letter_lifetime') {
+      return const <String>{
+        'letter_monthly',
+        'letter_yearly',
+        'letter_lifetime',
+      };
+    }
+    return <String>{
+      if (state.planId != null) state.planId!,
+      for (final subscription in state.activeSubscriptions)
+        subscription.productId,
+    };
+  }
+
   void _setFeedback(String line, {required bool isError}) {
     setState(() {
       _feedbackLine = line;
@@ -373,8 +393,7 @@ class _PlusExperienceState extends State<PlusExperience> {
     final planId = _selectedPlanId;
     if (planId == null ||
         _purchaseInFlight ||
-        (_entitlement.hasPremiumAccess &&
-            planId == _currentPlanId(_entitlement))) {
+        _ownedPlanIds(_entitlement).contains(planId)) {
       return;
     }
     _clearFeedback();
@@ -386,7 +405,12 @@ class _PlusExperienceState extends State<PlusExperience> {
       }
       setState(() {
         _entitlement = result.state;
-        if (_selectedPlanId == _currentPlanId(result.state)) {
+        if (result.state.hasPremiumAccess &&
+            result.state.planId == 'letter_lifetime') {
+          _showPlanChoices = false;
+        }
+        if (_selectedPlanId != null &&
+            _ownedPlanIds(result.state).contains(_selectedPlanId)) {
           _selectedPlanId = null;
         }
       });
@@ -744,6 +768,7 @@ class _PlusExperienceState extends State<PlusExperience> {
     final currentPlanId = _entitlement.hasPremiumAccess
         ? _currentPlanId(_entitlement)
         : null;
+    final ownedPlanIds = _ownedPlanIds(_entitlement);
     if (plans.isEmpty) {
       return Container(
         width: double.infinity,
@@ -776,9 +801,13 @@ class _PlusExperienceState extends State<PlusExperience> {
             key: ValueKey('plus-plan-${plan.id}'),
             plan: plan,
             current: plan.id == currentPlanId,
+            owned: ownedPlanIds.contains(plan.id),
+            includedWithLifetime:
+                _entitlement.planId == 'letter_lifetime' &&
+                plan.id != 'letter_lifetime',
             selected: plan.id == _selectedPlanId,
             enabled: !_purchaseInFlight && !_restoreInFlight,
-            onSelected: plan.available && plan.id != currentPlanId
+            onSelected: plan.available && !ownedPlanIds.contains(plan.id)
                 ? () {
                     ExperienceHaptics.pick();
                     setState(() => _selectedPlanId = plan.id);
@@ -800,8 +829,7 @@ class _PlusExperienceState extends State<PlusExperience> {
         selected != null &&
         !_purchaseInFlight &&
         !_plansLoading &&
-        (!_entitlement.hasPremiumAccess ||
-            selected.id != _currentPlanId(_entitlement));
+        !_ownedPlanIds(_entitlement).contains(selected.id);
     final outcome = _showPlanChoices && _entitlement.hasPremiumAccess
         ? 'Continue with ${selected?.title ?? 'a plan'}'
         : widget.outcomeContext?.headline ?? 'Start $introOfferLabel';
@@ -962,7 +990,13 @@ class _PlusExperienceState extends State<PlusExperience> {
             ),
             TextButton(
               onPressed: _togglePlanChoices,
-              child: Text(_showPlanChoices ? 'Done' : 'Change plan'),
+              child: Text(
+                _showPlanChoices
+                    ? 'Done'
+                    : isLifetime
+                    ? 'View plans'
+                    : 'Change plan',
+              ),
             ),
           ],
         ),
@@ -1063,20 +1097,15 @@ class _PlusExperienceState extends State<PlusExperience> {
           _buildPlansError()
         else ...<Widget>[
           _buildPlanList(),
-          const SizedBox(height: ExperienceSpacing.xs),
-          _buildPurchaseButton(),
+          if (_entitlement.planId != 'letter_lifetime') ...<Widget>[
+            const SizedBox(height: ExperienceSpacing.xs),
+            _buildPurchaseButton(),
+          ],
           if (_selectedPlanId == 'letter_lifetime' &&
               _entitlement.activeSubscriptions.isNotEmpty) ...<Widget>[
             const SizedBox(height: ExperienceSpacing.xs),
             Text(
               'Buying Lifetime does not cancel an active subscription.',
-              style: ExperienceType.caption(ExperienceColors.inkSoft),
-            ),
-          ] else if (_entitlement.planId == 'letter_lifetime' &&
-              _selectedPlanId != null) ...<Widget>[
-            const SizedBox(height: ExperienceSpacing.xs),
-            Text(
-              'Your Lifetime access remains active alongside this subscription.',
               style: ExperienceType.caption(ExperienceColors.inkSoft),
             ),
           ],
@@ -1195,6 +1224,8 @@ class _PlanCard extends StatelessWidget {
     super.key,
     required this.plan,
     required this.current,
+    required this.owned,
+    required this.includedWithLifetime,
     required this.selected,
     required this.enabled,
     this.onSelected,
@@ -1202,6 +1233,8 @@ class _PlanCard extends StatelessWidget {
 
   final LetterPlan plan;
   final bool current;
+  final bool owned;
+  final bool includedWithLifetime;
   final bool selected;
   final bool enabled;
   final VoidCallback? onSelected;
@@ -1217,12 +1250,20 @@ class _PlanCard extends StatelessWidget {
       selected: selected,
       enabled: tappable,
       label: current
-          ? '${plan.title}, current plan'
+          ? '${plan.title}, ${plan.priceLabel}, current plan'
+          : includedWithLifetime
+          ? '${plan.title}, ${plan.priceLabel}, included with Lifetime'
+          : owned
+          ? '${plan.title}, ${plan.priceLabel}, already active'
           : plan.available
           ? '${plan.title}, ${plan.priceLabel}'
           : '${plan.title}, not available right now',
       child: Opacity(
-        opacity: plan.available && !current ? 1 : 0.55,
+        opacity: !plan.available
+            ? 0.55
+            : owned
+            ? 0.72
+            : 1,
         child: Material(
           color: Colors.transparent,
           borderRadius: ExperienceRadius.cardRadius,
@@ -1290,7 +1331,7 @@ class _PlanCard extends StatelessWidget {
                           ),
                         ),
                         const SizedBox(height: 2),
-                        if (!current)
+                        if (plan.available)
                           Text(
                             plan.priceLabel,
                             style: ExperienceType.data(
@@ -1301,6 +1342,10 @@ class _PlanCard extends StatelessWidget {
                         Text(
                           current
                               ? 'Current plan'
+                              : includedWithLifetime
+                              ? 'Included with Lifetime'
+                              : owned
+                              ? 'Already active'
                               : plan.available
                               ? plan.effectiveMonthlyLabel
                               : 'Not available right now',

@@ -389,16 +389,16 @@ test, and `git diff --check` passed for that copy change.
 ## 2026-10-02 three-plan selector follow-up
 
 The latest local Plus source replaces the one-alternative selector described
-above. **Change plan** now appears for active Monthly, Yearly, and Lifetime,
-including the Test Store state with two active subscription products. Opening
-it shows Monthly, Yearly, and Lifetime. The product shown as the current plan
-is greyed out and cannot be selected; the other two use the existing purchase
-confirmation flow. When two products are active, the disabled product matches
-the current heading, which uses the latest reported purchase. Selecting
-Lifetime with an active subscription states that the subscription is not
-canceled automatically; selecting a subscription while Lifetime is active
-states that Lifetime remains active. The active entitlement remains visible
-if the catalog fails to load.
+above. **Change plan** on an active subscription shows Monthly, Yearly, and
+Lifetime. Already active products remain visible with catalog prices but
+cannot be selected or purchased. If Monthly and Yearly are both active, both
+are greyed out; only Lifetime remains selectable. The heading still uses the
+latest reported subscription purchase, and the access horizon still uses the
+latest confirmed current-period end. **View plans** on Lifetime shows all
+three prices, but every option is disabled and no purchase button appears.
+Selecting Lifetime with an active subscription states that the subscription
+is not canceled automatically. The active entitlement remains visible if the
+catalog fails to load.
 
 The Build 15/Test Store observations above remain historical and do not
 validate this new selector on Apple billing. The local widget tests cover
@@ -407,8 +407,30 @@ Apple sandbox/TestFlight still needs to confirm effective dates, charges,
 renewals, and plan management before release. Final local checks:
 `flutter analyze --no-pub` passed; focused Plus/report tests passed;
 complete `flutter test --no-pub --concurrency=4 -r expanded` passed
-**716 tests with 1 existing skip**; `git diff --check` passed. The complete
-app was hot-restarted on the isolated iOS simulator. Its live Plus sheet
-showed Yearly, Monthly, and Lifetime with Monthly disabled as the current
-product; tapping Yearly selected it and enabled **Continue with Yearly**.
-No purchase was initiated in this visual check.
+**716 tests with 1 existing skip**; `git diff --check` passed. Those results
+and the simulator observation of selectable Yearly with Monthly active were
+recorded before the follow-up rule that disables every already active plan.
+The revised rule is covered by focused tests; its final full-suite and
+simulator results follow below.
+
+## 2026-10-02 owned-plan rule verification
+
+The product rule is now consistent across Plus states: a store-reported
+already active product can be viewed with its current catalog price but cannot
+be selected or purchased. Monthly and Yearly are both disabled when both are
+active; Lifetime remains selectable in that case. Lifetime access makes all
+three cards read-only. The Lifetime sheet uses **View plans** and has no
+purchase button. Its other plan cards say **Included with Lifetime**. The
+purchase handler also rejects an already active product
+if entitlement changes while the sheet is open.
+
+The complete app on the isolated iOS simulator was hot-restarted with this
+source. Its Test Store account currently reports Lifetime plus a separate
+subscription. **View plans** displayed all three prices, with all three cards
+disabled and no purchase button. The Monthly and Yearly cards said **Included
+with Lifetime**. No purchase or account action was performed during this
+check. Widget tests cover the separate Monthly/Yearly overlap and
+single-subscription cases without requiring concurrent store activity.
+Final checks: `flutter analyze --no-pub` passed; complete
+`flutter test --no-pub --concurrency=4 -r expanded` passed **716 tests with
+1 existing skip**; `git diff --check` passed.
