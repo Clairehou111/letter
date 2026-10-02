@@ -98,6 +98,18 @@ sign-in; do not mark these cases passed from catalog display alone. This QA
 entry bypasses Supabase auth and therefore cannot validate the deleted-account
 reconnection path by itself.
 
+The separate `Letter Account QA 2026-10-02` simulator then ran the real app
+entry with an owner-confirmed disposable Letter Within account and the Apple
+RevenueCat configuration. All three Apple sandbox products loaded; Restore
+before purchase said no active subscription was found. A yearly purchase
+attempt prompted for an Apple Account, but returned to Plus without a purchase
+confirmation or entitlement. `Settings → Developer → Sandbox Apple Account`
+still showed **Sign In** after a login attempt. Sanitized simulator store logs
+contained `AMSErrorDomain Code=100` (authentication failed). The Sandbox Apple
+Account credential and simulator auth environment need verification before
+repeating purchase. No purchase, entitlement unlock, or post-purchase restore
+has passed; no credential or account identifier is recorded here.
+
 Run the ordered [account and subscription cases](account-subscription-cases.md)
 on the next build. The RevenueCat Test Store can separately check development
 SDK purchase/restore, while TestFlight's Apple sandbox remains necessary for

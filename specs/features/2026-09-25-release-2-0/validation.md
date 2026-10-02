@@ -130,6 +130,12 @@ recorded below.
   yearly US$39.99, monthly US$7.99, and lifetime US$99.99 from Apple sandbox.
   Tapping purchase opened the Sandbox Apple Account sign-in dialog. Sandbox
   purchase, entitlement unlock, and restore remain pending tester sign-in.
+- The real configured app on an isolated simulator, with an owner-confirmed
+  test app account, loaded those Apple products and returned a no-purchase
+  result for Restore. The attempted Sandbox Apple Account sign-in did not
+  persist in `Settings → Developer`; sanitized store logs showed
+  `AMSErrorDomain Code=100` (authentication failed). No sandbox transaction or
+  Plus unlock has been counted as a pass.
 
 ## 2026-10-01 Build 14 TestFlight handoff
 
