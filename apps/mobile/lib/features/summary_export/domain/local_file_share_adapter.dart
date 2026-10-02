@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:flutter/services.dart';
 import 'package:share_plus/share_plus.dart';
 
 import '../../care/domain/care_memory.dart';
@@ -86,13 +87,13 @@ final class SystemLocalFileShareAdapter implements LocalFileShareAdapter {
         bytes: file.bytes,
       );
       if (isMobile) {
-        final result = await SharePlus.instance.share(
-          ShareParams(files: [XFile(savedPath, mimeType: file.mimeType)]),
+        return shareSavedFileWithSystem(
+          savedPath: savedPath,
+          mimeType: file.mimeType,
+          resultTimeout: await _isIOSAppOnMac()
+              ? const Duration(seconds: 15)
+              : null,
         );
-        if (result.status != ShareResultStatus.success) {
-          return LocalFileShareResult.savedOnly(savedPath: savedPath);
-        }
-        return LocalFileShareResult.shared(savedPath: savedPath);
       }
       return LocalFileShareResult.savedOnly(savedPath: savedPath);
     } on Object {
@@ -101,6 +102,42 @@ final class SystemLocalFileShareAdapter implements LocalFileShareAdapter {
       }
       return const LocalFileShareResult.failed();
     }
+  }
+}
+
+const _platformChannel = MethodChannel('app.letterwithin/platform');
+
+Future<bool> _isIOSAppOnMac() async {
+  if (!Platform.isIOS) return false;
+  try {
+    return await _platformChannel.invokeMethod<bool>('isIOSAppOnMac') ?? false;
+  } on Object {
+    return false;
+  }
+}
+
+/// The local copy is already safe when the system sheet opens. On iOS apps
+/// running on a Mac, finishing or dismissing a native share action can leave
+/// its completion unanswered. Bound that wait so Reports never stays in its export
+/// loading state indefinitely; an unconfirmed result only claims local save.
+Future<LocalFileShareResult> shareSavedFileWithSystem({
+  required String savedPath,
+  required String mimeType,
+  Future<ShareResult> Function(ShareParams)? share,
+  Duration? resultTimeout,
+}) async {
+  try {
+    final sharing = (share ?? SharePlus.instance.share)(
+      ShareParams(files: [XFile(savedPath, mimeType: mimeType)]),
+    );
+    final result = await (resultTimeout == null
+        ? sharing
+        : sharing.timeout(resultTimeout));
+    return result.status == ShareResultStatus.success
+        ? LocalFileShareResult.shared(savedPath: savedPath)
+        : LocalFileShareResult.savedOnly(savedPath: savedPath);
+  } on Object {
+    return LocalFileShareResult.savedOnly(savedPath: savedPath);
   }
 }
 

@@ -2940,8 +2940,7 @@ class _ReceiptCard extends StatelessWidget {
         Icons.folder_outlined,
         ExperienceColors.accentGravity,
         'Saved to your Letter folder.',
-        'Nothing was shared. The file stays on this device until you '
-            'choose otherwise.',
+        'The file is saved on this device.',
       ),
       ExperienceFileOutcome.cancelled => (
         Icons.close,

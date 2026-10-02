@@ -86,6 +86,7 @@ final class LetterPrivacyCover {
 @main
 @objc class AppDelegate: FlutterAppDelegate, FlutterImplicitEngineDelegate {
   private var privacyChannel: FlutterMethodChannel?
+  private var platformChannel: FlutterMethodChannel?
 
   override func application(
     _ application: UIApplication,
@@ -183,6 +184,20 @@ final class LetterPrivacyCover {
       }
     }
     privacyChannel = channel
+
+    let platform = FlutterMethodChannel(
+      name: "app.letterwithin/platform",
+      binaryMessenger: registrar.messenger()
+    )
+    platform.setMethodCallHandler { call, result in
+      switch call.method {
+      case "isIOSAppOnMac":
+        result(ProcessInfo.processInfo.isiOSAppOnMac)
+      default:
+        result(FlutterMethodNotImplemented)
+      }
+    }
+    platformChannel = platform
   }
 
   /// posthog-ios keeps event queues under Application Support even after

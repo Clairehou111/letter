@@ -150,8 +150,7 @@ final class LetterReportExperiencePort implements ReportExperiencePort {
         LocalFileShareStatus.savedOnly => ExperienceFileReceipt(
           outcome: ExperienceFileOutcome.savedOnly,
           localPath: share.savedPath,
-          message:
-              'Saved on this device. No destination was selected in the share sheet.',
+          message: 'Saved on this device. Sharing was not confirmed.',
         ),
         LocalFileShareStatus.unavailable => const ExperienceFileReceipt(
           outcome: ExperienceFileOutcome.failed,
