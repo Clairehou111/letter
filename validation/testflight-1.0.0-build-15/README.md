@@ -385,3 +385,30 @@ a failed restore. The local deletion confirmation now explains that account
 deletion does not cancel an App Store or Google Play subscription and points to
 Restore on a new account. `flutter analyze --no-pub`, the focused Settings
 test, and `git diff --check` passed for that copy change.
+
+## 2026-10-02 three-plan selector follow-up
+
+The latest local Plus source replaces the one-alternative selector described
+above. **Change plan** now appears for active Monthly, Yearly, and Lifetime,
+including the Test Store state with two active subscription products. Opening
+it shows Monthly, Yearly, and Lifetime. The product shown as the current plan
+is greyed out and cannot be selected; the other two use the existing purchase
+confirmation flow. When two products are active, the disabled product matches
+the current heading, which uses the latest reported purchase. Selecting
+Lifetime with an active subscription states that the subscription is not
+canceled automatically; selecting a subscription while Lifetime is active
+states that Lifetime remains active. The active entitlement remains visible
+if the catalog fails to load.
+
+The Build 15/Test Store observations above remain historical and do not
+validate this new selector on Apple billing. The local widget tests cover
+single-plan, Lifetime, overlap, small-screen, and normal purchase paths.
+Apple sandbox/TestFlight still needs to confirm effective dates, charges,
+renewals, and plan management before release. Final local checks:
+`flutter analyze --no-pub` passed; focused Plus/report tests passed;
+complete `flutter test --no-pub --concurrency=4 -r expanded` passed
+**716 tests with 1 existing skip**; `git diff --check` passed. The complete
+app was hot-restarted on the isolated iOS simulator. Its live Plus sheet
+showed Yearly, Monthly, and Lifetime with Monthly disabled as the current
+product; tapping Yearly selected it and enabled **Continue with Yearly**.
+No purchase was initiated in this visual check.

@@ -238,7 +238,12 @@ class _PlusExperienceState extends State<PlusExperience> {
           _plansError is EntitlementException &&
           (_plansError! as EntitlementException).planLoadFailureCode ==
               PlanLoadFailureCode.accountNotReady;
-      setState(() => _entitlement = state);
+      setState(() {
+        _entitlement = state;
+        if (_showPlanChoices && _selectedPlanId == _currentPlanId(state)) {
+          _selectedPlanId = null;
+        }
+      });
       unawaited(_loadManagementUrl());
       // The app can open its shell while account-bound store reconciliation
       // finishes. If plans were requested before the user ID reached the store
@@ -274,8 +279,8 @@ class _PlusExperienceState extends State<PlusExperience> {
       setState(() {
         _plans = plans;
         _plansLoading = false;
-        _selectedPlanId = _showPlanChoices
-            ? _alternativeSubscriptionId(plans)
+        _selectedPlanId = _entitlement.hasPremiumAccess
+            ? null
             : _defaultSelection(plans);
       });
       _track(const analytics.PlanCatalogLoadEvent.loaded());
@@ -315,13 +320,22 @@ class _PlusExperienceState extends State<PlusExperience> {
     return available.first.id;
   }
 
-  String? _alternativeSubscriptionId(List<LetterPlan> plans) {
-    final otherId = _entitlement.planId == 'letter_monthly'
-        ? 'letter_yearly'
-        : 'letter_monthly';
-    return plans.any((plan) => plan.id == otherId && plan.available)
-        ? otherId
-        : null;
+  String? _currentPlanId(EntitlementState state) {
+    if (state.planId == 'letter_lifetime') return state.planId;
+    final subscriptions = state.activeSubscriptions;
+    if (subscriptions.map((item) => item.productId).toSet().length < 2) {
+      return state.planId;
+    }
+    ActivePlanPeriod? latest;
+    for (final subscription in subscriptions) {
+      if (latest == null ||
+          (subscription.purchasedAt != null &&
+              (latest.purchasedAt == null ||
+                  subscription.purchasedAt!.isAfter(latest.purchasedAt!)))) {
+        latest = subscription;
+      }
+    }
+    return latest?.productId ?? state.planId;
   }
 
   void _setFeedback(String line, {required bool isError}) {
@@ -359,7 +373,8 @@ class _PlusExperienceState extends State<PlusExperience> {
     final planId = _selectedPlanId;
     if (planId == null ||
         _purchaseInFlight ||
-        (_entitlement.hasPremiumAccess && planId == _entitlement.planId)) {
+        (_entitlement.hasPremiumAccess &&
+            planId == _currentPlanId(_entitlement))) {
       return;
     }
     _clearFeedback();
@@ -369,7 +384,12 @@ class _PlusExperienceState extends State<PlusExperience> {
       if (!mounted) {
         return;
       }
-      setState(() => _entitlement = result.state);
+      setState(() {
+        _entitlement = result.state;
+        if (_selectedPlanId == _currentPlanId(result.state)) {
+          _selectedPlanId = null;
+        }
+      });
       switch (result.outcome) {
         case PurchaseOutcome.activated:
           _trackPurchase(planId, analytics.PurchaseOutcome.completed);
@@ -498,8 +518,8 @@ class _PlusExperienceState extends State<PlusExperience> {
   void _togglePlanChoices() {
     setState(() {
       _showPlanChoices = !_showPlanChoices;
-      _selectedPlanId = _showPlanChoices
-          ? _alternativeSubscriptionId(_plans ?? const <LetterPlan>[])
+      _selectedPlanId = _entitlement.hasPremiumAccess
+          ? null
           : _defaultSelection(_plans ?? const <LetterPlan>[]);
       _feedbackLine = null;
     });
@@ -721,6 +741,9 @@ class _PlusExperienceState extends State<PlusExperience> {
 
   Widget _buildPlanList() {
     final plans = _plans ?? const <LetterPlan>[];
+    final currentPlanId = _entitlement.hasPremiumAccess
+        ? _currentPlanId(_entitlement)
+        : null;
     if (plans.isEmpty) {
       return Container(
         width: double.infinity,
@@ -750,10 +773,12 @@ class _PlusExperienceState extends State<PlusExperience> {
       children: <Widget>[
         for (final plan in ordered) ...<Widget>[
           _PlanCard(
+            key: ValueKey('plus-plan-${plan.id}'),
             plan: plan,
+            current: plan.id == currentPlanId,
             selected: plan.id == _selectedPlanId,
             enabled: !_purchaseInFlight && !_restoreInFlight,
-            onSelected: plan.available
+            onSelected: plan.available && plan.id != currentPlanId
                 ? () {
                     ExperienceHaptics.pick();
                     setState(() => _selectedPlanId = plan.id);
@@ -775,7 +800,8 @@ class _PlusExperienceState extends State<PlusExperience> {
         selected != null &&
         !_purchaseInFlight &&
         !_plansLoading &&
-        (!_entitlement.hasPremiumAccess || selected.id != _entitlement.planId);
+        (!_entitlement.hasPremiumAccess ||
+            selected.id != _currentPlanId(_entitlement));
     final outcome = _showPlanChoices && _entitlement.hasPremiumAccess
         ? 'Continue with ${selected?.title ?? 'a plan'}'
         : widget.outcomeContext?.headline ?? 'Start $introOfferLabel';
@@ -889,17 +915,6 @@ class _PlusExperienceState extends State<PlusExperience> {
                 .toSet()
                 .length >
             1;
-    ActivePlanPeriod? latestSubscription;
-    for (final subscription in subscriptions) {
-      if (latestSubscription == null ||
-          (subscription.purchasedAt != null &&
-              (latestSubscription.purchasedAt == null ||
-                  subscription.purchasedAt!.isAfter(
-                    latestSubscription.purchasedAt!,
-                  )))) {
-        latestSubscription = subscription;
-      }
-    }
     DateTime? accessThrough;
     for (final endsAt in <DateTime?>[
       _entitlement.expiresAt,
@@ -911,9 +926,7 @@ class _PlusExperienceState extends State<PlusExperience> {
       }
     }
     final periodLabel = _currentPeriodLabel();
-    final displayedPlanId = hasOverlappingPlans
-        ? latestSubscription?.productId
-        : _entitlement.planId;
+    final displayedPlanId = _currentPlanId(_entitlement);
     final currentPlan =
         plans.where((plan) => plan.id == displayedPlanId).firstOrNull ??
         letterPlans.where((plan) => plan.id == displayedPlanId).firstOrNull;
@@ -947,11 +960,10 @@ class _PlusExperienceState extends State<PlusExperience> {
               currentPlan?.title ?? 'Plus',
               style: ExperienceType.headline(ExperienceColors.ink),
             ),
-            if (!isLifetime && !hasOverlappingPlans)
-              TextButton(
-                onPressed: _togglePlanChoices,
-                child: Text(_showPlanChoices ? 'Done' : 'Change plan'),
-              ),
+            TextButton(
+              onPressed: _togglePlanChoices,
+              child: Text(_showPlanChoices ? 'Done' : 'Change plan'),
+            ),
           ],
         ),
         if (_entitlement.status == EntitlementStatus.activeIntro)
@@ -996,13 +1008,11 @@ class _PlusExperienceState extends State<PlusExperience> {
               label: const Text('Manage subscription'),
             ),
           ),
-        if (!isLifetime && !hasOverlappingPlans) ...<Widget>[
-          if (_showPlanChoices) ...<Widget>[
-            const SizedBox(height: ExperienceSpacing.sm),
-            const Divider(height: 1, color: ExperienceColors.hairline),
-            const SizedBox(height: ExperienceSpacing.sm),
-            _buildPlanChangeSection(),
-          ],
+        if (_showPlanChoices) ...<Widget>[
+          const SizedBox(height: ExperienceSpacing.sm),
+          const Divider(height: 1, color: ExperienceColors.hairline),
+          const SizedBox(height: ExperienceSpacing.sm),
+          _buildPlanChangeSection(),
         ],
       ],
     );
@@ -1044,9 +1054,6 @@ class _PlusExperienceState extends State<PlusExperience> {
   }
 
   Widget _buildPlanChangeSection() {
-    final alternative = (_plans ?? const <LetterPlan>[])
-        .where((plan) => plan.id == _selectedPlanId && plan.available)
-        .firstOrNull;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: <Widget>[
@@ -1054,74 +1061,26 @@ class _PlusExperienceState extends State<PlusExperience> {
           const _PlansSkeleton()
         else if (_plansError != null)
           _buildPlansError()
-        else if (alternative == null)
-          Text(
-            'No other subscription is available right now.',
-            style: ExperienceType.bodySmall(ExperienceColors.inkSoft),
-          )
-        else
-          Semantics(
-            button: true,
-            enabled: !_purchaseInFlight,
-            label:
-                'Switch to ${alternative.title}, ${alternative.priceLabel}, '
-                '${alternative.effectiveMonthlyLabel}',
-            child: Material(
-              color: ExperienceColors.surfaceWarm,
-              borderRadius: ExperienceRadius.cardRadius,
-              child: InkWell(
-                borderRadius: ExperienceRadius.cardRadius,
-                onTap: _purchaseInFlight ? null : _purchaseSelected,
-                child: Container(
-                  constraints: const BoxConstraints(minHeight: 76),
-                  padding: const EdgeInsets.all(ExperienceSpacing.sm),
-                  decoration: BoxDecoration(
-                    borderRadius: ExperienceRadius.cardRadius,
-                    border: Border.all(color: ExperienceColors.hairline),
-                  ),
-                  child: Row(
-                    children: <Widget>[
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          mainAxisSize: MainAxisSize.min,
-                          children: <Widget>[
-                            Text(
-                              _purchaseInFlight
-                                  ? 'Opening store…'
-                                  : 'Switch to ${alternative.title}',
-                              style: ExperienceType.bodyStrong(
-                                ExperienceColors.ink,
-                              ),
-                            ),
-                            const SizedBox(height: ExperienceSpacing.xs),
-                            Text(
-                              '${alternative.priceLabel} · '
-                              '${alternative.effectiveMonthlyLabel}',
-                              style: ExperienceType.bodySmall(
-                                ExperienceColors.inkSoft,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      const SizedBox(width: ExperienceSpacing.sm),
-                      if (_purchaseInFlight)
-                        const EmberLoadingIndicator(
-                          size: 20,
-                          semanticLabel: 'Purchase in progress',
-                        )
-                      else
-                        const Icon(
-                          Icons.arrow_forward_rounded,
-                          color: ExperienceColors.ember,
-                        ),
-                    ],
-                  ),
-                ),
-              ),
+        else ...<Widget>[
+          _buildPlanList(),
+          const SizedBox(height: ExperienceSpacing.xs),
+          _buildPurchaseButton(),
+          if (_selectedPlanId == 'letter_lifetime' &&
+              _entitlement.activeSubscriptions.isNotEmpty) ...<Widget>[
+            const SizedBox(height: ExperienceSpacing.xs),
+            Text(
+              'Buying Lifetime does not cancel an active subscription.',
+              style: ExperienceType.caption(ExperienceColors.inkSoft),
             ),
-          ),
+          ] else if (_entitlement.planId == 'letter_lifetime' &&
+              _selectedPlanId != null) ...<Widget>[
+            const SizedBox(height: ExperienceSpacing.xs),
+            Text(
+              'Your Lifetime access remains active alongside this subscription.',
+              style: ExperienceType.caption(ExperienceColors.inkSoft),
+            ),
+          ],
+        ],
       ],
     );
   }
@@ -1233,13 +1192,16 @@ class _StatusBanner extends StatelessWidget {
 
 class _PlanCard extends StatelessWidget {
   const _PlanCard({
+    super.key,
     required this.plan,
+    required this.current,
     required this.selected,
     required this.enabled,
     this.onSelected,
   });
 
   final LetterPlan plan;
+  final bool current;
   final bool selected;
   final bool enabled;
   final VoidCallback? onSelected;
@@ -1251,14 +1213,16 @@ class _PlanCard extends StatelessWidget {
         ? Duration.zero
         : ExperienceMotion.chipSelect;
     return Semantics(
-      button: onSelected != null,
-      selected: onSelected == null ? null : selected,
-      enabled: onSelected == null ? null : tappable,
-      label: plan.available
+      button: true,
+      selected: selected,
+      enabled: tappable,
+      label: current
+          ? '${plan.title}, current plan'
+          : plan.available
           ? '${plan.title}, ${plan.priceLabel}'
           : '${plan.title}, not available right now',
       child: Opacity(
-        opacity: plan.available ? 1 : 0.55,
+        opacity: plan.available && !current ? 1 : 0.55,
         child: Material(
           color: Colors.transparent,
           borderRadius: ExperienceRadius.cardRadius,
@@ -1286,7 +1250,7 @@ class _PlanCard extends StatelessWidget {
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: <Widget>[
-                  if (onSelected != null) ...<Widget>[
+                  if (plan.available) ...<Widget>[
                     Padding(
                       padding: const EdgeInsets.only(top: 2),
                       child: Container(
@@ -1326,15 +1290,18 @@ class _PlanCard extends StatelessWidget {
                           ),
                         ),
                         const SizedBox(height: 2),
-                        Text(
-                          plan.priceLabel,
-                          style: ExperienceType.data(
-                            ExperienceColors.ink,
-                            size: 15,
+                        if (!current)
+                          Text(
+                            plan.priceLabel,
+                            style: ExperienceType.data(
+                              ExperienceColors.ink,
+                              size: 15,
+                            ),
                           ),
-                        ),
                         Text(
-                          plan.available
+                          current
+                              ? 'Current plan'
+                              : plan.available
                               ? plan.effectiveMonthlyLabel
                               : 'Not available right now',
                           style: ExperienceType.caption(
