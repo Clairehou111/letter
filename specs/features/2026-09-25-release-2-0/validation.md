@@ -136,6 +136,11 @@ recorded below.
   persist in `Settings → Developer`; sanitized store logs showed
   `AMSErrorDomain Code=100` (authentication failed). No sandbox transaction or
   Plus unlock has been counted as a pass.
+- The owner verified the first App Store Connect Sandbox tester email. A
+  second independently verified tester reached Apple's verification-code
+  prompt, but the same iOS 26.5 simulator still returned to **Sign In** and
+  logged an authentication failure. A clean simulator comparison remains
+  pending; no physical iPhone is connected to the Mac.
 
 ## 2026-10-01 Build 14 TestFlight handoff
 

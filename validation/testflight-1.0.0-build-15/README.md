@@ -110,6 +110,17 @@ Account credential and simulator auth environment need verification before
 repeating purchase. No purchase, entitlement unlock, or post-purchase restore
 has passed; no credential or account identifier is recorded here.
 
+The owner confirmed the tester exists under App Store Connect **Users and
+Access → Sandbox** and completed Apple's email verification. Retrying that
+tester still left `Settings → Developer` at **Sign In**. A second independently
+verified sandbox tester advanced through Apple's verification-code prompt on
+the same simulator, then also returned to **Sign In**; sanitized recent store
+logs again contained `AMSErrorDomain Code=100`. This points to Apple sandbox
+authentication on that simulator, not a failed entitlement update. One final
+comparison is pending on the separate clean simulator before classifying the
+simulator path as blocked. A physical iPhone is not currently connected to
+this Mac.
+
 Run the ordered [account and subscription cases](account-subscription-cases.md)
 on the next build. The RevenueCat Test Store can separately check development
 SDK purchase/restore, while TestFlight's Apple sandbox remains necessary for
