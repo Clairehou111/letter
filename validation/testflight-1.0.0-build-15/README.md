@@ -275,25 +275,33 @@ test customer's RevenueCat profile showed **both Annual and Monthly active**,
 with separate renewal times; the customer history contained new Monthly
 purchases and renewals after the Annual purchase. This is overlapping Test
 Store purchase history, not evidence of a scheduled Apple crossgrade. The
-complete-app source now reads the active subscription products separately,
-shows both plans and their own renewal/access-end times when they overlap,
-and removes the further switch action in that state. A period ending within
+complete-app source now reads active subscription products separately. In an
+overlap it shows the product with the latest store-reported purchase or
+renewal, plus the **latest confirmed current-period end** across active
+products as the minimum known Plus access horizon. It does not add the two
+durations or call that horizon the final expiry of an auto-renewing plan.
+It also notes that another subscription is active and removes the further
+switch action in that state. A period ending within
 24 hours includes the local time so accelerated Test Store renewals can be
 distinguished. The singular date for an auto-renewing plan is the **next
 renewal**, not its final expiry. A canceled plan instead shows its access-end
-date. If the SDK still reports a plan active with a past period date, Plus
-labels that timestamp as the last reported period end instead of claiming
+date. If the SDK still reports a single plan active with a past period date,
+Plus labels that timestamp as the last reported period end instead of claiming
 an upcoming renewal. Widget tests cover the ordinary single-plan state,
-overlap, and that stale-period case.
+overlap selection, latest confirmed horizon, and that stale-period case.
 This source change is not in Build 15; an Apple sandbox run is still needed
 to validate actual same-group crossgrade timing and billing.
 
-Final complete-app simulator check after hot reload showed **Multiple plans
-active**, `Monthly · Last reported period ended Fri, Oct 2, 2026 at 12:41 PM`,
-and `Yearly · Renews on Fri, Oct 2, 2026 at 1:13 PM`. The past Monthly
-timestamp came from the SDK's latest reported period; the app did not treat
-it as a future renewal. Final source checks: `flutter analyze --no-pub`
-passed, complete `flutter test --no-pub --concurrency=4 -r expanded` passed
+An earlier simulator check showed `Monthly · Last reported period ended Fri,
+Oct 2, 2026 at 12:41 PM` and `Yearly · Renews on Fri, Oct 2, 2026 at 1:13
+PM` side by side. The follow-up design uses the more recent product for the
+heading and the later of those known period ends for Plus coverage. The
+complete-app simulator now displays **Monthly**, **Current Plus access through
+at least Fri, Oct 2, 2026 at 1:13 PM**, and a short notice that another store
+subscription remains active. Test Store does not prove that Apple's same-group
+crossgrade will produce an overlap; that requires Apple sandbox validation.
+Final checks for this follow-up: `flutter analyze --no-pub` passed, the
+complete `flutter test --no-pub --concurrency=4 -r expanded` suite passed
 **710 tests with 1 existing skip**, and `git diff --check` passed.
 
 This remains a debug Test Store result. A physical iPhone with TestFlight and

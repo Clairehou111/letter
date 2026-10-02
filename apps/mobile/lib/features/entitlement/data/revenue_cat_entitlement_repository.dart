@@ -172,6 +172,7 @@ final class PurchasesFlutterRevenueCatClient implements RevenueCatClient {
         .map(
           (subscription) => ActivePlanPeriod(
             productId: subscription.productIdentifier,
+            purchasedAt: DateTime.tryParse(subscription.purchaseDate)?.toUtc(),
             expiresAt: DateTime.tryParse(
               subscription.expiresDate ?? '',
             )?.toUtc(),
@@ -187,6 +188,9 @@ final class PurchasesFlutterRevenueCatClient implements RevenueCatClient {
         activeSubscriptions.add(
           ActivePlanPeriod(
             productId: id,
+            purchasedAt: DateTime.tryParse(
+              info.allPurchaseDates[id] ?? '',
+            )?.toUtc(),
             expiresAt: DateTime.tryParse(
               info.allExpirationDates[id] ?? '',
             )?.toUtc(),

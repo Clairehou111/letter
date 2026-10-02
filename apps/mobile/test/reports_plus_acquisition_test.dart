@@ -688,7 +688,7 @@ void main() {
     expect(find.textContaining('Renews on'), findsNothing);
   });
 
-  testWidgets('overlapping store plans show both dates without switch action', (
+  testWidgets('overlapping plans show newest activity and latest access date', (
     tester,
   ) async {
     final repository = LocalEntitlementRepository(
@@ -698,11 +698,13 @@ void main() {
         activeSubscriptions: [
           ActivePlanPeriod(
             productId: 'letter_yearly',
+            purchasedAt: DateTime.utc(2030, 9, 1),
             expiresAt: DateTime.utc(2030, 11, 2),
             willRenew: true,
           ),
           ActivePlanPeriod(
             productId: 'letter_monthly',
+            purchasedAt: DateTime.utc(2030, 9, 2),
             expiresAt: DateTime.utc(2030, 10, 2),
             willRenew: true,
           ),
@@ -718,9 +720,16 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    expect(find.text('Multiple plans active'), findsOneWidget);
-    expect(find.textContaining('Yearly · Renews on'), findsOneWidget);
-    expect(find.textContaining('Monthly · Renews on'), findsOneWidget);
+    expect(find.text('Monthly'), findsOneWidget);
+    expect(find.text('Yearly'), findsNothing);
+    expect(
+      find.text('Current Plus access through at least Sat, Nov 2, 2030'),
+      findsOneWidget,
+    );
+    expect(
+      find.text('Another subscription is also active in the store.'),
+      findsOneWidget,
+    );
     expect(find.text('Change plan'), findsNothing);
   });
 

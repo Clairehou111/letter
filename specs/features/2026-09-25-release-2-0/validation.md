@@ -417,8 +417,11 @@ recorded below.
 ## Release Boundaries
 
 - Plus shows the store-reported current plan and next renewal date, or the
-  access-end date when renewal is off. Overlapping active Monthly and Yearly
-  products are listed separately with their dates. The 2026-10-02 RevenueCat
+  access-end date when renewal is off. For overlapping active Monthly and
+  Yearly products, Plus names the product with the latest reported purchase
+  or renewal and shows the latest confirmed current-period end across both as
+  the minimum known access horizon; it never adds their durations. The
+  2026-10-02 RevenueCat
   Test Store account showed both products active after a Yearly → Monthly
   purchase; the single entitlement still named Yearly. This test environment
   does not establish an Apple crossgrade. Confirm actual same-group timing,

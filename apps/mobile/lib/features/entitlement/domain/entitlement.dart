@@ -117,11 +117,16 @@ class EntitlementState {
 class ActivePlanPeriod {
   const ActivePlanPeriod({
     required this.productId,
+    this.purchasedAt,
     this.expiresAt,
     this.willRenew,
   });
 
   final String productId;
+
+  /// Start of this product's most recently reported paid period. The store may
+  /// report a renewal here as well as an initial purchase.
+  final DateTime? purchasedAt;
   final DateTime? expiresAt;
   final bool? willRenew;
 }

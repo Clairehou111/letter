@@ -900,10 +900,34 @@ class _PlusExperienceState extends State<PlusExperience> {
             .toSet()
             .length >
         1;
+    ActivePlanPeriod? latestSubscription;
+    for (final subscription in subscriptions) {
+      if (latestSubscription == null ||
+          (subscription.purchasedAt != null &&
+              (latestSubscription.purchasedAt == null ||
+                  subscription.purchasedAt!.isAfter(
+                    latestSubscription.purchasedAt!,
+                  )))) {
+        latestSubscription = subscription;
+      }
+    }
+    DateTime? accessThrough;
+    for (final endsAt in <DateTime?>[
+      _entitlement.expiresAt,
+      for (final subscription in subscriptions) subscription.expiresAt,
+    ]) {
+      if (endsAt != null &&
+          (accessThrough == null || endsAt.isAfter(accessThrough))) {
+        accessThrough = endsAt;
+      }
+    }
     final periodLabel = _currentPeriodLabel();
+    final displayedPlanId = hasOverlappingPlans
+        ? latestSubscription?.productId
+        : _entitlement.planId;
     final currentPlan =
-        plans.where((plan) => plan.id == _entitlement.planId).firstOrNull ??
-        letterPlans.where((plan) => plan.id == _entitlement.planId).firstOrNull;
+        plans.where((plan) => plan.id == displayedPlanId).firstOrNull ??
+        letterPlans.where((plan) => plan.id == displayedPlanId).firstOrNull;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: <Widget>[
@@ -931,9 +955,7 @@ class _PlusExperienceState extends State<PlusExperience> {
           spacing: ExperienceSpacing.sm,
           children: <Widget>[
             Text(
-              hasOverlappingPlans
-                  ? 'Multiple plans active'
-                  : currentPlan?.title ?? 'Plus',
+              currentPlan?.title ?? 'Plus',
               style: ExperienceType.headline(ExperienceColors.ink),
             ),
             if (!isLifetime && !hasOverlappingPlans)
@@ -950,15 +972,17 @@ class _PlusExperienceState extends State<PlusExperience> {
           ),
         if (hasOverlappingPlans) ...<Widget>[
           const SizedBox(height: ExperienceSpacing.xs),
-          for (final subscription in subscriptions)
-            Padding(
-              padding: const EdgeInsets.only(bottom: ExperienceSpacing.xs),
-              child: Text(
-                '${letterPlans.where((plan) => plan.id == subscription.productId).firstOrNull?.title ?? subscription.productId} · '
-                '${_periodLabel(subscription.expiresAt, subscription.willRenew) ?? 'Active'}',
-                style: ExperienceType.bodySmall(ExperienceColors.inkSoft),
-              ),
+          if (accessThrough != null)
+            Text(
+              accessThrough.isAfter(DateTime.now().toUtc())
+                  ? 'Current Plus access through at least ${_displayDate(accessThrough)}'
+                  : 'Last reported Plus period ended ${_displayDate(accessThrough)}',
+              style: ExperienceType.bodySmall(ExperienceColors.inkSoft),
             ),
+          Text(
+            'Another subscription is also active in the store.',
+            style: ExperienceType.caption(ExperienceColors.inkSoft),
+          ),
         ] else if (periodLabel != null) ...<Widget>[
           const SizedBox(height: ExperienceSpacing.xs),
           Text(
@@ -999,15 +1023,7 @@ class _PlusExperienceState extends State<PlusExperience> {
     if (endsAt == null) {
       return null;
     }
-    final localDate = endsAt.toLocal();
-    final localizations = MaterialLocalizations.of(context);
-    final date =
-        '${localizations.formatMediumDate(localDate)}, '
-        '${localizations.formatYear(localDate)}';
-    final hoursUntil = endsAt.difference(DateTime.now().toUtc()).inHours;
-    final dateAndTime = hoursUntil > -24 && hoursUntil < 24
-        ? '$date at ${localizations.formatTimeOfDay(TimeOfDay.fromDateTime(localDate))}'
-        : date;
+    final dateAndTime = _displayDate(endsAt);
     if (!endsAt.isAfter(DateTime.now().toUtc())) {
       return 'Last reported period ended $dateAndTime';
     }
@@ -1016,6 +1032,18 @@ class _PlusExperienceState extends State<PlusExperience> {
       false => 'Access until $dateAndTime',
       null => 'Current period ends $dateAndTime',
     };
+  }
+
+  String _displayDate(DateTime endsAt) {
+    final localDate = endsAt.toLocal();
+    final localizations = MaterialLocalizations.of(context);
+    final date =
+        '${localizations.formatMediumDate(localDate)}, '
+        '${localizations.formatYear(localDate)}';
+    final hoursUntil = endsAt.difference(DateTime.now().toUtc()).inHours;
+    return hoursUntil > -24 && hoursUntil < 24
+        ? '$date at ${localizations.formatTimeOfDay(TimeOfDay.fromDateTime(localDate))}'
+        : date;
   }
 
   Widget _buildPlanChangeSection() {

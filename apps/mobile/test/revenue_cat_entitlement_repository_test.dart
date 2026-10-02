@@ -148,7 +148,11 @@ void main() {
         expiresAt: endsAt,
         willRenew: false,
         activeSubscriptions: [
-          ActivePlanPeriod(productId: 'letter_monthly', expiresAt: endsAt),
+          ActivePlanPeriod(
+            productId: 'letter_monthly',
+            purchasedAt: DateTime.utc(2030, 10, 1),
+            expiresAt: endsAt,
+          ),
           ActivePlanPeriod(
             productId: 'letter_yearly',
             expiresAt: DateTime.utc(2030, 12, 2),
@@ -173,6 +177,10 @@ void main() {
       'letter_monthly',
       'letter_yearly',
     ]);
+    expect(
+      state.activeSubscriptions.first.purchasedAt,
+      DateTime.utc(2030, 10, 1),
+    );
     expect(state.hasPremiumAccess, isTrue);
   });
 
