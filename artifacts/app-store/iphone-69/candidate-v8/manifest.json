@@ -1,6 +1,6 @@
 {
   "product": "Letter Within",
-  "sourcePlan": "marketing/launch-2.0/screenshot-order.md",
+  "sourcePlan": "artifacts/app-store/screenshot-order.md",
   "status": "local-review-blocked-not-uploaded",
   "ownerApprovedExtension": "Cycle day editor after report, before Care scene",
   "locale": "en-US",
@@ -13,7 +13,7 @@
     {
       "order": 1,
       "file": "final/01-care.jpg",
-      "source": "../candidate-v6/final/01-care.jpg",
+      "source": "final/01-care.jpg",
       "route": "Care tab",
       "caption": "Care for the moment you are in.",
       "sha256": "5272887354e65a706aeec6a9cd7055a735d44a204e5c738f9b326d34adaa2e51"
@@ -21,7 +21,7 @@
     {
       "order": 2,
       "file": "final/02-today.jpg",
-      "source": "../candidate-v6/final/02-today-period.jpg",
+      "source": "final/02-today.jpg",
       "route": "Today tab, top of page",
       "caption": "Track more than period dates.",
       "sha256": "4546b847c937e06a715d21d6a3a63acb3808da84babcd4d3cf5038d0c374a775"
@@ -29,7 +29,7 @@
     {
       "order": 3,
       "file": "final/03-comfort-kit.jpg",
-      "source": "../candidate-v6/final/03-comfort-kit.jpg",
+      "source": "final/03-comfort-kit.jpg",
       "route": "Care tab → Your comfort kit",
       "caption": "What helped before, kept close.",
       "sha256": "2b4762fff073e976e6b30e7e4b302873f733c63102920b2367593145e851b79c"
@@ -37,7 +37,7 @@
     {
       "order": 4,
       "file": "final/04-privacy.jpg",
-      "source": "../candidate-v6/final/06-privacy.jpg",
+      "source": "final/04-privacy.jpg",
       "route": "Onboarding → See how privacy works",
       "caption": "Your health records stay encrypted here.",
       "sha256": "7e193576f0098197744fffeb0a2e37a3bf5b572c587628a774ae7e377cea6b51"
@@ -45,7 +45,7 @@
     {
       "order": 5,
       "file": "final/05-what-helped-plus.jpg",
-      "source": "../candidate-v6/final/07-what-helped-plus.jpg",
+      "source": "final/05-what-helped-plus.jpg",
       "route": "Patterns tab → What helped, with Plus fixture",
       "caption": "With Plus, compare what helped.",
       "sha256": "5da0e019d3763f92183b83cb1aa19a3689aee91ad327fb7e6bacb4bc02340fd3"
@@ -53,7 +53,7 @@
     {
       "order": 6,
       "file": "final/06-mood-patterns-plus.jpg",
-      "source": "../candidate-v6/final/08-mood-patterns-plus.jpg",
+      "source": "final/06-mood-patterns-plus.jpg",
       "route": "Patterns tab → Mood & patterns",
       "caption": "With Plus, notice harder-day patterns.",
       "sha256": "656d362542b171dfbcb0ba75b346bfccfa2dbc43f3c3bd02f7a6108019c08f32"
@@ -61,7 +61,7 @@
     {
       "order": 7,
       "file": "final/07-clinician-report.jpg",
-      "source": "../candidate-v6/final/09-clinician-report.jpg",
+      "source": "final/07-clinician-report.jpg",
       "route": "Today → Settings → Clinician reports → Last 3 months",
       "caption": "Bring a clear record to your clinician.",
       "sha256": "6c87d0303ee45b0e89f1d5373c0a625a956e82fdb7d9e3f594bfae7ec74e73f0"
@@ -77,7 +77,7 @@
     {
       "order": 9,
       "file": "final/09-care-scene.jpg",
-      "source": "../candidate-v6/final/10-care-scene.jpg",
+      "source": "final/09-care-scene.jpg",
       "route": "Care tab → I feel heavy → blue-rain scene",
       "caption": "A quiet moment to set it down.",
       "sha256": "342843a092ea876bc54e86a2b3a486dac781f301a367b2b8e98189cf17deaa75"

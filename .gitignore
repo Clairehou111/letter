@@ -4,8 +4,16 @@
 artifacts/*
 !artifacts/app-store/
 !artifacts/app-store/**
+artifacts/app-store/.DS_Store
+artifacts/app-store/**/.DS_Store
 coverage/
 .cache/
+
+# Local validation exports may contain readable health records.
+validation/**/*.sqlite
+validation/**/*.letter
+validation/**/*.pdf
+validation/**/*.csv
 
 # Local generated design and staging workspaces.
 apps/mobile/.ui-forge/

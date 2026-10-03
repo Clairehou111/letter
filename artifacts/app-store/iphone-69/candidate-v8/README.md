@@ -1,9 +1,8 @@
 # Candidate v8: one Today frame plus Cycle recording proof
 
-Status: **superseded app-only review draft; not uploaded to ASC**. Titled
-composition is under `../candidate-v9/`. The ten candidate-v4
-screenshots remain live in ASC iOS 1.0. This set retains the first seven core
-positions from `marketing/launch-2.0/screenshot-order.md`, then follows the
+Status: **source provenance for the uploaded candidate-v9 set; not uploaded to ASC**.
+The titled composition is under `../candidate-v9/`. This set retains the first seven core
+positions from `artifacts/app-store/screenshot-order.md`, then follows the
 owner-approved extension: a Cycle day editor at #8 and the immersive Care
 scene at #9.
 
@@ -23,10 +22,8 @@ Frame 8 came from complete-app navigation on the 6.9-inch simulator:
 `Cycle → Cycle 2 → 6/22/2026 flow day → day editor`. The debug-only full-app
 fixture adds one flow/color record to a past day that already has a saved
 symptom. The untouched native PNG is in `source/`; `final/` contains its
-JPEG conversion. All other frames are byte-identical copies from v7 except
-that Care moves from #8 to #9. The three Today scroll positions in v6 remain
-preserved as internal validation evidence. Every health record shown is
-synthetic.
+JPEG conversion. The final JPEGs are the retained app-only provenance used by
+candidate-v9. Every health record shown is synthetic.
 
 All nine `final/` files are 1320 × 2868 JPEGs without alpha. They have no
 phone mockup or external caption. `manifest.json` lists the unchanged

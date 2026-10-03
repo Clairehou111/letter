@@ -1,186 +1,54 @@
-# App Store screenshot set
+# App Store assets
 
-Status: **the owner-approved nine-frame candidate-v9 titled set is live in
-ASC iOS 1.0 as of 2026-10-03**. It replaced the ten candidate-v4 screenshots.
+This folder contains the owner-approved iOS 1.0 App Store screenshot masters
+and the source provenance needed to reproduce them. The uploaded set is
+`iphone-69/candidate-v9/`; its nine titled JPEGs are in `final/` and its
+manifest records the upload order, source routes, copy, and hashes.
 
-Candidate-v3 is preserved as the previously uploaded historical set. The app's
-Plus, Account, Care, and other screens changed after that capture.
+## Current set
 
-`iphone-69/candidate-v4/` contains ten dark UI screenshots captured through
-complete-app navigation with synthetic records, plus composed JPEGs and a
-manifest. The owner explicitly approved all ten, including the Mood viewport's
-partially visible sentence. The files were uploaded in order 01–10 to the
-6.9-inch English (U.S.) slot, and the order persisted after an ASC reload. The
-6.5-inch slot inherits this set. The
-original candidate-v4 harness PNGs remain in `source/` for audit only; use
-`full-app-source/` as the provenance for `final/`. The Care Heavy image uses
-the current blue-rain scene. See
-`../../validation/release-prep-2026-10-02/README.md` for route checks and
-outstanding release gates.
+`iphone-69/candidate-v9/` was uploaded to App Store Connect on 2026-10-03
+for the 6.9-inch English (U.S.) slot. The 6.5-inch slot inherits the set.
+The order is:
 
-The files under `iphone-69/final/` preserve the removed six-image v1 audit
-trail. They must not be treated as approved launch masters. The owner rejected
-the set because the first Care frame and Patterns frame were obsolete, the
-report did not show enough data, and the strip read as coarse at storefront
-scale.
+1. Care chooser — Care for the moment you are in.
+2. Today — Track more than period dates.
+3. Comfort Kit — What helped before, kept close.
+4. Privacy — Your health records stay encrypted here.
+5. What helped — With Plus, compare what helped.
+6. Mood Patterns — With Plus, notice harder-day patterns.
+7. Clinician report — Bring a clear record to your clinician.
+8. Cycle day editor — Keep the details that matter.
+9. Immersive Care scene — A quiet moment to set it down.
 
-`iphone-69/candidate-v5/` is a **local, not-uploaded** eight-frame candidate
-following the Release 2.0 screenshot order: Care, Today, Comfort Kit, Privacy,
-What helped, Mood, report, immersive Care. It adds a populated Comfort Kit and
-current-app report, fixes Mood's incomplete insight, and labels the two
-Plus-depth Patterns captions. The existing ten ASC screenshots remain the
-approved candidate-v4 set until a separate operation-specific replacement
-confirmation. See `iphone-69/candidate-v5/README.md` for per-frame review.
+Candidate-v9 uses the candidate-v8 full-app JPEGs as its source provenance.
+Candidate-v8 remains the reviewable, app-only source set under
+`iphone-69/candidate-v8/`; do not delete or replace those files without
+updating the v9 manifest and the release evidence.
 
-`iphone-69/candidate-v6/` is a **local, not-uploaded** ten-frame app-only
-validation set superseded by the owner's one-Today decision. It retains Care → Today → Comfort Kit at the front, then shows
-separate real Today scroll positions for bleeding, symptoms, and a saved note.
-It has no phone mockup or marketing canvas. Its two Plus-depth Patterns frames
-have the owner-selected small `With Plus` badge; the report and privacy frames
-need further visual review. See `iphone-69/candidate-v6/README.md`.
+## Reproduction
 
-`iphone-69/candidate-v7/` is the superseded eight-frame, one-Today ordered
-draft. `iphone-69/candidate-v8/` retains the plan's first seven core frames,
-adds an owner-approved Cycle day editor showing bleeding and a saved symptom
-as #8, then moves immersive Care to #9. It keeps the existing Today marketing
-caption in its manifest. The v6 bleeding and note frames remain as internal
-validation, not storefront slots. Privacy needs a more readable capture and
-the report frame needs correction before v8 is ready for ASC. See
-`iphone-69/candidate-v8/README.md`.
+The titled compositor is retained with the v9 set at
+`iphone-69/candidate-v9/compose_titled_app_pages.swift`. The older reusable
+compositors are retained under `tools/app-store/` for historical reproduction:
 
-`iphone-69/candidate-v9/` is the uploaded nine-frame App Store composition using
-v8's full-app views. Each image has its unchanged marketing headline above
-the entire app view, without a phone mockup; both Plus badges remain. The
-Privacy and report image limitations are documented in its README. The nine
-files were uploaded to the 6.9-inch English (U.S.) slot and verified in order
-after an ASC version-page reload; 6.5-inch inherits that set.
+- `tools/app-store/compose_app_store_screenshot.swift`
+- `tools/app-store/compose_app_store_screenshot_v2.swift`
 
-The historical candidate-v3 set is under `iphone-69/candidate-v3/`. It uses
-native Flutter UI and coherent synthetic records. No lifestyle photography,
-generated interface, real health data, testimonial, or clinical outcome claim
-is included.
-
-## Message hierarchy
-
-1. Care first: Letter Within helps in the moment, not only after data is logged.
-2. Privacy second: readable health records are encrypted on the device, and the
-   product does not use AI.
-3. Product proof: Patterns makes evidence and missingness visible.
-4. Practical proof: users can create a bounded report for a clinician.
-5. Tracking breadth: period dates are one part of the record.
-6. Continuity: an optional check-back helps the user remember what helped.
-
-## Uploaded v1 order - rejected
-
-| Order | File | Caption | Real app state |
-| --- | --- | --- | --- |
-| 1 | `iphone-69/final/01-cycle-care.jpg` | Cycle care for the days that feel heavier. | Care chooser with synthetic remembered-help evidence |
-| 2 | `iphone-69/final/02-private-no-ai.jpg` | Encrypted on your device. No AI. | Current production privacy explainer, captured natively on iPhone 17 |
-| 3 | `iphone-69/final/03-patterns.jpg` | See patterns across your cycles. | Twin pattern view showing observed and missing days |
-| 4 | `iphone-69/final/04-clinician-report.jpg` | Create a report for your clinician. | Populated report with range, scope boundary, provenance legend, and cyclical symptom matrix |
-| 5 | `iphone-69/final/05-track-more.jpg` | Track more than period dates. | Today view with cycle context and moment check-in |
-| 6 | `iphone-69/final/06-remember-what-helped.jpg` | Remember what helped next time. | Optional post-Care check-back |
-
-All uploaded v1 files are 1290 × 2796 JPEGs with no alpha channel. This is the
-6.9-inch iPhone master set. App Store Connect may scale the highest-resolution
-set for smaller iPhone display classes.
-
-## Candidate v2 order - review before upload
-
-| Order | File | Caption | Real app state |
-| --- | --- | --- | --- |
-| 1 | `iphone-69/candidate-v2/final/01-cycle-care.jpg` | Cycle care for the days that feel heavier. | Current Care chooser with all six supported paths visible |
-| 2 | `iphone-69/candidate-v2/final/02-private-no-ai.jpg` | Encrypted on your device. No AI. | Current Backup & restore controls showing password-protected export, restore, and record-by-record preview before writing |
-| 3 | `iphone-69/candidate-v2/final/03-cycle-patterns.jpg` | See patterns across your cycles. | Current Cycles & bleeding view with four realistic 28-30 day cycles |
-| 4 | `iphone-69/candidate-v2/final/04-mood-patterns.jpg` | Understand the days that feel heavier. | Current Mood & patterns view with four cycles and 11 harder days |
-| 5 | `iphone-69/candidate-v2/final/05-clinician-report.jpg` | Bring a clear record to your clinician. | Current report matrix with 43 confirmed synthetic records across four cycles |
-| 6 | `iphone-69/candidate-v2/final/06-cycle-tracking.jpg` | Track more than period dates. | Current cycle view exposing flow, color, pain, and observations |
-| 7 | `iphone-69/candidate-v2/final/07-care-heavy.jpg` | Support for the moment you are in. | Current low-energy Care scene with explicit Stay here and Leave for now controls |
-| 8 | `iphone-69/candidate-v2/final/08-what-helped.jpg` | Remember what helped next time. | Current What helped view with four Care actions and recorded outcomes |
-
-All candidate v2 files are 1290 × 2796 JPEGs with no alpha channel. The
-machine-readable candidate record is
-`iphone-69/candidate-v2/manifest.json`.
-
-Candidate v2 remains preserved as the superseded eight-frame review pass. It
-was not uploaded.
-
-## Uploaded v3 order - approved launch set
-
-| Order | File | Caption | Real app state |
-| --- | --- | --- | --- |
-| 1 | `iphone-69/candidate-v3/final/01-cycle-care.jpg` | Cycle care for the days that feel heavier. | Current Care chooser with all supported paths visible |
-| 2 | `iphone-69/candidate-v3/final/02-private-no-ai.jpg` | Encrypted on your device. No AI. | Backup & restore with password-protected export and record-by-record restore review |
-| 3 | `iphone-69/candidate-v3/final/03-today-tracking.jpg` | Track more than period dates. | Populated Today showing flow, color, Care doorway, and three saved symptoms |
-| 4 | `iphone-69/candidate-v3/final/04-cycle-days.jpg` | See every day in your cycle. | Five populated flow days with color observations |
-| 5 | `iphone-69/candidate-v3/final/05-day-symptoms.jpg` | Edit symptoms on any day. | Day editor with saved flow, color, moderate pain, and the recorded symptom row |
-| 6 | `iphone-69/candidate-v3/final/06-cycle-patterns.jpg` | See patterns across your cycles. | Four realistic completed cycles varying from 28 to 30 days |
-| 7 | `iphone-69/candidate-v3/final/07-mood-patterns.jpg` | Understand the days that feel heavier. | Four cycles and 11 harder days with missingness kept honest |
-| 8 | `iphone-69/candidate-v3/final/08-clinician-report.jpg` | Bring a clear record to your clinician. | Clinician matrix with 43 confirmed synthetic records across four cycles |
-| 9 | `iphone-69/candidate-v3/final/09-care-heavy.jpg` | Care for the moment you are in. | Heavy scene with a useful in-scene action and permanent exit |
-| 10 | `iphone-69/candidate-v3/final/10-what-helped.jpg` | Remember what helped next time. | Four Care actions with saved outcomes |
-
-Candidate v3 uses the app's exact Experience System colors outside the native
-UI: daylight is `#FBF7F3` / `#2A1626` / `#E4573D`; Care is the real
-`#2E1A33` to `#170D1C` world with `#F7EEE6` type. There is no separate rose or
-plum campaign canvas. Claude reviewed Heavy, Focus, Body, and Space through
-OpenRouter and selected Heavy because it most directly supports the fixed
-heavier-days promise.
-
-All v3 files are 1290 × 2796 JPEGs with no alpha channel. App Store Connect
-shows all ten in the order below for the 6.9-inch display and derives the
-6.5-inch display from that set. The machine-readable record is
-`iphone-69/candidate-v3/manifest.json`.
+These scripts only compose supplied native captures. They do not create app
+screens, add device frames, or establish product behavior. All visible records
+in the retained masters are synthetic.
 
 ## Claim boundaries
 
-- “Encrypted on your device” applies to readable health records stored in the
-  local SQLCipher database. Account access and subscription entitlement are
-  operational cloud functions, so do not shorten this to “nothing leaves your
-  device” or “100% local.”
-- “No AI” is a permanent product constraint. Patterns, estimates, candidate
-  matching, and reports are deterministic and run on-device.
-- Patterns describe saved observations and must keep missing data visible. They
-  do not diagnose, identify causes, or promise an outcome.
-- Reports summarize user-recorded observations. They are not a diagnosis and
-  are shared only when the user exports them.
-- Every visible record is synthetic. The remembered-help line is product UI
-  derived from fictional local history, not a customer quote.
+- The product's readable health records are encrypted in the local database.
+  Account access and subscription entitlement remain operational cloud
+  services, so storefront copy must not claim that nothing leaves the device.
+- Letter Within does not use AI. Patterns and reports summarize saved
+  observations deterministically and do not diagnose or promise an outcome.
+- The clinician report summarizes user-recorded observations and is not a
+  diagnosis.
 
-## Provenance
-
-- Uploaded v1 frames 1, 3, and 5 use native iPhone 17 captures from
-  `apps/mobile/.ui-forge/letter-release-framework-visual-v2/screenshots/final-native-r2/`.
-- Uploaded v1 frame 6 uses the native iPhone 17 pre-TestFlight evidence capture at
-  `apps/mobile/.ui-forge/pre-testflight-visual-20260915/evidence/care-checkback-iphone17.png`.
-- Uploaded v1 frames 2 and 4 were recaptured through `apps/mobile/tool/manual_qa_app.dart`
-  on 2026-09-24. Frame 2 renders the production `PrivacyExplainerSheet`; frame
-  4 renders `ReportsExperience` with fictional multi-cycle history. Their
-  durable native sources are under `iphone-69/source/`.
-- Uploaded v1 captions and framing are reproducibly composed by
-  `tool/compose_app_store_screenshot.swift`.
-
-- Candidate v2 uses fresh iPhone 17 Pro Max simulator captures from the current
-  source tree, all dated against the same fictional September 2026 history.
-- Candidate v2 synthetic history uses variable 28-30 day cycles, four Care
-  actions, and 43 confirmed report records across four cycles.
-- Candidate v2 framing is reproducibly composed by
-  `tool/compose_app_store_screenshot_v2.swift`.
-- Candidate v3 adds three populated tracker proofs, preserves all four Care
-  options as source evidence, and uses the same compositor constrained to the
-  app's actual daylight and Care color tokens.
-
-The superseded v1 machine-readable record is `manifest.json`.
-
-## Release gate
-
-The candidate-v9 screenshot replacement, Build 17 selection, Review Notes,
-legal-links reply attachment, and App Review resubmission were completed with
-owner authorization on October 3. ASC showed iOS 1.0 and its four associated
-purchase items Waiting for Review after reload. Manual release remains
-selected; no storefront availability change was made. First launch remains
-United States and Canada only.
-
-The marketing website may reuse these masters and this message hierarchy. Its
-redesign remains a separate comp-first task documented in
-`/Users/clairehou/pyProjects/letter-cycle-companion/WEBSITE_REDESIGN_HANDOFF.md`.
+Release status and remaining gates are recorded in
+`validation/1.0/release-prep-2026-10-02/README.md` and
+`validation/1.0/testflight-1.0.0-build-17/README.md`.

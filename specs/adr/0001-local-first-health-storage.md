@@ -1,6 +1,6 @@
 # ADR 0001: Local-First Health Storage
 
-Status: accepted
+Status: accepted; current scope reconciled on 2026-10-03.
 
 ## Context
 
@@ -11,7 +11,7 @@ risk.
 
 ## Decision
 
-The device is the source of truth for readable health records in P0. The server
+The device is the source of truth for readable health records. The server
 supports operational account and entitlement services only. No AI reads,
 rewrites, summarizes, suggests from, or interprets health records, and health
 records are never sent to an AI service. Predictions, personal patterns, and
@@ -19,7 +19,8 @@ reports are computed deterministically on-device from local data.
 
 ## Consequences
 
-- P0 must provide encrypted export/import and warn about uninstall/device loss.
+- Local encrypted export/import is the recovery path; explain uninstall and
+  device-loss consequences.
 - Operational analytics cannot include health values or inferred state.
-- Automatic cloud sync is not available in P0.
-- A future backup must encrypt on the client and store only ciphertext.
+- Automatic cloud health sync is outside the current release contract.
+- Any future cloud backup must encrypt on the client and store only ciphertext.

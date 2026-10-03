@@ -23,6 +23,14 @@ FORBIDDEN_SUFFIXES = {
     ".iml",
     ".pyc",
 }
+ALLOWED_APP_STORE_ROOT = Path("artifacts/app-store")
+ALLOWED_APP_STORE_SUFFIXES = {
+    ".jpg",
+    ".json",
+    ".md",
+    ".png",
+    ".swift",
+}
 
 
 def tracked_files() -> list[Path]:
@@ -38,6 +46,15 @@ def tracked_files() -> list[Path]:
 def main() -> int:
     violations: list[Path] = []
     for path in tracked_files():
+        if path == ALLOWED_APP_STORE_ROOT or ALLOWED_APP_STORE_ROOT in path.parents:
+            non_artifact_parts = set(path.parts) - {"artifacts"}
+            if (
+                path.suffix not in ALLOWED_APP_STORE_SUFFIXES
+                or FORBIDDEN_NAMES.intersection({path.name})
+                or FORBIDDEN_PARTS.intersection(non_artifact_parts)
+            ):
+                violations.append(path)
+            continue
         if (
             FORBIDDEN_PARTS.intersection(path.parts)
             or path.name in FORBIDDEN_NAMES

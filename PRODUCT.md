@@ -77,8 +77,9 @@ Only synthetic data may appear in tests, demonstrations, or store screenshots.
 
 - Product and system specifications: `specs/`
 - Flutter mobile application: `apps/mobile/`
-- Current release handoff: `CODEX_HANDOFF_APP_STORE.md`
-- Existing synthetic visual QA captures: `artifacts/`
+- Current 1.0 release handoff: `validation/1.0/app-store-handoff.md`
+- Current App Store screenshots and provenance: `artifacts/app-store/`
+- Release 2.0 acceptance state: `specs/features/release-2.0/validation.md`
 - Public marketing site source:
   `/Users/clairehou/pyProjects/letter-cycle-companion`
 - Public site: `https://www.letterwithin.app`

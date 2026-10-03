@@ -18,7 +18,7 @@ inherits that set. Candidate-v9 consists of nine titled
 9. Immersive Care scene — A quiet moment to set it down.
 
 The first seven follow the core order in
-`marketing/launch-2.0/screenshot-order.md`. The owner approved adding Cycle
+`artifacts/app-store/screenshot-order.md`. The owner approved adding Cycle
 recording proof after the report, with immersive Care last. There is one Today
 frame. All marketing headlines are unchanged from the v8 manifest.
 

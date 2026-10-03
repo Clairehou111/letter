@@ -1,40 +1,59 @@
-# Letter Within Architecture
+# System architecture
 
-## Applications
+Status: Release 2.0 target, grounded in the existing Flutter and FastAPI
+applications. See the [ADRs](adr/) for durable storage decisions.
 
-- `apps/mobile`: iOS and Android client
-- `apps/api`: FastAPI service for operational capabilities
-- `contracts/openapi`: generated API contract and mobile-client input
+## Applications and boundaries
 
-## Data Boundary
+| Area | Responsibility |
+| --- | --- |
+| `apps/mobile` | Flutter iOS/Android app; owns encrypted health records, deterministic computation, Care, and reports. |
+| `apps/api` and Supabase functions | Operational account, entitlement, consent, and deletion functions. No readable health history. |
+| `contracts/openapi` | Generated API contract; the Dart client is generated from this contract. |
+| Web preview | In-memory development and visual QA only; no browser persistence of readable health records. |
 
-Readable health data remains on the device:
+Native health storage uses Drift with SQLite3MultipleCiphers. A random local
+database key is held in platform secure storage; database open fails closed
+without verified cipher support. Native migrations and encrypted export/import
+must preserve user records. There is no automatic cloud health sync. A sign-in
+on another device restores account and entitlement state, not local history.
+Legacy onboarding profiles that contain the retired `cloud_tools` field still
+decode; new saves omit it. The app offers no AI or cloud health-processing
+preference.
 
-- period dates and cycle history
-- symptoms, severity, pain, mood, energy, notes, and transcripts
-- Care plans, coping actions, outcomes, predictions, patterns, and reports
+Period dates, symptoms, mood, notes, Care content, outcomes, forecasts,
+Patterns, and report material remain on-device. They do not enter Supabase,
+RevenueCat, PostHog, API requests, logs, crash metadata, or account metadata.
+Only explicitly selected report/export files leave the app through the user's
+chosen local share destination.
 
-Phase 2 Care memory uses the same encrypted local database as period and
-impulse records. A Care action is not stored on entry or interaction; the first
-persisted Care record is created only when the user explicitly selects Better,
-Same, or Worse. Clearer-day reflections and future-self notes are also
-user-confirmed local records. The Web preview uses in-memory repositories.
+## Identity, purchase and analytics
 
-The server may store:
+The first full entry requires a successful Supabase sign-in. Returning users
+can reach their existing local records and acute Care when offline; server
+operations wait for reauthentication. Sign in with Apple is the primary iOS
+route. The dedicated App Review account uses a supported email/password route;
+do not publish its credentials. Account deletion and local health deletion are
+separate explicit actions.
 
-- account and authentication data needed to operate the account
-- subscription entitlement and consent receipts needed for account operations
-- deletion requests
+RevenueCat associates an authenticated operational account with `letter_plus`.
+Store-provided product and localized price metadata is authoritative. Loss of
+network or store access must not delete local data or erase a still-valid
+locally known entitlement without reconciliation.
 
-No AI reads, rewrites, summarizes, suggests from, or interprets health records.
-Health records and free-text health content are never sent to an AI service.
-Predictions, personal patterns, candidate matching, and reports are computed
-deterministically on-device from local data. Supabase and RevenueCat are
-operational account and entitlement services only; they do not process health
-records or health-derived content.
+PostHog is optional and off by default. Consent is explicit and revocable.
+Disable autocapture, replay, and person profiles. Use an analytics-only random
+identifier, not a Supabase user ID. Immediate events are limited to non-health
+settings, paywall, and purchase flows. Any delayed Care usage aggregate follows
+the exact payload boundary in [2.0 requirements](features/release-2.0/requirements.md).
+The public privacy policy and App Store declaration must match a configured
+analytics build before it is submitted.
 
-## Recovery
+## Technology and validation
 
-P0 provides encrypted export and import. Mandatory cloud synchronization is out
-of scope. Optional end-to-end encrypted backup may be added only after demand
-is validated and a recovery-key design is approved.
+The mobile app uses Flutter/Dart; the operational API uses Python, FastAPI,
+Pydantic, SQLAlchemy, and Supabase PostgreSQL. OpenAPI generation and the Dart
+client are checked in CI. Do not add a health-data server, AI provider,
+mandatory sync, or new infrastructure without an approved specification and
+privacy review. Runtime release configurations and signing secrets remain
+Git-ignored.

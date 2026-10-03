@@ -1,60 +1,35 @@
-# ADR 0003: Required Account With Local Health Data
+# ADR 0003: Required account, local health data
 
-Status: accepted
+Status: accepted; reconciled for the 2.0 target on 2026-10-03.
 
 ## Context
 
-Letter Within needs one stable identity for approved operational analytics,
-subscription entitlement, purchase restoration, consent receipts, support, and
-future optional account services. Allowing unregistered use and later account
-conversion adds anonymous-user linking, duplicate-account resolution, and
-ambiguous attribution. That complexity is not justified for the first release.
-
-Requiring an account must not turn readable period, symptom, Letter Within, or Care
-records into server data or make returning users depend on a live connection.
+Account identity is needed for operational subscription restoration and
+deletion. Requiring an account must not turn readable health history into
+server data or make returning users depend on a live connection. Optional
+analytics needs its own consent and identity boundary.
 
 ## Decision
 
-Require one successful Supabase Auth sign-in before a new user enters the full
-product.
-
-- Do not create a pre-registration anonymous Supabase account.
-- Use Sign in with Apple as the primary iOS path and email magic link as the
-  fallback.
-- Use the Supabase user ID for approved operational analytics, consent receipts,
-  and entitlement association only.
-- Keep readable health records in the encrypted local database; never store
-  them in account metadata or operational analytics.
-- After the first successful sign-in, local records, Letters, and Care continue
-  to work offline. An expired session gates only server operations that need
-  re-authentication.
-- Account deletion and local-health-data deletion remain separate, explicit
-  actions with a clear explanation of what each removes.
+- Require one successful Supabase Auth sign-in before a new user enters the
+  full product. Sign in with Apple is the primary iOS route. An email/password
+  route supports the dedicated App Review account and configured fallback.
+- Keep period, symptom, mood, note, Care, Pattern, and report material in the
+  encrypted local database. Signing in elsewhere restores account and
+  entitlement state, not local health history.
+- Use the authenticated operational identity for account and entitlement
+  services only. Optional PostHog analytics is off by default and uses a
+  separate random analytics identifier, never the Supabase user ID. Its exact
+  event boundary is in [architecture](../architecture.md) and the
+  [2.0 requirements](../features/release-2.0/requirements.md).
+- Returning users can use existing local records and acute Care offline.
+  Operations requiring the server wait for reauthentication.
+- Account deletion and local health deletion are separate explicit actions.
+  Explain the difference before either action.
 
 ## Consequences
 
-- The first full-product entry requires a network connection and introduces
-  measurable onboarding friction.
-- Letter Within avoids anonymous-to-registered identity conversion and account-merge
-  behavior for new users.
-- Signing in on another device restores account and entitlement state, not
-  local health records; encrypted backup/import remains the recovery path.
-- Auth or network failure must not lock a returning user out of local records or
-  an already-available Care flow.
-- Product copy must say that account data and health records are separate, not
-  that Letter Within has no account.
-
-## Implementation status
-
-As of 2026-08-08, the mobile auth slice implements the approved state model,
-Apple and email magic-link entry points, the `LetterApp` gate, prior-sign-in
-offline/expired access, explicit sign-out, and server-side account-deletion
-boundary. Auth service, screen, and LetterApp gate tests cover the
-provider-independent behavior and pass in the current Flutter suite.
-
-The decision is not yet a release-complete account system. The production build
-must enable the authentication gate and verify the deployed Supabase Auth
-providers, redirect configuration, email magic-link flow, and
-`delete-account` function. Native iOS and Android session restoration remain
-release validation work. None of these gates permit uploading readable period,
-symptom, Letter Within, or Care data.
+First full entry needs a network connection. Authentication failures must not
+erase or hide an existing user's local records. Encrypted local backup/import,
+not sign-in, is the recovery path for health history. Public copy must describe
+account, purchase, analytics consent, and health storage accurately.

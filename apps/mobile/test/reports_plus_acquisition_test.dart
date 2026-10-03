@@ -16,7 +16,8 @@ import 'package:letter_mobile/features/analytics/presentation/analytics_scope.da
 import 'package:letter_mobile/features/entitlement/data/local_entitlement_repository.dart';
 import 'package:letter_mobile/features/entitlement/data/revenue_cat_entitlement_repository.dart';
 import 'package:letter_mobile/features/entitlement/domain/entitlement.dart';
-import 'package:letter_mobile/features/entitlement/domain/entitlement_repository.dart' as billing;
+import 'package:letter_mobile/features/entitlement/domain/entitlement_repository.dart'
+    as billing;
 import 'package:letter_mobile/features/entitlement/presentation/entitlement_scope.dart';
 import 'package:letter_mobile/features/health_records/domain/health_record.dart';
 import 'package:letter_mobile/features/summary_export/domain/cycle_care_summary.dart';
