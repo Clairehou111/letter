@@ -8,22 +8,26 @@ useful during both emotional and physical symptom episodes.
 
 ## Sources Of Truth
 
-- Product intent: `specs/mission.md`
+- Product intent: `specs/product.md`
 - Delivery order: `specs/roadmap.md`
-- Technology decisions: `specs/tech-stack.md`
-- System boundaries: `specs/architecture.md`
+- System and technology boundaries: `specs/architecture.md`
+- Experience, data, and access: `specs/experience.md`,
+  `specs/data-and-reports.md`, `specs/entitlements.md`
 - Permanent decisions: `specs/adr/`
-- Feature scope and acceptance: `specs/features/<feature>/`
+- Current release scope and acceptance: `specs/features/release-2.0/`
+- Dated release evidence: `validation/`
 
 Do not duplicate canonical decisions across instruction files. Application-level
 `AGENTS.md` files add local rules and must defer to these specifications.
 
 ## Spec-Driven Workflow
 
-1. Read `specs/roadmap.md` and identify the next proposed feature.
-2. Confirm the feature priority and unresolved product decisions with the user.
+1. Read `specs/README.md` and `specs/roadmap.md`; identify the current release
+   contract or proposed change.
+2. Confirm unresolved product decisions with the user.
 3. Create a dedicated branch.
-4. Create `requirements.md`, `plan.md`, and `validation.md`.
+4. Update the release requirements, plan, and validation criteria, or create a
+   scoped proposal beneath the current release directory.
 5. Do not implement until requirements and validation criteria are approved.
 6. Complete plan task groups in order and keep their status current.
 7. Run all specified automated and manual validation.
@@ -53,4 +57,3 @@ Never push, deploy, or merge without explicit user instruction.
   acceptance with the primary agent.
 - Give implementation subagents disjoint file ownership and review their
   changes before integration. Do not duplicate delegated work locally.
-

@@ -1,176 +1,26 @@
-# Letter Within Roadmap
+# Release roadmap
 
-Status values: `proposed`, `specifying`, `approved`, `in_progress`,
-`validated`, `merged`, `deferred`.
+This roadmap records delivery state, not a claim that target features have
+shipped. See [validation](../validation/README.md) for dated evidence.
 
-Only one product feature should normally be `in_progress`.
-
-## Active Superseding Feature
-
-| Order | Feature | Status | Specification |
-| --- | --- | --- | --- |
-| 1 | Unified record and navigation architecture | validated | `features/2026-07-31-unified-record-and-navigation/` |
-
-This feature supersedes session-only quick states and reconciles Today,
-cycle-grouped records, Letters, reflections, Gravity Horizon, Spectrum Log, and
-Twin Matrix before additional release-surface work continues.
-
-Explicitly authorized parallel slice (2026-08-07): Premium companion loop is
-implemented under `features/2026-08-07-premium-companion-loop/`, including the
-bounded RevenueCat/domain/payment slice. The later user instruction to finish
-payment superseded the earlier “billing remains deferred” timing decision; the
-historical decision remains recorded in the feature specs. Public store
-configuration and native purchase validation remain release gates.
-
-Exceptional-cycle handling and stable cycle-reflection identity are validated
-for the bounded local data and presentation rules covered by the focused test
-suite. The approved data, presentation, and estimate-engine boundaries remain
-recorded in [`exceptional-cycles.md`](exceptional-cycles.md). The period-delete
-warning names an attached cycle reflection before deletion.
-
-Current roadmap exclusions:
-
-- contact access, trusted-contact management, or direct messaging
-- medication history, medication reminders, or medication guidance
-
-## Phase 0: Architecture Validation
-
-| Order | Feature | Status | Specification |
-| --- | --- | --- | --- |
-| 1 | Flutter UI fidelity spike | validated | `features/2026-07-27-flutter-ui-fidelity/` |
-| 2 | Production workspace foundation | validated | `features/2026-07-27-production-workspace-foundation/` |
-| 3 | Letter Within Care-loop product redesign | approved | `features/2026-07-28-letter-care-loop-redesign/` |
-
-The user accepted the Flutter visual result on 2026-07-27. Flutter is the
-confirmed mobile stack.
-
-## Phase 1: Period And Context Foundation
-
-| Order | Feature | Status |
+| Release | State | Scope |
 | --- | --- | --- |
-| 1 | Local onboarding and privacy choices | validated |
-| 2 | Period logging and history editing | validated ([spec](features/2026-07-28-period-logging-history/)) |
-| 3 | Cycle prediction and confidence display | validated ([spec](features/2026-07-28-cycle-prediction-confidence/)) |
-| 4 | Today context and low-effort logging entry | validated ([spec](features/2026-07-28-today-cycle-context/)) |
+| 1.0 | Build 17 submitted for iPhone App Store review on 2026-10-03; manual release selected | Submitted product and App Store evidence are under `validation/1.0/` and `artifacts/app-store/`. Review approval and public availability are not recorded here. |
+| 2.0 | Target; release gates open | Four-destination navigation, Comfort Window and Kit, revised Free/Plus report boundary, Quiet Dusk, Care relief and companionship, and consented operational analytics. [Requirements](features/release-2.0/requirements.md) and [plan](features/release-2.0/plan.md). |
 
-Period logging is validated for shared logic, widget behavior, visual baseline,
-the non-persistent web preview, and native encrypted storage. The native
-acceptance suite also verifies schema 10-to-11 migration while preserving
-period data and cycle-reflection identity. Manual accessibility, target-user,
-clinical, store, payment, and live-configuration gates remain separate.
+## Next 2.0 work
 
-Cycle prediction is a derived, local-only date range based on at least two
-observed start-to-start intervals. It shows confidence and recorded variation
-without fertility, phase, or diagnostic claims.
+1. Reconcile implemented behavior with the 2.0 requirements on physical iPhone
+   and small/large supported layouts.
+2. Complete qualified clinical review of SP6/LV3 locator art, instructions,
+   and safety copy; correct and re-review any finding.
+3. Verify real StoreKit purchase and restore, consent and privacy disclosures,
+   notification opt-in, report exports, and account/deletion paths in the
+   release configuration.
+4. Run accessibility, safety, migration, and regression checks; record exact
+   results in [2.0 validation](features/release-2.0/validation.md).
+5. Submit only after those gates and final store assets are approved.
 
-Today derives its date, period or cycle day, and supported prediction from the
-same local period repository. The 2026-07-31 unified-record feature supersedes
-session-only quick states with timestamped, non-clinical moment check-ins that
-remain excluded from health reports.
-
-The validated onboarding persistence and privacy architecture remains. Its copy
-and goals require a separate revision after the Care-loop redesign is approved.
-
-## Phase 2: Personal Care Memory
-
-| Order | Feature | Status |
-| --- | --- | --- |
-| 1 | Five-way Care entrance and finite reward shell | validated ([spec](features/2026-07-28-five-way-care-shell/)) |
-| 2 | Angry/overloaded impulse buffer | validated ([spec](features/2026-07-28-angry-impulse-buffer/)) |
-| 3 | Heavy/low presence flow | validated ([spec](features/2026-07-28-heavy-low-presence-flow/)) |
-| 4 | Racing-thoughts convergence flow | validated ([spec](features/2026-07-28-racing-thoughts-convergence-flow/)) |
-| 5 | Need-space safe cocoon and boundary card | validated ([integration spec](features/2026-07-28-need-space-flow-integration/)) |
-| 6 | Physical-pain comfort flow and medical boundary | validated ([spec](features/2026-07-28-physical-pain-comfort-flow/)) |
-| 7 | Care action check-back and personal kit | validated ([spec](features/2026-07-28-care-checkback-personal-kit/)) |
-| 8 | Clearer-day reflection and future-self note | validated ([spec](features/2026-07-28-clearer-day-reflection/)) |
-| 9 | Cycle Letters archive | validated ([spec](features/2026-07-28-cycle-letters-archive/)) |
-
-The Care gate is now a working primary destination. All five experiential
-entrances use a finite, escapable response shell with explicit emotional or
-physical safety boundaries. Angry/overloaded Care now adds Shatter, a private
-local draft, and an honest app-enforced 24-hour cooldown. Shared logic, schema
-migration, Web behavior, and native encrypted-storage runtime checks are
-validated; manual UX, accessibility, and release review remain separate.
-Heavy/low Care now
-adds a one-tap light, finite protective copy, optional foreground-only
-two-minute presence, and a practical hand-off without storing an episode.
-Racing-thoughts Care now uses one-tap visual convergence, then allows optional
-one-thought naming, unnamed set-down, or immediate exit. Any entered text lives
-only on the current screen and is cleared rather than saved or resurfaced the
-next day. Need-space Care now closes one symbolic curtain, then offers an
-optional session-only boundary card with explicit clipboard copy and no
-contact, recipient, send, share, or phone-isolation capability. The
-physical-pain flow now provides five low-effort comfort paths and a persistent
-medical boundary without medication guidance or treatment claims. A completed
-Care action offers one optional Better/Same/Worse check-back; only an explicit
-outcome becomes a local record. Symptom recording remains a separate, explicit
-health record action after every Care activity.
-The Letters tab now groups completed cycles from real period starts, opens
-user-authored clearer-day reflections, and can return matching future-self
-notes only after the first acute response. No Phase 2 feature creates a
-clinical score, cloud request, analytics event, or LLM request.
-
-## Phase 3: Effortless Logging And Learning
-
-| Order | Feature | Status |
-| --- | --- | --- |
-| 1 | Confirmed health-record foundation | validated ([spec](features/2026-07-28-health-record-foundation/)) |
-| 2 | Care-linked recovery receipt | validated ([spec](features/2026-07-28-care-recovery-receipt/)) |
-| 3 | Text and on-device voice capture | validated ([spec](features/2026-07-28-text-voice-capture/)) |
-| 4 | NLP-first candidate confirmation | validated ([spec](features/2026-07-28-nlp-candidate-confirmation/)) |
-| 5 | Personal patterns and support-action matching | validated ([spec](features/2026-07-28-personal-patterns-support-matching/)) |
-| 6 | Archive Story and Pattern views | validated ([spec](features/2026-07-28-archive-story-pattern-views/)) |
-
-Phase 3 is usable without cloud processing or LLM access. Direct structured
-records are the source of truth. Care becomes a delayed, user-confirmed input
-to the same record model through Recovery Receipt. NLP and optional LLM output
-remain editable candidates and never assign severity, diagnosis, or function.
-
-The first Phase 3 implementation slice is now present as local-first modules:
-the health-record foundation, Recovery Receipt, text capture, personal
-patterns, archive views, and Cycle and Care Summary navigation use the shared
-local repositories. Voice recognition remains unavailable until a reviewed
-system-speech adapter is installed; NLP and optional LLM output remain editable
-candidates rather than records.
-
-## Phase 4: Reports And Commercial Readiness
-
-| Order | Feature | Status |
-| --- | --- | --- |
-| 1 | Encrypted local export and import | validated ([spec](features/2026-07-28-encrypted-local-export-import/)) |
-| 2 | Cycle and Care Summary export | proposed ([spec](features/2026-07-28-cycle-care-summary-export/)) |
-| 3 | Doctor Mode, prospective diary, and clinical report | in_progress (diary built; clinical report deferred) ([spec](features/2026-07-28-doctor-mode-prospective-diary/)) |
-| 4 | Authentication and subscription entitlement | in_progress (mobile auth and bounded RevenueCat slice implemented; Supabase deployment, store configuration, and native billing validation remain) ([spec](features/2026-07-28-auth-subscription-entitlement/)) |
-| 5 | Privacy-safe operational analytics (PostHog Cloud) | validated (typed, consent-gated implementation; production project configuration and release review remain) ([spec](features/2026-07-28-privacy-safe-operational-analytics/)) |
-| 6 | Encrypted cloud backup (MVP) | deferred ([spec](features/2026-07-28-encrypted-backup-demand-test/)) |
-
-Local export/import is separate from optional cloud backup. Reports are
-generated from local, user-confirmed data. Doctor Mode cannot use DRSP wording
-or claim diagnostic equivalence until clinical review, wording, scoring, and
-licensing requirements are satisfied.
-
-## Phase 5: MVP Release Readiness
-
-Release-blocking work for the first paid public MVP, ordered by dependency.
-
-| Order | Feature | Status |
-| --- | --- | --- |
-| 1 | Safety boundary content (locale-aware crisis + medical red flags) | validated ([spec](features/2026-07-29-safety-boundary-content/)) |
-| 2 | Paid split and paywall | validated (bounded implementation; external store release pending) ([spec](features/2026-07-29-paid-split-and-paywall/)) |
-| 3 | Design token layer completion (V1) | validated (shipped in branch `feature/safety-boundary-content`) |
-| 4 | Today letter hero (ritual envelope surface) | validated (shipped in branch `feature/today-letter-hero`) |
-
-Safety routing is now configured: US 988 call/text + 911, CA 9-8-8 + 911, and
-an honest no-invented-numbers fallback elsewhere; medical Care shows urgent
-and book-assessment red-flag tiers. All contacts are tappable with the visible
-number as fallback. Native dialer tap-through remains deferred to the release
-gates.
-
-## Release Acceptance Gates
-
-| Order | Gate | Status |
-| --- | --- | --- |
-| 1 | Native encryption, migration, and recovery validation | in_progress (encrypted-storage, migration, and restore evidence complete; manual/release checks remain) ([spec](features/2026-07-28-release-acceptance-gates/)) |
-| 2 | Target-user Care usability and adverse-response validation | proposed ([spec](features/2026-07-28-release-acceptance-gates/)) |
-| 3 | Clinical report provenance and clinician comprehension validation | proposed ([spec](features/2026-07-28-release-acceptance-gates/)) |
-| 4 | Accessibility, privacy, billing, and store-readiness validation | proposed ([spec](features/2026-07-28-release-acceptance-gates/)) |
+Android remains an engineering target; public availability is not promised by
+this roadmap. Doctor Mode, cloud health backup, fertility and ovulation
+prediction, and clinical diagnosis are outside this 2.0 release.
