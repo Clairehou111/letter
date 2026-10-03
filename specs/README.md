@@ -18,6 +18,14 @@ must not be described as complete.
 | Release 2.0 additions and gates | [features/release-2.0/](features/release-2.0/) |
 | Durable architecture decisions | [adr/](adr/) |
 
+This README is a map of the specifications, while the repository
+[README](../README.md) covers setup and release status. The root
+[PRODUCT.md](../PRODUCT.md) is a product and brand brief; this directory's
+[product.md](product.md) is the release contract. Keep
+[data-and-reports.md](data-and-reports.md) here because its provenance,
+estimate, and reporting rules span multiple feature contracts. Detailed
+editing and acceptance rules belong under [features/](features/).
+
 The 2026 dated feature plans were reconciled into the current feature
 contracts rather than restored unchanged. Git history preserves the originals.
 Validation records document what was tested at a particular time and do not

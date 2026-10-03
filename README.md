@@ -29,6 +29,11 @@ The dated feature plans were reconciled into the current
 [feature contracts](specs/features/README.md); Git history retains the
 originals. Start with the [spec index](specs/README.md).
 
+This README is the repository entry point. [PRODUCT.md](PRODUCT.md) is the
+product and brand brief; [specs/product.md](specs/product.md) is the current
+release product contract. The [spec index](specs/README.md) explains how the
+other contracts fit together.
+
 ## Work locally
 
 The unconfigured mobile debug build uses local development adapters. A
