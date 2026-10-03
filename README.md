@@ -25,9 +25,9 @@ open. The detailed 1.0 handoff is in
 | [`artifacts/app-store/`](artifacts/app-store/) | Current App Store screenshot set and its provenance. |
 | [`tools/`](tools/) | Contract, validation, hygiene, and App Store asset tooling. |
 
-The dated feature plans that preceded the current 2.0 contract were removed
-from the working tree. Git history retains them. Start with the
-[spec index](specs/README.md), not an old feature plan.
+The dated feature plans were reconciled into the current
+[feature contracts](specs/features/README.md); Git history retains the
+originals. Start with the [spec index](specs/README.md).
 
 ## Work locally
 

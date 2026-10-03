@@ -12,14 +12,19 @@ shipped. See [validation](../validation/README.md) for dated evidence.
 
 1. Reconcile implemented behavior with the 2.0 requirements on physical iPhone
    and small/large supported layouts.
-2. Complete qualified clinical review of SP6/LV3 locator art, instructions,
+2. Add explicit confirmation before adjacent-period merging and preserve
+   every attached cycle reflection; see the
+   [period contract](features/period-and-cycle/validation.md).
+3. Reconcile the legacy Cycle Check-in scheduler with the default-off,
+   evidence-gated 2.0 Comfort Window reminder.
+4. Complete qualified clinical review of SP6/LV3 locator art, instructions,
    and safety copy; correct and re-review any finding.
-3. Verify real StoreKit purchase and restore, consent and privacy disclosures,
+5. Verify real StoreKit purchase and restore, consent and privacy disclosures,
    notification opt-in, report exports, and account/deletion paths in the
    release configuration.
-4. Run accessibility, safety, migration, and regression checks; record exact
+6. Run accessibility, safety, migration, and regression checks; record exact
    results in [2.0 validation](features/release-2.0/validation.md).
-5. Submit only after those gates and final store assets are approved.
+7. Submit only after those gates and final store assets are approved.
 
 Android remains an engineering target; public availability is not promised by
 this roadmap. Doctor Mode, cloud health backup, fertility and ovulation

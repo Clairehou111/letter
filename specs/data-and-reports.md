@@ -15,9 +15,11 @@ Short, long, variable, adjacent, or incomplete history remains visible even
 when an interval is excluded from an estimate. No missing period or symptom is
 invented.
 
-The period estimate uses the median of at most six recent eligible
-start-to-start intervals, requires at least two, and uses the current 21–45
-day eligibility and relative-outlier rules. It is an estimate of recorded
+The formal period estimate uses the median of at most six recent eligible
+start-to-start intervals, requires at least two, and uses 15–90-day quality
+bounds plus relative-outlier filtering. The 21–45-day band is a review cue,
+not automatic exclusion. A one-interval orientation estimate is labeled
+limited and cannot feed health insights. It is an estimate of recorded
 period timing, not fertility, ovulation, phase, or diagnosis. Low confidence,
 insufficient history, and a passed estimated range are stated plainly.
 

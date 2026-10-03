@@ -14,9 +14,11 @@ must not be described as complete.
 | Navigation, Care, visual and accessibility rules | [experience.md](experience.md) |
 | Cycle, record, pattern and clinical evidence | [data-and-reports.md](data-and-reports.md) |
 | Free, Plus, pricing and access | [entitlements.md](entitlements.md) |
-| Detailed 2.0 behavior and acceptance | [features/release-2.0/](features/release-2.0/) |
+| Detailed feature behavior and acceptance | [features/](features/) |
+| Release 2.0 additions and gates | [features/release-2.0/](features/release-2.0/) |
 | Durable architecture decisions | [adr/](adr/) |
 
-The dated feature plans that preceded 2.0 were removed from the current tree;
-Git history preserves them. Validation records document what was tested at a
-particular time and do not override these current product contracts.
+The 2026 dated feature plans were reconciled into the current feature
+contracts rather than restored unchanged. Git history preserves the originals.
+Validation records document what was tested at a particular time and do not
+override these current product contracts.

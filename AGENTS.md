@@ -14,7 +14,8 @@ useful during both emotional and physical symptom episodes.
 - Experience, data, and access: `specs/experience.md`,
   `specs/data-and-reports.md`, `specs/entitlements.md`
 - Permanent decisions: `specs/adr/`
-- Current release scope and acceptance: `specs/features/release-2.0/`
+- Detailed feature behavior and acceptance: `specs/features/`
+- Current release scope and gates: `specs/features/release-2.0/`
 - Dated release evidence: `validation/`
 
 Do not duplicate canonical decisions across instruction files. Application-level
