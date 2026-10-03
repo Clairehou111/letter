@@ -1,6 +1,6 @@
 # Current feature contracts
 
-These directories contain the detailed behavior that the 2.0 release contract
+These documents contain the detailed behavior that the 2.0 release contract
 depends on. Read the [product rules](../product.md),
 [architecture](../architecture.md), and [2.0 requirements](release-2.0/requirements.md)
 with them. The 2.0 contract governs release scope, pricing, and visual direction;
@@ -9,6 +9,7 @@ code/spec difference is an open validation item, not a silently accepted change.
 
 | Feature | Detailed contract |
 | --- | --- |
+| Shared data, estimate, and report rules | [data-and-reports.md](data-and-reports.md) |
 | Periods, cycle history and estimates | [period-and-cycle](period-and-cycle/requirements.md) |
 | Confirmed health records | [health-records](health-records/requirements.md) |
 | Care and personal memory | [care-and-memory](care-and-memory/requirements.md) |

@@ -1,7 +1,7 @@
 # Data, estimates, and reports
 
 Status: Release 2.0 target. The exact Comfort Window rules and report ranges
-are in [2.0 requirements](features/release-2.0/requirements.md).
+are in [2.0 requirements](release-2.0/requirements.md).
 
 ## Records and provenance
 

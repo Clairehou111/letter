@@ -12,7 +12,7 @@ must not be described as complete.
 | Delivery order and open work | [roadmap.md](roadmap.md) |
 | Applications, storage, auth, network | [architecture.md](architecture.md) |
 | Navigation, Care, visual and accessibility rules | [experience.md](experience.md) |
-| Cycle, record, pattern and clinical evidence | [data-and-reports.md](data-and-reports.md) |
+| Cycle, record, pattern and clinical evidence | [features/data-and-reports.md](features/data-and-reports.md) |
 | Free, Plus, pricing and access | [entitlements.md](entitlements.md) |
 | Detailed feature behavior and acceptance | [features/](features/) |
 | Release 2.0 additions and gates | [features/release-2.0/](features/release-2.0/) |
@@ -22,11 +22,10 @@ This README is a map of the specifications, while the repository
 [README](../README.md) covers setup and release status. The root
 [PRODUCT.md](../PRODUCT.md) is a product and brand brief; this directory's
 [product.md](product.md) is the release contract. Keep
-[data-and-reports.md](data-and-reports.md) here because its provenance,
-estimate, and reporting rules span multiple feature contracts. The
-[architecture decision records](adr/) stay here too: they preserve durable
-technical decisions across releases. Detailed editing and acceptance rules
-belong under [features/](features/).
+The cross-feature [data and reports contract](features/data-and-reports.md)
+and detailed editing and acceptance rules live under [features/](features/).
+The [architecture decision records](adr/) stay at this level because they
+preserve durable technical decisions across releases.
 
 The 2026 dated feature plans were reconciled into the current feature
 contracts rather than restored unchanged. Git history preserves the originals.

@@ -11,8 +11,8 @@ useful during both emotional and physical symptom episodes.
 - Product intent: `specs/product.md`
 - Delivery order: `specs/roadmap.md`
 - System and technology boundaries: `specs/architecture.md`
-- Experience, data, and access: `specs/experience.md`,
-  `specs/data-and-reports.md`, `specs/entitlements.md`
+- Experience and access: `specs/experience.md`, `specs/entitlements.md`
+- Cross-feature data and reporting: `specs/features/data-and-reports.md`
 - Permanent decisions: `specs/adr/`
 - Detailed feature behavior and acceptance: `specs/features/`
 - Current release scope and gates: `specs/features/release-2.0/`
