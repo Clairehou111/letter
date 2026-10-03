@@ -42,11 +42,18 @@ history, and inferred causes are excluded. Every included value has a source,
 experienced date, and same-day/later-recall or factual-event provenance.
 
 PR-06. Cross-cycle visualizations use actual observations on both sides of a
-period boundary. A Twin Matrix or similar summary leaves missing cells blank,
-keeps explicit zero distinct from missing when supported, and never mirrors
-data into unobserved days. Underlying symptom codes remain traceable through
-any scanability grouping. Aggregate cells show their method and coverage.
-Do not call a modified or incomplete diary DRSP or diagnostically equivalent.
+period boundary. The Twin Matrix compares days -14 through -1 before the next
+observed period start with observed cycle days 1 through 14 after a period
+start. It leaves missing cells blank, keeps an explicitly reported zero
+distinct from missing when a source scale supports zero, and never mirrors
+data into unobserved days. Its five scanability groups retain the underlying
+symptom code, scale, date, provenance, and functional impact. For multiple
+ratings at one relative day, average within each observed cycle first, then
+average the cycle means so a heavily logged cycle does not dominate. Each
+populated cell exposes observation and cycle counts and source record IDs.
+The report labels coverage, generation time, missing days, and provenance
+beside the matrix. Do not call a modified or incomplete diary DRSP or
+diagnostically equivalent.
 
 PR-07. Report setup previews inclusion, range, provenance, and omissions
 before file generation. PDFs use clinician-readable direct headings, labeled
