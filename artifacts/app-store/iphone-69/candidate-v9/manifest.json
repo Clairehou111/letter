@@ -1,0 +1,88 @@
+{
+  "product": "Letter Within",
+  "sourcePlan": "marketing/launch-2.0/screenshot-order.md",
+  "status": "uploaded-to-asc-ios-1.0",
+  "ownerApprovedExtension": "Cycle day editor after report, before Care scene",
+  "locale": "en-US",
+  "deviceClass": "iPhone 6.9-inch",
+  "width": 1320,
+  "height": 2868,
+  "format": "jpeg",
+  "uploadedToAppStoreConnect": true,
+  "uploadedAt": "2026-10-03",
+  "screenshots": [
+    {
+      "order": 1,
+      "file": "final/01-care.jpg",
+      "source": "../candidate-v8/final/01-care.jpg",
+      "route": "Care tab",
+      "caption": "Care for the moment you are in.",
+      "sha256": "0264438a627c7154c9457ad5bd3fd7f7f8affd0c37a88fea7f8513a43730f5ee"
+    },
+    {
+      "order": 2,
+      "file": "final/02-today.jpg",
+      "source": "../candidate-v8/final/02-today.jpg",
+      "route": "Today tab, top of page",
+      "caption": "Track more than period dates.",
+      "sha256": "04fff72cfcd802c20d7590a3a10a5fd7a0ed979f6fe40dc12481623183e3432c"
+    },
+    {
+      "order": 3,
+      "file": "final/03-comfort-kit.jpg",
+      "source": "../candidate-v8/final/03-comfort-kit.jpg",
+      "route": "Care tab → Your comfort kit",
+      "caption": "What helped before, kept close.",
+      "sha256": "3fda5aacfd770ec8da910bcbd0e1fa3e77d3fc83229f220a6c36768967e716e1"
+    },
+    {
+      "order": 4,
+      "file": "final/04-privacy.jpg",
+      "source": "../candidate-v8/final/04-privacy.jpg",
+      "route": "Onboarding → See how privacy works",
+      "caption": "Your health records stay encrypted here.",
+      "sha256": "4178b3ef2d9b9c7bbd344dfaff8597d3e724a0c94ce40f3b2e22a36bf304e3a1"
+    },
+    {
+      "order": 5,
+      "file": "final/05-what-helped-plus.jpg",
+      "source": "../candidate-v8/final/05-what-helped-plus.jpg",
+      "route": "Patterns tab → What helped, with Plus fixture",
+      "caption": "With Plus, compare what helped.",
+      "sha256": "ad05d93d35a3e09c2171ce56c1ad3ff4f60e35bea51960f692d5016d98b87e5f"
+    },
+    {
+      "order": 6,
+      "file": "final/06-mood-patterns-plus.jpg",
+      "source": "../candidate-v8/final/06-mood-patterns-plus.jpg",
+      "route": "Patterns tab → Mood & patterns",
+      "caption": "With Plus, notice harder-day patterns.",
+      "sha256": "6a8aba5794f332a92a5bfb0d58dae580584181d8da384949afcf2ebce4ff41f9"
+    },
+    {
+      "order": 7,
+      "file": "final/07-clinician-report.jpg",
+      "source": "../candidate-v8/final/07-clinician-report.jpg",
+      "route": "Today → Settings → Clinician reports → Last 3 months",
+      "caption": "Bring a clear record to your clinician.",
+      "sha256": "52943d582009903d682a195a82103aa97f854755e92422d51314c490e51f6b7b"
+    },
+    {
+      "order": 8,
+      "file": "final/08-cycle-day-editor.jpg",
+      "source": "../candidate-v8/final/08-cycle-day-editor.jpg",
+      "route": "Cycle tab → Cycle 2 → 6/22/2026 flow day → day editor",
+      "caption": "Keep the details that matter.",
+      "sha256": "ddb11fade9c8e38c8be75c6131e5131b12c1cc8b3252cfea49a0ad3fcbaa1251"
+    },
+    {
+      "order": 9,
+      "file": "final/09-care-scene.jpg",
+      "source": "../candidate-v8/final/09-care-scene.jpg",
+      "route": "Care tab → I feel heavy → blue-rain scene",
+      "caption": "A quiet moment to set it down.",
+      "sha256": "1d415b9982f2f3a7b913dd1d69dfc2241838fea78ad98a8366625c9f0b8c7998"
+    }
+  ],
+  "titlePresentation": "Unchanged manifest caption above full app capture; no phone mockup"
+}

@@ -1,0 +1,88 @@
+{
+  "product": "Letter Within",
+  "status": "uploaded-to-app-store-connect",
+  "locale": "en-US",
+  "deviceClass": "iPhone 6.9-inch",
+  "width": 1290,
+  "height": 2796,
+  "format": "jpeg",
+  "alpha": false,
+  "capture": "complete LetterApp navigation with synthetic local records on iPhone simulator; onboarding privacy via step 2",
+  "uploadedToAppStoreConnect": true,
+  "ownerApproved": true,
+  "uploadedAt": "2026-10-02",
+  "ascVersion": "iOS 1.0 Rejected",
+  "ascDisplay": "iPhone 6.9-inch English (U.S.)",
+  "screenshots": [
+    {
+      "order": 1,
+      "file": "final/01-cycle-care.jpg",
+      "source": "full-app-source/01-care-chooser.png",
+      "caption": "Care for the moment you are in.",
+      "sha256": "8af1cc5213e7b5b3734f69a2ab034ce9edc58a9c400111de504ec6eb29a1f780"
+    },
+    {
+      "order": 2,
+      "file": "final/02-private-no-ai.jpg",
+      "source": "full-app-source/02-privacy.png",
+      "caption": "Private by design. Clear by choice.",
+      "sha256": "0deddd8b1247f3dd37f3cb9f26dbc8a2022eab510c59febc8cce6dcef04b38a6"
+    },
+    {
+      "order": 3,
+      "file": "final/03-today-tracking.jpg",
+      "source": "full-app-source/03-today.png",
+      "caption": "Track more than period dates.",
+      "sha256": "9a023b484eb22e2d1342649e8613c8c6cb11e8b7410e8c7ad5634e54253070bd"
+    },
+    {
+      "order": 4,
+      "file": "final/04-cycle-view.jpg",
+      "source": "full-app-source/04-cycle.png",
+      "caption": "See where you are in your cycle.",
+      "sha256": "951a7502842d1f6c472508adbf72f91b268a80c81379ae328215ac3399808c53"
+    },
+    {
+      "order": 5,
+      "file": "final/05-flow-days.jpg",
+      "source": "full-app-source/05-flow-days.png",
+      "caption": "See every day in your cycle.",
+      "sha256": "a6753d95569c3e7113ec7c29199cec86bdfbca5ed1ee2842fd11044c796e7c98"
+    },
+    {
+      "order": 6,
+      "file": "final/06-day-details.jpg",
+      "source": "full-app-source/06-day-editor.png",
+      "caption": "Keep the details that matter.",
+      "sha256": "38faa2e4be4f9f1fbed462d1aa1d7f4348a58a7923cc700462ef08cb90dbd975"
+    },
+    {
+      "order": 7,
+      "file": "final/07-mood-patterns.jpg",
+      "source": "full-app-source/07-mood-patterns.png",
+      "caption": "Notice the days that feel harder.",
+      "sha256": "5ef4e2ca531b274b03539eff04d6111ae4f0c80e120948c0fc77a711b82c9e68"
+    },
+    {
+      "order": 8,
+      "file": "final/08-cycle-patterns.jpg",
+      "source": "full-app-source/08-cycle-patterns.png",
+      "caption": "See patterns across your cycles.",
+      "sha256": "f3adc9d7cf13d4c7f8f3174ea82c324299de0d2ec10e0246abe828b3776019f1"
+    },
+    {
+      "order": 9,
+      "file": "final/09-what-helped.jpg",
+      "source": "full-app-source/09-what-helped.png",
+      "caption": "Remember what helped before.",
+      "sha256": "782b688fd2afa33be5eb66a4c418b6a4a2df73b34324197dd2d62c6af890de35"
+    },
+    {
+      "order": 10,
+      "file": "final/10-care-heavy.jpg",
+      "source": "full-app-source/10-care-heavy.png",
+      "caption": "A quiet moment to set it down.",
+      "sha256": "033aac51a9c700c5c44fdcef10c02db391550af7d90cf646b7bf50337746b03e"
+    }
+  ]
+}

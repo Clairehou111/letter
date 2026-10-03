@@ -77,6 +77,22 @@ explicit action-time approval.
 
 ## Release gates
 
+### 2026-10-02 physical iPhone subscription-management follow-up
+
+The tester installed distributed Build 16 from TestFlight with an ordinary
+iCloud/Apple Account, purchased a subscription inside Letter Within, and saw
+the expected active plan. **Manage or cancel subscription** opened Apple's
+Chinese-language Subscriptions page showing no items. This is **P16-05 partial
+pass** for purchase/Plus display and **unresolved** for sandbox subscription
+management. The screenshot does not show lost Plus access. Build 16 uses
+RevenueCat `CustomerInfo.managementURL`, not a hard-coded Apple Developer or
+Google Play destination. TestFlight purchases use Apple's sandbox even when
+the tester starts from an ordinary account; RevenueCat Test Store is not used
+by this release build. Inspect Settings → Developer → Sandbox Apple Account →
+Manage → Subscriptions on the same iPhone while the accelerated transaction is
+active. Record the result and the purchasing account context without recording
+credentials. [Detailed finding and sources](../release-prep-2026-10-02/README.md#build-16-physical-iphone-p16-05-finding).
+
 - **Build 16 is not an App Review candidate:** on this iOS app running on
   Apple Silicon Mac, the native share action can finish without returning a
   completion to Flutter; Reports then remains in its exporting state. A local

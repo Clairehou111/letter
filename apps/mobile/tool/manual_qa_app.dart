@@ -2,13 +2,8 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:letter_mobile/config/app_config.dart';
-import 'package:letter_mobile/experience/care/care_body_scene.dart';
-import 'package:letter_mobile/experience/care/care_boundary_scene.dart';
-import 'package:letter_mobile/experience/care/care_animation_port.dart';
 import 'package:letter_mobile/experience/care/care_experience.dart';
-import 'package:letter_mobile/experience/care/care_focus_scene.dart';
-import 'package:letter_mobile/experience/care/care_heavy_scene.dart';
-import 'package:letter_mobile/experience/care/care_release_scene.dart';
+import 'package:letter_mobile/experience/care/original_care_animation_port.dart';
 import 'package:letter_mobile/experience/cycle/cycle_experience.dart';
 import 'package:letter_mobile/experience/experience_release_ports.dart';
 import 'package:letter_mobile/experience/plus/plus_experience.dart';
@@ -55,6 +50,9 @@ const String _qaRevenueCatAppUserId = String.fromEnvironment(
 );
 const bool _qaStoreFlow = bool.fromEnvironment('LETTER_QA_STORE_FLOW');
 
+// Component fixtures below are for isolated manual QA only. App Store
+// screenshots must come from the complete app and its real navigation.
+
 void main() {
   runApp(const _ManualQaApp());
 }
@@ -91,67 +89,13 @@ class _ManualQaApp extends StatelessWidget {
       body: SafeArea(
         child: CareExperience(
           careMemoryRepository: InMemoryCareMemoryRepository(),
+          animationPort: const OriginalCareAnimationPort(),
           regionCode: 'US',
-          performanceConstrained: true,
           now: () => DateTime(2026, 9, 19, 20, 34),
         ),
       ),
     ),
     'care-memory' => _careMemoryCaptureSurface(),
-    'care-heavy' => Scaffold(
-      backgroundColor: ExperienceColors.careSkyBottom,
-      body: CareHeavyScene(
-        motionPreference: CareSceneMotionPreference.staticFallback,
-        onSignal: (_) {},
-        onComplete: () {},
-        onExit: () {},
-        onSafety: () {},
-      ),
-    ),
-    'care-focus' => Scaffold(
-      backgroundColor: ExperienceColors.careSkyBottom,
-      body: CareFocusScene(
-        motionPreference: CareSceneMotionPreference.staticFallback,
-        onSignal: (_) {},
-        onCompleted: () {},
-        onExit: () {},
-        onSafety: () {},
-        initialStepIndex: 2,
-      ),
-    ),
-    'care-space' => Scaffold(
-      backgroundColor: ExperienceColors.careSkyBottom,
-      body: CareBoundaryScene(
-        motionPreference: CareSceneMotionPreference.staticFallback,
-        onSignal: (_) {},
-        onCompleted: () {},
-        onExit: () {},
-        onSafety: () {},
-        initialStepIndex: 1,
-      ),
-    ),
-    'care-body' => Scaffold(
-      backgroundColor: ExperienceColors.careSkyBottom,
-      body: CareBodyScene.build(
-        motionPreference: CareSceneMotionPreference.staticFallback,
-        onSignal: (_) {},
-        onCompleted: () {},
-        onExit: () {},
-        onSafety: () {},
-        resumeStepId: CareBodyScene.warmthStepId,
-      ),
-    ),
-    'care-release' => Scaffold(
-      backgroundColor: ExperienceColors.careSkyBottom,
-      body: CareReleaseScene(
-        motionPreference: CareSceneMotionPreference.staticFallback,
-        onSignal: (_) {},
-        onCompleted: () {},
-        onExit: () {},
-        onSafety: () {},
-        initialStepIndex: 2,
-      ),
-    ),
     'tracker-today' => const _TrackerCaptureSurface(
       initialDestination: _TrackerDestination.today,
     ),
@@ -159,7 +103,10 @@ class _ManualQaApp extends StatelessWidget {
       initialDestination: _TrackerDestination.cycle,
     ),
     'patterns' => PatternsExperienceScreen(data: _patternsCaptureData()),
-    _ => const _QaShell(),
+    '' => const _QaShell(),
+    _ => Scaffold(
+      body: Center(child: Text('Unknown manual QA frame: $_captureFrame')),
+    ),
   };
 }
 
@@ -195,6 +142,7 @@ Widget _careMemoryCaptureSurface() {
     backgroundColor: ExperienceColors.careSkyBottom,
     body: CareExperience(
       careMemoryRepository: careMemory,
+      animationPort: const OriginalCareAnimationPort(),
       comfortExperienceController: controller,
       memoryEvidence: const <SupportActionPattern>[
         SupportActionPattern(
@@ -217,7 +165,6 @@ Widget _careMemoryCaptureSurface() {
           reflections: <AuthoredReflectionEvidence>[],
         ),
       ],
-      performanceConstrained: true,
       now: () => now,
     ),
   );
@@ -234,11 +181,12 @@ final class _QaPatternSource implements PatternSourceReader {
 
 enum _TrackerDestination { today, cycle }
 
-/// Populated, synthetic-only tracker evidence for App Store capture.
+/// Populated, synthetic-only tracker evidence for isolated manual QA.
 ///
 /// This uses the production Today and Cycle surfaces and the same repository
 /// contracts as the shipped shell. The only capture-specific layer is the
-/// deterministic fixture and the production-matching tab bar around it.
+/// deterministic fixture with a test-only tab bar around it. Capture App Store
+/// screenshots through the complete application's navigation instead.
 class _TrackerCaptureSurface extends StatefulWidget {
   const _TrackerCaptureSurface({required this.initialDestination});
 

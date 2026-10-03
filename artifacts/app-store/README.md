@@ -1,13 +1,22 @@
 # App Store screenshot set
 
-Status: **the rejected six-frame v1 set was removed; the owner-approved
-ten-frame v3 set was uploaded and verified on 2026-09-24**
+Status: **the owner-approved nine-frame candidate-v9 titled set is live in
+ASC iOS 1.0 as of 2026-10-03**. It replaced the ten candidate-v4 screenshots.
 
-2026-10-02 release recheck: App Store Connect still displays these ten v3
-frames on the rejected 1.0 listing. The app's Plus, Account, Care, and other
-screens have changed since capture. Treat v3 as the uploaded historical set;
-audit each frame against the final UI and replace stale frames before the next
-App Review submission. Do not fabricate UI or use private health data.
+Candidate-v3 is preserved as the previously uploaded historical set. The app's
+Plus, Account, Care, and other screens changed after that capture.
+
+`iphone-69/candidate-v4/` contains ten dark UI screenshots captured through
+complete-app navigation with synthetic records, plus composed JPEGs and a
+manifest. The owner explicitly approved all ten, including the Mood viewport's
+partially visible sentence. The files were uploaded in order 01–10 to the
+6.9-inch English (U.S.) slot, and the order persisted after an ASC reload. The
+6.5-inch slot inherits this set. The
+original candidate-v4 harness PNGs remain in `source/` for audit only; use
+`full-app-source/` as the provenance for `final/`. The Care Heavy image uses
+the current blue-rain scene. See
+`../../validation/release-prep-2026-10-02/README.md` for route checks and
+outstanding release gates.
 
 The files under `iphone-69/final/` preserve the removed six-image v1 audit
 trail. They must not be treated as approved launch masters. The owner rejected
@@ -15,7 +24,38 @@ the set because the first Care frame and Patterns frame were obsolete, the
 report did not show enough data, and the strip read as coarse at storefront
 scale.
 
-The current replacement candidate is under `iphone-69/candidate-v3/`. It uses current
+`iphone-69/candidate-v5/` is a **local, not-uploaded** eight-frame candidate
+following the Release 2.0 screenshot order: Care, Today, Comfort Kit, Privacy,
+What helped, Mood, report, immersive Care. It adds a populated Comfort Kit and
+current-app report, fixes Mood's incomplete insight, and labels the two
+Plus-depth Patterns captions. The existing ten ASC screenshots remain the
+approved candidate-v4 set until a separate operation-specific replacement
+confirmation. See `iphone-69/candidate-v5/README.md` for per-frame review.
+
+`iphone-69/candidate-v6/` is a **local, not-uploaded** ten-frame app-only
+validation set superseded by the owner's one-Today decision. It retains Care → Today → Comfort Kit at the front, then shows
+separate real Today scroll positions for bleeding, symptoms, and a saved note.
+It has no phone mockup or marketing canvas. Its two Plus-depth Patterns frames
+have the owner-selected small `With Plus` badge; the report and privacy frames
+need further visual review. See `iphone-69/candidate-v6/README.md`.
+
+`iphone-69/candidate-v7/` is the superseded eight-frame, one-Today ordered
+draft. `iphone-69/candidate-v8/` retains the plan's first seven core frames,
+adds an owner-approved Cycle day editor showing bleeding and a saved symptom
+as #8, then moves immersive Care to #9. It keeps the existing Today marketing
+caption in its manifest. The v6 bleeding and note frames remain as internal
+validation, not storefront slots. Privacy needs a more readable capture and
+the report frame needs correction before v8 is ready for ASC. See
+`iphone-69/candidate-v8/README.md`.
+
+`iphone-69/candidate-v9/` is the uploaded nine-frame App Store composition using
+v8's full-app views. Each image has its unchanged marketing headline above
+the entire app view, without a phone mockup; both Plus badges remain. The
+Privacy and report image limitations are documented in its README. The nine
+files were uploaded to the 6.9-inch English (U.S.) slot and verified in order
+after an ASC version-page reload; 6.5-inch inherits that set.
+
+The historical candidate-v3 set is under `iphone-69/candidate-v3/`. It uses
 native Flutter UI and coherent synthetic records. No lifestyle photography,
 generated interface, real health data, testimonial, or clinical outcome claim
 is included.
@@ -134,10 +174,12 @@ The superseded v1 machine-readable record is `manifest.json`.
 
 ## Release gate
 
-Do not modify the uploaded v3 screenshots, attach build 11, add any in-app
-purchase for review, submit an app version, or change storefront availability
-without explicit user approval. First launch remains United States and Canada
-only.
+The candidate-v9 screenshot replacement, Build 17 selection, Review Notes,
+legal-links reply attachment, and App Review resubmission were completed with
+owner authorization on October 3. ASC showed iOS 1.0 and its four associated
+purchase items Waiting for Review after reload. Manual release remains
+selected; no storefront availability change was made. First launch remains
+United States and Canada only.
 
 The marketing website may reuse these masters and this message hierarchy. Its
 redesign remains a separate comp-first task documented in
