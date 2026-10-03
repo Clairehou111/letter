@@ -23,8 +23,10 @@ This README is a map of the specifications, while the repository
 [PRODUCT.md](../PRODUCT.md) is a product and brand brief; this directory's
 [product.md](product.md) is the release contract. Keep
 [data-and-reports.md](data-and-reports.md) here because its provenance,
-estimate, and reporting rules span multiple feature contracts. Detailed
-editing and acceptance rules belong under [features/](features/).
+estimate, and reporting rules span multiple feature contracts. The
+[architecture decision records](adr/) stay here too: they preserve durable
+technical decisions across releases. Detailed editing and acceptance rules
+belong under [features/](features/).
 
 The 2026 dated feature plans were reconciled into the current feature
 contracts rather than restored unchanged. Git history preserves the originals.
