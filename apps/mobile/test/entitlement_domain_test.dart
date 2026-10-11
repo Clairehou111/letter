@@ -3,6 +3,17 @@ import 'package:letter_mobile/features/entitlement/data/local_entitlement_reposi
 import 'package:letter_mobile/features/entitlement/domain/entitlement.dart';
 
 void main() {
+  test('REQ-005 reference catalog matches the canonical store target', () {
+    expect(letterPlans.map((p) => p.referencePriceLabel), [
+      '\$39.99 / year',
+      '\$7.99 / month',
+      '\$99.99 once',
+    ]);
+    expect(
+      letterPlans.first.effectiveMonthlyLabel,
+      'Renews yearly until canceled',
+    );
+  });
   const freeCapabilities = [
     LetterCapability.acuteCareFlows,
     LetterCapability.safetyRoutes,

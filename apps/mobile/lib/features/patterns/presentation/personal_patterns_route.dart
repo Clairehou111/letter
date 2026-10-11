@@ -8,6 +8,7 @@ import '../../entitlement/domain/entitlement.dart';
 import '../../entitlement/presentation/entitlement_scope.dart';
 import '../../entitlement/presentation/locked_premium_surface.dart';
 import '../../cycle/domain/local_date.dart';
+import '../../health_records/domain/health_record.dart';
 import '../../health_records/presentation/health_record_form_screen.dart';
 import '../../preparation/domain/preparation_plan.dart';
 import '../application/personal_patterns_controller.dart';
@@ -29,6 +30,7 @@ class PersonalPatternsRoute extends StatefulWidget {
     this.now,
     this.showBack = true,
     this.onOpenCycle,
+    this.onOpenRecord,
     super.key,
   });
 
@@ -38,6 +40,8 @@ class PersonalPatternsRoute extends StatefulWidget {
   final DateTime Function()? now;
   final bool showBack;
   final VoidCallback? onOpenCycle;
+  final Future<void> Function(LocalDate date, SymptomType symptom)?
+  onOpenRecord;
 
   @override
   State<PersonalPatternsRoute> createState() => _PersonalPatternsRouteState();
@@ -140,6 +144,14 @@ class _PersonalPatternsRouteState extends State<PersonalPatternsRoute> {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('That source record is no longer here.')),
       );
+      return;
+    }
+    if (widget.onOpenRecord != null) {
+      await widget.onOpenRecord!(
+        matches.first.experiencedDate,
+        matches.first.symptom,
+      );
+      if (mounted) await _run(_controller.refresh);
       return;
     }
     await Navigator.of(context).push<void>(

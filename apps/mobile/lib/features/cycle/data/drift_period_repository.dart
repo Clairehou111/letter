@@ -1,7 +1,7 @@
+import 'dart:convert';
 import 'dart:math';
 
 import 'package:drift/drift.dart';
-import 'package:flutter/foundation.dart';
 
 import '../domain/bleeding_flow.dart';
 import '../domain/local_date.dart';
@@ -9,8 +9,10 @@ import '../domain/period_record.dart';
 import '../domain/period_repository.dart';
 import '../domain/period_validation.dart';
 import 'letter_health_database.dart';
+import '../../record_hub/data/drift_record_hub_repository.dart';
+import '../../record_hub/domain/record_hub_facts.dart';
 
-final class DriftPeriodRepository implements PeriodRepository {
+final class DriftPeriodRepository implements ConfirmablePeriodRepository {
   DriftPeriodRepository(
     this._database, {
     DateTime Function()? clock,
@@ -23,6 +25,7 @@ final class DriftPeriodRepository implements PeriodRepository {
   final DateTime Function() _clock;
   final String Function() _idGenerator;
   final bool closeDatabase;
+  final PeriodReviewStore _reviews = PeriodReviewStore();
 
   @override
   Future<List<PeriodRecord>> getAll() async {
@@ -32,7 +35,14 @@ final class DriftPeriodRepository implements PeriodRepository {
   }
 
   @override
-  Future<PeriodRecord> create(PeriodDraft draft, {required LocalDate today}) {
+  Future<PeriodRecord> create(PeriodDraft draft, {required LocalDate today}) =>
+      _create(draft, today: today);
+
+  Future<PeriodRecord> _create(
+    PeriodDraft draft, {
+    required LocalDate today,
+    bool confirmed = false,
+  }) {
     return _guardStorage(() {
       return _database.transaction(() async {
         final existing = await getAll();
@@ -44,6 +54,11 @@ final class DriftPeriodRepository implements PeriodRepository {
           existing: existing,
         );
         if (adjacent.isNotEmpty) {
+          if (!confirmed) {
+            throw const PeriodWriteException(
+              PeriodWriteFailure.confirmationRequired,
+            );
+          }
           final mergedDraft = mergeAdjacentPeriodDraft(draft, adjacent);
           final survivor = _earliestPeriod(adjacent);
           return _persistMergedPeriod(
@@ -51,6 +66,7 @@ final class DriftPeriodRepository implements PeriodRepository {
             absorbed: adjacent.where((record) => record.id != survivor.id),
             draft: mergedDraft,
             updatedAt: now,
+            today: today,
           );
         }
         final record = PeriodRecord(
@@ -71,6 +87,13 @@ final class DriftPeriodRepository implements PeriodRepository {
     String id,
     PeriodDraft draft, {
     required LocalDate today,
+  }) => _update(id, draft, today: today);
+
+  Future<PeriodRecord> _update(
+    String id,
+    PeriodDraft draft, {
+    required LocalDate today,
+    bool confirmed = false,
   }) {
     return _guardStorage(() {
       return _database.transaction(() async {
@@ -87,6 +110,18 @@ final class DriftPeriodRepository implements PeriodRepository {
           existing: existing,
           editingId: id,
         );
+        final consequence = await _retentionConsequences(
+          draft,
+          today,
+          existing,
+          id,
+        );
+        if (!confirmed &&
+            (consequence.bleeding > 0 || consequence.reflections > 0)) {
+          throw const PeriodWriteException(
+            PeriodWriteFailure.confirmationRequired,
+          );
+        }
         final adjacent = adjacentPeriodsForDraft(
           draft: draft,
           today: today,
@@ -94,6 +129,11 @@ final class DriftPeriodRepository implements PeriodRepository {
           editingId: id,
         );
         if (adjacent.isNotEmpty) {
+          if (!confirmed) {
+            throw const PeriodWriteException(
+              PeriodWriteFailure.confirmationRequired,
+            );
+          }
           final mergedDraft = mergeAdjacentPeriodDraft(draft, adjacent);
           final candidates = <PeriodRecord>[previous, ...adjacent];
           final survivor = _earliestPeriod(
@@ -106,6 +146,7 @@ final class DriftPeriodRepository implements PeriodRepository {
             absorbed: candidates.where((record) => record.id != survivor.id),
             draft: mergedDraft,
             updatedAt: _clock().toUtc(),
+            today: today,
           );
         }
         final updatedAt = _clock().toUtc();
@@ -119,22 +160,7 @@ final class DriftPeriodRepository implements PeriodRepository {
         await (_database.update(
           _database.periodRows,
         )..where((row) => row.id.equals(id))).write(_toCompanion(updated));
-        await (_database.update(
-          _database.cycleReflectionRows,
-        )..where((row) => row.startingPeriodId.equals(id))).write(
-          CycleReflectionRowsCompanion(
-            cycleStartDay: Value(draft.startDate.epochDay),
-            updatedAtMillis: Value(updatedAt.millisecondsSinceEpoch),
-          ),
-        );
-        final upperBound = draft.endDate?.epochDay ?? today.epochDay;
-        await (_database.delete(_database.periodFlowRows)..where(
-              (row) =>
-                  row.periodId.equals(id) &
-                  (row.day.isSmallerThanValue(draft.startDate.epochDay) |
-                      row.day.isBiggerThanValue(upperBound)),
-            ))
-            .go();
+        await _preserveOutsideRange(id, draft, today);
         return updated;
       });
     });
@@ -145,6 +171,7 @@ final class DriftPeriodRepository implements PeriodRepository {
     required Iterable<PeriodRecord> absorbed,
     required PeriodDraft draft,
     required DateTime updatedAt,
+    required LocalDate today,
   }) async {
     final merged = PeriodRecord(
       id: survivor.id,
@@ -158,24 +185,212 @@ final class DriftPeriodRepository implements PeriodRepository {
     await (_database.update(
       _database.periodRows,
     )..where((row) => row.id.equals(survivor.id))).write(_toCompanion(merged));
-    await (_database.update(
-      _database.cycleReflectionRows,
-    )..where((row) => row.startingPeriodId.equals(survivor.id))).write(
-      CycleReflectionRowsCompanion(
-        cycleStartDay: Value(draft.startDate.epochDay),
-        updatedAtMillis: Value(updatedAt.millisecondsSinceEpoch),
-      ),
-    );
+    // Reflection anchors, IDs and both timestamps remain as originally saved.
+    // Absorbed owners detach via the existing foreign key and remain readable.
+    for (final sourceId in [survivor.id, ...absorbedIds]) {
+      await _promoteLegacyFlows(sourceId);
+    }
     for (final absorbedId in absorbedIds) {
-      await _database.customStatement(
-        'UPDATE period_flow_rows SET period_id = ? WHERE period_id = ?',
-        [survivor.id, absorbedId],
-      );
+      await (_database.update(_database.recordHubBleedingRows)
+            ..where((row) => row.periodId.equals(absorbedId)))
+          .write(RecordHubBleedingRowsCompanion(periodId: Value(survivor.id)));
+
       await (_database.delete(
         _database.periodRows,
       )..where((row) => row.id.equals(absorbedId))).go();
     }
+    await _preserveOutsideRange(survivor.id, draft, today);
     return merged;
+  }
+
+  @override
+  Future<PeriodWritePreview> previewWrite(
+    PeriodDraft draft, {
+    required LocalDate today,
+    String? editingId,
+  }) => _guardStorage(
+    () => _database.transaction(() async {
+      final existing = await getAll();
+      final consequence = await _retentionConsequences(
+        draft,
+        today,
+        existing,
+        editingId,
+      );
+      return _reviews.preview(
+        draft: draft,
+        today: today,
+        editingId: editingId,
+        existing: existing,
+        snapshot: await _sourceSnapshot(),
+        detachedBleedingCount: consequence.bleeding,
+        detachedReflectionCount: consequence.reflections,
+      );
+    }),
+  );
+
+  @override
+  Future<PeriodRecord> confirmWrite(
+    PeriodWritePreview preview, {
+    required LocalDate today,
+  }) async {
+    final saved = await _guardStorage(
+      () => _database.transaction(() async {
+        final reviewed = _reviews.validate(preview, await _sourceSnapshot());
+        return reviewed.editingId == null
+            ? _create(reviewed.draft, today: today, confirmed: true)
+            : _update(
+                reviewed.editingId!,
+                reviewed.draft,
+                today: today,
+                confirmed: true,
+              );
+      }),
+    );
+    _reviews.consume(preview);
+    return saved;
+  }
+
+  Future<String> _sourceSnapshot() async {
+    final periods = (await _database.select(_database.periodRows).get())
+      ..sort((a, b) => a.id.compareTo(b.id));
+    final flows = (await _database.select(_database.periodFlowRows).get())
+      ..sort((a, b) {
+        final id = a.periodId.compareTo(b.periodId);
+        return id != 0 ? id : a.day.compareTo(b.day);
+      });
+    final bleeding =
+        (await _database.select(_database.recordHubBleedingRows).get())
+          ..sort((a, b) => a.id.compareTo(b.id));
+    final reflections =
+        (await _database.select(_database.cycleReflectionRows).get())
+          ..sort((a, b) => a.id.compareTo(b.id));
+    return jsonEncode([
+      periods.map((row) => row.toJson()).toList(),
+      flows.map((row) => row.toJson()).toList(),
+      bleeding.map((row) => row.toJson()).toList(),
+      reflections.map((row) => row.toJson()).toList(),
+    ]);
+  }
+
+  Future<({int bleeding, int reflections})> _retentionConsequences(
+    PeriodDraft draft,
+    LocalDate today,
+    List<PeriodRecord> existing,
+    String? editingId,
+  ) async {
+    final adjacent = adjacentPeriodsForDraft(
+      draft: draft,
+      today: today,
+      existing: existing,
+      editingId: editingId,
+    );
+    final affected = <PeriodRecord>[
+      if (editingId != null)
+        ...existing.where((period) => period.id == editingId),
+      ...adjacent,
+    ];
+    if (affected.isEmpty) return (bleeding: 0, reflections: 0);
+    final sourceIds = affected.map((period) => period.id).toSet();
+    final survivor = _earliestPeriod(
+      affected,
+      editedId: editingId,
+      draft: draft,
+    );
+    final finalRange = mergeAdjacentPeriodDraft(draft, adjacent);
+    bool outside(int day) =>
+        day < finalRange.startDate.epochDay ||
+        day > (finalRange.endDate ?? today).epochDay;
+    final legacy = await (_database.select(
+      _database.periodFlowRows,
+    )..where((row) => row.periodId.isIn(sourceIds))).get();
+    final typed = await (_database.select(
+      _database.recordHubBleedingRows,
+    )..where((row) => row.periodId.isIn(sourceIds))).get();
+    final ids = <String>{
+      for (final row in legacy)
+        if (outside(row.day)) '${row.periodId}:${row.day}',
+      for (final row in typed)
+        if (outside(row.experiencedDay)) row.id,
+    };
+    final reflections = await (_database.select(
+      _database.cycleReflectionRows,
+    )..where((row) => row.startingPeriodId.isIn(sourceIds))).get();
+    return (
+      bleeding: ids.length,
+      reflections: reflections
+          .where(
+            (row) =>
+                row.startingPeriodId != survivor.id ||
+                outside(row.cycleStartDay),
+          )
+          .length,
+    );
+  }
+
+  Future<void> _promoteLegacyFlows(
+    String periodId, {
+    int? start,
+    int? end,
+  }) async {
+    final legacy = await (_database.select(
+      _database.periodFlowRows,
+    )..where((row) => row.periodId.equals(periodId))).get();
+    for (final row in legacy) {
+      if (start != null && end != null && row.day >= start && row.day <= end) {
+        continue;
+      }
+      final existing =
+          await (_database.select(_database.recordHubBleedingRows)
+                ..where((fact) => fact.experiencedDay.equals(row.day)))
+              .getSingleOrNull();
+      if (existing != null && existing.id != '$periodId:${row.day}') {
+        // Retaining distinct IDs requires a separate source; never discard one
+        // to satisfy the date singleton constraint during an implicit change.
+        throw const PeriodWriteException(PeriodWriteFailure.storageUnavailable);
+      }
+      if (existing == null) {
+        await _database
+            .into(_database.recordHubBleedingRows)
+            .insert(
+              RecordHubBleedingRowsCompanion.insert(
+                id: '$periodId:${row.day}',
+                experiencedDay: row.day,
+                recordedAtMillis: row.createdAtMillis,
+                updatedAtMillis: row.updatedAtMillis,
+                originalProvenance: 'timing_unknown',
+                provenance: 'timing_unknown',
+                periodId: Value(periodId),
+                flow: Value(row.flow),
+                color: Value(row.color),
+              ),
+            );
+      }
+      await (_database.delete(_database.periodFlowRows)..where(
+            (fact) => fact.periodId.equals(periodId) & fact.day.equals(row.day),
+          ))
+          .go();
+    }
+  }
+
+  Future<void> _preserveOutsideRange(
+    String periodId,
+    PeriodDraft draft,
+    LocalDate today,
+  ) async {
+    final upper = (draft.endDate ?? today).epochDay;
+    await _promoteLegacyFlows(
+      periodId,
+      start: draft.startDate.epochDay,
+      end: upper,
+    );
+    await (_database.update(_database.recordHubBleedingRows)..where(
+          (row) =>
+              row.periodId.equals(periodId) &
+              (row.experiencedDay.isSmallerThanValue(draft.startDate.epochDay) |
+                  row.experiencedDay.isBiggerThanValue(upper)),
+        ))
+        .write(const RecordHubBleedingRowsCompanion(periodId: Value(null)));
   }
 
   PeriodRecord _earliestPeriod(
@@ -203,6 +418,10 @@ final class DriftPeriodRepository implements PeriodRepository {
   Future<void> delete(String id) {
     return _guardStorage(() {
       return _database.transaction(() async {
+        await _promoteLegacyFlows(id);
+        await (_database.update(_database.recordHubBleedingRows)
+              ..where((row) => row.periodId.equals(id)))
+            .write(const RecordHubBleedingRowsCompanion(periodId: Value(null)));
         final deleted = await (_database.delete(
           _database.periodRows,
         )..where((row) => row.id.equals(id))).go();
@@ -218,12 +437,40 @@ final class DriftPeriodRepository implements PeriodRepository {
 
   @override
   Future<List<BleedingDayRecord>> getAllFlowDays() async {
-    final query = _database.select(_database.periodFlowRows)
-      ..orderBy([
-        (row) => OrderingTerm.desc(row.day),
-        (row) => OrderingTerm.asc(row.periodId),
-      ]);
-    return (await query.get()).map(_flowToDomain).toList(growable: false);
+    final legacy =
+        await (_database.select(_database.periodFlowRows)..orderBy([
+              (row) => OrderingTerm.desc(row.day),
+              (row) => OrderingTerm.asc(row.periodId),
+            ]))
+            .get();
+    final current = await _database
+        .select(_database.recordHubBleedingRows)
+        .get();
+    final overriddenDays = current.map((row) => row.experiencedDay).toSet();
+    final facts = <BleedingDayRecord>[
+      ...legacy
+          .where((row) => !overriddenDays.contains(row.day))
+          .map(_flowToDomain),
+      for (final row in current)
+        if (row.periodId != null && row.flow != null)
+          BleedingDayRecord(
+            periodId: row.periodId!,
+            date: LocalDate.fromEpochDay(row.experiencedDay),
+            flow: BleedingFlow.values.byName(row.flow!),
+            color: row.color == null
+                ? null
+                : BleedingColor.values.byName(row.color!),
+            createdAt: DateTime.fromMillisecondsSinceEpoch(
+              row.recordedAtMillis,
+              isUtc: true,
+            ),
+            updatedAt: DateTime.fromMillisecondsSinceEpoch(
+              row.updatedAtMillis,
+              isUtc: true,
+            ),
+          ),
+    ]..sort((a, b) => b.date.compareTo(a.date));
+    return facts;
   }
 
   @override
@@ -251,6 +498,27 @@ final class DriftPeriodRepository implements PeriodRepository {
           throw const PeriodWriteException(
             PeriodWriteFailure.flowDateOutsidePeriod,
           );
+        }
+        final hub =
+            await (_database.select(_database.recordHubBleedingRows)
+                  ..where((row) => row.experiencedDay.equals(date.epochDay)))
+                .getSingleOrNull();
+        if (hub != null) {
+          final saved = await DriftRecordHubRepository(_database, clock: _clock)
+              .upsertBleeding(
+                BleedingFactDraft(
+                  experiencedDate: date,
+                  periodId: periodId,
+                  flow: flow,
+                  color: hub.color == null
+                      ? null
+                      : BleedingColor.values.byName(hub.color!),
+                  clots: hub.clots == null
+                      ? null
+                      : ClotObservation.values.byName(hub.clots!),
+                ),
+              );
+          return _bleedingToFlow(saved);
         }
         final existing =
             await (_database.select(_database.periodFlowRows)..where(
@@ -290,6 +558,30 @@ final class DriftPeriodRepository implements PeriodRepository {
     BleedingColor color,
   ) {
     return _guardStorage(() async {
+      final hub =
+          await (_database.select(_database.recordHubBleedingRows)
+                ..where((row) => row.experiencedDay.equals(date.epochDay)))
+              .getSingleOrNull();
+      if (hub != null) {
+        if (hub.flow == null) {
+          throw const PeriodWriteException(
+            PeriodWriteFailure.flowRequiredForColor,
+          );
+        }
+        final saved = await DriftRecordHubRepository(_database, clock: _clock)
+            .upsertBleeding(
+              BleedingFactDraft(
+                experiencedDate: date,
+                periodId: periodId,
+                flow: BleedingFlow.values.byName(hub.flow!),
+                color: color,
+                clots: hub.clots == null
+                    ? null
+                    : ClotObservation.values.byName(hub.clots!),
+              ),
+            );
+        return _bleedingToFlow(saved);
+      }
       final existing =
           await (_database.select(_database.periodFlowRows)..where(
                 (row) =>
@@ -330,6 +622,23 @@ final class DriftPeriodRepository implements PeriodRepository {
   @override
   Future<void> clearBleedingColor(String periodId, LocalDate date) {
     return _guardStorage(() async {
+      final hub =
+          await (_database.select(_database.recordHubBleedingRows)
+                ..where((row) => row.experiencedDay.equals(date.epochDay)))
+              .getSingleOrNull();
+      if (hub != null && hub.flow != null) {
+        await DriftRecordHubRepository(_database, clock: _clock).upsertBleeding(
+          BleedingFactDraft(
+            experiencedDate: date,
+            periodId: periodId,
+            flow: BleedingFlow.values.byName(hub.flow!),
+            clots: hub.clots == null
+                ? null
+                : ClotObservation.values.byName(hub.clots!),
+          ),
+        );
+        return;
+      }
       await (_database.update(_database.periodFlowRows)..where(
             (row) =>
                 row.periodId.equals(periodId) & row.day.equals(date.epochDay),
@@ -345,14 +654,29 @@ final class DriftPeriodRepository implements PeriodRepository {
 
   @override
   Future<void> clearFlow(String periodId, LocalDate date) {
-    return _guardStorage(() async {
-      await (_database.delete(_database.periodFlowRows)..where(
-            (row) =>
-                row.periodId.equals(periodId) & row.day.equals(date.epochDay),
-          ))
-          .go();
-    });
+    return _guardStorage(
+      () => _database.transaction(() async {
+        await (_database.delete(
+          _database.recordHubBleedingRows,
+        )..where((row) => row.experiencedDay.equals(date.epochDay))).go();
+        await (_database.delete(_database.periodFlowRows)..where(
+              (row) =>
+                  row.periodId.equals(periodId) & row.day.equals(date.epochDay),
+            ))
+            .go();
+      }),
+    );
   }
+
+  static BleedingDayRecord _bleedingToFlow(BleedingFactRecord saved) =>
+      BleedingDayRecord(
+        periodId: saved.value.periodId!,
+        date: saved.experiencedDate,
+        flow: saved.value.flow!,
+        color: saved.value.color,
+        createdAt: saved.metadata.recordedAt,
+        updatedAt: saved.metadata.updatedAt,
+      );
 
   @override
   Future<void> close() async {
@@ -366,11 +690,7 @@ final class DriftPeriodRepository implements PeriodRepository {
       return await operation();
     } on PeriodWriteException {
       rethrow;
-    } on Object catch (error, stackTrace) {
-      if (kDebugMode) {
-        debugPrint('Period storage failed: $error');
-        debugPrintStack(stackTrace: stackTrace);
-      }
+    } on Object {
       throw const PeriodWriteException(PeriodWriteFailure.storageUnavailable);
     }
   }

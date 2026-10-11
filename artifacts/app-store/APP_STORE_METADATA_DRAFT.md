@@ -141,6 +141,13 @@ Letter Within does not use AI. Pattern text and cycle estimates are deterministi
 
 ## Paid products to attach to version 1.0
 
+The table below preserves the recorded version 1.0 store configuration.
+Release 2.0 reference targets are US$7.99/month, US$39.99/year and US$99.99
+lifetime (REQ-005); this document does not assert that the store was changed.
+Store-provided localized offers remain authoritative. Under approved RH-042,
+all-record raw CSV and the recent three-calendar-month factual Visit Summary
+PDF are free; only longer/custom factual PDFs and Clinical PDFs require Plus.
+
 | Product | Apple ID | Type | US price |
 | --- | --- | --- | --- |
 | `letter_monthly` | `6800577122` | Auto-renewable monthly | US$6.99/month |

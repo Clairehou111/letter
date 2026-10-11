@@ -1,3 +1,6 @@
+import '../../cycle/domain/local_date.dart';
+import '../../health_records/domain/health_record.dart';
+
 enum MomentCheckInState {
   good('Good'),
   steady('Steady'),
@@ -43,10 +46,27 @@ final class MomentCheckIn {
     required this.state,
     required this.occurredAt,
     required this.createdAt,
-  });
+    this.experiencedDate,
+    this.provenance = HealthRecordProvenance.timingUnknown,
+    this.writeZoneOffsetMinutes,
+    this.writeZoneName,
+    DateTime? updatedAt,
+    HealthRecordProvenance? originalProvenance,
+    this.updatedZoneOffsetMinutes,
+    this.updatedZoneName,
+  }) : updatedAt = updatedAt ?? createdAt,
+       originalProvenance = originalProvenance ?? provenance;
 
   final String id;
   final MomentCheckInState state;
   final DateTime occurredAt;
   final DateTime createdAt;
+  final DateTime updatedAt;
+  final HealthRecordProvenance originalProvenance;
+  final LocalDate? experiencedDate;
+  final HealthRecordProvenance provenance;
+  final int? writeZoneOffsetMinutes;
+  final String? writeZoneName;
+  final int? updatedZoneOffsetMinutes;
+  final String? updatedZoneName;
 }

@@ -61,9 +61,9 @@ final class PatternSourceSnapshot {
           .toList(growable: false),
       momentCheckIns: momentCheckIns
           .where((checkIn) {
-            return !LocalDate.fromDateTime(
-              checkIn.occurredAt.toLocal(),
-            ).isAfter(today);
+            return !(checkIn.experiencedDate ??
+                    LocalDate.fromDateTime(checkIn.occurredAt.toLocal()))
+                .isAfter(today);
           })
           .toList(growable: false),
     );

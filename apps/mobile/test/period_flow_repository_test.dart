@@ -106,7 +106,7 @@ void main() {
       );
     });
 
-    test('date correction and deletion clean up attached flow', () async {
+    test('date correction and deletion detach attached flow', () async {
       final repository = InMemoryPeriodRepository(seed: [_period()]);
       for (final day in [2, 3, 4, 5, 6]) {
         await repository.setFlow(
@@ -117,14 +117,15 @@ void main() {
         );
       }
 
-      await repository.update(
-        'period-flow',
+      final review = await repository.previewWrite(
         const PeriodDraft(
           startDate: LocalDate(2026, 8, 3),
           endDate: LocalDate(2026, 8, 5),
         ),
         today: today,
+        editingId: 'period-flow',
       );
+      await repository.confirmWrite(review, today: today);
       expect(
         (await repository.getAllFlowDays()).map((record) => record.date.day),
         [5, 4, 3],
@@ -135,50 +136,56 @@ void main() {
     });
   });
 
-  test('Drift persists flow and cleans it up with its period', () async {
-    final database = LetterHealthDatabase(NativeDatabase.memory());
-    addTearDown(database.close);
-    final repository = DriftPeriodRepository(
-      database,
-      clock: () => DateTime.utc(2026, 8, 6, 12),
-      idGenerator: () => 'period-flow',
-      closeDatabase: false,
-    );
-    await repository.create(
-      const PeriodDraft(
-        startDate: LocalDate(2026, 8, 2),
-        endDate: LocalDate(2026, 8, 6),
-      ),
-      today: today,
-    );
+  test(
+    'Drift persists flow and promotes it when deleting its period',
+    () async {
+      final database = LetterHealthDatabase(NativeDatabase.memory());
+      addTearDown(database.close);
+      final repository = DriftPeriodRepository(
+        database,
+        clock: () => DateTime.utc(2026, 8, 6, 12),
+        idGenerator: () => 'period-flow',
+        closeDatabase: false,
+      );
+      await repository.create(
+        const PeriodDraft(
+          startDate: LocalDate(2026, 8, 2),
+          endDate: LocalDate(2026, 8, 6),
+        ),
+        today: today,
+      );
 
-    await repository.setFlow(
-      'period-flow',
-      const LocalDate(2026, 8, 4),
-      BleedingFlow.heavy,
-      today: today,
-    );
-    await repository.setBleedingColor(
-      'period-flow',
-      const LocalDate(2026, 8, 4),
-      BleedingColor.brightRed,
-    );
-    expect((await repository.getAllFlowDays()).single.flow, BleedingFlow.heavy);
-    expect(
-      (await repository.getAllFlowDays()).single.color,
-      BleedingColor.brightRed,
-    );
-    expect(
-      (await database.select(database.periodFlowRows).get()).single,
-      isA<PeriodFlowRow>()
-          .having((row) => row.flow, 'flow', 'heavy')
-          .having((row) => row.color, 'color', 'brightRed'),
-    );
+      await repository.setFlow(
+        'period-flow',
+        const LocalDate(2026, 8, 4),
+        BleedingFlow.heavy,
+        today: today,
+      );
+      await repository.setBleedingColor(
+        'period-flow',
+        const LocalDate(2026, 8, 4),
+        BleedingColor.brightRed,
+      );
+      expect(
+        (await repository.getAllFlowDays()).single.flow,
+        BleedingFlow.heavy,
+      );
+      expect(
+        (await repository.getAllFlowDays()).single.color,
+        BleedingColor.brightRed,
+      );
+      expect(
+        (await database.select(database.periodFlowRows).get()).single,
+        isA<PeriodFlowRow>()
+            .having((row) => row.flow, 'flow', 'heavy')
+            .having((row) => row.color, 'color', 'brightRed'),
+      );
 
-    await repository.delete('period-flow');
-    expect(await repository.getAllFlowDays(), isEmpty);
-    expect(await database.select(database.periodFlowRows).get(), isEmpty);
-  });
+      await repository.delete('period-flow');
+      expect(await repository.getAllFlowDays(), isEmpty);
+      expect(await database.select(database.periodFlowRows).get(), isEmpty);
+    },
+  );
 
   test('Drift merge keeps the surviving cycle-reflection identity', () async {
     final database = LetterHealthDatabase(NativeDatabase.memory());
@@ -208,7 +215,7 @@ void main() {
           ),
         );
 
-    final merged = await repository.create(
+    final preview = await repository.previewWrite(
       const PeriodDraft(
         startDate: LocalDate(2026, 8, 1),
         endDate: LocalDate(2026, 8, 2),
@@ -216,15 +223,17 @@ void main() {
       today: today,
     );
 
+    final merged = await repository.confirmWrite(preview, today: today);
     expect(merged.id, period.id);
     final reflection =
         (await database.select(database.cycleReflectionRows).get()).single;
     expect(reflection.startingPeriodId, period.id);
-    expect(reflection.cycleStartDay, const LocalDate(2026, 8, 1).epochDay);
+    expect(reflection.cycleStartDay, const LocalDate(2026, 8, 3).epochDay);
+    expect(reflection.updatedAtMillis, 1);
   });
 
   test(
-    'Drift date edit keeps the cycle reflection aligned by stable id',
+    'Drift consequential date edit requires review and preserves the original Cycle letter source',
     () async {
       final database = LetterHealthDatabase(NativeDatabase.memory());
       addTearDown(database.close);
@@ -248,29 +257,55 @@ void main() {
               id: 'reflection',
               startingPeriodId: Value(period.id),
               cycleStartDay: const LocalDate(2026, 8, 3).epochDay,
+              observation: const Value('Original anchored letter'),
               createdAtMillis: 1,
               updatedAtMillis: 1,
             ),
           );
 
-      final edited = await repository.update(
-        period.id,
-        const PeriodDraft(
-          startDate: LocalDate(2026, 8, 4),
-          endDate: LocalDate(2026, 8, 6),
-        ),
-        today: today,
+      const correctedRange = PeriodDraft(
+        startDate: LocalDate(2026, 8, 4),
+        endDate: LocalDate(2026, 8, 6),
       );
+      await expectLater(
+        repository.update(period.id, correctedRange, today: today),
+        throwsA(
+          isA<PeriodWriteException>().having(
+            (error) => error.failure,
+            'failure',
+            PeriodWriteFailure.confirmationRequired,
+          ),
+        ),
+      );
+      expect((await repository.getAll()).single.startDate, period.startDate);
+      final originalSource =
+          (await database.select(database.cycleReflectionRows).get()).single;
+      final preview = await repository.previewWrite(
+        correctedRange,
+        today: today,
+        editingId: period.id,
+      );
+      expect(preview.requiresConfirmation, isTrue);
+      expect(preview.detachedReflectionCount, 1);
+      expect(
+        (await database.select(database.cycleReflectionRows).get()).single
+            .toJson(),
+        originalSource.toJson(),
+      );
+      final edited = await repository.confirmWrite(preview, today: today);
 
       expect(edited.id, period.id);
       final reflection =
           (await database.select(database.cycleReflectionRows).get()).single;
       expect(reflection.startingPeriodId, period.id);
-      expect(reflection.cycleStartDay, const LocalDate(2026, 8, 4).epochDay);
-      expect(
-        reflection.updatedAtMillis,
-        DateTime.utc(2026, 8, 8, 12).millisecondsSinceEpoch,
-      );
+      expect(edited.startDate, correctedRange.startDate);
+      expect(edited.endDate, correctedRange.endDate);
+      expect(reflection.id, originalSource.id);
+      expect(reflection.cycleStartDay, const LocalDate(2026, 8, 3).epochDay);
+      expect(reflection.observation, 'Original anchored letter');
+      expect(reflection.createdAtMillis, 1);
+      expect(reflection.updatedAtMillis, 1);
+      expect(reflection.toJson(), originalSource.toJson());
     },
   );
 }

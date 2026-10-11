@@ -266,10 +266,22 @@ void main() {
               end: LocalDate(2026, 7, 30),
             ),
             selectedNoteIds: const {},
-            format: ReportExportFormat.rawCsv,
+            format: ReportExportFormat.patternReportPdf,
           );
       expect(afterLapseReceipt.outcome, ExperienceFileOutcome.failed);
       expect(afterLapseShare.file, isNull);
+      final freeCsvShare = _RecordingShareAdapter();
+      final freeCsvReceipt =
+          await port(freeCsvShare, entitlementRepository: entitlement).export(
+            range: const SummaryDateRange(
+              start: LocalDate(2026, 7, 1),
+              end: LocalDate(2026, 7, 30),
+            ),
+            selectedNoteIds: const {},
+            format: ReportExportFormat.rawCsv,
+          );
+      expect(freeCsvReceipt.outcome, ExperienceFileOutcome.shared);
+      expect(freeCsvShare.file, isA<LocalCsvFile>());
     },
   );
 
@@ -315,7 +327,7 @@ void main() {
   );
 
   test(
-    'every file format is blocked before generation without paid Plus',
+    'free source CSV and recent factual PDFs retain access while Clinical files need paid Plus',
     () async {
       final freeEntitlement = LocalEntitlementRepository();
       addTearDown(freeEntitlement.dispose);
@@ -332,13 +344,22 @@ void main() {
               format: format,
             );
 
+        final clinical =
+            format == ReportExportFormat.pdf ||
+            format == ReportExportFormat.patternReportPdf;
         expect(
           receipt.outcome,
-          ExperienceFileOutcome.failed,
+          clinical
+              ? ExperienceFileOutcome.failed
+              : ExperienceFileOutcome.shared,
           reason: '$format',
         );
-        expect(receipt.message, contains('paid Plus'), reason: '$format');
-        expect(share.file, isNull, reason: '$format');
+        if (clinical) {
+          expect(receipt.message, contains('paid Plus'), reason: '$format');
+          expect(share.file, isNull, reason: '$format');
+        } else {
+          expect(share.file, isA<LocalExportFile>(), reason: '$format');
+        }
       }
     },
   );

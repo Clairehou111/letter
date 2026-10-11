@@ -440,7 +440,9 @@ final class PatternsExperienceDataBuilder {
     // conflicting moods in Patterns.
     final newestByDay = <int, MomentCheckIn>{};
     for (final checkIn in checkIns) {
-      final date = LocalDate.fromDateTime(checkIn.occurredAt.toLocal());
+      final date =
+          (checkIn.experiencedDate ??
+          LocalDate.fromDateTime(checkIn.occurredAt.toLocal()));
       if (date.isBefore(firstIncluded) || date.isAfter(today)) continue;
       final current = newestByDay[date.epochDay];
       if (current == null || checkIn.occurredAt.isAfter(current.occurredAt)) {
@@ -452,7 +454,8 @@ final class PatternsExperienceDataBuilder {
           final checkIn = entry.value;
           return _moodForCheckIn(
             checkIn,
-            LocalDate.fromDateTime(checkIn.occurredAt.toLocal()),
+            (checkIn.experiencedDate ??
+                LocalDate.fromDateTime(checkIn.occurredAt.toLocal())),
           );
         }).toList()..sort((left, right) {
           final byDate = left.date.compareTo(right.date);

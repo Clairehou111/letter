@@ -415,8 +415,31 @@ final class _CountingCaptureNoteStore implements CaptureNoteStore {
   int getAllCalls = 0;
 
   @override
-  Future<void> delete(CaptureNote note) async {
+  Future<void> delete(CaptureNote note, {CaptureNote? expectedCurrent}) async {
+    final existing = _notes.where((n) => n.id == note.id).firstOrNull;
+    if (expectedCurrent != null &&
+        (existing == null ||
+            !sameCaptureNoteVersion(existing, expectedCurrent))) {
+      throw StateError('Note changed since Undo.');
+    }
     _notes.removeWhere((item) => item.id == note.id);
+  }
+
+  @override
+  Future<CaptureNote> restore(
+    CaptureNote note, {
+    CaptureNote? expectedCurrent,
+  }) async {
+    final existing = _notes.where((n) => n.id == note.id).firstOrNull;
+    if (expectedCurrent == null
+        ? existing != null
+        : existing == null ||
+              !sameCaptureNoteVersion(existing, expectedCurrent)) {
+      throw StateError('Note changed since Undo.');
+    }
+    _notes.removeWhere((n) => n.id == note.id);
+    _notes.add(note);
+    return note;
   }
 
   @override

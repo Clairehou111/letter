@@ -1,6 +1,10 @@
 import 'dart:async';
 import 'dart:math' as math;
 
+import '../../features/care/application/care_action_recording_controller.dart';
+import '../../features/record_hub/domain/record_interventions.dart';
+import '../../features/record_hub/domain/record_hub_facts.dart';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
@@ -122,6 +126,8 @@ class CareExperience extends StatefulWidget {
     super.key,
     required this.careMemoryRepository,
     this.saveReceipt,
+    this.interventionsRepository,
+    this.onRecordChanged,
     this.animationPort,
     this.comfortExperienceController,
     this.loopKind,
@@ -139,8 +145,13 @@ class CareExperience extends StatefulWidget {
   });
 
   /// Persistence for outcomes and reflections, handed to the completion
-  /// flow. Nothing is written until a deliberate save inside that flow.
+  /// flow. Typed action storage records only deliberate completion events.
   final CareMemoryRepository careMemoryRepository;
+
+  /// Automatic action and optional check-back storage. Null keeps the legacy
+  /// standalone fixture behavior.
+  final RecordInterventionsRepository? interventionsRepository;
+  final VoidCallback? onRecordChanged;
 
   /// Receipt persistence seam, wired by the shell from the health-records
   /// repository. When null, the completion flow does not offer the receipt
@@ -230,6 +241,10 @@ class _CareExperienceState extends State<CareExperience>
   // Completion hand-off.
   CareActionCompletion? _activeCompletion;
   CareMode _completionMode = CareMode.physical;
+  CareActionRecordingController? _actionRecording;
+  TriedActionRecord? _savedAction;
+  bool _savingAction = false;
+  String? _actionError;
 
   bool _memoryProposalDismissed = false;
   int _toolkitVisitId = 0;
@@ -251,6 +266,10 @@ class _CareExperienceState extends State<CareExperience>
     WidgetsBinding.instance.addPostFrameCallback((_) {
       unawaited(_loadComfortSnapshot());
     });
+    final repository = widget.interventionsRepository;
+    if (repository != null) {
+      _actionRecording = CareActionRecordingController(repository: repository);
+    }
   }
 
   @override
@@ -490,8 +509,11 @@ class _CareExperienceState extends State<CareExperience>
       _completionMode = mode;
       _activeMode = null;
       _interruptedMode = null;
+      _savedAction = null;
+      _actionError = null;
       _stage = _CareStage.completion;
     });
+    unawaited(_recordCompletedAction());
   }
 
   Future<void> _handleRitualCompleted(CareActionCompletion completion) async {
@@ -499,8 +521,41 @@ class _CareExperienceState extends State<CareExperience>
     setState(() {
       _activeCompletion = completion;
       _completionMode = completion.mode;
+      _savedAction = null;
+      _actionError = null;
       _stage = _CareStage.completion;
     });
+    await _recordCompletedAction();
+  }
+
+  Future<void> _recordCompletedAction() async {
+    final recording = _actionRecording;
+    final completion = _activeCompletion;
+    if (recording == null || completion == null || _savingAction) return;
+    setState(() {
+      _savingAction = true;
+      _actionError = null;
+    });
+    try {
+      final saved = await recording.recordCompletion(completion);
+      if (!mounted || !identical(_activeCompletion, completion)) return;
+      setState(() => _savedAction = saved);
+      widget.onRecordChanged?.call();
+    } on RecordHubException catch (error) {
+      if (!mounted || !identical(_activeCompletion, completion)) return;
+      setState(() => _actionError = error.userMessage);
+    } catch (_) {
+      if (!mounted || !identical(_activeCompletion, completion)) return;
+      setState(
+        () => _actionError = const RecordHubException(
+          RecordHubFailure.storageUnavailable,
+        ).userMessage,
+      );
+    } finally {
+      if (mounted && identical(_activeCompletion, completion)) {
+        setState(() => _savingAction = false);
+      }
+    }
   }
 
   /// The unsaved check-back's Skip path (and Android/system back, which the
@@ -510,6 +565,12 @@ class _CareExperienceState extends State<CareExperience>
   /// stage change; the completion flow itself is presentation-only and
   /// cannot self-navigate.
   void _skipCompletionToLanding() {
+    // A failed or pending automatic action keeps its original completion token.
+    // The shell retains Care while the person leaves, making retry available.
+    if (_hasPendingCompletedAction) {
+      _leaveToDaylight();
+      return;
+    }
     setState(() {
       _activeCompletion = null;
       _stage = _CareStage.landing;
@@ -533,12 +594,22 @@ class _CareExperienceState extends State<CareExperience>
     _interruptedStepIndex = 0;
     _pausedMidScene = false;
     _activeCompletion = null;
+    _savedAction = null;
+    _savingAction = false;
+    _actionError = null;
     _stage = _CareStage.landing;
   }
 
+  bool get _hasPendingCompletedAction =>
+      widget.interventionsRepository != null &&
+      _activeCompletion != null &&
+      _savedAction == null;
+
   void _leaveToDaylight() {
     ExperienceHaptics.pick();
-    setState(_resetJourneyToLanding);
+    // The shell retains this destination while the person visits Today.
+    // Keep a failed completion and its token available for an explicit retry.
+    if (!_hasPendingCompletedAction) setState(_resetJourneyToLanding);
     final leave = widget.onLeaveCare;
     if (leave != null) {
       leave();
@@ -551,7 +622,7 @@ class _CareExperienceState extends State<CareExperience>
     final request = widget.onRequestCheckIn;
     if (request == null) return;
     ExperienceHaptics.pick();
-    setState(_resetJourneyToLanding);
+    if (!_hasPendingCompletedAction) setState(_resetJourneyToLanding);
     request();
   }
 
@@ -1593,6 +1664,12 @@ class _CareExperienceState extends State<CareExperience>
     return CareCompletionFlow(
       mode: _completionMode,
       completion: completion,
+      interventionsRepository: widget.interventionsRepository,
+      recordedAction: _savedAction,
+      savingAction: _savingAction,
+      actionError: _actionError,
+      onRetryAction: _recordCompletedAction,
+      onRecordChanged: widget.onRecordChanged,
       careMemoryRepository: widget.careMemoryRepository,
       saveReceipt: widget.saveReceipt,
       onDataChanged: _handleRecordsChanged,

@@ -3,7 +3,6 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:letter_mobile/experience/degree/degree_graphics.dart';
 import 'package:letter_mobile/experience/theme/experience_foundation.dart';
 import 'package:letter_mobile/features/cycle/domain/bleeding_flow.dart';
-import 'package:letter_mobile/features/health_records/domain/health_record.dart';
 
 void main() {
   testWidgets('shared degree graphics keep one visual language', (
@@ -98,7 +97,7 @@ void main() {
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       crossAxisAlignment: CrossAxisAlignment.end,
                       children: <Widget>[
-                        for (final severity in SymptomSeverity.values)
+                        for (final severity in DegreeGraphics.severityDegrees)
                           DegreeGraphics.severity(
                             severity,
                             size: 30,

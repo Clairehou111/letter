@@ -7,9 +7,9 @@ import '../features/summary_export/domain/cycle_care_summary.dart';
 ///
 /// Implementations adapt the existing summary/PDF/CSV and dedicated Letter
 /// folder services. UI code must not build files, choose paths, or infer data.
-/// Every [export] format requires a freshly verified paid entitlement; a
-/// no-card Plus Preview is never sufficient. Implementations must enforce the
-/// boundary again before file bytes are generated, not rely on hidden UI.
+/// Factual CSV and recent Visit summaries are free. Longer/custom and clinical
+/// PDFs require freshly verified paid entitlement; Plus Preview cannot grant
+/// file access. Implementations enforce the boundary before generation and handoff.
 abstract interface class ReportExperiencePort {
   Future<SummaryExportInput> load();
 
@@ -86,4 +86,9 @@ abstract interface class YouExperiencePort {
   Future<void> savePrivacy(PrivacyPreferences preferences);
   Future<void> signOut();
   Future<void> deleteServerAccount();
+}
+
+/// Optional status capability; incumbent fake/account ports remain compatible.
+abstract interface class ComfortReminderStatusPort {
+  String get comfortReminderStatus;
 }

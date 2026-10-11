@@ -11,6 +11,8 @@ import '../../features/cycle/domain/period_repository.dart';
 import '../../features/health_records/domain/health_record.dart';
 import '../../features/health_records/domain/health_record_repository.dart';
 import '../../features/today/today_cycle_context.dart';
+import '../../features/record_hub/domain/record_hub_repository.dart';
+import '../../features/record_hub/domain/record_hub_facts.dart';
 
 /// The small, reliability-gated slice of Comfort Window that Today may show.
 /// A null value means intentional silence: Today must not expose an emerging
@@ -25,6 +27,8 @@ final class TodayComfortWindowState {
     required this.reminderEnabled,
     required this.reminderLeadDays,
     required this.sourceCycleCount,
+    this.reminderHour = 9,
+    this.reminderMinute = 0,
   });
 
   final LocalDate forecastStart;
@@ -35,6 +39,10 @@ final class TodayComfortWindowState {
   final bool reminderEnabled;
   final int reminderLeadDays;
   final int sourceCycleCount;
+  final int reminderHour, reminderMinute;
+
+  String get reminderTimeLabel =>
+      '${reminderHour.toString().padLeft(2, '0')}:${reminderMinute.toString().padLeft(2, '0')}';
 
   bool get reminderInvitationVisible => !reminderConfigured;
 }
@@ -53,12 +61,20 @@ final class TodayVisualSnapshot {
     this.quickNotes = const [],
     this.rememberedHelpLine,
     this.comfortWindow,
+    this.bleedingFact,
+    this.sleep,
+    this.pins,
+    this.recordHubEnabled = false,
   });
 
   final LocalDate today;
   final PeriodRecord? containingPeriod;
   final PeriodRecord? openPeriod;
   final BleedingDayRecord? flowRecord;
+  final BleedingFactRecord? bleedingFact;
+  final SleepRecord? sleep;
+  final SymptomPins? pins;
+  final bool recordHubEnabled;
   final MomentCheckInState? mood;
   final List<HealthRecord> symptoms;
   final String? note;
@@ -72,7 +88,7 @@ final class TodayVisualSnapshot {
   /// Present only after the complete reminder reliability gate passes.
   final TodayComfortWindowState? comfortWindow;
 
-  bool get canRecordFlow => containingPeriod != null;
+  bool get canRecordFlow => containingPeriod != null || recordHubEnabled;
   bool get canEndPeriod => openPeriod != null;
 }
 
@@ -124,9 +140,11 @@ final class RepositoryTodayVisualPort implements TodayVisualPort {
     this.loadRememberedHelpLine,
     this.loadComfortExperience,
     this.saveComfortReminderPreference,
+    this.recordHubRepository,
   });
 
   final PeriodRepository periodRepository;
+  final RecordHubRepository? recordHubRepository;
   final MomentCheckInRepository checkInRepository;
   final HealthRecordRepository healthRecordRepository;
   final CaptureNoteStore captureNoteStore;
@@ -155,6 +173,8 @@ final class RepositoryTodayVisualPort implements TodayVisualPort {
       captureNoteStore.getAll(),
     ]);
     final date = today();
+    final hubFacts = await recordHubRepository?.getDateFacts(date);
+    final pins = await recordHubRepository?.getPins();
     final periods = values[0] as List<PeriodRecord>;
     final flows = values[1] as List<BleedingDayRecord>;
     final checkIns = values[2] as List<MomentCheckIn>;
@@ -184,6 +204,8 @@ final class RepositoryTodayVisualPort implements TodayVisualPort {
           reminderConfigured: comfort.reminder.updatedAt != null,
           reminderEnabled: comfort.reminder.enabled,
           reminderLeadDays: comfort.reminder.leadDays,
+          reminderHour: comfort.reminder.hour,
+          reminderMinute: comfort.reminder.minute,
           sourceCycleCount: window.candidate.votingCycleCount,
         );
       }
@@ -209,7 +231,10 @@ final class RepositoryTodayVisualPort implements TodayVisualPort {
               .firstOrNull;
     final mood = checkIns
         .where(
-          (entry) => LocalDate.fromDateTime(entry.occurredAt.toLocal()) == date,
+          (entry) =>
+              (entry.experiencedDate ??
+                  LocalDate.fromDateTime(entry.occurredAt.toLocal())) ==
+              date,
         )
         .firstOrNull
         ?.state;
@@ -221,10 +246,19 @@ final class RepositoryTodayVisualPort implements TodayVisualPort {
       containingPeriod: containing,
       openPeriod: open,
       flowRecord: flow,
+      bleedingFact: hubFacts?.bleeding,
+      sleep: hubFacts?.sleep,
+      pins: pins,
+      recordHubEnabled: recordHubRepository != null,
       mood: mood,
       symptoms: symptoms,
-      note: notes.firstOrNull?.text,
-      quickNotes: List.unmodifiable(notes),
+      note: notes
+          .where((note) => note.experiencedDate == date)
+          .firstOrNull
+          ?.text,
+      quickNotes: List.unmodifiable(
+        notes.where((note) => note.experiencedDate == date),
+      ),
       // This is the exact shared prediction contract. Today does not keep a
       // visual-only day count or date estimate of its own.
       cycleContext: TodayCycleContext.fromRecords(
@@ -245,10 +279,14 @@ final class RepositoryTodayVisualPort implements TodayVisualPort {
 
   Future<TodayVisualSnapshot> _saveMood(MomentCheckInState state) async {
     final created = await checkInRepository.create(state, occurredAt: now());
-    final date = today();
+    final date =
+        created.experiencedDate ??
+        LocalDate.fromDateTime(created.occurredAt.toLocal());
     for (final entry in await checkInRepository.getAll()) {
       if (entry.id != created.id &&
-          LocalDate.fromDateTime(entry.occurredAt.toLocal()) == date) {
+          (entry.experiencedDate ??
+                  LocalDate.fromDateTime(entry.occurredAt.toLocal())) ==
+              date) {
         try {
           await checkInRepository.delete(entry.id);
         } on MomentCheckInException {
@@ -288,6 +326,24 @@ final class RepositoryTodayVisualPort implements TodayVisualPort {
   Future<TodayVisualSnapshot> setFlow(BleedingFlow? flow) async {
     final snapshot = await load();
     final period = snapshot.containingPeriod;
+    if (recordHubRepository != null) {
+      final current = snapshot.bleedingFact;
+      if (current != null && current.value.flow == flow) {
+        await recordHubRepository!.clearBleeding(snapshot.today);
+      } else {
+        await recordHubRepository!.upsertBleeding(
+          BleedingFactDraft(
+            experiencedDate: snapshot.today,
+            flow: flow,
+            periodId: period?.id,
+            color: flow == null ? null : current?.value.color,
+            clots: flow == null ? null : current?.value.clots,
+          ),
+        );
+      }
+      onCycleDataChanged();
+      return load();
+    }
     if (period == null) {
       throw StateError('A period must be started before flow can be saved.');
     }
@@ -310,6 +366,22 @@ final class RepositoryTodayVisualPort implements TodayVisualPort {
   Future<TodayVisualSnapshot> setColor(BleedingColor color) async {
     final snapshot = await load();
     final period = snapshot.containingPeriod;
+    final standalone = snapshot.bleedingFact;
+    if (recordHubRepository != null &&
+        standalone != null &&
+        standalone.value.flow != null) {
+      await recordHubRepository!.upsertBleeding(
+        BleedingFactDraft(
+          experiencedDate: snapshot.today,
+          flow: standalone.value.flow,
+          periodId: standalone.value.periodId,
+          color: standalone.value.color == color ? null : color,
+          clots: standalone.value.clots,
+        ),
+      );
+      onCycleDataChanged();
+      return load();
+    }
     final flow = snapshot.flowRecord;
     if (period == null || flow == null) {
       throw StateError('Flow is required before color can be saved.');
@@ -375,6 +447,7 @@ final class RepositoryTodayVisualPort implements TodayVisualPort {
         source: CaptureSource.typed,
         createdAt: timestamp,
         keepInComfortKit: keepInComfortKit,
+        experiencedDate: today(),
       ),
     );
     onCycleDataChanged();

@@ -101,7 +101,7 @@ void _registerContract(
     });
 
     test(
-      'adjacent periods merge while inclusive edge overlap is rejected',
+      'confirmed adjacent periods merge while inclusive edge overlap is rejected',
       () async {
         final first = await repository.create(
           const PeriodDraft(
@@ -110,14 +110,16 @@ void _registerContract(
           ),
           today: _today,
         );
-        final before = await repository.create(
+        final before = await _confirmedCreate(
+          repository,
           const PeriodDraft(
             startDate: LocalDate(2026, 8, 7),
             endDate: LocalDate(2026, 8, 9),
           ),
           today: _today,
         );
-        final after = await repository.create(
+        final after = await _confirmedCreate(
+          repository,
           const PeriodDraft(
             startDate: LocalDate(2026, 8, 13),
             endDate: LocalDate(2026, 8, 15),
@@ -186,7 +188,8 @@ void _registerContract(
           today: _today,
         );
 
-        final merged = await repository.create(
+        final merged = await _confirmedCreate(
+          repository,
           const PeriodDraft(
             startDate: LocalDate(2026, 8, 4),
             endDate: LocalDate(2026, 8, 6),
@@ -412,7 +415,7 @@ void _registerContract(
       },
     );
 
-    test('date edits remove only flow outside the new range', () async {
+    test('date edits detach flow outside the new range', () async {
       final period = await repository.create(
         const PeriodDraft(
           startDate: LocalDate(2026, 8, 10),
@@ -429,12 +432,17 @@ void _registerContract(
         );
       }
 
-      await repository.update(
-        period.id,
-        const PeriodDraft(
-          startDate: LocalDate(2026, 8, 11),
-          endDate: LocalDate(2026, 8, 13),
-        ),
+      final review = await (repository as ConfirmablePeriodRepository)
+          .previewWrite(
+            const PeriodDraft(
+              startDate: LocalDate(2026, 8, 11),
+              endDate: LocalDate(2026, 8, 13),
+            ),
+            today: _today,
+            editingId: period.id,
+          );
+      await (repository as ConfirmablePeriodRepository).confirmWrite(
+        review,
         today: _today,
       );
       expect((await repository.getAllFlowDays()).map((row) => row.date), [
@@ -541,4 +549,14 @@ Future<_RepositoryHandle> _driftRepository() async {
 void main() {
   _registerContract('InMemoryPeriodRepository contract', _inMemoryRepository);
   _registerContract('DriftPeriodRepository contract', _driftRepository);
+}
+
+Future<PeriodRecord> _confirmedCreate(
+  PeriodRepository repository,
+  PeriodDraft draft, {
+  required LocalDate today,
+}) async {
+  final confirmable = repository as ConfirmablePeriodRepository;
+  final preview = await confirmable.previewWrite(draft, today: today);
+  return confirmable.confirmWrite(preview, today: today);
 }

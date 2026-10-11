@@ -2,6 +2,10 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 
+import '../../features/record_hub/domain/record_interventions.dart';
+import '../../features/record_hub/domain/record_hub_facts.dart';
+import '../../features/record_hub/presentation/record_interventions_editor.dart';
+
 import '../../features/care/domain/care_memory.dart';
 import '../../features/care/domain/care_memory_repository.dart';
 import '../../features/care/domain/care_mode.dart';
@@ -23,7 +27,8 @@ import 'care_scene_foundation.dart';
 /// Contracts honored here (design authority):
 ///  * A completion is a **deliberate** [CareActionCompletion] supplied by the
 ///    scene the person actually performed. Reading a suggestion never counts;
-///    nothing persists until the person deliberately saves an outcome.
+///    the action persists at completion when the typed store is available;
+///    the optional check-back persists only after an explicit save.
 ///  * The page asks exactly one display-size question — *"How does this
 ///    moment feel now?"* — and accepts exactly one optional answer. The
 ///    acknowledgement (*"You stayed with the moment."*) is a supporting
@@ -36,10 +41,10 @@ import 'care_scene_foundation.dart';
 ///    soft ink through a private neutral glyph, so no honest answer is
 ///    pre-warmed. Selection alone warms — the chosen option composes the
 ///    shared [DegreeGraphics] outcome glyph in its selected treatment.
-///    Shape + word carry the meaning, never color alone. Skipping records
-///    nothing and loses nothing.
+///    Shape + word carry the meaning, never color alone. Skipping keeps
+///    the recorded action without a check-back.
 ///  * Skip (`Skip — nothing needs saving`) and Android/system back from the
-///    unsaved stage persist nothing and delegate to [onSkip]. The saved
+///    unsaved stage save no check-back and delegate to [onSkip]. The saved
 ///    stage has exactly one exit, labeled exactly `Return to daylight`,
 ///    rendered in flow (never pinned), and saved-stage system back is
 ///    intercepted here and routed to [onLeaveCare]. `Leave for now` never
@@ -92,6 +97,12 @@ class CareCompletionFlow extends StatefulWidget {
     required this.onLeaveCare,
     this.saveReceipt,
     this.onDataChanged,
+    this.interventionsRepository,
+    this.recordedAction,
+    this.savingAction = false,
+    this.actionError,
+    this.onRetryAction,
+    this.onRecordChanged,
     this.onResumeScene,
     this.resumeHint,
     required this.onSkip,
@@ -104,10 +115,16 @@ class CareCompletionFlow extends StatefulWidget {
   final CareMode mode;
 
   /// The deliberate action record produced by the completed scene. Persisted
-  /// only when the person deliberately saves an outcome — never on a read.
+  /// on completion by the host, independently from the optional outcome.
   final CareActionCompletion completion;
 
   final CareMemoryRepository careMemoryRepository;
+  final RecordInterventionsRepository? interventionsRepository;
+  final TriedActionRecord? recordedAction;
+  final bool savingAction;
+  final String? actionError;
+  final Future<void> Function()? onRetryAction;
+  final VoidCallback? onRecordChanged;
 
   /// Receipt persistence seam, wired by the shell. When null, the receipt
   /// postscript is not offered at all.
@@ -161,6 +178,8 @@ class _CareCompletionFlowState extends State<CareCompletionFlow> {
   String? _outcomeError;
 
   CareRecord? _record;
+  ActionCheckbackRecord? _typedCheckback;
+  ActionCheckbackRecord? _pendingAdvancedCheckback;
   String? _ackLine;
 
   bool _receiptDismissed = false;
@@ -193,23 +212,66 @@ class _CareCompletionFlowState extends State<CareCompletionFlow> {
     super.dispose();
   }
 
+  bool get _actionReady =>
+      widget.interventionsRepository == null || widget.recordedAction != null;
+
+  static ActionOutcome _typedOutcome(CareOutcome value) => switch (value) {
+    CareOutcome.better => ActionOutcome.better,
+    CareOutcome.same => ActionOutcome.same,
+    CareOutcome.worse => ActionOutcome.worse,
+  };
+
+  static CareOutcome? _legacyOutcome(ActionOutcome value) => switch (value) {
+    ActionOutcome.better => CareOutcome.better,
+    ActionOutcome.same => CareOutcome.same,
+    ActionOutcome.worse => CareOutcome.worse,
+    ActionOutcome.mixed || ActionOutcome.couldntTry => null,
+  };
+
   Future<void> _saveOutcome() async {
-    final outcome = _selectedOutcome;
-    if (outcome == null || _savingOutcome) return;
+    final advanced = _pendingAdvancedCheckback;
+    final selected = _selectedOutcome;
+    if ((advanced == null && selected == null) ||
+        _savingOutcome ||
+        !_actionReady) {
+      return;
+    }
     setState(() {
       _savingOutcome = true;
       _outcomeError = null;
     });
     try {
-      // The completion is validated before it ever becomes a record; an
-      // unrecognized action can never persist.
-      final valid = validateCareCompletion(widget.completion);
-      final record = await widget.careMemoryRepository.saveOutcome(
-        valid,
-        outcome,
-      );
+      final repository = widget.interventionsRepository;
+      ActionCheckbackRecord? typed = advanced;
+      if (repository != null && typed == null) {
+        typed = await repository.saveCheckback(
+          ActionCheckbackDraft(
+            experiencedDate: LocalDate.fromDateTime(_now().toLocal()),
+            actionId: widget.recordedAction!.id,
+            outcome: _typedOutcome(selected!),
+          ),
+        );
+      }
+      // Keep a successful typed write for a legacy retry, including its
+      // original check-back day if the retry crosses midnight.
+      _pendingAdvancedCheckback = typed;
+      // Mixed and Couldn’t try retain only their exact typed outcome. No
+      // legacy Better/Same/Worse record is invented for them.
+      final legacy = typed == null
+          ? selected
+          : _legacyOutcome(typed.value.outcome);
+      CareRecord? record = _record;
+      if (legacy != null && record == null) {
+        record = await widget.careMemoryRepository.saveOutcome(
+          validateCareCompletion(widget.completion),
+          legacy,
+        );
+        _record = record;
+      }
       await _notifyDataChanged();
       if (!mounted) return;
+      _typedCheckback = typed;
+      widget.onRecordChanged?.call();
       final line = await ExperienceFoundation.savedRhythm(
         SavedRhythmKind.outcome,
         now: _now(),
@@ -220,19 +282,48 @@ class _CareCompletionFlowState extends State<CareCompletionFlow> {
         _stage = _LandingStage.checkedIn;
         _ackLine = line;
       });
+    } on RecordHubException catch (error) {
+      if (mounted) setState(() => _outcomeError = error.userMessage);
     } on CareMemoryException catch (error) {
-      // Errors are visual + textual. No haptics — vibration punishes.
-      setState(() => _outcomeError = error.userMessage);
+      if (mounted) setState(() => _outcomeError = error.userMessage);
     } catch (_) {
-      setState(
-        () => _outcomeError = const CareMemoryException(
-          CareMemoryFailure.storageUnavailable,
-        ).userMessage,
-      );
-    } finally {
       if (mounted) {
-        setState(() => _savingOutcome = false);
+        setState(
+          () => _outcomeError = const CareMemoryException(
+            CareMemoryFailure.storageUnavailable,
+          ).userMessage,
+        );
       }
+    } finally {
+      if (mounted) setState(() => _savingOutcome = false);
+    }
+  }
+
+  Future<void> _openCheckbackOptions() async {
+    final repository = widget.interventionsRepository;
+    final action = widget.recordedAction;
+    if (repository == null || action == null || _savingOutcome) return;
+    final saved = await Navigator.of(context).push<bool>(
+      MaterialPageRoute(
+        builder: (context) => RecordActionCheckbackEditor(
+          date: LocalDate.fromDateTime(_now().toLocal()),
+          repository: repository,
+          action: action,
+          clock: widget.now,
+          initial: _pendingAdvancedCheckback,
+        ),
+      ),
+    );
+    if (!mounted || saved != true) return;
+    try {
+      final outcomes = await repository.getCheckbacks();
+      if (!mounted) return;
+      _pendingAdvancedCheckback = outcomes
+          .where((outcome) => outcome.value.actionId == action.id)
+          .firstOrNull;
+      if (_pendingAdvancedCheckback != null) await _saveOutcome();
+    } on RecordHubException catch (error) {
+      if (mounted) setState(() => _outcomeError = error.userMessage);
     }
   }
 
@@ -345,6 +436,10 @@ class _CareCompletionFlowState extends State<CareCompletionFlow> {
                         order: const NumericFocusOrder(1),
                         child: _Eyebrow(label: widget.mode.label),
                       ),
+                      if (widget.interventionsRepository != null) ...[
+                        const SizedBox(height: ExperienceSpacing.sm),
+                        _buildActionStatus(),
+                      ],
                       const SizedBox(height: ExperienceSpacing.lg),
                       FocusTraversalOrder(
                         order: const NumericFocusOrder(2),
@@ -396,6 +491,35 @@ class _CareCompletionFlowState extends State<CareCompletionFlow> {
     );
   }
 
+  Widget _buildActionStatus() {
+    if (widget.recordedAction != null) {
+      return Text(
+        'Care action recorded. The check-back is optional.',
+        textAlign: TextAlign.center,
+        style: ExperienceType.caption(ExperienceColors.careInkSoft),
+      );
+    }
+    return Column(
+      children: [
+        Semantics(
+          liveRegion: true,
+          child: Text(
+            widget.savingAction
+                ? 'Saving your Care action…'
+                : 'The Care action has not been saved. ${widget.actionError ?? ''}',
+            textAlign: TextAlign.center,
+            style: ExperienceType.caption(ExperienceColors.careInkSoft),
+          ),
+        ),
+        if (!widget.savingAction && widget.onRetryAction != null)
+          TextButton(
+            onPressed: widget.onRetryAction,
+            child: const Text('Retry saving Care action'),
+          ),
+      ],
+    );
+  }
+
   Widget _buildCheckInContent() {
     return Column(
       key: const ValueKey<String>('check-in'),
@@ -422,11 +546,14 @@ class _CareCompletionFlowState extends State<CareCompletionFlow> {
                 child: _OutcomeOption(
                   outcome: outcome,
                   selected: _selectedOutcome == outcome,
-                  onTap: _savingOutcome
+                  onTap: _savingOutcome || !_actionReady
                       ? null
                       : () {
                           ExperienceHaptics.pick();
-                          setState(() => _selectedOutcome = outcome);
+                          setState(() {
+                            _selectedOutcome = outcome;
+                            _pendingAdvancedCheckback = null;
+                          });
                         },
                 ),
               ),
@@ -434,17 +561,32 @@ class _CareCompletionFlowState extends State<CareCompletionFlow> {
         ),
         const SizedBox(height: ExperienceSpacing.sm),
         Text(
-          'Choose what fits — or skip. Nothing is recorded until you save.',
+          widget.interventionsRepository == null
+              ? 'Choose what fits — or skip. Nothing is recorded until you save.'
+              : 'Choose what fits — or skip. The check-back is optional.',
           style: ExperienceType.caption(ExperienceColors.careInkSoft),
           textAlign: TextAlign.center,
         ),
         const SizedBox(height: ExperienceSpacing.lg),
         _EmberAction(
           label: _savingOutcome ? 'Saving…' : 'Save this check-back',
-          onPressed: _selectedOutcome == null || _savingOutcome
+          onPressed:
+              (_selectedOutcome == null && _pendingAdvancedCheckback == null) ||
+                  _savingOutcome ||
+                  !_actionReady
               ? null
               : _saveOutcome,
         ),
+        if (widget.interventionsRepository != null)
+          TextButton(
+            onPressed: _savingOutcome || !_actionReady
+                ? null
+                : _openCheckbackOptions,
+            child: Text(
+              'More check-back options',
+              style: ExperienceType.label(ExperienceColors.careInkSoft),
+            ),
+          ),
         if (_outcomeError != null)
           Padding(
             padding: const EdgeInsets.only(top: ExperienceSpacing.sm),
@@ -461,7 +603,9 @@ class _CareCompletionFlowState extends State<CareCompletionFlow> {
         // Skip is a first-class, fully visible exit from the question —
         // its own quiet row, never tucked under the primary action.
         _QuietExitRow(
-          label: 'Skip — nothing needs saving',
+          label: widget.interventionsRepository == null
+              ? 'Skip — nothing needs saving'
+              : 'Skip — no check-back',
           strong: true,
           onPressed: _savingOutcome ? null : _skipOutcome,
         ),
@@ -493,6 +637,12 @@ class _CareCompletionFlowState extends State<CareCompletionFlow> {
         // The settled unit: arc + word + record line. Static; the page
         // settles, nothing celebrates.
         if (record != null) _SettledUnit(record: record),
+        if (record == null && _typedCheckback != null)
+          Text(
+            'Check-back: ${_typedCheckback!.value.outcome.label}',
+            textAlign: TextAlign.center,
+            style: ExperienceType.body(ExperienceColors.careInk),
+          ),
         const SizedBox(height: ExperienceSpacing.sm),
         Center(child: SavedRhythmAckLine(line: _ackLine, careWorld: true)),
         const SizedBox(height: ExperienceSpacing.lg),
@@ -508,7 +658,8 @@ class _CareCompletionFlowState extends State<CareCompletionFlow> {
         // Postscripts: optional work, deliberately after the point of
         // completion — quiet hairline rows, visually subordinate to the
         // exit, ink only.
-        if (widget.saveReceipt != null &&
+        if (record != null &&
+            widget.saveReceipt != null &&
             receiptResult == null &&
             !_receiptDismissed)
           _PostscriptRow(
@@ -526,13 +677,13 @@ class _CareCompletionFlowState extends State<CareCompletionFlow> {
                 ? 'Health note saved — same-day record.'
                 : 'Health note saved — later recall, and it still counts.',
           ),
-        if (!_reflectionSaved)
+        if (record != null && !_reflectionSaved)
           _PostscriptRow(
             label: 'A few words for future you — optional',
             semanticsLabel: 'Write a few words for future you. Optional.',
             onTap: _openReflection,
           )
-        else
+        else if (_reflectionSaved)
           const _PostscriptConfirmation(
             line: 'Reflection kept for future you.',
           ),

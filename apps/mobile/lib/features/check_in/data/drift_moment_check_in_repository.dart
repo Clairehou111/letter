@@ -1,4 +1,6 @@
 import 'dart:math';
+import '../../cycle/domain/local_date.dart';
+import '../../health_records/domain/health_record.dart';
 
 import 'package:drift/drift.dart';
 
@@ -6,7 +8,8 @@ import '../../cycle/data/letter_health_database.dart';
 import '../domain/moment_check_in.dart';
 import '../domain/moment_check_in_repository.dart';
 
-final class DriftMomentCheckInRepository implements MomentCheckInRepository {
+final class DriftMomentCheckInRepository
+    implements CorrectableMomentRepository {
   DriftMomentCheckInRepository(
     this._database, {
     DateTime Function()? clock,
@@ -19,6 +22,7 @@ final class DriftMomentCheckInRepository implements MomentCheckInRepository {
   final DateTime Function() _clock;
   final String Function() _idGenerator;
   final bool closeDatabase;
+  final Map<String, MomentCheckIn> _deletedSources = {};
 
   @override
   Future<List<MomentCheckIn>> getAll() {
@@ -35,24 +39,92 @@ final class DriftMomentCheckInRepository implements MomentCheckInRepository {
     required DateTime occurredAt,
   }) {
     return _guard(() async {
-      final record = MomentCheckIn(
+      final record = createMomentCheckIn(
         id: _idGenerator(),
         state: state,
-        occurredAt: occurredAt.toUtc(),
-        createdAt: _clock().toUtc(),
+        occurredAt: occurredAt,
+        savedAt: _clock(),
       );
       await _database
           .into(_database.momentCheckInRows)
-          .insert(
-            MomentCheckInRowsCompanion.insert(
-              id: record.id,
-              state: record.state.name,
-              occurredAtMillis: record.occurredAt.millisecondsSinceEpoch,
-              createdAtMillis: record.createdAt.millisecondsSinceEpoch,
-            ),
-          );
+          .insert(_toCompanion(record));
       return record;
     });
+  }
+
+  @override
+  Future<MomentCheckIn> update(
+    String id,
+    MomentCheckInState state, {
+    MomentCheckIn? expected,
+  }) => _guard(
+    () => _database.transaction(() async {
+      final row = await (_database.select(
+        _database.momentCheckInRows,
+      )..where((row) => row.id.equals(id))).getSingleOrNull();
+      if (row == null) {
+        throw const MomentCheckInException(MomentCheckInFailure.notFound);
+      }
+      final previous = _fromRow(row);
+      if (expected != null && !momentCheckInsMatch(previous, expected)) {
+        throw const MomentCheckInException(MomentCheckInFailure.staleWrite);
+      }
+      if (previous.state == state) return previous;
+      final corrected = correctMomentCheckIn(
+        previous: previous,
+        state: state,
+        savedAt: _clock(),
+      );
+      if (identical(corrected, previous)) return previous;
+      await (_database.update(
+        _database.momentCheckInRows,
+      )..where((row) => row.id.equals(id))).write(_toCompanion(corrected));
+      return corrected;
+    }),
+  );
+
+  @override
+  Future<bool> deleteIfUnchanged(MomentCheckIn expected) async {
+    final deleted = await _guard(
+      () => _database.transaction(() async {
+        final row = await (_database.select(
+          _database.momentCheckInRows,
+        )..where((row) => row.id.equals(expected.id))).getSingleOrNull();
+        if (row == null) return null;
+        final current = _fromRow(row);
+        if (!momentCheckInsMatch(current, expected)) return null;
+        await (_database.delete(
+          _database.momentCheckInRows,
+        )..where((row) => row.id.equals(expected.id))).go();
+        return current;
+      }),
+    );
+    if (deleted == null) return false;
+    _deletedSources[deleted.id] = deleted;
+    return true;
+  }
+
+  @override
+  Future<MomentCheckIn> restoreDeleted(MomentCheckIn deleted) async {
+    final restored = await _guard(
+      () => _database.transaction(() async {
+        final trusted = _deletedSources[deleted.id];
+        final existing = await (_database.select(
+          _database.momentCheckInRows,
+        )..where((row) => row.id.equals(deleted.id))).getSingleOrNull();
+        if (trusted == null ||
+            !momentCheckInsMatch(trusted, deleted) ||
+            existing != null) {
+          throw const MomentCheckInException(MomentCheckInFailure.staleWrite);
+        }
+        await _database
+            .into(_database.momentCheckInRows)
+            .insert(_toCompanion(trusted));
+        return trusted;
+      }),
+    );
+    _deletedSources.remove(deleted.id);
+    return restored;
   }
 
   @override
@@ -64,6 +136,7 @@ final class DriftMomentCheckInRepository implements MomentCheckInRepository {
       if (deleted == 0) {
         throw const MomentCheckInException(MomentCheckInFailure.notFound);
       }
+      _deletedSources.remove(id);
     });
   }
 
@@ -99,6 +172,39 @@ final class DriftMomentCheckInRepository implements MomentCheckInRepository {
           row.createdAtMillis,
           isUtc: true,
         ),
+        experiencedDate: row.experiencedDay == null
+            ? null
+            : LocalDate.fromEpochDay(row.experiencedDay!),
+        provenance: row.experiencedDay == null
+            ? HealthRecordProvenance.timingUnknown
+            : HealthRecordProvenance.fromStorageKey(row.provenance),
+        originalProvenance: row.experiencedDay == null
+            ? HealthRecordProvenance.timingUnknown
+            : HealthRecordProvenance.fromStorageKey(
+                row.originalProvenance ??
+                    (row.updatedAtMillis == null ||
+                            row.updatedAtMillis == row.createdAtMillis
+                        ? row.provenance
+                        : null),
+              ),
+        updatedAt: DateTime.fromMillisecondsSinceEpoch(
+          row.updatedAtMillis ?? row.createdAtMillis,
+          isUtc: true,
+        ),
+        updatedZoneOffsetMinutes:
+            row.updatedZoneOffsetMinutes ??
+            (row.updatedAtMillis == null ||
+                    row.updatedAtMillis == row.createdAtMillis
+                ? row.writeZoneOffsetMinutes
+                : null),
+        updatedZoneName:
+            row.updatedZoneName ??
+            (row.updatedAtMillis == null ||
+                    row.updatedAtMillis == row.createdAtMillis
+                ? row.writeZoneName
+                : null),
+        writeZoneOffsetMinutes: row.writeZoneOffsetMinutes,
+        writeZoneName: row.writeZoneName,
       );
     } on Object {
       throw const MomentCheckInException(
@@ -106,6 +212,22 @@ final class DriftMomentCheckInRepository implements MomentCheckInRepository {
       );
     }
   }
+
+  static MomentCheckInRowsCompanion _toCompanion(MomentCheckIn record) =>
+      MomentCheckInRowsCompanion.insert(
+        id: record.id,
+        state: record.state.name,
+        occurredAtMillis: record.occurredAt.millisecondsSinceEpoch,
+        createdAtMillis: record.createdAt.millisecondsSinceEpoch,
+        updatedAtMillis: Value(record.updatedAt.millisecondsSinceEpoch),
+        experiencedDay: Value(record.experiencedDate?.epochDay),
+        provenance: Value(record.provenance.storageKey),
+        originalProvenance: Value(record.originalProvenance.storageKey),
+        writeZoneOffsetMinutes: Value(record.writeZoneOffsetMinutes),
+        writeZoneName: Value(record.writeZoneName),
+        updatedZoneOffsetMinutes: Value(record.updatedZoneOffsetMinutes),
+        updatedZoneName: Value(record.updatedZoneName),
+      );
 
   static String _randomId() {
     final random = Random.secure();

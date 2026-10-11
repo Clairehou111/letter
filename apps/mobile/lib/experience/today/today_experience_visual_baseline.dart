@@ -12,6 +12,10 @@ import '../../features/cycle/domain/local_date.dart';
 import '../../features/health_records/domain/health_record.dart';
 import '../../features/health_records/domain/observation_catalog.dart';
 import '../../features/today/today_cycle_context.dart';
+import '../../features/record_hub/domain/record_hub_facts.dart';
+import '../../features/record_hub/presentation/record_entry_section.dart';
+import '../components/interaction_controls.dart';
+import '../components/record_option_scale.dart';
 import '../comfort/comfort_reminder_sheet.dart';
 import '../cycle/cycle_estimate_copy.dart';
 import '../degree/degree_graphics.dart';
@@ -37,10 +41,24 @@ class TodayExperienceVisual extends StatefulWidget {
     super.key,
     required this.port,
     this.revision = 0,
+    this.showHeader = true,
+    this.onOpenRecord,
+    this.onOpenRecordSection,
+    this.onOpenSymptom,
+    this.preparationContent,
+    this.programmeContent,
+    this.onStartPeriod,
+    this.onEndPeriod,
   });
 
   final TodayVisualPort port;
   final int revision;
+  final bool showHeader;
+  final VoidCallback? onOpenRecord;
+  final ValueChanged<RecordEntrySection>? onOpenRecordSection;
+  final ValueChanged<SymptomType>? onOpenSymptom;
+  final Widget? preparationContent, programmeContent;
+  final Future<bool> Function()? onStartPeriod, onEndPeriod;
 
   @override
   State<TodayExperienceVisual> createState() => _TodayExperienceVisualState();
@@ -66,7 +84,6 @@ const Color _hairline = ExperienceColors.careGlassBorder;
 
 const Color _ember = ExperienceColors.ember;
 const Color _emberBright = ExperienceColors.emberBright;
-const Color _emberDeep = ExperienceColors.emberDeep;
 const Color _emberSoft = Color(0x24E4573D);
 
 const Color _error = ExperienceColors.error;
@@ -79,7 +96,6 @@ const double _minTouchTarget = 48;
 /// sitting beside the date and stacks instead, so no word is ever split
 /// across lines and the hero stays reachable in the first viewport.
 const double _headerStackTextScale = 1.5;
-const double _headerStackMinWidth = 380;
 
 TextStyle _serif(
   double size, {
@@ -128,31 +144,11 @@ BoxDecoration _cardDecoration({Color color = _surface}) {
   );
 }
 
-/// The quiet ember underline — a short gradient settling from the ember to
-/// its deepest note. Used for the masthead rule and the saved-note spine.
-BoxDecoration _emberRuleDecoration({double radius = 2}) {
-  return BoxDecoration(
-    gradient: const LinearGradient(colors: <Color>[_ember, _emberDeep]),
-    borderRadius: BorderRadius.circular(radius),
-  );
-}
-
 /// Motion constitution: the platform reduced-motion flag comes first. When
 /// set, every animated surface on Today degrades to an instant, composed
 /// transition with identical copy and controls.
 Duration _motion(BuildContext context, Duration duration) =>
     ExperienceMotion.reducedMotion(context) ? Duration.zero : duration;
-
-/// Keeps authored masthead words intact at extreme text scale: the line is
-/// laid out as one unbroken word sequence and scaled down to fit, never
-/// wrapped mid-word and never clipped mid-glyph.
-Widget _fitMastheadLine(Text text) {
-  return FittedBox(
-    fit: BoxFit.scaleDown,
-    alignment: Alignment.centerLeft,
-    child: text,
-  );
-}
 
 /// Display-title resilience, scoped to editorial hero titles only.
 ///
@@ -274,6 +270,10 @@ class _TodayExperienceVisualState extends State<TodayExperienceVisual> {
   BleedingFlow? _bleeding;
   BleedingColor? _bleedingColor;
   final List<_SymptomEntry> _symptoms = <_SymptomEntry>[];
+  List<SymptomType> _pins = const [];
+  SleepRecord? _sleep;
+  bool _explicitNoBleeding = false;
+  bool _todayHasPeriod = false;
   bool _periodActive = false;
   bool _canRecordFlow = false;
 
@@ -305,24 +305,6 @@ class _TodayExperienceVisualState extends State<TodayExperienceVisual> {
   // Acknowledgement toast.
   String? _ack;
   Timer? _ackTimer;
-
-  static const List<MomentCheckInState> _primaryMoods = <MomentCheckInState>[
-    MomentCheckInState.good,
-    MomentCheckInState.calm,
-    MomentCheckInState.steady,
-    MomentCheckInState.low,
-    MomentCheckInState.irritable,
-    MomentCheckInState.anxious,
-  ];
-
-  static const List<MomentCheckInState> _moreMoods = <MomentCheckInState>[
-    MomentCheckInState.energized,
-    MomentCheckInState.tender,
-    MomentCheckInState.hopeful,
-    MomentCheckInState.overwhelmed,
-    MomentCheckInState.exhausted,
-    MomentCheckInState.physical,
-  ];
 
   /// Moods that may want extra gentleness. Selecting one reveals — never
   /// forces — a route to Care.
@@ -384,19 +366,6 @@ class _TodayExperienceVisualState extends State<TodayExperienceVisual> {
         )
         .toList(growable: false),
   );
-
-  static const List<(SymptomSeverity, String)> _severities =
-      <(SymptomSeverity, String)>[
-        (SymptomSeverity.minimal, 'barely there'),
-        (SymptomSeverity.mild, 'noticeable, easy to carry'),
-        (SymptomSeverity.moderate, 'asking for attention'),
-        (SymptomSeverity.severe, 'hard to move through'),
-        (SymptomSeverity.extreme, 'all-consuming'),
-      ];
-
-  /// Warm ramp for the severity legend — five steps from a whisper of
-  /// warmth to its deepest note.
-  static const List<Color> _severityRamp = DegreeGraphics.severityRamp;
 
   bool get _moodSaveInFlight => _moodSavesInFlight > 0;
   int _loadGeneration = 0;
@@ -504,7 +473,7 @@ class _TodayExperienceVisualState extends State<TodayExperienceVisual> {
   // Mood
   // -------------------------------------------------------------------------
 
-  Future<void> _selectMood(MomentCheckInState mood) async {
+  Future<bool> _selectMood(MomentCheckInState mood) async {
     final generation = ++_moodSelectionGeneration;
     setState(() {
       _mood = mood;
@@ -512,14 +481,16 @@ class _TodayExperienceVisualState extends State<TodayExperienceVisual> {
     });
     try {
       final snapshot = await widget.port.saveMood(mood);
-      if (!mounted || generation != _moodSelectionGeneration) return;
+      if (!mounted || generation != _moodSelectionGeneration) return false;
       await _reloadFrom(snapshot);
       _acknowledge('Mood noted — ${mood.label}', saved: true);
+      return true;
     } on Object {
       if (mounted && generation == _moodSelectionGeneration) {
         await _reload();
         _acknowledge("Letter Within couldn't save that. Try again.");
       }
+      return false;
     } finally {
       if (mounted) {
         setState(() => _moodSavesInFlight--);
@@ -537,8 +508,15 @@ class _TodayExperienceVisualState extends State<TodayExperienceVisual> {
     if (!mounted) return;
     setState(() {
       _mood = snapshot.mood;
-      _bleeding = snapshot.flowRecord?.flow;
-      _bleedingColor = snapshot.flowRecord?.color;
+      _pins = snapshot.pins?.symptoms ?? const [];
+      _sleep = snapshot.sleep;
+      _explicitNoBleeding = snapshot.bleedingFact?.value.noBleeding ?? false;
+      _bleeding = snapshot.bleedingFact != null
+          ? snapshot.bleedingFact!.value.flow
+          : snapshot.flowRecord?.flow;
+      _bleedingColor = snapshot.bleedingFact != null
+          ? snapshot.bleedingFact!.value.color
+          : snapshot.flowRecord?.color;
       _symptoms
         ..clear()
         ..addAll(
@@ -551,6 +529,7 @@ class _TodayExperienceVisualState extends State<TodayExperienceVisual> {
           ),
         );
       _periodActive = snapshot.canEndPeriod;
+      _todayHasPeriod = snapshot.containingPeriod != null;
       _canRecordFlow = snapshot.canRecordFlow;
       _note = snapshot.note;
       _quickNotes
@@ -572,52 +551,160 @@ class _TodayExperienceVisualState extends State<TodayExperienceVisual> {
     return _CycleView.known;
   }
 
-  Future<void> _openMoreMoods() async {
-    final MomentCheckInState? picked =
-        await showModalBottomSheet<MomentCheckInState>(
-          context: context,
-          backgroundColor: _surface,
-          isScrollControlled: true,
-          shape: const RoundedRectangleBorder(
-            borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
-          ),
-          builder: (BuildContext ctx) {
-            return SafeArea(
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(22, 12, 22, 24),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: <Widget>[
-                    const _SheetHandle(),
-                    const SizedBox(height: 14),
-                    Text('More ways this moment could feel', style: _serif(20)),
-                    const SizedBox(height: 4),
-                    Text(
-                      'Still one tap. Still no wrong answers.',
-                      style: _sans(13.5, color: _inkSoft),
-                    ),
-                    const SizedBox(height: 18),
-                    Wrap(
-                      spacing: 10,
-                      runSpacing: 10,
-                      children: _moreMoods
-                          .map(
-                            (MomentCheckInState m) => _Chip(
-                              label: m.label,
-                              selected: _mood == m,
-                              onTap: () => Navigator.of(ctx).pop(m),
+  Future<void> _openMomentSheet() async {
+    bool saving = false;
+    MomentCheckInState? selected = _mood;
+    String? error;
+    await showModalBottomSheet<void>(
+      context: context,
+      backgroundColor: _surface,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (sheetContext) => StatefulBuilder(
+        builder: (context, updateSheet) => SafeArea(
+          child: SizedBox(
+            height: MediaQuery.sizeOf(context).height * .72,
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(20, 12, 20, 16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  LayoutBuilder(
+                    builder: (context, constraints) {
+                      final question = Text(
+                        'How is this moment?',
+                        style: _sans(20, weight: FontWeight.w700),
+                      );
+                      final close = TextButton(
+                        onPressed: saving
+                            ? null
+                            : () => Navigator.pop(sheetContext),
+                        child: const Text('Not now'),
+                      );
+                      if (MediaQuery.textScalerOf(context).scale(1) > 1.3) {
+                        return Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            question,
+                            Align(
+                              alignment: Alignment.centerRight,
+                              child: close,
                             ),
-                          )
-                          .toList(),
+                          ],
+                        );
+                      }
+                      return Row(
+                        children: [
+                          Expanded(child: question),
+                          close,
+                        ],
+                      );
+                    },
+                  ),
+                  Text(
+                    'Choose what fits right now.',
+                    style: _sans(13, color: _inkSoft),
+                  ),
+                  const SizedBox(height: 16),
+                  Expanded(
+                    child: LayoutBuilder(
+                      builder: (context, constraints) {
+                        final columns =
+                            constraints.maxWidth < 280 ||
+                                MediaQuery.textScalerOf(context).scale(1) > 1.5
+                            ? 1
+                            : 2;
+                        final width =
+                            (constraints.maxWidth - (columns - 1) * 10) /
+                            columns;
+                        return SingleChildScrollView(
+                          child: Wrap(
+                            spacing: 10,
+                            runSpacing: 10,
+                            children: [
+                              for (final feeling in MomentCheckInState.values)
+                                SizedBox(
+                                  width: width,
+                                  child: InteractionSurface(
+                                    color: Theme.of(
+                                      sheetContext,
+                                    ).colorScheme.surfaceContainerHighest,
+                                    selected: selected == feeling,
+                                    semanticLabel: feeling.label,
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 14,
+                                      vertical: 14,
+                                    ),
+                                    onTap: saving
+                                        ? null
+                                        : () async {
+                                            updateSheet(() {
+                                              selected = feeling;
+                                              saving = true;
+                                              error = null;
+                                            });
+                                            final saved = await _selectMood(
+                                              feeling,
+                                            );
+                                            if (!sheetContext.mounted) return;
+                                            if (saved) {
+                                              Navigator.pop(sheetContext);
+                                            } else {
+                                              updateSheet(() {
+                                                saving = false;
+                                                error =
+                                                    'Your feeling could not be saved. Try again.';
+                                              });
+                                            }
+                                          },
+                                    child: Row(
+                                      children: [
+                                        Expanded(
+                                          child: Text(
+                                            feeling.label,
+                                            style: _sans(
+                                              14,
+                                              weight: FontWeight.w600,
+                                            ),
+                                          ),
+                                        ),
+                                        if (selected == feeling)
+                                          const Icon(
+                                            Icons.check_rounded,
+                                            size: 18,
+                                          ),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                            ],
+                          ),
+                        );
+                      },
                     ),
-                  ],
-                ),
+                  ),
+                  if (saving)
+                    Semantics(
+                      liveRegion: true,
+                      child: Text(
+                        'Saving your moment…',
+                        style: _sans(13, color: _inkSoft),
+                      ),
+                    ),
+                  if (error != null)
+                    Semantics(
+                      liveRegion: true,
+                      child: Text(error!, style: _sans(13, color: _error)),
+                    ),
+                ],
               ),
-            );
-          },
-        );
-    if (picked != null) await _selectMood(picked);
+            ),
+          ),
+        ),
+      ),
+    );
   }
 
   /// The optional Care route — opened only by the user, never automatically.
@@ -767,7 +854,11 @@ class _TodayExperienceVisualState extends State<TodayExperienceVisual> {
     if (!mounted) return;
     if (started == true) {
       try {
-        await widget.port.startPeriod();
+        if (widget.onStartPeriod != null) {
+          if (!await widget.onStartPeriod!()) return;
+        } else {
+          await widget.port.startPeriod();
+        }
         final snapshot = await widget.port.setFlow(flow);
         if (!mounted) return;
         await _reloadFrom(snapshot);
@@ -932,20 +1023,27 @@ class _TodayExperienceVisualState extends State<TodayExperienceVisual> {
                     style: _sans(13.5, color: _inkSoft),
                   ),
                   const SizedBox(height: 16),
-                  const _SeverityLegend(),
-                  const SizedBox(height: 16),
-                  for (int i = 0; i < _severities.length; i++)
-                    Padding(
-                      padding: const EdgeInsets.only(bottom: 8),
-                      child: _SeverityChoice(
-                        index: i,
-                        name: _severities[i].$1.label,
-                        desc: _severities[i].$2,
-                        color: _severityRamp[i],
-                        selected: current == _severities[i].$1,
-                        onTap: () => Navigator.of(ctx).pop(_severities[i].$1),
-                      ),
-                    ),
+                  RecordOptionScale<SymptomSeverity>(
+                    options: [
+                      for (final degree in SymptomSeverity.orderedDegrees)
+                        RecordScaleOption(
+                          value: degree,
+                          label: degree.label,
+                          semanticLabel:
+                              '${degree.label}, ${degree.score} of 5',
+                          key: Key('today-degree-${degree.score}'),
+                          marker: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              DegreeGraphics.severity(degree, showWord: false),
+                              Text('${degree.score}'),
+                            ],
+                          ),
+                        ),
+                    ],
+                    selected: current,
+                    onSelected: (degree) => Navigator.of(ctx).pop(degree),
+                  ),
                 ],
               ),
             ),
@@ -961,7 +1059,12 @@ class _TodayExperienceVisualState extends State<TodayExperienceVisual> {
 
   Future<void> _startPeriodFromStrip() async {
     try {
-      final snapshot = await widget.port.startPeriod();
+      if (widget.onStartPeriod != null && !await widget.onStartPeriod!()) {
+        return;
+      }
+      final snapshot = widget.onStartPeriod == null
+          ? await widget.port.startPeriod()
+          : await widget.port.load();
       if (!mounted) return;
       await _reloadFrom(snapshot);
       _transitionHero(_cycleViewFor(snapshot.cycleContext));
@@ -1022,7 +1125,10 @@ class _TodayExperienceVisualState extends State<TodayExperienceVisual> {
     );
     if (confirmed != true || !mounted) return;
     try {
-      final snapshot = await widget.port.endOpenPeriodToday();
+      if (widget.onEndPeriod != null && !await widget.onEndPeriod!()) return;
+      final snapshot = widget.onEndPeriod == null
+          ? await widget.port.endOpenPeriodToday()
+          : await widget.port.load();
       if (!mounted) return;
       await _reloadFrom(snapshot);
       _transitionHero(_cycleViewFor(snapshot.cycleContext));
@@ -1180,88 +1286,305 @@ class _TodayExperienceVisualState extends State<TodayExperienceVisual> {
     );
   }
 
-  Widget _buildPhone() {
+  Widget _buildPhone() => Column(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      if (widget.showHeader) _buildHeader(),
+      _buildHero(),
+      const SizedBox(height: 16),
+      _buildMoodSection(),
+      const SizedBox(height: 12),
+      _buildQuickActions(),
+      _buildRememberedHelpLine(),
+      if (_showComfortWindow) ...[
+        const SizedBox(height: 18),
+        _buildComfortWindow(),
+      ],
+      if (widget.programmeContent != null) ...[
+        const SizedBox(height: 16),
+        widget.programmeContent!,
+      ],
+      if (_showSupplementalPreparation) ...[
+        const SizedBox(height: 16),
+        widget.preparationContent!,
+      ],
+      const SizedBox(height: 24),
+      _buildFooter(),
+    ],
+  );
+
+  Widget _buildWide() => _buildPhone();
+
+  String get _bodySummary {
+    final parts = <String>[
+      if (_symptoms.isNotEmpty)
+        '${_symptoms.first.definition.label} · ${_symptoms.first.severity.label}',
+      if (_symptoms.length > 1) '${_symptoms.length} symptoms recorded',
+      if (_explicitNoBleeding)
+        'No bleeding recorded'
+      else if (_bleeding != null)
+        '${_bleeding!.label} flow',
+    ];
+    return parts.isEmpty ? 'Symptoms and bleeding' : parts.join(' · ');
+  }
+
+  String get _sleepSummary {
+    final sleep = _sleep?.value;
+    if (sleep == null) return 'Record the night before';
+    final parts = <String>[
+      if (sleep.duration != null) sleep.duration!.label,
+      if (sleep.quality != null) sleep.quality!.label,
+      if (sleep.signals.isNotEmpty &&
+          sleep.duration == null &&
+          sleep.quality == null)
+        sleep.signals.first.label,
+    ];
+    return parts.join(' · ');
+  }
+
+  Widget _buildQuickActions() {
+    final routed =
+        widget.onOpenRecordSection != null || widget.onOpenRecord != null;
+    if (!routed) {
+      return Column(
+        children: [
+          ExpansionTile(
+            key: const Key('today-body-expansion'),
+            tilePadding: EdgeInsets.zero,
+            title: Text('Body', style: _sans(16, weight: FontWeight.w700)),
+            subtitle: Text(_bodySummary, style: _sans(13, color: _inkSoft)),
+            children: [
+              _buildBleedingSection(),
+              const SizedBox(height: 20),
+              if (_pins.isNotEmpty) _buildPinnedSymptomsSection(),
+              _buildSymptomsSection(),
+            ],
+          ),
+          ExpansionTile(
+            key: const Key('today-note-expansion'),
+            tilePadding: EdgeInsets.zero,
+            title: Text(
+              'Private note',
+              style: _sans(16, weight: FontWeight.w700),
+            ),
+            subtitle: Text(
+              _quickNotes.isEmpty
+                  ? 'A few words for yourself'
+                  : '${_quickNotes.length} ${_quickNotes.length == 1 ? 'note' : 'notes'} saved today',
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+              style: _sans(13, color: _inkSoft),
+            ),
+            children: [_buildNoteSection()],
+          ),
+        ],
+      );
+    }
     return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: <Widget>[
-        _buildHeader(),
-        _buildHero(),
-        if (!_periodActive && !_canRecordFlow) ...<Widget>[
-          const SizedBox(height: 14),
-          _buildStartPeriodStrip(),
-        ] else if (!_periodActive) ...<Widget>[
-          const SizedBox(height: 14),
-          _buildRecordedTodayStrip(),
-        ],
-        if (_showComfortWindow) ...<Widget>[
-          const SizedBox(height: 18),
-          _buildComfortWindow(),
-        ],
-        const SizedBox(height: 30),
-        _buildMoodSection(),
-        _buildRememberedHelpLine(),
-        const SizedBox(height: 38),
-        _buildBleedingSection(),
-        const SizedBox(height: 38),
-        _buildSymptomsSection(),
-        const SizedBox(height: 38),
-        _buildNoteSection(),
-        const SizedBox(height: 34),
-        _buildFooter(),
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Padding(
+          padding: const EdgeInsets.only(top: 4, bottom: 10),
+          child: Text(
+            'Quick records',
+            style: _sans(16, weight: FontWeight.w700),
+          ),
+        ),
+        _quickRecordRow(
+          key: const Key('today-bleeding-shortcut'),
+          title: 'Bleeding',
+          summary: _explicitNoBleeding
+              ? 'No bleeding recorded'
+              : _bleeding == null
+              ? 'Not recorded'
+              : '${_bleeding!.label} flow',
+          icon: Icons.water_drop_outlined,
+          onTap: () => widget.onOpenRecordSection != null
+              ? widget.onOpenRecordSection!(RecordEntrySection.bleeding)
+              : widget.onOpenRecord?.call(),
+        ),
+        const SizedBox(height: 14),
+        Text(
+          _pins.isEmpty ? 'Quick symptoms' : 'Pinned by you',
+          style: _sans(12.5, color: _inkSoft),
+        ),
+        const SizedBox(height: 8),
+        _buildPinnedQuickRecords(),
+        const SizedBox(height: 10),
+        _quickRecordRow(
+          title: 'Sleep',
+          summary: _sleepSummary,
+          icon: Icons.bedtime_outlined,
+          onTap: () => widget.onOpenRecordSection != null
+              ? widget.onOpenRecordSection!(RecordEntrySection.sleep)
+              : widget.onOpenRecord?.call(),
+        ),
+        const SizedBox(height: 6),
+        InteractionSurface(
+          semanticLabel:
+              'Private note. ${_note == null ? 'Add a few words' : 'Edit your saved note'}',
+          padding: const EdgeInsets.all(16),
+          onTap: () => widget.onOpenRecordSection != null
+              ? widget.onOpenRecordSection!(RecordEntrySection.note)
+              : widget.onOpenRecord!(),
+          child: Row(
+            children: [
+              const Icon(Icons.edit_note_rounded, size: 23, color: _inkSoft),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Private note',
+                      style: _sans(15, weight: FontWeight.w700),
+                    ),
+                    const SizedBox(height: 3),
+                    Text(
+                      _note ?? 'A few words for yourself',
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: _sans(12.5, color: _inkSoft),
+                    ),
+                  ],
+                ),
+              ),
+              const Icon(
+                Icons.chevron_right_rounded,
+                size: 18,
+                color: _inkSoft,
+              ),
+            ],
+          ),
+        ),
+        if (widget.onOpenRecord != null)
+          Align(
+            alignment: Alignment.centerLeft,
+            child: TextButton.icon(
+              onPressed: widget.onOpenRecord,
+              icon: const Icon(Icons.arrow_forward_rounded, size: 18),
+              label: const Text('All records'),
+            ),
+          ),
       ],
     );
   }
 
-  Widget _buildWide() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: <Widget>[
-        _buildHeader(),
-        Row(
+  Widget _quickRecordRow({
+    Key? key,
+    required String title,
+    required String summary,
+    required IconData icon,
+    required VoidCallback onTap,
+  }) => InteractionSurface(
+    key: key,
+    semanticLabel: '$title. $summary',
+    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+    onTap: onTap,
+    child: Row(
+      children: [
+        Icon(icon, size: 22, color: _inkSoft),
+        const SizedBox(width: 12),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(title, style: _sans(15, weight: FontWeight.w700)),
+              const SizedBox(height: 3),
+              Text(summary, style: _sans(12.5, color: _inkSoft)),
+            ],
+          ),
+        ),
+        const SizedBox(width: 8),
+        const Icon(Icons.chevron_right_rounded, size: 18, color: _inkSoft),
+      ],
+    ),
+  );
+
+  Widget _buildPinnedQuickRecords() {
+    final shortcuts = _pins.isNotEmpty
+        ? _pins
+        : ObservationCatalog.symptoms
+              .where(
+                (definition) =>
+                    definition.quickPickPriority ==
+                    ObservationQuickPickPriority.defaultPick,
+              )
+              .take(3)
+              .map((definition) => definition.symptom)
+              .toList(growable: false);
+    Widget shortcut(SymptomType symptom) {
+      final definition = ObservationCatalog.definitionFor(symptom);
+      final saved = _symptoms
+          .where((entry) => entry.definition.symptom == symptom)
+          .firstOrNull;
+      return InteractionSurface(
+        key: Key('today-pinned-${symptom.name}'),
+        semanticLabel:
+            '${definition.label}. ${saved?.severity.label ?? 'Not recorded'}. Edit symptom',
+        padding: const EdgeInsets.all(14),
+        selected: saved != null,
+        onTap: () {
+          if (widget.onOpenSymptom != null) {
+            widget.onOpenSymptom!(symptom);
+          } else if (widget.onOpenRecordSection != null) {
+            widget.onOpenRecordSection!(RecordEntrySection.body);
+          } else {
+            widget.onOpenRecord?.call();
+          }
+        },
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
-          children: <Widget>[
-            Expanded(
-              flex: 11,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: <Widget>[
-                  _buildHero(),
-                  if (!_periodActive && !_canRecordFlow) ...<Widget>[
-                    const SizedBox(height: 14),
-                    _buildStartPeriodStrip(),
-                  ] else if (!_periodActive) ...<Widget>[
-                    const SizedBox(height: 14),
-                    _buildRecordedTodayStrip(),
-                  ],
-                  if (_showComfortWindow) ...<Widget>[
-                    const SizedBox(height: 18),
-                    _buildComfortWindow(),
-                  ],
-                  const SizedBox(height: 30),
-                  _buildMoodSection(),
-                  _buildRememberedHelpLine(),
+          children: [
+            Text(definition.label, style: _sans(15, weight: FontWeight.w700)),
+            const SizedBox(height: 8),
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                if (saved != null) ...[
+                  DegreeGraphics.severity(saved.severity, showWord: false),
+                  const SizedBox(width: 6),
                 ],
-              ),
-            ),
-            const SizedBox(width: 32),
-            Expanded(
-              flex: 13,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: <Widget>[
-                  _buildBleedingSection(),
-                  const SizedBox(height: 38),
-                  _buildSymptomsSection(),
-                  const SizedBox(height: 38),
-                  _buildNoteSection(),
-                  const SizedBox(height: 34),
-                  _buildFooter(),
-                ],
-              ),
+                Expanded(
+                  child: Text(
+                    saved?.severity.label ?? 'Not recorded',
+                    style: _sans(12.5, color: _inkSoft),
+                  ),
+                ),
+              ],
             ),
           ],
         ),
-      ],
+      );
+    }
+
+    if (MediaQuery.textScalerOf(context).scale(1) > 1.5) {
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          for (final symptom in shortcuts)
+            Padding(
+              padding: const EdgeInsets.only(bottom: 8),
+              child: shortcut(symptom),
+            ),
+        ],
+      );
+    }
+    return SingleChildScrollView(
+      key: const PageStorageKey<String>('today-pinned-shortcuts'),
+      scrollDirection: Axis.horizontal,
+      child: IntrinsicHeight(
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            for (var i = 0; i < shortcuts.length; i++) ...[
+              if (i > 0) const SizedBox(width: 8),
+              SizedBox(width: 152, child: shortcut(shortcuts[i])),
+            ],
+          ],
+        ),
+      ),
     );
   }
 
@@ -1275,72 +1598,41 @@ class _TodayExperienceVisualState extends State<TodayExperienceVisual> {
   // never consumes the first viewport on its own.
   // -------------------------------------------------------------------------
 
-  Widget _buildHeaderTitleBlock({required bool compact}) {
-    final Text kicker = Text(
-      'TODAY',
-      style: _kicker(),
-      maxLines: 1,
-      softWrap: false,
-    );
-    final Text title = Text(
-      'Letter Within',
-      style: _serif(30, weight: FontWeight.w600, height: 1.15),
-      maxLines: 1,
-      softWrap: false,
-    );
-    return Column(
+  Widget _buildHeader() => Padding(
+    padding: const EdgeInsets.only(top: 4, bottom: 18),
+    child: Column(
       crossAxisAlignment: CrossAxisAlignment.start,
-      children: <Widget>[
-        compact ? _fitMastheadLine(kicker) : kicker,
-        const SizedBox(height: 7),
-        compact ? _fitMastheadLine(title) : title,
-        const SizedBox(height: 9),
-        Container(width: 30, height: 2, decoration: _emberRuleDecoration()),
-      ],
-    );
-  }
-
-  Widget _buildHeader() {
-    final MediaQueryData media = MediaQuery.of(context);
-    final bool stacked =
-        media.textScaler.scale(1.0) > _headerStackTextScale ||
-        media.size.width < _headerStackMinWidth;
-    if (stacked) {
-      final Text date = Text(
-        _headerDateLabel(_cycleContext?.today),
-        style: _sans(14.5, color: _inkSoft),
-        maxLines: 1,
-        softWrap: false,
-      );
-      return Padding(
-        padding: const EdgeInsets.only(top: 10, bottom: 16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: <Widget>[
-            _buildHeaderTitleBlock(compact: true),
-            const SizedBox(height: 8),
-            _fitMastheadLine(date),
-          ],
-        ),
-      );
-    }
-    return Padding(
-      padding: const EdgeInsets.only(top: 14, bottom: 22),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.end,
-        children: <Widget>[
-          Expanded(child: _buildHeaderTitleBlock(compact: false)),
-          Padding(
-            padding: const EdgeInsets.only(bottom: 6),
-            child: Text(
+      children: [
+        Text('Letter Within', style: _sans(12, color: _inkSoft)),
+        const SizedBox(height: 4),
+        LayoutBuilder(
+          builder: (context, constraints) {
+            final title = Text(
+              'Today',
+              style: _sans(25, weight: FontWeight.w700),
+            );
+            final date = Text(
               _headerDateLabel(_cycleContext?.today),
-              style: _sans(14.5, color: _inkSoft),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
+              style: _sans(13, color: _inkSoft),
+            );
+            if (constraints.maxWidth < 320 ||
+                MediaQuery.textScalerOf(context).scale(1) > 1.5) {
+              return Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [title, const SizedBox(height: 4), date],
+              );
+            }
+            return Row(
+              children: [
+                Expanded(child: title),
+                date,
+              ],
+            );
+          },
+        ),
+      ],
+    ),
+  );
 
   // -------------------------------------------------------------------------
   // Cycle-context hero — the raised focal surface, honest states
@@ -1369,7 +1661,7 @@ class _TodayExperienceVisualState extends State<TodayExperienceVisual> {
                     horizontal: 14,
                     vertical: 9,
                   ),
-                  minimumSize: Size.zero,
+                  minimumSize: const Size(48, 48),
                   tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12),
@@ -1380,7 +1672,9 @@ class _TodayExperienceVisualState extends State<TodayExperienceVisual> {
                   style: _sans(12.5, weight: FontWeight.w700),
                 ),
               )
-            : null,
+            : !_todayHasPeriod
+            ? _buildStartPeriodStrip()
+            : _buildRecordedTodayStrip(),
       ),
       _CycleView.learning => _StatusCard(
         key: const ValueKey<String>('learning'),
@@ -1398,12 +1692,9 @@ class _TodayExperienceVisualState extends State<TodayExperienceVisual> {
         kicker: 'NO HISTORY YET',
         title: 'A quiet beginning',
         footnote: 'Private on this device.',
+        action: _buildStartPeriodStrip(),
         middle: Text(
-          _note == null
-              ? 'No notes yet — and nothing to catch up on. Begin with how '
-                    'this moment feels.'
-              : 'Your note is here — and there is nothing else to catch up '
-                    'on. Begin with how this moment feels.',
+          'No period history yet. Record when you’re ready.',
           style: _sans(14.5, color: _ink.withValues(alpha: 0.88), height: 1.45),
         ),
       ),
@@ -1417,146 +1708,70 @@ class _TodayExperienceVisualState extends State<TodayExperienceVisual> {
 
   /// Slim, quiet start-period surface — appears only when no period is
   /// active, so period status is never repeated across large cards.
-  Widget _buildStartPeriodStrip() {
-    final Widget startButton = OutlinedButton(
-      onPressed: _startPeriodFromStrip,
-      style: OutlinedButton.styleFrom(
-        foregroundColor: _emberBright,
-        side: const BorderSide(color: _ember, width: 1.3),
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 11),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      ),
-      child: Text(
-        'Start period',
-        textAlign: TextAlign.center,
-        style: _sans(13, weight: FontWeight.w700),
-      ),
-    );
-    final Widget copy = Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: <Widget>[
-        Text(
-          'Has your period started?',
-          style: _serif(16.5, weight: FontWeight.w700),
-        ),
-        const SizedBox(height: 2),
-        Text(
-          'Marking day one sets the rhythm.',
-          style: _sans(12.5, color: _inkSoft),
-        ),
-      ],
-    );
-    return Container(
-      decoration: _cardDecoration(),
-      padding: const EdgeInsets.fromLTRB(18, 14, 14, 14),
-      child: LayoutBuilder(
-        builder: (BuildContext context, BoxConstraints constraints) {
-          final bool compact =
-              MediaQuery.textScalerOf(context).scale(1.0) >
-                  _headerStackTextScale ||
-              constraints.maxWidth < 320;
-          if (compact) {
-            return Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: <Widget>[
-                copy,
-                const SizedBox(height: 12),
-                SizedBox(width: double.infinity, child: startButton),
-              ],
-            );
-          }
-          return Row(
-            children: <Widget>[
-              Expanded(child: copy),
-              const SizedBox(width: 12),
-              startButton,
-            ],
-          );
-        },
-      ),
-    );
-  }
+  Widget _buildStartPeriodStrip() => TextButton(
+    onPressed: _startPeriodFromStrip,
+    style: TextButton.styleFrom(
+      foregroundColor: _emberBright,
+      minimumSize: const Size(48, 48),
+    ),
+    child: Text('Start period', style: _sans(13, weight: FontWeight.w700)),
+  );
 
-  /// A period ended today still contains today, so its flow and color remain
-  /// editable. Starting another period would necessarily overlap it.
-  Widget _buildRecordedTodayStrip() {
-    return Container(
-      decoration: _cardDecoration(),
-      padding: const EdgeInsets.fromLTRB(18, 14, 14, 14),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: <Widget>[
-          Text(
-            'Period recorded today',
-            style: _serif(16.5, weight: FontWeight.w700),
-          ),
-          const SizedBox(height: 2),
-          Text(
-            'You can still update flow and color below.',
-            style: _sans(12.5, color: _inkSoft),
-          ),
-        ],
-      ),
-    );
-  }
+  Widget _buildRecordedTodayStrip() =>
+      Text('Period recorded today', style: _sans(12, color: _inkSoft));
 
   // -------------------------------------------------------------------------
   // Mood — one tap, plus a More sheet, plus an optional Care route
   // -------------------------------------------------------------------------
 
-  Widget _buildMoodSection() {
-    final List<MomentCheckInState> chips = List<MomentCheckInState>.of(
-      _primaryMoods,
-    );
-    if (_mood != null && !chips.contains(_mood)) {
-      chips.add(_mood!);
-    }
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: <Widget>[
-        const _SectionHeader(
-          kicker: 'One tap — no wrong answers',
-          title: 'How is this moment?',
-        ),
-        const SizedBox(height: 16),
-        Wrap(
-          spacing: 10,
-          runSpacing: 10,
-          children: <Widget>[
-            for (final MomentCheckInState m in chips)
-              _Chip(
-                label: m.label,
-                selected: _mood == m,
-                onTap: () => _selectMood(m),
-              ),
-            _Chip(
-              label: 'More',
-              selected: false,
-              icon: Icons.add_rounded,
-              onTap: _openMoreMoods,
+  Widget _buildMoodSection() => Column(
+    crossAxisAlignment: CrossAxisAlignment.stretch,
+    children: [
+      InteractionSurface(
+        key: const Key('today-moment-card'),
+        semanticLabel: _mood == null
+            ? 'How is this moment? Choose a feeling.'
+            : 'Moment. ${_mood!.label}. Edit your feeling.',
+        selected: _mood != null,
+        padding: const EdgeInsets.all(18),
+        onTap: _moodSaveInFlight ? null : _openMomentSheet,
+        child: Row(
+          children: [
+            Icon(
+              _mood == null
+                  ? Icons.favorite_border_rounded
+                  : Icons.favorite_rounded,
+              color: _mood == null ? _inkSoft : _emberBright,
+              size: 24,
             ),
+            const SizedBox(width: 14),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    _mood == null ? 'How is this moment?' : _mood!.label,
+                    style: _sans(18, weight: FontWeight.w700),
+                  ),
+                  const SizedBox(height: 5),
+                  Text(
+                    _moodSaveInFlight
+                        ? 'Saving your moment…'
+                        : _mood == null
+                        ? 'Choose a feeling for right now'
+                        : 'Moment saved · tap to edit',
+                    style: _sans(13, color: _inkSoft),
+                  ),
+                ],
+              ),
+            ),
+            const Icon(Icons.chevron_right_rounded, color: _inkSoft, size: 20),
           ],
         ),
-        _swap(
-          _showCareRoute
-              ? Padding(
-                  key: const ValueKey<String>('care'),
-                  padding: const EdgeInsets.only(top: 14),
-                  child: _buildCareNudge(),
-                )
-              : const SizedBox.shrink(key: ValueKey<String>('no-care')),
-          duration: const Duration(milliseconds: 260),
-          transitionBuilder: (Widget child, Animation<double> anim) {
-            return SizeTransition(
-              sizeFactor: CurvedAnimation(parent: anim, curve: Curves.easeOut),
-              alignment: AlignmentDirectional.topStart,
-              child: FadeTransition(opacity: anim, child: child),
-            );
-          },
-        ),
-      ],
-    );
-  }
+      ),
+      if (_showCareRoute) ...[const SizedBox(height: 12), _buildCareNudge()],
+    ],
+  );
 
   /// A gentle, optional doorway to Care — visible only when the day sounds
   /// heavy, and never opened on the user's behalf.
@@ -1718,6 +1933,16 @@ class _TodayExperienceVisualState extends State<TodayExperienceVisual> {
     );
   }
 
+  // Production's Build17 controller owns preparation and reminder truth.
+  // The supplemental seam remains available only to isolated ports without it.
+  bool get _showSupplementalPreparation {
+    final port = widget.port;
+    return widget.preparationContent != null &&
+        !_showComfortWindow &&
+        !(port is RepositoryTodayVisualPort &&
+            port.loadComfortExperience != null);
+  }
+
   bool get _showComfortWindow {
     final comfort = _comfortWindow;
     return comfort != null &&
@@ -1731,7 +1956,7 @@ class _TodayExperienceVisualState extends State<TodayExperienceVisual> {
     }
     final range = _dateRangeLabel(comfort.forecastStart, comfort.forecastEnd);
     final reminderLine = comfort.reminderEnabled
-        ? 'Reminder preference · ${comfortReminderLeadLabel(comfort.reminderLeadDays)} at 09:00'
+        ? 'Reminder preference · ${comfortReminderLeadLabel(comfort.reminderLeadDays)} at ${comfort.reminderTimeLabel}'
         : 'Reminder is off';
     return Semantics(
       container: true,
@@ -1973,7 +2198,9 @@ class _TodayExperienceVisualState extends State<TodayExperienceVisual> {
                     Expanded(
                       child: DegreeGraphics.flowChoice(
                         _bleedingOptions[i],
-                        selected: _bleeding == _bleedingOptions[i],
+                        selected: _bleedingOptions[i] == null
+                            ? _explicitNoBleeding
+                            : _bleeding == _bleedingOptions[i],
                         onTap: () => _selectBleeding(_bleedingOptions[i]),
                       ),
                     ),
@@ -2033,6 +2260,62 @@ class _TodayExperienceVisualState extends State<TodayExperienceVisual> {
   // Symptoms — concise editable entries
   // -------------------------------------------------------------------------
 
+  Widget _buildPinnedSymptomsSection() {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 24),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const _SectionHeader(kicker: 'Pinned by you', title: 'Your symptoms'),
+          const SizedBox(height: 12),
+          for (final symptom in _pins)
+            Builder(
+              builder: (context) {
+                final saved = _symptoms
+                    .where((entry) => entry.definition.symptom == symptom)
+                    .firstOrNull;
+                return ListTile(
+                  contentPadding: EdgeInsets.zero,
+                  title: Text(symptom.label, style: _sans(15)),
+                  subtitle: Text(
+                    saved?.severity.label ?? 'Not recorded',
+                    style: _sans(13, color: _inkSoft),
+                  ),
+                  trailing: saved == null
+                      ? const Icon(Icons.add_rounded)
+                      : DegreeGraphics.severity(
+                          saved.severity,
+                          showWord: false,
+                        ),
+                  onTap: () async {
+                    final chosen = await _pickSeverity(
+                      symptom.label,
+                      current: saved?.severity,
+                    );
+                    if (chosen == null || !mounted) return;
+                    try {
+                      final snapshot = saved != null && chosen == saved.severity
+                          ? await widget.port.removeSymptom(saved.id)
+                          : await widget.port.saveSymptom(symptom, chosen);
+                      if (!mounted) return;
+                      _applySnapshot(snapshot);
+                      _acknowledge('${symptom.label} saved for today');
+                    } catch (_) {
+                      if (mounted) {
+                        _acknowledge(
+                          'Your symptom could not be saved. Try again.',
+                        );
+                      }
+                    }
+                  },
+                );
+              },
+            ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildSymptomsSection() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -2074,7 +2357,7 @@ class _TodayExperienceVisualState extends State<TodayExperienceVisual> {
               SizedBox(
                 width: double.infinity,
                 child: OutlinedButton.icon(
-                  onPressed: _addSymptom,
+                  onPressed: widget.onOpenRecord ?? _addSymptom,
                   icon: const Icon(Icons.add_rounded, size: 18),
                   label: const Text('Add a symptom'),
                   style: OutlinedButton.styleFrom(
@@ -2213,6 +2496,18 @@ class _TodayExperienceVisualState extends State<TodayExperienceVisual> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: <Widget>[
+        if (widget.onOpenRecord != null) ...[
+          OutlinedButton.icon(
+            onPressed: widget.onOpenRecord,
+            icon: const Icon(Icons.add_rounded),
+            label: const Text('Record more'),
+          ),
+          Text(
+            'Sleep, medication, What I tried, temperature and more. Choose another date inside Record.',
+            style: _sans(13, color: _inkSoft),
+          ),
+          const SizedBox(height: 24),
+        ],
         const _SectionHeader(kicker: 'Optional', title: 'Quick note'),
         const SizedBox(height: 14),
         Container(
@@ -2426,24 +2721,10 @@ class _StatusCard extends StatelessWidget {
     return Container(
       width: double.infinity,
       decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: <Color>[_surfaceRaised, _surface],
-        ),
-        borderRadius: BorderRadius.circular(28),
-        border: Border.all(color: _hairline),
-        // The viewport's single focal shadow: plum-black, low and warm —
-        // in dusk, shadows deepen rather than lighten.
-        boxShadow: <BoxShadow>[
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.34),
-            blurRadius: 36,
-            offset: const Offset(0, 14),
-          ),
-        ],
+        color: _surfaceRaised,
+        borderRadius: BorderRadius.circular(16),
       ),
-      padding: const EdgeInsets.fromLTRB(24, 20, 24, 22),
+      padding: const EdgeInsets.all(16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
@@ -2465,8 +2746,8 @@ class _StatusCard extends StatelessWidget {
           // viewport on its own. Normal-scale rendering is unchanged.
           _DisplayTitle(
             title,
-            style: _serif(
-              29,
+            style: _sans(
+              20,
               color: _ink,
               weight: FontWeight.w600,
               height: 1.12,
@@ -2477,22 +2758,17 @@ class _StatusCard extends StatelessWidget {
           middle,
           if (footnote != null || action != null) ...<Widget>[
             const SizedBox(height: 14),
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.center,
+            Wrap(
+              spacing: 12,
+              runSpacing: 4,
+              crossAxisAlignment: WrapCrossAlignment.center,
               children: <Widget>[
                 if (footnote != null)
-                  Expanded(
-                    child: Text(
-                      footnote!,
-                      style: _sans(12.5, color: _inkSoft, height: 1.4),
-                    ),
-                  )
-                else
-                  const Spacer(),
-                if (action != null) ...<Widget>[
-                  if (footnote != null) const SizedBox(width: 12),
-                  action!,
-                ],
+                  Text(
+                    footnote!,
+                    style: _sans(12.5, color: _inkSoft, height: 1.4),
+                  ),
+                if (action != null) ...<Widget>[action!],
               ],
             ),
           ],
@@ -2740,13 +3016,11 @@ class _Chip extends StatelessWidget {
     required this.label,
     required this.selected,
     required this.onTap,
-    this.icon,
   });
 
   final String label;
   final bool selected;
   final VoidCallback onTap;
-  final IconData? icon;
 
   @override
   Widget build(BuildContext context) {
@@ -2780,9 +3054,6 @@ class _Chip extends StatelessWidget {
                     color: _emberBright,
                   ),
                   const SizedBox(width: 6),
-                ] else if (icon != null) ...<Widget>[
-                  Icon(icon, size: 15, color: _inkSoft),
-                  const SizedBox(width: 5),
                 ],
                 Flexible(
                   child: Text(
@@ -2955,184 +3226,6 @@ class _SymptomBrowserSheetState extends State<_SymptomBrowserSheet> {
             ],
           ),
         ),
-      ),
-    );
-  }
-}
-
-// ---------------------------------------------------------------------------
-// Severity legend — five rising steps that name the scale at a glance
-// ---------------------------------------------------------------------------
-
-class _SeverityLegend extends StatelessWidget {
-  const _SeverityLegend();
-
-  static const List<double> _barHeights = <double>[5, 9, 13, 17, 21];
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      decoration: BoxDecoration(
-        color: _canvas,
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: _hairline),
-      ),
-      padding: const EdgeInsets.fromLTRB(12, 12, 12, 10),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: <Widget>[
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.end,
-            children: <Widget>[
-              for (int i = 0; i < 5; i++)
-                Expanded(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.end,
-                    children: <Widget>[
-                      SizedBox(
-                        height: 21,
-                        child: Align(
-                          alignment: Alignment.bottomCenter,
-                          child: Container(
-                            width: 14,
-                            height: _barHeights[i],
-                            decoration: BoxDecoration(
-                              color:
-                                  _TodayExperienceVisualState._severityRamp[i],
-                              borderRadius: BorderRadius.circular(3),
-                            ),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(height: 6),
-                      FittedBox(
-                        fit: BoxFit.scaleDown,
-                        child: Text(
-                          _TodayExperienceVisualState._severities[i].$1.label,
-                          maxLines: 1,
-                          softWrap: false,
-                          style: _sans(
-                            10,
-                            weight: FontWeight.w600,
-                            color: i == 4 ? _emberBright : _inkSoft,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-            ],
-          ),
-          const SizedBox(height: 8),
-          Center(
-            child: Text(
-              'A gentle scale — from barely there to all-consuming.',
-              textAlign: TextAlign.center,
-              style: _serif(
-                12,
-                color: _inkSoft,
-                weight: FontWeight.w500,
-                italic: true,
-                height: 1.35,
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-/// One tappable severity row: its step on the legend scale (filled pips in
-/// the step's own color) beside the name and a plain-words meaning.
-class _SeverityChoice extends StatelessWidget {
-  const _SeverityChoice({
-    required this.index,
-    required this.name,
-    required this.desc,
-    required this.color,
-    required this.selected,
-    required this.onTap,
-  });
-
-  final int index;
-  final String name;
-  final String desc;
-  final Color color;
-  final bool selected;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    final bool reduced = MediaQuery.disableAnimationsOf(context);
-    final BoxDecoration decoration = BoxDecoration(
-      color: selected ? _emberSoft : Colors.transparent,
-      borderRadius: BorderRadius.circular(12),
-      border: Border.all(
-        color: selected ? _ember : _hairline,
-        width: selected ? 1.4 : 1,
-      ),
-    );
-    const EdgeInsets padding = EdgeInsets.symmetric(
-      horizontal: 14,
-      vertical: 12,
-    );
-    final Widget body = Row(
-      children: <Widget>[
-        SizedBox(
-          width: 34,
-          child: Row(
-            children: <Widget>[
-              for (int p = 0; p < 5; p++)
-                Padding(
-                  padding: const EdgeInsets.only(right: 2.5),
-                  child: Container(
-                    width: 4,
-                    height: 4 + (p * 1.5),
-                    decoration: BoxDecoration(
-                      color: p <= index ? color : _ink.withValues(alpha: 0.14),
-                      borderRadius: BorderRadius.circular(1.5),
-                    ),
-                  ),
-                ),
-            ],
-          ),
-        ),
-        const SizedBox(width: 10),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: <Widget>[
-              Text(
-                name,
-                style: _sans(
-                  15,
-                  weight: FontWeight.w600,
-                  color: selected ? _emberBright : _ink,
-                ),
-              ),
-              Text(desc, style: _sans(12.5, color: _inkSoft)),
-            ],
-          ),
-        ),
-        if (selected) const Icon(Icons.check_rounded, size: 18, color: _ember),
-      ],
-    );
-    return Semantics(
-      button: true,
-      selected: selected,
-      label: '$name — $desc',
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(12),
-        child: reduced
-            ? Container(padding: padding, decoration: decoration, child: body)
-            : AnimatedContainer(
-                duration: _motion(context, const Duration(milliseconds: 160)),
-                padding: padding,
-                decoration: decoration,
-                child: body,
-              ),
       ),
     );
   }

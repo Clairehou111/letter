@@ -1,0 +1,9 @@
+{
+  "command": "flutter test --no-pub --reporter expanded --file-reporter=json:validation/ui-pilot-2026-10-10/v4/full-tests.json",
+  "exitCode": 0,
+  "cliPassed": 1041,
+  "cliSkipped": 1,
+  "failures": 0,
+  "jsonDoneSuccess": true,
+  "productionFingerprint": "94d052fc6c892062e1c8e919bc357966bc4838572754cbebca8dead93cc4a6d3"
+}

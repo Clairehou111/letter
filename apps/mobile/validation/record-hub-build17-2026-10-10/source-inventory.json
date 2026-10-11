@@ -1,0 +1,1503 @@
+{
+  "base": "cf12e70791c14acb2735415b8c51b1ce6047fac2",
+  "branch": "feat/record-hub-build17-2026-10-10",
+  "sourceCount": 374,
+  "sources": [
+    {
+      "path": "apps/mobile/integration_test/native_storage_acceptance_test.dart",
+      "sha256": "3f02f2fa0107955b08feb0a24b0b80328a4395c374ce789189660aae84a22d4d"
+    },
+    {
+      "path": "apps/mobile/integration_test/record_hub_storage_acceptance_test.dart",
+      "sha256": "a2d95acbb1000f6e9c2701f272bfed20449fa90c9f70dd62bcc5042c2aa58de7"
+    },
+    {
+      "path": "apps/mobile/integration_test/record_hub_visual_acceptance_test.dart",
+      "sha256": "fc934d3a34922da6c9e3a9306a203f3496362bcba2a7ca341481707a2d1d4fe9"
+    },
+    {
+      "path": "apps/mobile/lib/api/generated/letter_api_client.dart",
+      "sha256": "2cb5703aa0d81722085f95fa52f531229c1994610c078f0a1731782e9a916438"
+    },
+    {
+      "path": "apps/mobile/lib/app/letter_app.dart",
+      "sha256": "7bed8ba9d1f23ce9fd0d25fb2ca3321cead55b377300553e20e9c0f2e30ae2ba"
+    },
+    {
+      "path": "apps/mobile/lib/config/app_config.dart",
+      "sha256": "beaa523d2928382850adb76249b20d9e9f4fbaba383ab71dd04cfa342b4c8287"
+    },
+    {
+      "path": "apps/mobile/lib/design_system/letter_brand_mark.dart",
+      "sha256": "5761d67f74d6ea67005cb1dfd7dd7cd3ca5d7cf0eaecc9db6c42cc798a6ce63e"
+    },
+    {
+      "path": "apps/mobile/lib/design_system/letter_theme.dart",
+      "sha256": "c3dccb63b6fab917a1bef6da9da92297e40bedd336b0d1342a544e746375bfbd"
+    },
+    {
+      "path": "apps/mobile/lib/design_system/lovable/health_record_kit.dart",
+      "sha256": "a6614773559bb9e66e79453c7b78d0bb0a0193c90376f061ebc8e8005b9a3cda"
+    },
+    {
+      "path": "apps/mobile/lib/design_system/lovable/letter_kit.dart",
+      "sha256": "eda0daf1b56a293e2003c6bf43ca8cd8a97e4dd910fb3280e624deeb3ef42ab4"
+    },
+    {
+      "path": "apps/mobile/lib/design_system/lovable/letter_theme.dart",
+      "sha256": "8e722bf05e5847ca0b6d13a1c9ab857905c7cdd9231a3345c5d636870bc500f8"
+    },
+    {
+      "path": "apps/mobile/lib/design_system/lovable/letter_tokens.dart",
+      "sha256": "8c364868ed9a69663d231c92c8f4e6d4c6a889b5288a7abebd1250ee19961cee"
+    },
+    {
+      "path": "apps/mobile/lib/experience/backup/letter_backup_experience_port.dart",
+      "sha256": "aa2ffeb95aa45b15836169099e304bb208ddb5c557a494cc47484b522f271a43"
+    },
+    {
+      "path": "apps/mobile/lib/experience/care/care_animation_port.dart",
+      "sha256": "85708693db3aa6388a86803fe03517de9f18f799e35b473ff217c9bd9b4ffb63"
+    },
+    {
+      "path": "apps/mobile/lib/experience/care/care_body_scene.dart",
+      "sha256": "09788391ffddd90d2f0ffb4372325a3907a7a05cf423254e316675b7b198a77e"
+    },
+    {
+      "path": "apps/mobile/lib/experience/care/care_boundary_scene.dart",
+      "sha256": "58d2ff366194fe865ce870e35731eb65433eba159edc9ec2d533861cd63d7afd"
+    },
+    {
+      "path": "apps/mobile/lib/experience/care/care_completion_flow.dart",
+      "sha256": "a6f225893aba32b890747e650d3efe3c9d9d28b7ebc2f5dede58a840a4df0601"
+    },
+    {
+      "path": "apps/mobile/lib/experience/care/care_editorial_art.dart",
+      "sha256": "ee3d44f2ab962bf87a4be04f3bc27fec79a712151ad4b6257ea4076e052e9ab4"
+    },
+    {
+      "path": "apps/mobile/lib/experience/care/care_experience.dart",
+      "sha256": "02330ab72290bf725300f769bfa1eb96854d1d26b8edaca74e34adbcfd534f02"
+    },
+    {
+      "path": "apps/mobile/lib/experience/care/care_focus_scene.dart",
+      "sha256": "8e904c5d21ff63e2ad60a1cf462675cc1abebd505e3e11d742f4dc1026552ad8"
+    },
+    {
+      "path": "apps/mobile/lib/experience/care/care_heavy_scene.dart",
+      "sha256": "83e8ca2e18e9ba1caf4f13347b77c02aec9f6789fb82b2141fcf0c7837600643"
+    },
+    {
+      "path": "apps/mobile/lib/experience/care/care_release_scene.dart",
+      "sha256": "34e1a4f572741bec3ceee3462161c1b23e098f3e56aef19ae12ad81ad9348384"
+    },
+    {
+      "path": "apps/mobile/lib/experience/care/care_safety_route.dart",
+      "sha256": "1555deca9dc32b90f17784d248d0465dc3f1f5a8d4c1d823d13efbd1d17f8c3f"
+    },
+    {
+      "path": "apps/mobile/lib/experience/care/care_scene_foundation.dart",
+      "sha256": "e0a08e4397fc12aaee506762f2bc2d221c21cccfa76defb11ab9f42f306838e6"
+    },
+    {
+      "path": "apps/mobile/lib/experience/care/care_toolkit_experience.dart",
+      "sha256": "8e2b33f01dae23da91fad52a52e83caf3a31805ce5f52537bddd68b3b7c05ebe"
+    },
+    {
+      "path": "apps/mobile/lib/experience/care/original_care_animation_port.dart",
+      "sha256": "fe2053098e6c5c61c889a978f6ba321c9cb9f93a6b00970d8c532f1898ccff57"
+    },
+    {
+      "path": "apps/mobile/lib/experience/comfort/comfort_reminder_sheet.dart",
+      "sha256": "f2b7fcc475056d9e1d8d587e8bff056b87121e79f956e192c36c911ce330025d"
+    },
+    {
+      "path": "apps/mobile/lib/experience/cycle/cycle_action_panel.dart",
+      "sha256": "adb16071b8ae15fbe17e302c42172027302bb918d6c968c8bf73610a06361b8b"
+    },
+    {
+      "path": "apps/mobile/lib/experience/cycle/cycle_estimate_copy.dart",
+      "sha256": "712f7e777ab27027fc7a8a8cc08e1b25e397f509063f5d0dad7c646d3b8ffcbd"
+    },
+    {
+      "path": "apps/mobile/lib/experience/cycle/cycle_experience.dart",
+      "sha256": "d7ccf5a1c08737a2e7c19595a10b105decf2839ff6a0a422b71213be761109f9"
+    },
+    {
+      "path": "apps/mobile/lib/experience/degree/degree_graphics.dart",
+      "sha256": "5ea96194cd02b86595d9e414fb67cb304a109b3560367378132895ac3dcd3571"
+    },
+    {
+      "path": "apps/mobile/lib/experience/experience_contract_context.dart",
+      "sha256": "b1a8111785832b49cfa2503a10389825f6a5057387e4ffd9065d3112f5b4c90f"
+    },
+    {
+      "path": "apps/mobile/lib/experience/experience_release_ports.dart",
+      "sha256": "97037049f3b13cd8668a2e334ddc09f58733a9943c04a40450a6f8e16f4db031"
+    },
+    {
+      "path": "apps/mobile/lib/experience/letter_experience_shell.dart",
+      "sha256": "3fc3e2b2335102f378ee4d338107b5adc85b7201ebb8cb30e004087498aa9441"
+    },
+    {
+      "path": "apps/mobile/lib/experience/patterns/gravity_chart.dart",
+      "sha256": "c8783e8dfab6e5f91814ea21ea6c8fbe66f3cf4728233a19155aef618c411f55"
+    },
+    {
+      "path": "apps/mobile/lib/experience/patterns/spectrum_chart.dart",
+      "sha256": "388130e6837bd09c68adb15f1add40bc859614d4239de7e71b9d778f8dcbc29b"
+    },
+    {
+      "path": "apps/mobile/lib/experience/patterns/twin_chart.dart",
+      "sha256": "590bed7f0281fb14ad33841db0b5c02df578b904eb72a86a078f25fc2777438d"
+    },
+    {
+      "path": "apps/mobile/lib/experience/plus/plus_experience.dart",
+      "sha256": "c055bbe7de26b545026dd152a8e629db4a3d5211763d1d6d1205cf250ac75c9f"
+    },
+    {
+      "path": "apps/mobile/lib/experience/records/observation_picker.dart",
+      "sha256": "9db410bb8f42d629ed71c3a7ddb848f80cc1729fa44a390775f261823010282b"
+    },
+    {
+      "path": "apps/mobile/lib/experience/reports/letter_report_experience_port.dart",
+      "sha256": "2936e5ffb72019f224c5c54a88142f9e917bdfc64d3812f353d0f952b73be12b"
+    },
+    {
+      "path": "apps/mobile/lib/experience/reports/reports_experience.dart",
+      "sha256": "f3d4309d733c1b2a1b8a2cd2c8e4f2136e910fbb00b952d13583c365341ef5dc"
+    },
+    {
+      "path": "apps/mobile/lib/experience/source/source_panel.dart",
+      "sha256": "d188b43e819e425bb8db7e1b41c07d1955ace353376fb8008285f6abbfae9ca7"
+    },
+    {
+      "path": "apps/mobile/lib/experience/theme/experience_foundation.dart",
+      "sha256": "237ab827d028ef11ce4f6fb1a8734b25d94b92da4b303558b564ad10e5915010"
+    },
+    {
+      "path": "apps/mobile/lib/experience/theme/thread_foundation.dart",
+      "sha256": "32e819f6c83696aa1ff8ebec6408ba1c6692f18f35d7ae58e4fbf25c84af8f66"
+    },
+    {
+      "path": "apps/mobile/lib/experience/today/today_cycle_ring.dart",
+      "sha256": "5c5bc6a001ec55dd39b998af7118dbd9f561af452de7714cff737ab45ee7fe0b"
+    },
+    {
+      "path": "apps/mobile/lib/experience/today/today_experience.dart",
+      "sha256": "6abb5c7df483291b97ad9d17ac0f2245870b0373392fe07112f321e23066fce5"
+    },
+    {
+      "path": "apps/mobile/lib/experience/today/today_experience_visual_baseline.dart",
+      "sha256": "827dd2f15434524ff94fae421f5952c2bb91b00a0e5952b1ff342183863d0c68"
+    },
+    {
+      "path": "apps/mobile/lib/experience/today/today_visual_port.dart",
+      "sha256": "01f713bc80f81300871e72f7e6618f8c0b1064cd6e1126721003203b02eebca2"
+    },
+    {
+      "path": "apps/mobile/lib/experience/you/you_experience.dart",
+      "sha256": "28f8c75d9a1516d04ac86e085fadb5ebb5b24c1507c57dee4da10cc241f3e622"
+    },
+    {
+      "path": "apps/mobile/lib/features/analytics/data/dev_analytics_service.dart",
+      "sha256": "6e5000e8bc2a6a70923e436e82810b4e9e9c7af286bc7bd804d46dbae3afa7c9"
+    },
+    {
+      "path": "apps/mobile/lib/features/analytics/data/posthog_analytics_service.dart",
+      "sha256": "b705f11616dd48572f8549ac6719f104c5ec0f65961a282449435e75dde19844"
+    },
+    {
+      "path": "apps/mobile/lib/features/analytics/data/secure_care_usage_aggregate_store.dart",
+      "sha256": "59fc8612a9b158f280d2e78dd04c313fec572dce49cada70f27810a7ea6a334a"
+    },
+    {
+      "path": "apps/mobile/lib/features/analytics/domain/analytics_service.dart",
+      "sha256": "a42d5aaa7092d8ab097f2f8a6af2ed1e6a917cbc89b427dd00a46ac3e42c1749"
+    },
+    {
+      "path": "apps/mobile/lib/features/analytics/domain/care_usage_aggregate.dart",
+      "sha256": "4db1bf5f710c7a7b0f63275a4016bd4d82d4101c9aa0d7bc0e6d920103906aaa"
+    },
+    {
+      "path": "apps/mobile/lib/features/analytics/presentation/analytics_scope.dart",
+      "sha256": "fdaf388534ffe353e957b6d22cff2b9d7290df0df459a13660a3fa831f8e224f"
+    },
+    {
+      "path": "apps/mobile/lib/features/archive_views/domain/archive_repository.dart",
+      "sha256": "084cb7c6bc1512596132cc23c7117895c0c9888d6ebb935f83157920266d5fc5"
+    },
+    {
+      "path": "apps/mobile/lib/features/archive_views/domain/archive_summary_export_input.dart",
+      "sha256": "17aa7709aa48009959a9774b12f6480eacdec4f797adc818d74e9bf14a063681"
+    },
+    {
+      "path": "apps/mobile/lib/features/archive_views/domain/archive_view_models.dart",
+      "sha256": "ecef5fc0753faf16453f406438cb44b8ffde59aba3db204b38b27154efa13761"
+    },
+    {
+      "path": "apps/mobile/lib/features/auth/data/dev_auth_service.dart",
+      "sha256": "5553666056776aa42e3f1e5d4a94d735ae823e10ebd4d48b203a54b95a6da430"
+    },
+    {
+      "path": "apps/mobile/lib/features/auth/data/supabase_auth_service.dart",
+      "sha256": "d9e8a38425f985ed500e167402e2811c5a0ad039f6bea1f0b91108627c55e842"
+    },
+    {
+      "path": "apps/mobile/lib/features/auth/domain/auth_service.dart",
+      "sha256": "c7a4d2fbb7282d8dd89848d2a09caca918b9850774e656e7ed178368f4e527c7"
+    },
+    {
+      "path": "apps/mobile/lib/features/auth/presentation/auth_error_message.dart",
+      "sha256": "09c4086562fddc9ef32af594c19dacc88f2527ea2c34c4714951b7bd2a2f9ba3"
+    },
+    {
+      "path": "apps/mobile/lib/features/auth/presentation/auth_screen.dart",
+      "sha256": "eadd41b5d0ec2eaa51ed87f58f57f056ad4a4d65f06956d41f240ba2baf2837d"
+    },
+    {
+      "path": "apps/mobile/lib/features/capture/application/text_voice_capture_controller.dart",
+      "sha256": "91c9b62614a2113bceced794a6f0a77dc68dfae9917d50f19c8b2bfb83eb5235"
+    },
+    {
+      "path": "apps/mobile/lib/features/capture/data/drift_capture_note_store.dart",
+      "sha256": "8ddc5ec8bae49df89ee51ecc6b5dd13ae2418d3e63c59a152039d584fcabaae8"
+    },
+    {
+      "path": "apps/mobile/lib/features/capture/data/fake_speech_to_text_adapter.dart",
+      "sha256": "588231efdf5fe4a28fd03a528a9c5621f030a8ea6437a97e0df3791fa627c3b0"
+    },
+    {
+      "path": "apps/mobile/lib/features/capture/domain/capture_models.dart",
+      "sha256": "1833ae58e79dd877892bd491b180ee1a5400ac7a19f7436615e39b16aff9010e"
+    },
+    {
+      "path": "apps/mobile/lib/features/capture/domain/speech_to_text_adapter.dart",
+      "sha256": "cefc5a6c6973c56bd4abc13b682650c089d8b82c625bafc8a1830a9da946ecb9"
+    },
+    {
+      "path": "apps/mobile/lib/features/capture/presentation/capture_note_history_screen.dart",
+      "sha256": "e38ae12d95b144d4e3be04be0409cfb5d69642da75de89ee87769b77b711af44"
+    },
+    {
+      "path": "apps/mobile/lib/features/care/application/care_action_recording_controller.dart",
+      "sha256": "3f7324057542458b4cb110d01fb88dcc250e3e9892ae952a6f876c42461275df"
+    },
+    {
+      "path": "apps/mobile/lib/features/care/data/drift_care_memory_repository.dart",
+      "sha256": "8f098ee14b90ae385995fc6d4c5d931fb6b5345a717fe405950d706025500dc4"
+    },
+    {
+      "path": "apps/mobile/lib/features/care/data/in_memory_care_memory_repository.dart",
+      "sha256": "a8acf7e29222db25b1d242163debe018bce848cec4a15aed6409344844c02522"
+    },
+    {
+      "path": "apps/mobile/lib/features/care/data/url_launcher_safety_dialer.dart",
+      "sha256": "e1367604ab7d78cbd3b10123c95cb247e0736da23c1e6d0fb290777ec0d31df1"
+    },
+    {
+      "path": "apps/mobile/lib/features/care/domain/care_memory.dart",
+      "sha256": "120de4289f8ef2a78dac4c34def993f1f58fe5abc8b5f9960e3cfbdfe5d8424e"
+    },
+    {
+      "path": "apps/mobile/lib/features/care/domain/care_memory_repository.dart",
+      "sha256": "05d3a44c8cce136d27b24a9b61ae6d207339b9ba979a3595166624ebda0d9cc1"
+    },
+    {
+      "path": "apps/mobile/lib/features/care/domain/care_mode.dart",
+      "sha256": "1e79643fadd7bba470aef77a7a6355563abc5c239aa13cc3d14eb3b618b67d52"
+    },
+    {
+      "path": "apps/mobile/lib/features/care/domain/safety_dialer.dart",
+      "sha256": "b2067bdf2c92477e7f97857ad3aaf0cb0b7f5dc33e3a604777843528ef1d8914"
+    },
+    {
+      "path": "apps/mobile/lib/features/care/domain/safety_resources.dart",
+      "sha256": "d01fafd409f71186e262a99e423566ea642791e7a7d6560d1b06a6c3231cf1b8"
+    },
+    {
+      "path": "apps/mobile/lib/features/care/presentation/breath_flow.dart",
+      "sha256": "b1144bc3b53b1c95f2f32286c28fc78ab310759bc5d1d5030301557c4d86ad27"
+    },
+    {
+      "path": "apps/mobile/lib/features/care/presentation/care_audio_runtime.dart",
+      "sha256": "1169a91a7af9b37c5bbb25885dc62138fc31448dd9370f962a5282c7e730639e"
+    },
+    {
+      "path": "apps/mobile/lib/features/care/presentation/care_haptics.dart",
+      "sha256": "2f705524f44d49ae9ea5ddc752f3e9c43caeccbd5653e97421ad3cd5e153cb18"
+    },
+    {
+      "path": "apps/mobile/lib/features/care/presentation/care_motion_flow.dart",
+      "sha256": "2fbbdefb5f78cc17d7fc52c7d334cde68b9883cec3f69696ceaa2fb6cd61bd9a"
+    },
+    {
+      "path": "apps/mobile/lib/features/care/presentation/care_safety_boundary_sheet.dart",
+      "sha256": "b4206250c3fdaccc9b0e9abb379650a61f498b742b6c790f45de5971265c5e4b"
+    },
+    {
+      "path": "apps/mobile/lib/features/care/presentation/care_sound_engine.dart",
+      "sha256": "d2b8e51e16c347bb219d028812618cebb6f6783b7c006667e78e13656aa0ff13"
+    },
+    {
+      "path": "apps/mobile/lib/features/care/presentation/letter_safety_scope.dart",
+      "sha256": "af3fc3da10a84a3aef2f4a9781e1ec3c89cbfd71e65c29a6041290511039b73a"
+    },
+    {
+      "path": "apps/mobile/lib/features/care/presentation/prototype_scene_painter.dart",
+      "sha256": "2e4253732b4c4a872f1a20f1312c480fe5f59fbc1edbfd954ca48e6f94d003de"
+    },
+    {
+      "path": "apps/mobile/lib/features/check_in/data/drift_moment_check_in_repository.dart",
+      "sha256": "41c037da86ca03c076d61ccefe5511d2a262e9e559b06ff3e7506b98c3cbb35e"
+    },
+    {
+      "path": "apps/mobile/lib/features/check_in/data/in_memory_moment_check_in_repository.dart",
+      "sha256": "d33f1fb4e5484299ccef6655f283726ccbe9324ee589b452d763652b5356e4dc"
+    },
+    {
+      "path": "apps/mobile/lib/features/check_in/domain/moment_check_in.dart",
+      "sha256": "ad1cbf8558b383b8625309be9dcf1623e0aae0a933170b94bb833461742da68b"
+    },
+    {
+      "path": "apps/mobile/lib/features/check_in/domain/moment_check_in_repository.dart",
+      "sha256": "01980c4d956477fb3cc08e64ffb8f3c191bff9a9e7d18528fcabf47fab65612a"
+    },
+    {
+      "path": "apps/mobile/lib/features/clinical/presentation/twin_matrix_report.dart",
+      "sha256": "eff5d47d412fc373027e02aedb249d6570aa7824aeb44a31cf74baa42c38f266"
+    },
+    {
+      "path": "apps/mobile/lib/features/clinical/presentation/twin_matrix_view_model.dart",
+      "sha256": "fbaf02edab532697a60f61c317db75f4bc87881346c25d689319706ecdd717ee"
+    },
+    {
+      "path": "apps/mobile/lib/features/comfort_kit/application/comfort_experience_controller.dart",
+      "sha256": "cff35f073744a94a387c383f5660cfbe124e6562065179404f9309b48302e7f7"
+    },
+    {
+      "path": "apps/mobile/lib/features/comfort_kit/data/drift_comfort_kit_repository.dart",
+      "sha256": "b248a11f1c7e561502e643d8d12164b89ea31f596cce30c6591d554a05ba9ee6"
+    },
+    {
+      "path": "apps/mobile/lib/features/comfort_kit/data/in_memory_comfort_kit_repository.dart",
+      "sha256": "05f15327ce3e420e725e4832c5702473f9ad98dd79f709cfb2f5a8eb36d6e434"
+    },
+    {
+      "path": "apps/mobile/lib/features/comfort_kit/domain/comfort_kit.dart",
+      "sha256": "242f1361f7df362bbd4850f64a216905c232b5ac4a564dbe802842b790d55f5a"
+    },
+    {
+      "path": "apps/mobile/lib/features/comfort_kit/domain/comfort_kit_repository.dart",
+      "sha256": "9e2ea6d268b21f5634871ae9a5a4ee9e2a10811896419b48552087e43fc7fd46"
+    },
+    {
+      "path": "apps/mobile/lib/features/comfort_window/data/comfort_reminder_preference_repositories.dart",
+      "sha256": "0b7d3a31a6e45efd4d652a34de21f7601ead7c93b1236d4c0874222ca6635eff"
+    },
+    {
+      "path": "apps/mobile/lib/features/comfort_window/domain/comfort_reminder_preference.dart",
+      "sha256": "966cbfa40a0cc24128869a942b53182abdca1eede98e13f3bd35f622248e334f"
+    },
+    {
+      "path": "apps/mobile/lib/features/comfort_window/domain/comfort_window.dart",
+      "sha256": "ee9da908612d96aca7fb49242528a419904b7239738d5f688f803b247d15d3ba"
+    },
+    {
+      "path": "apps/mobile/lib/features/comfort_window/domain/comfort_window_engine.dart",
+      "sha256": "36fb823c968c58fc4f79f3fdf4e4e7d23b42cf03bbbcdd1cb8b0eb6c376fde67"
+    },
+    {
+      "path": "apps/mobile/lib/features/cycle/data/drift_period_repository.dart",
+      "sha256": "cb8819bb88eafb65168076187bbf06ca07073a2dabb30d51ab9a474b87a3f7bd"
+    },
+    {
+      "path": "apps/mobile/lib/features/cycle/data/in_memory_period_repository.dart",
+      "sha256": "d7a34de8395aa11c0bd59613f0585f5706a4c21bcd3a43d3e65fb9f172f2d991"
+    },
+    {
+      "path": "apps/mobile/lib/features/cycle/data/letter_health_database.dart",
+      "sha256": "91721e8c1c83267097ef45b5bf01e341f65c2b99805d83b3e05ff809e0f0e38f"
+    },
+    {
+      "path": "apps/mobile/lib/features/cycle/data/letter_health_database.g.dart",
+      "sha256": "74c6885a191c370b07abddd6994d21ffc9230fe2ee753f8c5853376f89e64c17"
+    },
+    {
+      "path": "apps/mobile/lib/features/cycle/domain/bleeding_flow.dart",
+      "sha256": "6440c7b40c7a67224c86c9582e369f02f4f6b07a60fc5a383187ce31fadc3055"
+    },
+    {
+      "path": "apps/mobile/lib/features/cycle/domain/cycle_prediction.dart",
+      "sha256": "122862e3a2ab56832d271407d3c4962ed910f7ba8f3ae0276afde11f83f63d0a"
+    },
+    {
+      "path": "apps/mobile/lib/features/cycle/domain/cycle_read_snapshot.dart",
+      "sha256": "af79d7afb52d293478b763559835de7d221541e4317f2bbcd7057b5bfaf98426"
+    },
+    {
+      "path": "apps/mobile/lib/features/cycle/domain/local_date.dart",
+      "sha256": "48b71cbdeff5cdfbc240cffc5b41d5cdb0a4d023968ec74a1ff93d7ad0ffc4e8"
+    },
+    {
+      "path": "apps/mobile/lib/features/cycle/domain/period_record.dart",
+      "sha256": "338d04a25d3a683f4683150a57a943d70c7285cf483435f5e07c0f57bf8f8112"
+    },
+    {
+      "path": "apps/mobile/lib/features/cycle/domain/period_repository.dart",
+      "sha256": "54b46d5d8b144e27a9164b0dcb094b2c8674ec9b596671c93a0f6ea8b984a7ec"
+    },
+    {
+      "path": "apps/mobile/lib/features/cycle/domain/period_validation.dart",
+      "sha256": "9d37483bc20c1efed9260eb038386b015a8fe5d99ac847fd3e6e5a4bfb9ac913"
+    },
+    {
+      "path": "apps/mobile/lib/features/cycle/presentation/period_write_review.dart",
+      "sha256": "febab2b264f5eb55e05b19649af5f0a0c299f084d72068b4f4267ad749fb4185"
+    },
+    {
+      "path": "apps/mobile/lib/features/diary/data/in_memory_diary_repository.dart",
+      "sha256": "f668dfe45b3af5c548664b7f306e835245359ad0f9322d8a36a8fca32afb0926"
+    },
+    {
+      "path": "apps/mobile/lib/features/diary/domain/diary_enrollment.dart",
+      "sha256": "86b011cd4a5fe84813570b9d36c3599ce17be196e9da0d5e25a8bc85690f8e16"
+    },
+    {
+      "path": "apps/mobile/lib/features/diary/domain/diary_repository.dart",
+      "sha256": "d57951745625f0cb48983b43d3f5bb8854864ac84196902b7140826943281b01"
+    },
+    {
+      "path": "apps/mobile/lib/features/entitlement/data/local_entitlement_repository.dart",
+      "sha256": "845398f1f971ea6e40445bdcbd94f03e7c5756f37ced2bce8aa6c52d59e22a07"
+    },
+    {
+      "path": "apps/mobile/lib/features/entitlement/data/plus_preview_repositories.dart",
+      "sha256": "952cdbf5e563f7a4d5fbee38d52ad9ca44736550d8b77af1a65ca95b45f300b9"
+    },
+    {
+      "path": "apps/mobile/lib/features/entitlement/data/revenue_cat_entitlement_repository.dart",
+      "sha256": "95fa8f08635f7177af7ea92a91f39b6ba33c930106b0442ff1604b2a70d5b7d3"
+    },
+    {
+      "path": "apps/mobile/lib/features/entitlement/domain/entitlement.dart",
+      "sha256": "e0f389a7d28a6cb6a3e902dae7d05853b5a9bd7f4be6040e6d4da4cdf7d3eaa4"
+    },
+    {
+      "path": "apps/mobile/lib/features/entitlement/domain/entitlement_repository.dart",
+      "sha256": "6120365f532b537f6ee5343b8dd49539222033ad827197b062b2e3fe1d728655"
+    },
+    {
+      "path": "apps/mobile/lib/features/entitlement/domain/plus_preview.dart",
+      "sha256": "5b5fe14457aff68db91339da5fa7386cce192cbfec48cf8f0ba8b48b9ce0bfce"
+    },
+    {
+      "path": "apps/mobile/lib/features/entitlement/domain/plus_preview_evidence.dart",
+      "sha256": "ccdbadf0bdee3dcb81e8d8ae0aac29a69eba03df07d14103b6f77f48c08be055"
+    },
+    {
+      "path": "apps/mobile/lib/features/entitlement/presentation/entitlement_scope.dart",
+      "sha256": "f865c9be7dbefcd82ecf136966dd1e2e13e76df52d150c8f9bef4cc483b3b287"
+    },
+    {
+      "path": "apps/mobile/lib/features/entitlement/presentation/locked_premium_surface.dart",
+      "sha256": "1c0bd0f68a8bc6122cd576ae96742146d708b229c0299daef3e2a8073b6732ee"
+    },
+    {
+      "path": "apps/mobile/lib/features/health_data/data/local_health_store.dart",
+      "sha256": "89712bcdb15de6722b4a45471c5279b434fc5eae7afbaac73a33c8ba303ae04a"
+    },
+    {
+      "path": "apps/mobile/lib/features/health_data/data/local_health_store_factory.dart",
+      "sha256": "7e784fa84fc5f130173a0812b04ffe4f74ef8afdc3a754c30af3c54d63ecaba3"
+    },
+    {
+      "path": "apps/mobile/lib/features/health_data/data/local_health_store_factory_native.dart",
+      "sha256": "49a49122780806334106dc2ed9ac6f0d31ee8e2420c9cd2f0009254782d901fb"
+    },
+    {
+      "path": "apps/mobile/lib/features/health_data/data/local_health_store_factory_web.dart",
+      "sha256": "4365dc2bfe6d9867134b03aea8c4ba0c4c59d8a8fae1645bf9288d940d1edf56"
+    },
+    {
+      "path": "apps/mobile/lib/features/health_data/domain/local_health_read_transaction.dart",
+      "sha256": "d9740f1d5a995dd11b0430de9169e89232442ef3e7dc3b6816124f47d6cea4f3"
+    },
+    {
+      "path": "apps/mobile/lib/features/health_records/data/drift_health_record_repository.dart",
+      "sha256": "d7c245f67d15ea3034138017634a7166100d70058826c04ff25b4f0defa6211c"
+    },
+    {
+      "path": "apps/mobile/lib/features/health_records/data/in_memory_health_record_repository.dart",
+      "sha256": "4a46c22b2b5fe9a8af9c9052e41da42957fa401855fbcddfeefb69b7c0a6c73a"
+    },
+    {
+      "path": "apps/mobile/lib/features/health_records/domain/health_record.dart",
+      "sha256": "12b669091b4fd169a85469bc58bfdb52fedd3fdeece998c9dfce6d9d99798861"
+    },
+    {
+      "path": "apps/mobile/lib/features/health_records/domain/health_record_repository.dart",
+      "sha256": "e496bffe5382639b9e6870246667d88b64aade64f96f0ee68355770644613351"
+    },
+    {
+      "path": "apps/mobile/lib/features/health_records/domain/health_record_write_policy.dart",
+      "sha256": "229ec026780d011490a2acc7365738bc9fb96973dcc280949779c34236f424d3"
+    },
+    {
+      "path": "apps/mobile/lib/features/health_records/domain/observation_catalog.dart",
+      "sha256": "a4b06a45a715cb8493147f675eced878498c6dc6b5ea0289505ca304a796315c"
+    },
+    {
+      "path": "apps/mobile/lib/features/health_records/presentation/health_record_form_screen.dart",
+      "sha256": "9cd8bde0a62af8e350940e013ff848ab03f19f7c69e5471dcc517afd0b9eb9fb"
+    },
+    {
+      "path": "apps/mobile/lib/features/health_records/presentation/health_records_screen.dart",
+      "sha256": "629c3e7bf7bd8fdb61d36b7df9729be4b2d87bf676f9ee8cb6cf209e8b34cec5"
+    },
+    {
+      "path": "apps/mobile/lib/features/insights/presentation/gravity_horizon.dart",
+      "sha256": "8597e66c545c9faf826e999627a7f4d78455e1e9b7d3504e5dc9bc46e0927083"
+    },
+    {
+      "path": "apps/mobile/lib/features/insights/presentation/gravity_horizon_view_model.dart",
+      "sha256": "603a25ba3b106327facc9607aabe796af261be972bd99244c7b8996ae09dc3d5"
+    },
+    {
+      "path": "apps/mobile/lib/features/insights/presentation/hormonal_spectrum_strip.dart",
+      "sha256": "9de6c332a7cd6451170917f49fbcd39a9046abdd69c63dbf82b13f9326441c17"
+    },
+    {
+      "path": "apps/mobile/lib/features/insights/presentation/spectrum_log_view_model.dart",
+      "sha256": "1c69be6c2f9ea094dbe5399c71adb9dbfecd8020ee6fae83d94ed913426eb26f"
+    },
+    {
+      "path": "apps/mobile/lib/features/letters/domain/cycle_letter.dart",
+      "sha256": "70984e1e56b4f1b202ebe899934be934b31f4a923bfb2325420cfb67f2a75080"
+    },
+    {
+      "path": "apps/mobile/lib/features/letters/domain/cycle_letters_aggregator.dart",
+      "sha256": "7540487ca45e4d6fa98ef8dceb595a4fca1af0deb104fdae85a1b29239a2498c"
+    },
+    {
+      "path": "apps/mobile/lib/features/local_backup/application/local_backup_service.dart",
+      "sha256": "6c334a87deb1d086982b3a3fc658ba4828594aad518ee7d1981134bd7c0fa676"
+    },
+    {
+      "path": "apps/mobile/lib/features/local_backup/data/drift_local_backup_store.dart",
+      "sha256": "b4f07c0e62a253e80985663a95588f132d3d44a67bd2bdf0e8d1cf58d2d676a0"
+    },
+    {
+      "path": "apps/mobile/lib/features/local_backup/data/in_memory_local_backup_store.dart",
+      "sha256": "40a9910f74d512faac89ac04a855314b51621452f6ce7b8f7f9493d17cfeb402"
+    },
+    {
+      "path": "apps/mobile/lib/features/local_backup/data/secure_local_backup_credential_store.dart",
+      "sha256": "92f2de341f8d63806fd02dd396e55ca45958e0a6f22d4e17d640984b6d60afbd"
+    },
+    {
+      "path": "apps/mobile/lib/features/local_backup/domain/local_backup_credential_store.dart",
+      "sha256": "cad0fc80c7b81d349fdac47503eb2cc0d46d6cbccffccf581cfd14c7d9e366c6"
+    },
+    {
+      "path": "apps/mobile/lib/features/local_backup/domain/local_backup_file_port.dart",
+      "sha256": "875086f69ac215dfe7d51e387830a7393fac11622e3cbca9d6fe923ace3ba64a"
+    },
+    {
+      "path": "apps/mobile/lib/features/local_backup/domain/local_backup_import.dart",
+      "sha256": "f17ba86cca03d02f87e03d87c87eea5d4353cd8647801cb9a5be5861d82d0b23"
+    },
+    {
+      "path": "apps/mobile/lib/features/local_backup/domain/local_backup_models.dart",
+      "sha256": "175fd0b99cc7456ddec51efe9ea8c9232059e245e5601bc12f58751146b68bff"
+    },
+    {
+      "path": "apps/mobile/lib/features/local_backup/domain/local_backup_package.dart",
+      "sha256": "bed5e800de850073c7624ceb4e3ac113f2841b78884b97a124d9765b8671b913"
+    },
+    {
+      "path": "apps/mobile/lib/features/local_export/domain/letter_local_export_store.dart",
+      "sha256": "db7d9338dd611bf3ecd4b1d6caeaefc81bf6bb6131c2d1736529d5333bf113d5"
+    },
+    {
+      "path": "apps/mobile/lib/features/nlp/application/nlp_review_controller.dart",
+      "sha256": "760d09f261c0881f26383ae9fd89e5d2da0678d371554b61dd7b2fdf553e6573"
+    },
+    {
+      "path": "apps/mobile/lib/features/nlp/domain/local_nlp_parser.dart",
+      "sha256": "e3534b64b992990e0bf7b30ee0ea2875cb2a0ef1f41d38644ed66f8985a752b5"
+    },
+    {
+      "path": "apps/mobile/lib/features/nlp/domain/nlp_candidate.dart",
+      "sha256": "e9ed4f349a6798ebc941f44d03abe5031f89ac41c93951b2adc6b65b746e057b"
+    },
+    {
+      "path": "apps/mobile/lib/features/notifications/application/comfort_window_scheduler.dart",
+      "sha256": "1a87c187248d22a1802413c5ea6640a8208e44afa3382786e27ce5244f3d68f6"
+    },
+    {
+      "path": "apps/mobile/lib/features/notifications/application/cycle_check_in_scheduler.dart",
+      "sha256": "4d29acca3e25ec60cdfec9a1696c4151adfe51d0c2ee33197809e6d6e310fbb7"
+    },
+    {
+      "path": "apps/mobile/lib/features/notifications/application/notifying_period_repository.dart",
+      "sha256": "bd70d295a658d76fb6a073fb8dec74c8cecdd6abaab1303d81b105ecad56e47e"
+    },
+    {
+      "path": "apps/mobile/lib/features/notifications/data/flutter_local_notification_port.dart",
+      "sha256": "94fed4854643876816164c961b861bacc8202fcec7c574c4bfb4150fe021ff73"
+    },
+    {
+      "path": "apps/mobile/lib/features/notifications/domain/local_notification_port.dart",
+      "sha256": "6fb98628c3ce10cc8f8105b3a67c539641487a65edcaedeb2df37f60b67d04d7"
+    },
+    {
+      "path": "apps/mobile/lib/features/onboarding/data/file_onboarding_repository.dart",
+      "sha256": "e3cb767ec2227e3d9af2da8eb204d2cdd349f60a31ba043a40f5d367697aad40"
+    },
+    {
+      "path": "apps/mobile/lib/features/onboarding/data/onboarding_repository.dart",
+      "sha256": "f1af100aff805976c6c9ea1baf725707f6f25a76fea7c355971656874d30960e"
+    },
+    {
+      "path": "apps/mobile/lib/features/onboarding/data/onboarding_repository_factory.dart",
+      "sha256": "16fe947d44b3eb1d73e4b6b400c9ca30abbe887f5395020b993f465724d134eb"
+    },
+    {
+      "path": "apps/mobile/lib/features/onboarding/data/onboarding_repository_factory_native.dart",
+      "sha256": "c38fca4b0950b8b1e407e61e62b5448d39915c7d40cdeee59c7323c225287bb6"
+    },
+    {
+      "path": "apps/mobile/lib/features/onboarding/data/onboarding_repository_factory_web.dart",
+      "sha256": "c5adde4f5a1980ba50e4e2da65f556265a6e74ee2190c97d790f4fb9405ef9e7"
+    },
+    {
+      "path": "apps/mobile/lib/features/onboarding/domain/onboarding_profile.dart",
+      "sha256": "e2ac11a6306d45651f6ee4c598226d73014006d4b3c29bd7ce74360cee595f5a"
+    },
+    {
+      "path": "apps/mobile/lib/features/onboarding/presentation/onboarding_flow.dart",
+      "sha256": "134476e7c59a8f553d7ca01c62b1e3aea2406721fc29eea490093734dd8e0765"
+    },
+    {
+      "path": "apps/mobile/lib/features/onboarding/presentation/privacy_explainer_sheet.dart",
+      "sha256": "fc0a5744c8f1f0ffcc358d134585ba765467d8ce2ce03ae4271e6ad614d16f91"
+    },
+    {
+      "path": "apps/mobile/lib/features/onboarding/presentation/privacy_protection_screen.dart",
+      "sha256": "b2e484707563401976ec0b6c8ddf26d68e5fad96f71087134c5f7c876b62731b"
+    },
+    {
+      "path": "apps/mobile/lib/features/patterns/application/personal_patterns_controller.dart",
+      "sha256": "583b4c9a334949b570a6e9c14c0148720ed05579705fa692451b5d6078067ca1"
+    },
+    {
+      "path": "apps/mobile/lib/features/patterns/data/personal_pattern_preview_repository.dart",
+      "sha256": "11877dbb6839072c6edcc825c2cb7064e6bba46a93b749b930697b6ae0c756ec"
+    },
+    {
+      "path": "apps/mobile/lib/features/patterns/data/repository_pattern_source.dart",
+      "sha256": "90097218c765bfac0f01601d8cca8d6dac3e118bc01969b629f4d7c4a77a9737"
+    },
+    {
+      "path": "apps/mobile/lib/features/patterns/domain/pattern_source.dart",
+      "sha256": "955ff845bc164ee62f90e8efcb94db59c7b1cd1618f480de5c6be9d455385bf2"
+    },
+    {
+      "path": "apps/mobile/lib/features/patterns/domain/patterns_experience_data.dart",
+      "sha256": "0781088dca2a9aa99052f4a1330f715c3dbd042823fff9351e4d090cb55271d6"
+    },
+    {
+      "path": "apps/mobile/lib/features/patterns/domain/personal_pattern.dart",
+      "sha256": "ae30c88ca9c5de278042f571db642f36a64f9064a41e5bc199e3489c92ff166d"
+    },
+    {
+      "path": "apps/mobile/lib/features/patterns/domain/personal_pattern_engine.dart",
+      "sha256": "28d5044a8e36ea5204fcbb138c62874400b284e258beabb779e0d0468508bbd8"
+    },
+    {
+      "path": "apps/mobile/lib/features/patterns/presentation/patterns_experience_screen.dart",
+      "sha256": "5930f1d7030a82ac9cbe503369ec4788a982b47fbefb1f98f76868863e5c0d6a"
+    },
+    {
+      "path": "apps/mobile/lib/features/patterns/presentation/personal_patterns_route.dart",
+      "sha256": "512c3eb1908c23efb03c4194c446cedf170ac96a8a3829d661eb562560844100"
+    },
+    {
+      "path": "apps/mobile/lib/features/preparation/data/drift_preparation_repository.dart",
+      "sha256": "01618adec8025d7775c25dd4105fcdecfafb92c4bb0a29424ff83abd2d86c806"
+    },
+    {
+      "path": "apps/mobile/lib/features/preparation/data/in_memory_preparation_repository.dart",
+      "sha256": "d1127579fa651a179dbebee9c11cc0c39a8407dabf3097f5f937ba1e565f6408"
+    },
+    {
+      "path": "apps/mobile/lib/features/preparation/domain/preparation_loop_state.dart",
+      "sha256": "aabf3db96f105b19bbc20ead9b8d5090ca353c0c8ea82b7467bf7f636dab07a4"
+    },
+    {
+      "path": "apps/mobile/lib/features/preparation/domain/preparation_plan.dart",
+      "sha256": "bd947d5f2bd66c5b9a6b238a87fa298a78b951890b0e4cb43d0ff1b007a02703"
+    },
+    {
+      "path": "apps/mobile/lib/features/preparation/domain/preparation_snapshot.dart",
+      "sha256": "e27f232a1520e186f4be846088e5cc1297de7784373be55c55f64f0a93664850"
+    },
+    {
+      "path": "apps/mobile/lib/features/preparation/domain/preparation_snapshot_composer.dart",
+      "sha256": "6c4ef332d5881c650f27b4795e75dfd658546f176167224de5ce46da0ad23d40"
+    },
+    {
+      "path": "apps/mobile/lib/features/privacy/data/file_privacy_preferences_repository.dart",
+      "sha256": "b8fd4b9fe4782b9e99f5128cd7b49b5e6fd089cf0cedc8134f1063b996d25567"
+    },
+    {
+      "path": "apps/mobile/lib/features/privacy/data/native_privacy_bridge.dart",
+      "sha256": "9280c9957a7f81c9ebbaa03ecdbb814e8cf385711edd165fedf0c640450a23c3"
+    },
+    {
+      "path": "apps/mobile/lib/features/privacy/data/privacy_preferences_repository_factory.dart",
+      "sha256": "d1662f286c984c401121abc1b7a80a7b33cacfee25db58b262435229315b8f74"
+    },
+    {
+      "path": "apps/mobile/lib/features/privacy/data/privacy_preferences_repository_factory_native.dart",
+      "sha256": "daef7ae37e69fb96d659b64f6cf0c9a884985c77103b43657915771734bcc7b0"
+    },
+    {
+      "path": "apps/mobile/lib/features/privacy/data/privacy_preferences_repository_factory_web.dart",
+      "sha256": "56a104738ca5414af5f360351b07a75f69a0182e9e91c9d9a1e56db1280ba5df"
+    },
+    {
+      "path": "apps/mobile/lib/features/privacy/data/secure_privacy_preferences_repository.dart",
+      "sha256": "c76bccbcd4543484e608924545e38476ca7fc54018223cc39c71dea5edbb1008"
+    },
+    {
+      "path": "apps/mobile/lib/features/privacy/domain/privacy_preferences.dart",
+      "sha256": "bc1dec326de6f712269c13c581f8f51e86a91891e92bfa70fd85b9adec32d112"
+    },
+    {
+      "path": "apps/mobile/lib/features/privacy/domain/privacy_preferences_repository.dart",
+      "sha256": "32543cb6be25d6cb1e6bdee965cf52e4299ff2407ef54f08ca497cb307e89edb"
+    },
+    {
+      "path": "apps/mobile/lib/features/privacy/presentation/privacy_shell.dart",
+      "sha256": "fad371edfcc1edc0f7f04542164a47218e1aa0ec6a7b6761189ebda680a84e8c"
+    },
+    {
+      "path": "apps/mobile/lib/features/record_hub/application/record_session_controller.dart",
+      "sha256": "eaa00e2c7c0a2c759867ba41511673070611ff6ec7c6162883ea207cc282e9c3"
+    },
+    {
+      "path": "apps/mobile/lib/features/record_hub/data/drift_record_hub_repository.dart",
+      "sha256": "2953acda54bae94d79648a2d26005a039656793e9a6a45c20281932b073956df"
+    },
+    {
+      "path": "apps/mobile/lib/features/record_hub/data/drift_record_interventions_repository.dart",
+      "sha256": "a419f21403c45f04d1dca33840e2e9fea10e9dff9b6bc88c10795918229541e5"
+    },
+    {
+      "path": "apps/mobile/lib/features/record_hub/data/drift_record_programme_repository.dart",
+      "sha256": "c07884c1a5cdc508d7954351d1c28c991af04cfa9e1432987e486b4c5375a5c6"
+    },
+    {
+      "path": "apps/mobile/lib/features/record_hub/data/record_hub_tables.dart",
+      "sha256": "f557aa1c577ca672beb0a8311d78031c41a885da3a267ca9d15dd9a87974e4eb"
+    },
+    {
+      "path": "apps/mobile/lib/features/record_hub/data/record_interventions_tables.dart",
+      "sha256": "bd1c1bfab72569b72de8dcb151abe4209142cd1c1a069fa0dbefe73558bb9f84"
+    },
+    {
+      "path": "apps/mobile/lib/features/record_hub/data/record_programme_tables.dart",
+      "sha256": "cc7593073109f31bfaf78d9f6e46cbc083da242e621bbf227ed7cbbba99823a6"
+    },
+    {
+      "path": "apps/mobile/lib/features/record_hub/domain/comfort_window.dart",
+      "sha256": "9f47f7509cc1692759cc85212f4d4abef70a253d1e2bcb60ad5694c6ffa846b3"
+    },
+    {
+      "path": "apps/mobile/lib/features/record_hub/domain/comfort_window_projection.dart",
+      "sha256": "10818b1402f584c965f2b411769ec1df1ff85894c5490cba9036d2409c438b2f"
+    },
+    {
+      "path": "apps/mobile/lib/features/record_hub/domain/record_calendar_month.dart",
+      "sha256": "1542a853bfa2dd1d89a29df48e74085418e1a075d8b789c684cd500b8939118a"
+    },
+    {
+      "path": "apps/mobile/lib/features/record_hub/domain/record_hub_facts.dart",
+      "sha256": "c81713a3d6f9b30db2d3447ece34ff83dbb4b9ec2a11b53511a6c9b84868b9cc"
+    },
+    {
+      "path": "apps/mobile/lib/features/record_hub/domain/record_hub_repository.dart",
+      "sha256": "543742e03abcbd45c363baf875b3cca1e5455d344120342bc68af77501799f64"
+    },
+    {
+      "path": "apps/mobile/lib/features/record_hub/domain/record_interventions.dart",
+      "sha256": "3ea4b3e58bf7f69defb3ddc08bca3eda7cf1796523540a2ec9af02539f0f511e"
+    },
+    {
+      "path": "apps/mobile/lib/features/record_hub/domain/record_programme.dart",
+      "sha256": "78683625cb3dc6f80aa05c4524e869baa1b20af008f14514997a7bc592b17d30"
+    },
+    {
+      "path": "apps/mobile/lib/features/record_hub/domain/record_programme_facts.dart",
+      "sha256": "134c0191e64875b71a199a72fa9874dc4ea3347708b89fc2c93738d4cf141559"
+    },
+    {
+      "path": "apps/mobile/lib/features/record_hub/domain/record_session.dart",
+      "sha256": "caf6bd85d26ebb59c5ecdb7a6dc77c736e29a3bb314bb6f7f0622c0fe7aac65f"
+    },
+    {
+      "path": "apps/mobile/lib/features/record_hub/presentation/cycle_letter_archive_screen.dart",
+      "sha256": "e59651c7c72d1e0742871e4d9a5b312652fe84a869815e83710348b81defac62"
+    },
+    {
+      "path": "apps/mobile/lib/features/record_hub/presentation/moment_source_history_screen.dart",
+      "sha256": "718ea6f09da6ae92f844a77d22cb6a36431aa460d1a7876c499798a6832a37e9"
+    },
+    {
+      "path": "apps/mobile/lib/features/record_hub/presentation/record_calendar.dart",
+      "sha256": "5746cf5fba97ad55b4afa16c7258683191e3254f74fac4514a0f6e2507146170"
+    },
+    {
+      "path": "apps/mobile/lib/features/record_hub/presentation/record_context_editor.dart",
+      "sha256": "3717c7f1ffc415bb6270f2e082d65f3a65a23b25d0a703869494a494d0430a7a"
+    },
+    {
+      "path": "apps/mobile/lib/features/record_hub/presentation/record_hub_screen.dart",
+      "sha256": "879d22abbe08fd1433aaf4fe0186c0fbf012e756398d29a709ad11ed6a55b6a6"
+    },
+    {
+      "path": "apps/mobile/lib/features/record_hub/presentation/record_interventions_editor.dart",
+      "sha256": "3a7ab1db9fc3132f026672f715fcf8e9dffa406f489b9d52f771bd35b1a6c9b8"
+    },
+    {
+      "path": "apps/mobile/lib/features/record_hub/presentation/record_preparation_screen.dart",
+      "sha256": "49093e273693467221a9602df443d41979373f34e512b53f6d51aec3d854e568"
+    },
+    {
+      "path": "apps/mobile/lib/features/record_hub/presentation/record_programme_screen.dart",
+      "sha256": "21ec083f7deae13786d2f1dad719b355931b507bb60eb0419d0d6d3666beace1"
+    },
+    {
+      "path": "apps/mobile/lib/features/recovery_receipt/application/recovery_receipt_controller.dart",
+      "sha256": "183455c79c999a1352039b95e15106102c6f3f73cd0b2ceaa642159335e147ca"
+    },
+    {
+      "path": "apps/mobile/lib/features/recovery_receipt/domain/recovery_receipt.dart",
+      "sha256": "7b52ba6eccb66ce162cf5067678a6e11c50794ea627231bf88384a9232e25bdf"
+    },
+    {
+      "path": "apps/mobile/lib/features/summary_export/domain/cycle_care_pdf.dart",
+      "sha256": "fa8532cd418070b7a9edd925897715c078c2eb4856899efe5b28ae23d9912dfd"
+    },
+    {
+      "path": "apps/mobile/lib/features/summary_export/domain/cycle_care_summary.dart",
+      "sha256": "30730dbfef5f8a9166a6ee79d7bfa819cef1c66630c9256a78bc5af204f15052"
+    },
+    {
+      "path": "apps/mobile/lib/features/summary_export/domain/local_file_share_adapter.dart",
+      "sha256": "78014cce4f453196e018ce2f06bdebca18b0925e0cc230e60894f08f94f9a388"
+    },
+    {
+      "path": "apps/mobile/lib/features/summary_export/domain/record_report_selection.dart",
+      "sha256": "82364643c6bd87fa6809a34b939aa0ed38dfa94be051e2dfd82aef70fa56fcb9"
+    },
+    {
+      "path": "apps/mobile/lib/features/summary_export/domain/record_report_sources.dart",
+      "sha256": "f403a47acd1616c039fdeabac670570e9a0e2c82dcfabe7bdf93585a47af29f1"
+    },
+    {
+      "path": "apps/mobile/lib/features/summary_export/domain/record_source_export.dart",
+      "sha256": "fbe292388f7077973c97c5c09db304d97d9a6a096876b453b26c7588b140d47f"
+    },
+    {
+      "path": "apps/mobile/lib/features/summary_export/domain/summary_export_repository.dart",
+      "sha256": "bafc57ed36d6e8884afa60d45b7684bab2d80565f07b098b613a0dcc985985cd"
+    },
+    {
+      "path": "apps/mobile/lib/features/summary_export/domain/visit_summary_pdf.dart",
+      "sha256": "0f71a3e6588a33e97ce862727396a833f723563599984b577bc0a286c69718d4"
+    },
+    {
+      "path": "apps/mobile/lib/features/summary_export/presentation/twin_matrix_summary_adapter.dart",
+      "sha256": "74100cc9ad76d429ffcf5a38a009b5416b9b7110ae9e0070a91148b79b88c38d"
+    },
+    {
+      "path": "apps/mobile/lib/features/today/today_cycle_context.dart",
+      "sha256": "3d5a5d9ed82a9ea65a506bafa7cf530027535071292ee756697eda7dde17a538"
+    },
+    {
+      "path": "apps/mobile/lib/features/today/today_cycle_ring_model.dart",
+      "sha256": "43b5783143f2f487bdebb6eb4ee4653281be39a6c1b62d2e87398640629c723c"
+    },
+    {
+      "path": "apps/mobile/lib/main.dart",
+      "sha256": "6673188ec320e1b6355abc278c3c8e4b9e3cd036977ce6acf29f867ad46d7d5a"
+    },
+    {
+      "path": "apps/mobile/pubspec.lock",
+      "sha256": "e286c7be563baf248cc2ba79a5d0cb69588d9b31d52df1445faec9cf603849da"
+    },
+    {
+      "path": "apps/mobile/pubspec.yaml",
+      "sha256": "c5e82f144ddd96c87742190c8ff6c183490a0e66c6cb545704e0574fbddebee1"
+    },
+    {
+      "path": "apps/mobile/test/algorithm_validation_audit_test.dart",
+      "sha256": "79ebcb18c02c354212e8f072aa29fd66298de095ab4a11259f45a885beefadb3"
+    },
+    {
+      "path": "apps/mobile/test/app_config_test.dart",
+      "sha256": "f9e91e107a4b70c374e3f46280b40c5d674a4ce3d1a53b51998fd4f86e706c10"
+    },
+    {
+      "path": "apps/mobile/test/archive_views_domain_test.dart",
+      "sha256": "ac0e09473d9057bfafe3f073c42a00890d37a0a3d20358a9f43c87f263bb2909"
+    },
+    {
+      "path": "apps/mobile/test/auth_analytics_domain_test.dart",
+      "sha256": "b0ca4c1ed644af04dc57894ecf3bb2d836d89d95d535aaae432ce8ad5f14b844"
+    },
+    {
+      "path": "apps/mobile/test/auth_gate_test.dart",
+      "sha256": "8d3e13c5268493c592848745c0dffacbb15e7af9ce51de7e5edfbcc9e28a4f15"
+    },
+    {
+      "path": "apps/mobile/test/auth_screen_test.dart",
+      "sha256": "d3245df5e77dbf51a23d4fa4441411e01d51050cdaa5f4c5ac6dc3ea5581a135"
+    },
+    {
+      "path": "apps/mobile/test/breath_flow_test.dart",
+      "sha256": "7006e9e0313fcc45ca651c9c1ec03f097990b8a55db2086b0902cf67932beb1f"
+    },
+    {
+      "path": "apps/mobile/test/build10_release_gate/care_non_scene_responsive_test.dart",
+      "sha256": "d7301c6739546eacad72581f0dfd56c5bc695d7f6c12cb3875487f65e966bb8f"
+    },
+    {
+      "path": "apps/mobile/test/build17_backup_note_compatibility_test.dart",
+      "sha256": "aa056e5550138bededcb25c0d02e260c833fd1dc6d08e696101a768fb20d7035"
+    },
+    {
+      "path": "apps/mobile/test/capture_controller_test.dart",
+      "sha256": "f28f3ec2b64da1f4bf84a77a1f186b677d83c68a166aeb71537dd8facef2a09f"
+    },
+    {
+      "path": "apps/mobile/test/capture_note_history_screen_test.dart",
+      "sha256": "ed43c156268de00149bee1b0c7279f12d60844baddc00024c8088daed5734507"
+    },
+    {
+      "path": "apps/mobile/test/care_action_recording_test.dart",
+      "sha256": "72f0830da4d13a2753dc22c9ce887fb2cbc5d2ad2cbf0e8f1f19a985a43ff1a9"
+    },
+    {
+      "path": "apps/mobile/test/care_audit/care_animation_capture_test.dart",
+      "sha256": "3376af9b36f80204706e5fc8f4a9761fd0a1adc1430958725020f941f673cc7f"
+    },
+    {
+      "path": "apps/mobile/test/care_audit/care_audit_accessibility_test.dart",
+      "sha256": "ccb0a2c16baea630c5771ce5f37184be89884552f764998a026538747e1e003e"
+    },
+    {
+      "path": "apps/mobile/test/care_break_flow_test.dart",
+      "sha256": "bdf10508903f8cffe7852286fcbd8f6c80507a292d5c549729af18f4c5b76826"
+    },
+    {
+      "path": "apps/mobile/test/care_experience_animation_port_test.dart",
+      "sha256": "bf13a143fe36cc37bdfc3e468c3f460069b18ab4a4ee5bbbf72aa1e8d041098f"
+    },
+    {
+      "path": "apps/mobile/test/care_landing_polish_test.dart",
+      "sha256": "99a45cadf8619b79bdb34ce04f6669d2d8f81a66d79aeefdfbaaf56d302a929d"
+    },
+    {
+      "path": "apps/mobile/test/care_memory_repository_test.dart",
+      "sha256": "3139f2ba6987f11a7f31c9286397744a658762bbd4a556e77ff192e44e6d3a4e"
+    },
+    {
+      "path": "apps/mobile/test/care_mode_test.dart",
+      "sha256": "29a95676466efd6338f7289f91edf33c3e99bf100d65fb4fbf505499622d3cca"
+    },
+    {
+      "path": "apps/mobile/test/care_safety_boundary_sheet_test.dart",
+      "sha256": "f71e4558ea5d4868fe224bf1dcd84303f90ca3355b8f2424587e87df18c41301"
+    },
+    {
+      "path": "apps/mobile/test/care_scene_foundation_accessibility_test.dart",
+      "sha256": "27f1248c91a9ea6773ca1c991c41e61b041722b92b5a0115954b9ef4867e3027"
+    },
+    {
+      "path": "apps/mobile/test/care_selling_point_journey_test.dart",
+      "sha256": "ac63db4541c62f3bb14f4052a23110ad4d96cd1b699a5642683c99c05c8d5a54"
+    },
+    {
+      "path": "apps/mobile/test/care_sound_assets_test.dart",
+      "sha256": "d94d87c008606bcb9fc8e47b506290a6b1ef1350e941c99f81a05291ffc7974b"
+    },
+    {
+      "path": "apps/mobile/test/care_usage_analytics_test.dart",
+      "sha256": "31e513830b1392e57934bbb93a9b515271d997ec76b4d27a33bff4b8c80e9e94"
+    },
+    {
+      "path": "apps/mobile/test/comfort_experience_projection_integration_test.dart",
+      "sha256": "970918081a68f53d1fdb43345138bdaa19efafde6fe3cd43c865f874bb07a351"
+    },
+    {
+      "path": "apps/mobile/test/comfort_kit_assembler_test.dart",
+      "sha256": "717005e1437dbfca584a5f7b48345c1bcfab4869f3cb5456b5dd71f7ef7ea851"
+    },
+    {
+      "path": "apps/mobile/test/comfort_kit_runtime_wiring_test.dart",
+      "sha256": "b0f7d9885d504689da5556f1949bc977a2a9e38a2e59ccfcf20eb8fa778178b7"
+    },
+    {
+      "path": "apps/mobile/test/comfort_preferences_repository_test.dart",
+      "sha256": "b8407b284e69629cccd2a4f78edb4e51d4f08a71b69b546760ec370cc523331a"
+    },
+    {
+      "path": "apps/mobile/test/comfort_window_engine_test.dart",
+      "sha256": "7679f18ae3a2b982984d6b7e91c019475062636e1273441568dfc3e0ac6f5b3b"
+    },
+    {
+      "path": "apps/mobile/test/comfort_window_record_hub_test.dart",
+      "sha256": "d7dfa158b6bb3eae893d5438de6f67c7d9b4375adc9b54a9d56fbfb36e87f410"
+    },
+    {
+      "path": "apps/mobile/test/comfort_window_review_test.dart",
+      "sha256": "10bdbbfee0b378160e65fb6b6fd5dccc2a553c66585dead00b9a7d814b1a0c78"
+    },
+    {
+      "path": "apps/mobile/test/comfort_window_scheduler_test.dart",
+      "sha256": "f819699c398141898c53df5ec1a533120c21a66c3262658a43f5bea61e301d7b"
+    },
+    {
+      "path": "apps/mobile/test/core_cycle_prediction_test.dart",
+      "sha256": "a38da943774538983acf7bdf5f798ab36ef33729b8fe389345fec0f4d4918baf"
+    },
+    {
+      "path": "apps/mobile/test/core_pattern_engine_test.dart",
+      "sha256": "2fc853f3cc52943a8fe31929513d8d0810ff40dbb86689c0ecefbf04681e2192"
+    },
+    {
+      "path": "apps/mobile/test/cycle_check_in_scheduler_test.dart",
+      "sha256": "f7106fc1b99755b018a5f53659ccd591d19c8be19ced42aaa7eadfdac49834c2"
+    },
+    {
+      "path": "apps/mobile/test/cycle_domain_test.dart",
+      "sha256": "ba41751a660d5e5488fda77e5c0d1bcefc4c7b4450078aafce2e2c986bd35657"
+    },
+    {
+      "path": "apps/mobile/test/cycle_experience_history_test.dart",
+      "sha256": "e4f558a3b0807b53ffa2a313356906876a8eb0c134655cf401ca10014aabb51b"
+    },
+    {
+      "path": "apps/mobile/test/cycle_letters_aggregator_test.dart",
+      "sha256": "2aa677c18c82ceb6385243050221e14fbd0759c49eae50f4266cdacc35bf200a"
+    },
+    {
+      "path": "apps/mobile/test/cycle_period_reachability_test.dart",
+      "sha256": "6b0c3c9df80e38b64005bdd69798436942fc645b64ea73b55f47820545da7d17"
+    },
+    {
+      "path": "apps/mobile/test/cycle_prediction_test.dart",
+      "sha256": "8acab65c996405e948a61852220555401f7133355399f29d252e988751276505"
+    },
+    {
+      "path": "apps/mobile/test/cycle_read_snapshot_test.dart",
+      "sha256": "ef4d5654ec877d3c657652287a71043b8ac729e539802ab75c26629f234bf8af"
+    },
+    {
+      "path": "apps/mobile/test/cycle_ring_fallback_test.dart",
+      "sha256": "c1607b636fa7b8aadfb19bd7d0a87c6bf52ed24a2a162818bbbe81e2709355fd"
+    },
+    {
+      "path": "apps/mobile/test/degree_graphics_consistency_test.dart",
+      "sha256": "597666d8619d26b0f5277a1df29d6a764f8d9ea544a34597bee1ac0d9567c58b"
+    },
+    {
+      "path": "apps/mobile/test/diary_domain_test.dart",
+      "sha256": "3aa24d027f71a255e49098222460dbfbcd78299b89e78e91cc2b53bd5bcf20dc"
+    },
+    {
+      "path": "apps/mobile/test/diary_two_cycle_validation_test.dart",
+      "sha256": "51841f7f51ce1d3e13656f27f66c5d2aeea4d8a8ee11dfe412023591ea26dc78"
+    },
+    {
+      "path": "apps/mobile/test/drift_capture_note_store_test.dart",
+      "sha256": "1757d8e4d94cd7c9d962384967ed0525f44728df48c8d6a3ac4b5fddbcec5afd"
+    },
+    {
+      "path": "apps/mobile/test/drift_care_memory_repository_test.dart",
+      "sha256": "bcc428d6ded183e9fdebe3fc8f1f547dac55b7274822de7196f13ce1cc9f3b79"
+    },
+    {
+      "path": "apps/mobile/test/drift_health_record_repository_test.dart",
+      "sha256": "2d058213b365b8012c65593f4e6ed3ae7b5d7ade98e7d5c40acf03847366da0c"
+    },
+    {
+      "path": "apps/mobile/test/drift_local_backup_store_test.dart",
+      "sha256": "eadb8b6e01609371d394ddce1a513cbaa0c8da4978fb3ee63a3236dd3a3c0b48"
+    },
+    {
+      "path": "apps/mobile/test/drift_moment_check_in_repository_test.dart",
+      "sha256": "6859d4dd60095e6efeb85b3c0216e655f5e7059965232ec7c0258589f9e31c3a"
+    },
+    {
+      "path": "apps/mobile/test/drift_period_repository_test.dart",
+      "sha256": "64839870dfd41f856aae48f8bbd8ea07e9c06e0b98693759b9f4313b5f6ddde1"
+    },
+    {
+      "path": "apps/mobile/test/drift_record_hub_repository_test.dart",
+      "sha256": "8e5158bea395230c1949843f26e4099c033c62a5b9351838e79efebfa6a477e8"
+    },
+    {
+      "path": "apps/mobile/test/drift_record_interventions_repository_test.dart",
+      "sha256": "29df3ddac3c2d880f67805485c69eca49f5719e0c88bbb006efee38ff7aee18c"
+    },
+    {
+      "path": "apps/mobile/test/entitlement_domain_test.dart",
+      "sha256": "7fd7d352f07e1427accf9f110021f18eefac0775102e336fdb53a9aaa67967c3"
+    },
+    {
+      "path": "apps/mobile/test/experience_contrast_test.dart",
+      "sha256": "d755c9e7f27980a784ee88c223b75fb74223c7c53d6a6501293258d3b3fe00af"
+    },
+    {
+      "path": "apps/mobile/test/file_privacy_preferences_repository_test.dart",
+      "sha256": "246d7d798387f8ddd167dfbf083be4d469618e56a3ab218d731ac88a6542f942"
+    },
+    {
+      "path": "apps/mobile/test/generated_api_client_test.dart",
+      "sha256": "79e736342c72fe37d21367b2175f6157ec607dda2048764c812a73a03e2e99a7"
+    },
+    {
+      "path": "apps/mobile/test/gravity_horizon_test.dart",
+      "sha256": "6621d909ca46debb9c5054fb0eb823956628eb364d88a5b1213378365ba6ca34"
+    },
+    {
+      "path": "apps/mobile/test/health_records_domain_test.dart",
+      "sha256": "71ad3c3bfd4b0cbcbb4b01feeeb586c107922c4f5d4e62fb750c8580d685d6c8"
+    },
+    {
+      "path": "apps/mobile/test/health_records_repository_test.dart",
+      "sha256": "498cc0ba816845f63be7850504a423e1d374c6a2209810c04a6ab5e9286d9369"
+    },
+    {
+      "path": "apps/mobile/test/health_records_screen_test.dart",
+      "sha256": "b0f2228b665108cb32ff6654d1a08943cd48662f616adfaadadf311495878af0"
+    },
+    {
+      "path": "apps/mobile/test/insights/gravity_horizon_geometry_test.dart",
+      "sha256": "8ff5b753dd29b9a9a67da94479012bf9b451c3b792bc314478c04f339aa42527"
+    },
+    {
+      "path": "apps/mobile/test/insights/gravity_horizon_visual_test.dart",
+      "sha256": "aba49250c07d5b3e4b3a66948feb31892970792a7dfa2363fbafe53ce0ccc10f"
+    },
+    {
+      "path": "apps/mobile/test/insights/spectrum_log_view_model_test.dart",
+      "sha256": "26d3ead7d2bcc3ce88cbed3a62c99891d0aa47361a04d0f826cbc45e877ed932"
+    },
+    {
+      "path": "apps/mobile/test/letter_backup_experience_port_test.dart",
+      "sha256": "285dbe14fb435a5e0661f0085879ddb26b8c514ccc880b33e70d663c8a0bb69f"
+    },
+    {
+      "path": "apps/mobile/test/letter_health_database_migration_test.dart",
+      "sha256": "caf5767789d856591fbef5af6aa641fa948a7f6d955578d99b831313620b0722"
+    },
+    {
+      "path": "apps/mobile/test/letter_health_database_schema_test.dart",
+      "sha256": "29e9f0d4b94c3c8f492655d478b14dd58a84d7d74050098fe233de12ed5db91f"
+    },
+    {
+      "path": "apps/mobile/test/letter_local_export_store_test.dart",
+      "sha256": "9cb4c06e3c98ad758963e74d4d43c4edefeb1bd6368fe799940735036ed97461"
+    },
+    {
+      "path": "apps/mobile/test/letter_report_experience_port_test.dart",
+      "sha256": "b3b006317994cd52c15b546f8ecf825ed98f55662756101f11bf3d60de382c8e"
+    },
+    {
+      "path": "apps/mobile/test/local_backup_file_port_test.dart",
+      "sha256": "f82ee9a2fbd4631bea89ca8251f75fd810015747db6059b54922bedec9dc36f3"
+    },
+    {
+      "path": "apps/mobile/test/local_backup_service_test.dart",
+      "sha256": "1bfb60eac1352ab197ab8e7986fd6d7023e5fcec63a8cda9b9a37753f801c2eb"
+    },
+    {
+      "path": "apps/mobile/test/local_file_share_adapter_test.dart",
+      "sha256": "2d2c170ffed42a86977092308bbbff0adcf8fde00d303d99ba501638ad4178e7"
+    },
+    {
+      "path": "apps/mobile/test/local_health_store_factory_policy_test.dart",
+      "sha256": "d6b4680601846ab30ff66a73a6cef25eedb72c4d51bc6a9f5710d424a8e9e2ca"
+    },
+    {
+      "path": "apps/mobile/test/moment_check_in_repository_test.dart",
+      "sha256": "ca4f70587e0181cf8daed71cc8ce19a048a29bb53bfc0647c81015c9c5e64b2d"
+    },
+    {
+      "path": "apps/mobile/test/moment_correction_persistence_test.dart",
+      "sha256": "091a6575886faeae1d6f9f61b2f2071963dfd0e5d556a479939ff164fc2fba0a"
+    },
+    {
+      "path": "apps/mobile/test/moment_pattern_date_test.dart",
+      "sha256": "374751bbe769991f8ba6d14ad982b3c389b9a533ea25984b54b450a40fe2bcb0"
+    },
+    {
+      "path": "apps/mobile/test/moment_source_history_review_test.dart",
+      "sha256": "9ac425e4cb266ebbdb8ad4ca8c1c440e4f343d5b7f6fac00e6618e60a3d7f82d"
+    },
+    {
+      "path": "apps/mobile/test/moment_timing_persistence_test.dart",
+      "sha256": "b74633aa590b2ac14685a49f8613449a955ca8de0d52523c802b079d41baeef6"
+    },
+    {
+      "path": "apps/mobile/test/nlp_candidate_parser_test.dart",
+      "sha256": "b6e83c361986e3d69a8b71af320c05bf86136e9b8dd547a33062df141f9d5951"
+    },
+    {
+      "path": "apps/mobile/test/nlp_review_controller_test.dart",
+      "sha256": "0d035ae417802613457990dd8e328296f9b1ff0c05bd5a99d328cbe176df75d8"
+    },
+    {
+      "path": "apps/mobile/test/notification_privacy_navigation_test.dart",
+      "sha256": "8b52a9a634eca6dfe818ee287b9cc48f2283201ba694ee6870cf570308d64a36"
+    },
+    {
+      "path": "apps/mobile/test/observation_catalog_test.dart",
+      "sha256": "d81aac554446006f6fe1a84588b180fe72023a54d8ac2eeada0dd435208db633"
+    },
+    {
+      "path": "apps/mobile/test/onboarding_test.dart",
+      "sha256": "59081304299ede62931444c48c62e5af686c048cd1394cad9d6cd7ee9893a901"
+    },
+    {
+      "path": "apps/mobile/test/patterns/patterns_accessibility_test.dart",
+      "sha256": "79d02e25b9bdb20146cc3064c20b7dfa4874454b0ea4f9ac717a612981864101"
+    },
+    {
+      "path": "apps/mobile/test/patterns/patterns_experience_data_test.dart",
+      "sha256": "7feff2d0d8a76467af2558e1fdf726fc4494f37c118621c64e7abb2132662c08"
+    },
+    {
+      "path": "apps/mobile/test/patterns/personal_pattern_engine_test.dart",
+      "sha256": "0ccbda2f4e86a55dba5b77340cc6effac855ac0b2cc8ac636ff1fd86d069bbea"
+    },
+    {
+      "path": "apps/mobile/test/patterns/personal_patterns_controller_test.dart",
+      "sha256": "f3d62d9a1a54d1b45178c324a0b6659870580075104ee4cdce95fc944f40943f"
+    },
+    {
+      "path": "apps/mobile/test/patterns/personal_patterns_route_test.dart",
+      "sha256": "9de949f53e9bcd465db39aabc7f0edfe319d374adcf1b7f4a0f829dfa44811c4"
+    },
+    {
+      "path": "apps/mobile/test/patterns/repository_pattern_source_test.dart",
+      "sha256": "b6e4df1b086566e17cdbfd4c5232670dcdf61e02627736450bda596287b0a48e"
+    },
+    {
+      "path": "apps/mobile/test/period_flow_repository_test.dart",
+      "sha256": "e164d45b0b81d23e190bf62e2daab281ac831216e1de4d570bef0fab30240456"
+    },
+    {
+      "path": "apps/mobile/test/period_preservation_confirmation_test.dart",
+      "sha256": "7ff0236f4b23c63d719b3fb8deab37821469ea296eb6bd04ca946d3e00b90f6c"
+    },
+    {
+      "path": "apps/mobile/test/period_repository_contract_test.dart",
+      "sha256": "68998d627164874ebac4584f2ff9602d26fa647f68ffb3f28f29432d95168258"
+    },
+    {
+      "path": "apps/mobile/test/plus_preview_entitlement_scope_test.dart",
+      "sha256": "6d3a451fd9f503f2b1bed23b544061d0e22c03ba012bdc244dd676985568aaab"
+    },
+    {
+      "path": "apps/mobile/test/plus_preview_test.dart",
+      "sha256": "2b59c4532cba6e1f0219c4a7d262ad0baefc8a0364a02316ee7dd9a7ab498c74"
+    },
+    {
+      "path": "apps/mobile/test/preparation/drift_preparation_repository_test.dart",
+      "sha256": "cce1a3206e3f4f4623d89f9839808528e226533cfe5a177acaac537db58fda7a"
+    },
+    {
+      "path": "apps/mobile/test/preparation/preparation_loop_state_test.dart",
+      "sha256": "8a820d450bb512a71b346db098c01e43d35d9baad804dd8e09049a13605f0c2f"
+    },
+    {
+      "path": "apps/mobile/test/preparation/preparation_snapshot_composer_test.dart",
+      "sha256": "51de770d7a2df59d0656df689032b7584a5beeabd5592847c13700936d4182a6"
+    },
+    {
+      "path": "apps/mobile/test/privacy_analytics_test.dart",
+      "sha256": "c692f71f928a5d60ba147912d3c547bbb43ed3006dfc7ae2402730fca34c42a6"
+    },
+    {
+      "path": "apps/mobile/test/privacy_build17_compatibility_test.dart",
+      "sha256": "c15aa76c1978ff66f004cb6fa6195f288f93175d030e586e3cd34f8a02267b3c"
+    },
+    {
+      "path": "apps/mobile/test/privacy_shell_test.dart",
+      "sha256": "ad1c0b412889690d64f7eef901e6baab51147e77922861e337507ce82f14a27b"
+    },
+    {
+      "path": "apps/mobile/test/record_calendar_test.dart",
+      "sha256": "56582f327aa5b1b7c8c4bfe3717003f41d8822cd81d374bcfd6349a8ea5502b2"
+    },
+    {
+      "path": "apps/mobile/test/record_context_editor_test.dart",
+      "sha256": "d7785aa7c88ad39494806aad9f3bfb5a6f5a22a1e427dce760b7743f62337ddf"
+    },
+    {
+      "path": "apps/mobile/test/record_hub_backup_test.dart",
+      "sha256": "6ffdb3ca5e78f21aa82b479522f35e94e25e1dbb0e6d20ec9ff65f6fb1d7798a"
+    },
+    {
+      "path": "apps/mobile/test/record_hub_bleeding_bridge_test.dart",
+      "sha256": "893db507da987502eb8447c050d2a10331e183edafb126dc31922684d8f91287"
+    },
+    {
+      "path": "apps/mobile/test/record_hub_facts_test.dart",
+      "sha256": "89d9d49a27a193912bbac4fcc7f21b70f9dda6b0217b726a508939ead41b4507"
+    },
+    {
+      "path": "apps/mobile/test/record_hub_navigation_test.dart",
+      "sha256": "43e09e74478b36c2650b1b24484810b406dea2f75a1370fc2504fc060361a2ce"
+    },
+    {
+      "path": "apps/mobile/test/record_hub_screen_test.dart",
+      "sha256": "f24250911a5b8975eb0c5af58baf973667e9606615044e8313d5c7b7a16dd170"
+    },
+    {
+      "path": "apps/mobile/test/record_hub_symptom_persistence_test.dart",
+      "sha256": "f216a23c63ca30dc4b0ab3375aefb3bde26c8b87e6984c846bcc199ddd8f85b8"
+    },
+    {
+      "path": "apps/mobile/test/record_hub_zero_compatibility_test.dart",
+      "sha256": "d203169ada3c99fa59b1cb05a02df2bb70036be8c9d53c972302dc41ed820d33"
+    },
+    {
+      "path": "apps/mobile/test/record_interventions_editor_test.dart",
+      "sha256": "ed768b2faf632e38a8b35f0af35a7d9b79ae2dc90f84c5aaa45d68471f3ca740"
+    },
+    {
+      "path": "apps/mobile/test/record_interventions_test.dart",
+      "sha256": "2f530968b3886ba8e2d9121ff9503f49c5f4ea82a61a51d0478901b817b7a7f2"
+    },
+    {
+      "path": "apps/mobile/test/record_native_file_handoff_test.dart",
+      "sha256": "52fb60395aeead09c95d441dc8ac527fca6f98a44e3c6cda9e5c9a3604ffed52"
+    },
+    {
+      "path": "apps/mobile/test/record_preparation_review_test.dart",
+      "sha256": "7bc2fec2c558b0b25138ef06c242a84641815181991acb85fa56941d0a8831b2"
+    },
+    {
+      "path": "apps/mobile/test/record_programme_facts_test.dart",
+      "sha256": "06b91321e61f6e69fe076ffbb1116b46cc29b859e34ce0aedb3352a9a256900a"
+    },
+    {
+      "path": "apps/mobile/test/record_programme_navigation_test.dart",
+      "sha256": "0c912713fa7cfbd4ddfcf66ad144668187602b77286633a68820088e2fd467ef"
+    },
+    {
+      "path": "apps/mobile/test/record_programme_repository_test.dart",
+      "sha256": "060f3491b4962e18db8488aa7933cf506500898c18dbb7c4a730f5c1cfa2c6ce"
+    },
+    {
+      "path": "apps/mobile/test/record_programme_screen_test.dart",
+      "sha256": "490416e8803b7203b4e6098e72eca5e4416693be475576a08a185a3ef2cd60c3"
+    },
+    {
+      "path": "apps/mobile/test/record_report_export_test.dart",
+      "sha256": "9daac3a252c01c2fc14f881f0f831ad0d57360ccbfa1b291ddb038d6c810b803"
+    },
+    {
+      "path": "apps/mobile/test/record_report_moment_correction_test.dart",
+      "sha256": "637569c2c311ef1ced6add52b8774127a3937890dad5921486a53c6b2b17d633"
+    },
+    {
+      "path": "apps/mobile/test/record_reports_experience_test.dart",
+      "sha256": "39205d38419f9b5eef5407b9897559fcdd7a162cc25f16bd9e425cf079a49244"
+    },
+    {
+      "path": "apps/mobile/test/record_session_test.dart",
+      "sha256": "b1b450250f41729a13f66d2a69b262ee26459b70e087dbed220d6ed25e8b72b6"
+    },
+    {
+      "path": "apps/mobile/test/recovery_receipt_controller_test.dart",
+      "sha256": "aebf2224406526a1f92bbc9f9a8797292cef7bc6ed4d8a2ec132e4ced73dc0dc"
+    },
+    {
+      "path": "apps/mobile/test/recovery_receipt_domain_test.dart",
+      "sha256": "a014f66a73b41de38977b3484725278ef1e9bf8b0f7155bc300c4dd1f4b89c79"
+    },
+    {
+      "path": "apps/mobile/test/release_2_data_ui_matrix_test.dart",
+      "sha256": "741f1dce17fd0a86937d341d6a10c7f2b80b2bacc4531048459982b90b7e169b"
+    },
+    {
+      "path": "apps/mobile/test/reports_plus_acquisition_test.dart",
+      "sha256": "a75c7e25592d974bd95377ea82e4c9a3e67d20fabdc724c2567c297ad1805f7d"
+    },
+    {
+      "path": "apps/mobile/test/revenue_cat_entitlement_repository_test.dart",
+      "sha256": "e007b5d3a4f82bfffb02a70994ea315f83e688d8091a092a882f82ec023c82a6"
+    },
+    {
+      "path": "apps/mobile/test/safety_resources_test.dart",
+      "sha256": "6e9dcccb01c5e3a875a6e860ff1c3c08a8eaae3ebb9af9c572f469d68fea667a"
+    },
+    {
+      "path": "apps/mobile/test/settings_analytics_toggle_test.dart",
+      "sha256": "bd3a6926eb9f5cbadcf78eec4c2c1213ec248d9ee18204f5074471143992fdb6"
+    },
+    {
+      "path": "apps/mobile/test/summary_export_domain_test.dart",
+      "sha256": "4ef6cd143e9af66871468a5f5f7cc155bb5b57ffb288a86bde1c0c9e9f5c6b22"
+    },
+    {
+      "path": "apps/mobile/test/supabase_auth_service_test.dart",
+      "sha256": "dc5d8e997ef5ab5825c5d221558e266182ae9c671a8248ae643b72eb6c7bc4da"
+    },
+    {
+      "path": "apps/mobile/test/support/widget_test_pump.dart",
+      "sha256": "d6519255ac357939e02098afb9d62f2b3558f5dfc78db8f63ceef650dd01ba8d"
+    },
+    {
+      "path": "apps/mobile/test/today_cycle_context_test.dart",
+      "sha256": "38117c870af75a1a3609e833ac512ac5145720dc299555b0f954aa362ab4b97e"
+    },
+    {
+      "path": "apps/mobile/test/today_cycle_period_coherence_test.dart",
+      "sha256": "76826dcc53c9eefb3aa3baf36d7a13db6429ad3687ec6ba26cdc885f1835fe39"
+    },
+    {
+      "path": "apps/mobile/test/today_cycle_release_matrix_test.dart",
+      "sha256": "cbfac76249e3daf47fbaff1255e656b794e056b0a77ae1b9beb9a82b989da4c1"
+    },
+    {
+      "path": "apps/mobile/test/today_cycle_ring_model_test.dart",
+      "sha256": "ad6e0391f9b5b83122c668a53440f16290d69accdc4c6e3696496e43925cab0b"
+    },
+    {
+      "path": "apps/mobile/test/today_visual_baseline_test.dart",
+      "sha256": "acd9c4588cf4b2227310e21cf3232a1bdbe8354e6171da456096b9268bc676b0"
+    },
+    {
+      "path": "apps/mobile/test/today_visual_port_test.dart",
+      "sha256": "8e5bca2b3d32bc483fba63e1f175ee40ee0022c45f18e6e41b8fb79960bd390d"
+    },
+    {
+      "path": "apps/mobile/test/twin_matrix_report_test.dart",
+      "sha256": "870fca61cb173b8aa2712f8e704ee4f19d08b864333f91736d5cc2df4ac6d7ac"
+    },
+    {
+      "path": "apps/mobile/test/twin_matrix_view_model_test.dart",
+      "sha256": "f394bf7daedd04b118500531c88115cb0ac7b39c06301b7bb7df193f847526ad"
+    }
+  ]
+}

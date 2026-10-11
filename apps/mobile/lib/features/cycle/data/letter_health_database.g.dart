@@ -2660,6 +2660,60 @@ class $HealthRecordRowsTable extends HealthRecordRows
     type: DriftSqlType.string,
     requiredDuringInsert: true,
   );
+  static const VerificationMeta _originalProvenanceMeta =
+      const VerificationMeta('originalProvenance');
+  @override
+  late final GeneratedColumn<String> originalProvenance =
+      GeneratedColumn<String>(
+        'original_provenance',
+        aliasedName,
+        true,
+        type: DriftSqlType.string,
+        requiredDuringInsert: false,
+      );
+  static const VerificationMeta _writeZoneOffsetMinutesMeta =
+      const VerificationMeta('writeZoneOffsetMinutes');
+  @override
+  late final GeneratedColumn<int> writeZoneOffsetMinutes = GeneratedColumn<int>(
+    'write_zone_offset_minutes',
+    aliasedName,
+    true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _writeZoneNameMeta = const VerificationMeta(
+    'writeZoneName',
+  );
+  @override
+  late final GeneratedColumn<String> writeZoneName = GeneratedColumn<String>(
+    'write_zone_name',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _updatedZoneOffsetMinutesMeta =
+      const VerificationMeta('updatedZoneOffsetMinutes');
+  @override
+  late final GeneratedColumn<int> updatedZoneOffsetMinutes =
+      GeneratedColumn<int>(
+        'updated_zone_offset_minutes',
+        aliasedName,
+        true,
+        type: DriftSqlType.int,
+        requiredDuringInsert: false,
+      );
+  static const VerificationMeta _updatedZoneNameMeta = const VerificationMeta(
+    'updatedZoneName',
+  );
+  @override
+  late final GeneratedColumn<String> updatedZoneName = GeneratedColumn<String>(
+    'updated_zone_name',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
   static const VerificationMeta _userConfirmedMeta = const VerificationMeta(
     'userConfirmed',
   );
@@ -2695,6 +2749,11 @@ class $HealthRecordRowsTable extends HealthRecordRows
     recordedAtMillis,
     updatedAtMillis,
     provenance,
+    originalProvenance,
+    writeZoneOffsetMinutes,
+    writeZoneName,
+    updatedZoneOffsetMinutes,
+    updatedZoneName,
     userConfirmed,
     vocabularyVersion,
   ];
@@ -2783,6 +2842,51 @@ class $HealthRecordRowsTable extends HealthRecordRows
     } else if (isInserting) {
       context.missing(_provenanceMeta);
     }
+    if (data.containsKey('original_provenance')) {
+      context.handle(
+        _originalProvenanceMeta,
+        originalProvenance.isAcceptableOrUnknown(
+          data['original_provenance']!,
+          _originalProvenanceMeta,
+        ),
+      );
+    }
+    if (data.containsKey('write_zone_offset_minutes')) {
+      context.handle(
+        _writeZoneOffsetMinutesMeta,
+        writeZoneOffsetMinutes.isAcceptableOrUnknown(
+          data['write_zone_offset_minutes']!,
+          _writeZoneOffsetMinutesMeta,
+        ),
+      );
+    }
+    if (data.containsKey('write_zone_name')) {
+      context.handle(
+        _writeZoneNameMeta,
+        writeZoneName.isAcceptableOrUnknown(
+          data['write_zone_name']!,
+          _writeZoneNameMeta,
+        ),
+      );
+    }
+    if (data.containsKey('updated_zone_offset_minutes')) {
+      context.handle(
+        _updatedZoneOffsetMinutesMeta,
+        updatedZoneOffsetMinutes.isAcceptableOrUnknown(
+          data['updated_zone_offset_minutes']!,
+          _updatedZoneOffsetMinutesMeta,
+        ),
+      );
+    }
+    if (data.containsKey('updated_zone_name')) {
+      context.handle(
+        _updatedZoneNameMeta,
+        updatedZoneName.isAcceptableOrUnknown(
+          data['updated_zone_name']!,
+          _updatedZoneNameMeta,
+        ),
+      );
+    }
     if (data.containsKey('user_confirmed')) {
       context.handle(
         _userConfirmedMeta,
@@ -2850,6 +2954,26 @@ class $HealthRecordRowsTable extends HealthRecordRows
         DriftSqlType.string,
         data['${effectivePrefix}provenance'],
       )!,
+      originalProvenance: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}original_provenance'],
+      ),
+      writeZoneOffsetMinutes: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}write_zone_offset_minutes'],
+      ),
+      writeZoneName: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}write_zone_name'],
+      ),
+      updatedZoneOffsetMinutes: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}updated_zone_offset_minutes'],
+      ),
+      updatedZoneName: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}updated_zone_name'],
+      ),
       userConfirmed: attachedDatabase.typeMapping.read(
         DriftSqlType.bool,
         data['${effectivePrefix}user_confirmed'],
@@ -2876,6 +3000,11 @@ class HealthRecordRow extends DataClass implements Insertable<HealthRecordRow> {
   final int recordedAtMillis;
   final int updatedAtMillis;
   final String provenance;
+  final String? originalProvenance;
+  final int? writeZoneOffsetMinutes;
+  final String? writeZoneName;
+  final int? updatedZoneOffsetMinutes;
+  final String? updatedZoneName;
   final bool userConfirmed;
   final int vocabularyVersion;
   const HealthRecordRow({
@@ -2887,6 +3016,11 @@ class HealthRecordRow extends DataClass implements Insertable<HealthRecordRow> {
     required this.recordedAtMillis,
     required this.updatedAtMillis,
     required this.provenance,
+    this.originalProvenance,
+    this.writeZoneOffsetMinutes,
+    this.writeZoneName,
+    this.updatedZoneOffsetMinutes,
+    this.updatedZoneName,
     required this.userConfirmed,
     required this.vocabularyVersion,
   });
@@ -2901,6 +3035,23 @@ class HealthRecordRow extends DataClass implements Insertable<HealthRecordRow> {
     map['recorded_at_millis'] = Variable<int>(recordedAtMillis);
     map['updated_at_millis'] = Variable<int>(updatedAtMillis);
     map['provenance'] = Variable<String>(provenance);
+    if (!nullToAbsent || originalProvenance != null) {
+      map['original_provenance'] = Variable<String>(originalProvenance);
+    }
+    if (!nullToAbsent || writeZoneOffsetMinutes != null) {
+      map['write_zone_offset_minutes'] = Variable<int>(writeZoneOffsetMinutes);
+    }
+    if (!nullToAbsent || writeZoneName != null) {
+      map['write_zone_name'] = Variable<String>(writeZoneName);
+    }
+    if (!nullToAbsent || updatedZoneOffsetMinutes != null) {
+      map['updated_zone_offset_minutes'] = Variable<int>(
+        updatedZoneOffsetMinutes,
+      );
+    }
+    if (!nullToAbsent || updatedZoneName != null) {
+      map['updated_zone_name'] = Variable<String>(updatedZoneName);
+    }
     map['user_confirmed'] = Variable<bool>(userConfirmed);
     map['vocabulary_version'] = Variable<int>(vocabularyVersion);
     return map;
@@ -2916,6 +3067,21 @@ class HealthRecordRow extends DataClass implements Insertable<HealthRecordRow> {
       recordedAtMillis: Value(recordedAtMillis),
       updatedAtMillis: Value(updatedAtMillis),
       provenance: Value(provenance),
+      originalProvenance: originalProvenance == null && nullToAbsent
+          ? const Value.absent()
+          : Value(originalProvenance),
+      writeZoneOffsetMinutes: writeZoneOffsetMinutes == null && nullToAbsent
+          ? const Value.absent()
+          : Value(writeZoneOffsetMinutes),
+      writeZoneName: writeZoneName == null && nullToAbsent
+          ? const Value.absent()
+          : Value(writeZoneName),
+      updatedZoneOffsetMinutes: updatedZoneOffsetMinutes == null && nullToAbsent
+          ? const Value.absent()
+          : Value(updatedZoneOffsetMinutes),
+      updatedZoneName: updatedZoneName == null && nullToAbsent
+          ? const Value.absent()
+          : Value(updatedZoneName),
       userConfirmed: Value(userConfirmed),
       vocabularyVersion: Value(vocabularyVersion),
     );
@@ -2937,6 +3103,17 @@ class HealthRecordRow extends DataClass implements Insertable<HealthRecordRow> {
       recordedAtMillis: serializer.fromJson<int>(json['recordedAtMillis']),
       updatedAtMillis: serializer.fromJson<int>(json['updatedAtMillis']),
       provenance: serializer.fromJson<String>(json['provenance']),
+      originalProvenance: serializer.fromJson<String?>(
+        json['originalProvenance'],
+      ),
+      writeZoneOffsetMinutes: serializer.fromJson<int?>(
+        json['writeZoneOffsetMinutes'],
+      ),
+      writeZoneName: serializer.fromJson<String?>(json['writeZoneName']),
+      updatedZoneOffsetMinutes: serializer.fromJson<int?>(
+        json['updatedZoneOffsetMinutes'],
+      ),
+      updatedZoneName: serializer.fromJson<String?>(json['updatedZoneName']),
       userConfirmed: serializer.fromJson<bool>(json['userConfirmed']),
       vocabularyVersion: serializer.fromJson<int>(json['vocabularyVersion']),
     );
@@ -2953,6 +3130,13 @@ class HealthRecordRow extends DataClass implements Insertable<HealthRecordRow> {
       'recordedAtMillis': serializer.toJson<int>(recordedAtMillis),
       'updatedAtMillis': serializer.toJson<int>(updatedAtMillis),
       'provenance': serializer.toJson<String>(provenance),
+      'originalProvenance': serializer.toJson<String?>(originalProvenance),
+      'writeZoneOffsetMinutes': serializer.toJson<int?>(writeZoneOffsetMinutes),
+      'writeZoneName': serializer.toJson<String?>(writeZoneName),
+      'updatedZoneOffsetMinutes': serializer.toJson<int?>(
+        updatedZoneOffsetMinutes,
+      ),
+      'updatedZoneName': serializer.toJson<String?>(updatedZoneName),
       'userConfirmed': serializer.toJson<bool>(userConfirmed),
       'vocabularyVersion': serializer.toJson<int>(vocabularyVersion),
     };
@@ -2967,6 +3151,11 @@ class HealthRecordRow extends DataClass implements Insertable<HealthRecordRow> {
     int? recordedAtMillis,
     int? updatedAtMillis,
     String? provenance,
+    Value<String?> originalProvenance = const Value.absent(),
+    Value<int?> writeZoneOffsetMinutes = const Value.absent(),
+    Value<String?> writeZoneName = const Value.absent(),
+    Value<int?> updatedZoneOffsetMinutes = const Value.absent(),
+    Value<String?> updatedZoneName = const Value.absent(),
     bool? userConfirmed,
     int? vocabularyVersion,
   }) => HealthRecordRow(
@@ -2978,6 +3167,21 @@ class HealthRecordRow extends DataClass implements Insertable<HealthRecordRow> {
     recordedAtMillis: recordedAtMillis ?? this.recordedAtMillis,
     updatedAtMillis: updatedAtMillis ?? this.updatedAtMillis,
     provenance: provenance ?? this.provenance,
+    originalProvenance: originalProvenance.present
+        ? originalProvenance.value
+        : this.originalProvenance,
+    writeZoneOffsetMinutes: writeZoneOffsetMinutes.present
+        ? writeZoneOffsetMinutes.value
+        : this.writeZoneOffsetMinutes,
+    writeZoneName: writeZoneName.present
+        ? writeZoneName.value
+        : this.writeZoneName,
+    updatedZoneOffsetMinutes: updatedZoneOffsetMinutes.present
+        ? updatedZoneOffsetMinutes.value
+        : this.updatedZoneOffsetMinutes,
+    updatedZoneName: updatedZoneName.present
+        ? updatedZoneName.value
+        : this.updatedZoneName,
     userConfirmed: userConfirmed ?? this.userConfirmed,
     vocabularyVersion: vocabularyVersion ?? this.vocabularyVersion,
   );
@@ -3001,6 +3205,21 @@ class HealthRecordRow extends DataClass implements Insertable<HealthRecordRow> {
       provenance: data.provenance.present
           ? data.provenance.value
           : this.provenance,
+      originalProvenance: data.originalProvenance.present
+          ? data.originalProvenance.value
+          : this.originalProvenance,
+      writeZoneOffsetMinutes: data.writeZoneOffsetMinutes.present
+          ? data.writeZoneOffsetMinutes.value
+          : this.writeZoneOffsetMinutes,
+      writeZoneName: data.writeZoneName.present
+          ? data.writeZoneName.value
+          : this.writeZoneName,
+      updatedZoneOffsetMinutes: data.updatedZoneOffsetMinutes.present
+          ? data.updatedZoneOffsetMinutes.value
+          : this.updatedZoneOffsetMinutes,
+      updatedZoneName: data.updatedZoneName.present
+          ? data.updatedZoneName.value
+          : this.updatedZoneName,
       userConfirmed: data.userConfirmed.present
           ? data.userConfirmed.value
           : this.userConfirmed,
@@ -3021,6 +3240,11 @@ class HealthRecordRow extends DataClass implements Insertable<HealthRecordRow> {
           ..write('recordedAtMillis: $recordedAtMillis, ')
           ..write('updatedAtMillis: $updatedAtMillis, ')
           ..write('provenance: $provenance, ')
+          ..write('originalProvenance: $originalProvenance, ')
+          ..write('writeZoneOffsetMinutes: $writeZoneOffsetMinutes, ')
+          ..write('writeZoneName: $writeZoneName, ')
+          ..write('updatedZoneOffsetMinutes: $updatedZoneOffsetMinutes, ')
+          ..write('updatedZoneName: $updatedZoneName, ')
           ..write('userConfirmed: $userConfirmed, ')
           ..write('vocabularyVersion: $vocabularyVersion')
           ..write(')'))
@@ -3037,6 +3261,11 @@ class HealthRecordRow extends DataClass implements Insertable<HealthRecordRow> {
     recordedAtMillis,
     updatedAtMillis,
     provenance,
+    originalProvenance,
+    writeZoneOffsetMinutes,
+    writeZoneName,
+    updatedZoneOffsetMinutes,
+    updatedZoneName,
     userConfirmed,
     vocabularyVersion,
   );
@@ -3052,6 +3281,11 @@ class HealthRecordRow extends DataClass implements Insertable<HealthRecordRow> {
           other.recordedAtMillis == this.recordedAtMillis &&
           other.updatedAtMillis == this.updatedAtMillis &&
           other.provenance == this.provenance &&
+          other.originalProvenance == this.originalProvenance &&
+          other.writeZoneOffsetMinutes == this.writeZoneOffsetMinutes &&
+          other.writeZoneName == this.writeZoneName &&
+          other.updatedZoneOffsetMinutes == this.updatedZoneOffsetMinutes &&
+          other.updatedZoneName == this.updatedZoneName &&
           other.userConfirmed == this.userConfirmed &&
           other.vocabularyVersion == this.vocabularyVersion);
 }
@@ -3065,6 +3299,11 @@ class HealthRecordRowsCompanion extends UpdateCompanion<HealthRecordRow> {
   final Value<int> recordedAtMillis;
   final Value<int> updatedAtMillis;
   final Value<String> provenance;
+  final Value<String?> originalProvenance;
+  final Value<int?> writeZoneOffsetMinutes;
+  final Value<String?> writeZoneName;
+  final Value<int?> updatedZoneOffsetMinutes;
+  final Value<String?> updatedZoneName;
   final Value<bool> userConfirmed;
   final Value<int> vocabularyVersion;
   final Value<int> rowid;
@@ -3077,6 +3316,11 @@ class HealthRecordRowsCompanion extends UpdateCompanion<HealthRecordRow> {
     this.recordedAtMillis = const Value.absent(),
     this.updatedAtMillis = const Value.absent(),
     this.provenance = const Value.absent(),
+    this.originalProvenance = const Value.absent(),
+    this.writeZoneOffsetMinutes = const Value.absent(),
+    this.writeZoneName = const Value.absent(),
+    this.updatedZoneOffsetMinutes = const Value.absent(),
+    this.updatedZoneName = const Value.absent(),
     this.userConfirmed = const Value.absent(),
     this.vocabularyVersion = const Value.absent(),
     this.rowid = const Value.absent(),
@@ -3090,6 +3334,11 @@ class HealthRecordRowsCompanion extends UpdateCompanion<HealthRecordRow> {
     required int recordedAtMillis,
     required int updatedAtMillis,
     required String provenance,
+    this.originalProvenance = const Value.absent(),
+    this.writeZoneOffsetMinutes = const Value.absent(),
+    this.writeZoneName = const Value.absent(),
+    this.updatedZoneOffsetMinutes = const Value.absent(),
+    this.updatedZoneName = const Value.absent(),
     required bool userConfirmed,
     required int vocabularyVersion,
     this.rowid = const Value.absent(),
@@ -3112,6 +3361,11 @@ class HealthRecordRowsCompanion extends UpdateCompanion<HealthRecordRow> {
     Expression<int>? recordedAtMillis,
     Expression<int>? updatedAtMillis,
     Expression<String>? provenance,
+    Expression<String>? originalProvenance,
+    Expression<int>? writeZoneOffsetMinutes,
+    Expression<String>? writeZoneName,
+    Expression<int>? updatedZoneOffsetMinutes,
+    Expression<String>? updatedZoneName,
     Expression<bool>? userConfirmed,
     Expression<int>? vocabularyVersion,
     Expression<int>? rowid,
@@ -3126,6 +3380,13 @@ class HealthRecordRowsCompanion extends UpdateCompanion<HealthRecordRow> {
       if (recordedAtMillis != null) 'recorded_at_millis': recordedAtMillis,
       if (updatedAtMillis != null) 'updated_at_millis': updatedAtMillis,
       if (provenance != null) 'provenance': provenance,
+      if (originalProvenance != null) 'original_provenance': originalProvenance,
+      if (writeZoneOffsetMinutes != null)
+        'write_zone_offset_minutes': writeZoneOffsetMinutes,
+      if (writeZoneName != null) 'write_zone_name': writeZoneName,
+      if (updatedZoneOffsetMinutes != null)
+        'updated_zone_offset_minutes': updatedZoneOffsetMinutes,
+      if (updatedZoneName != null) 'updated_zone_name': updatedZoneName,
       if (userConfirmed != null) 'user_confirmed': userConfirmed,
       if (vocabularyVersion != null) 'vocabulary_version': vocabularyVersion,
       if (rowid != null) 'rowid': rowid,
@@ -3141,6 +3402,11 @@ class HealthRecordRowsCompanion extends UpdateCompanion<HealthRecordRow> {
     Value<int>? recordedAtMillis,
     Value<int>? updatedAtMillis,
     Value<String>? provenance,
+    Value<String?>? originalProvenance,
+    Value<int?>? writeZoneOffsetMinutes,
+    Value<String?>? writeZoneName,
+    Value<int?>? updatedZoneOffsetMinutes,
+    Value<String?>? updatedZoneName,
     Value<bool>? userConfirmed,
     Value<int>? vocabularyVersion,
     Value<int>? rowid,
@@ -3155,6 +3421,13 @@ class HealthRecordRowsCompanion extends UpdateCompanion<HealthRecordRow> {
       recordedAtMillis: recordedAtMillis ?? this.recordedAtMillis,
       updatedAtMillis: updatedAtMillis ?? this.updatedAtMillis,
       provenance: provenance ?? this.provenance,
+      originalProvenance: originalProvenance ?? this.originalProvenance,
+      writeZoneOffsetMinutes:
+          writeZoneOffsetMinutes ?? this.writeZoneOffsetMinutes,
+      writeZoneName: writeZoneName ?? this.writeZoneName,
+      updatedZoneOffsetMinutes:
+          updatedZoneOffsetMinutes ?? this.updatedZoneOffsetMinutes,
+      updatedZoneName: updatedZoneName ?? this.updatedZoneName,
       userConfirmed: userConfirmed ?? this.userConfirmed,
       vocabularyVersion: vocabularyVersion ?? this.vocabularyVersion,
       rowid: rowid ?? this.rowid,
@@ -3190,6 +3463,25 @@ class HealthRecordRowsCompanion extends UpdateCompanion<HealthRecordRow> {
     if (provenance.present) {
       map['provenance'] = Variable<String>(provenance.value);
     }
+    if (originalProvenance.present) {
+      map['original_provenance'] = Variable<String>(originalProvenance.value);
+    }
+    if (writeZoneOffsetMinutes.present) {
+      map['write_zone_offset_minutes'] = Variable<int>(
+        writeZoneOffsetMinutes.value,
+      );
+    }
+    if (writeZoneName.present) {
+      map['write_zone_name'] = Variable<String>(writeZoneName.value);
+    }
+    if (updatedZoneOffsetMinutes.present) {
+      map['updated_zone_offset_minutes'] = Variable<int>(
+        updatedZoneOffsetMinutes.value,
+      );
+    }
+    if (updatedZoneName.present) {
+      map['updated_zone_name'] = Variable<String>(updatedZoneName.value);
+    }
     if (userConfirmed.present) {
       map['user_confirmed'] = Variable<bool>(userConfirmed.value);
     }
@@ -3213,6 +3505,11 @@ class HealthRecordRowsCompanion extends UpdateCompanion<HealthRecordRow> {
           ..write('recordedAtMillis: $recordedAtMillis, ')
           ..write('updatedAtMillis: $updatedAtMillis, ')
           ..write('provenance: $provenance, ')
+          ..write('originalProvenance: $originalProvenance, ')
+          ..write('writeZoneOffsetMinutes: $writeZoneOffsetMinutes, ')
+          ..write('writeZoneName: $writeZoneName, ')
+          ..write('updatedZoneOffsetMinutes: $updatedZoneOffsetMinutes, ')
+          ..write('updatedZoneName: $updatedZoneName, ')
           ..write('userConfirmed: $userConfirmed, ')
           ..write('vocabularyVersion: $vocabularyVersion, ')
           ..write('rowid: $rowid')
@@ -3294,6 +3591,60 @@ class $CaptureNoteRowsTable extends CaptureNoteRows
     ),
     defaultValue: const Constant(false),
   );
+  static const VerificationMeta _experiencedDayMeta = const VerificationMeta(
+    'experiencedDay',
+  );
+  @override
+  late final GeneratedColumn<int> experiencedDay = GeneratedColumn<int>(
+    'experienced_day',
+    aliasedName,
+    true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _provenanceMeta = const VerificationMeta(
+    'provenance',
+  );
+  @override
+  late final GeneratedColumn<String> provenance = GeneratedColumn<String>(
+    'provenance',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _originalProvenanceMeta =
+      const VerificationMeta('originalProvenance');
+  @override
+  late final GeneratedColumn<String> originalProvenance =
+      GeneratedColumn<String>(
+        'original_provenance',
+        aliasedName,
+        true,
+        type: DriftSqlType.string,
+        requiredDuringInsert: false,
+      );
+  static const VerificationMeta _writeZoneOffsetMinutesMeta =
+      const VerificationMeta('writeZoneOffsetMinutes');
+  @override
+  late final GeneratedColumn<int> writeZoneOffsetMinutes = GeneratedColumn<int>(
+    'write_zone_offset_minutes',
+    aliasedName,
+    true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _writeZoneNameMeta = const VerificationMeta(
+    'writeZoneName',
+  );
+  @override
+  late final GeneratedColumn<String> writeZoneName = GeneratedColumn<String>(
+    'write_zone_name',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
   @override
   List<GeneratedColumn> get $columns => [
     id,
@@ -3302,6 +3653,11 @@ class $CaptureNoteRowsTable extends CaptureNoteRows
     createdAtMillis,
     updatedAtMillis,
     keepInComfortKit,
+    experiencedDay,
+    provenance,
+    originalProvenance,
+    writeZoneOffsetMinutes,
+    writeZoneName,
   ];
   @override
   String get aliasedName => _alias ?? actualTableName;
@@ -3365,6 +3721,48 @@ class $CaptureNoteRowsTable extends CaptureNoteRows
         ),
       );
     }
+    if (data.containsKey('experienced_day')) {
+      context.handle(
+        _experiencedDayMeta,
+        experiencedDay.isAcceptableOrUnknown(
+          data['experienced_day']!,
+          _experiencedDayMeta,
+        ),
+      );
+    }
+    if (data.containsKey('provenance')) {
+      context.handle(
+        _provenanceMeta,
+        provenance.isAcceptableOrUnknown(data['provenance']!, _provenanceMeta),
+      );
+    }
+    if (data.containsKey('original_provenance')) {
+      context.handle(
+        _originalProvenanceMeta,
+        originalProvenance.isAcceptableOrUnknown(
+          data['original_provenance']!,
+          _originalProvenanceMeta,
+        ),
+      );
+    }
+    if (data.containsKey('write_zone_offset_minutes')) {
+      context.handle(
+        _writeZoneOffsetMinutesMeta,
+        writeZoneOffsetMinutes.isAcceptableOrUnknown(
+          data['write_zone_offset_minutes']!,
+          _writeZoneOffsetMinutesMeta,
+        ),
+      );
+    }
+    if (data.containsKey('write_zone_name')) {
+      context.handle(
+        _writeZoneNameMeta,
+        writeZoneName.isAcceptableOrUnknown(
+          data['write_zone_name']!,
+          _writeZoneNameMeta,
+        ),
+      );
+    }
     return context;
   }
 
@@ -3398,6 +3796,26 @@ class $CaptureNoteRowsTable extends CaptureNoteRows
         DriftSqlType.bool,
         data['${effectivePrefix}keep_in_comfort_kit'],
       )!,
+      experiencedDay: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}experienced_day'],
+      ),
+      provenance: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}provenance'],
+      ),
+      originalProvenance: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}original_provenance'],
+      ),
+      writeZoneOffsetMinutes: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}write_zone_offset_minutes'],
+      ),
+      writeZoneName: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}write_zone_name'],
+      ),
     );
   }
 
@@ -3414,6 +3832,13 @@ class CaptureNoteRow extends DataClass implements Insertable<CaptureNoteRow> {
   final int createdAtMillis;
   final int updatedAtMillis;
   final bool keepInComfortKit;
+
+  /// Unknown legacy experienced dates remain undated; never infer from UTC.
+  final int? experiencedDay;
+  final String? provenance;
+  final String? originalProvenance;
+  final int? writeZoneOffsetMinutes;
+  final String? writeZoneName;
   const CaptureNoteRow({
     required this.id,
     required this.content,
@@ -3421,6 +3846,11 @@ class CaptureNoteRow extends DataClass implements Insertable<CaptureNoteRow> {
     required this.createdAtMillis,
     required this.updatedAtMillis,
     required this.keepInComfortKit,
+    this.experiencedDay,
+    this.provenance,
+    this.originalProvenance,
+    this.writeZoneOffsetMinutes,
+    this.writeZoneName,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -3431,6 +3861,21 @@ class CaptureNoteRow extends DataClass implements Insertable<CaptureNoteRow> {
     map['created_at_millis'] = Variable<int>(createdAtMillis);
     map['updated_at_millis'] = Variable<int>(updatedAtMillis);
     map['keep_in_comfort_kit'] = Variable<bool>(keepInComfortKit);
+    if (!nullToAbsent || experiencedDay != null) {
+      map['experienced_day'] = Variable<int>(experiencedDay);
+    }
+    if (!nullToAbsent || provenance != null) {
+      map['provenance'] = Variable<String>(provenance);
+    }
+    if (!nullToAbsent || originalProvenance != null) {
+      map['original_provenance'] = Variable<String>(originalProvenance);
+    }
+    if (!nullToAbsent || writeZoneOffsetMinutes != null) {
+      map['write_zone_offset_minutes'] = Variable<int>(writeZoneOffsetMinutes);
+    }
+    if (!nullToAbsent || writeZoneName != null) {
+      map['write_zone_name'] = Variable<String>(writeZoneName);
+    }
     return map;
   }
 
@@ -3442,6 +3887,21 @@ class CaptureNoteRow extends DataClass implements Insertable<CaptureNoteRow> {
       createdAtMillis: Value(createdAtMillis),
       updatedAtMillis: Value(updatedAtMillis),
       keepInComfortKit: Value(keepInComfortKit),
+      experiencedDay: experiencedDay == null && nullToAbsent
+          ? const Value.absent()
+          : Value(experiencedDay),
+      provenance: provenance == null && nullToAbsent
+          ? const Value.absent()
+          : Value(provenance),
+      originalProvenance: originalProvenance == null && nullToAbsent
+          ? const Value.absent()
+          : Value(originalProvenance),
+      writeZoneOffsetMinutes: writeZoneOffsetMinutes == null && nullToAbsent
+          ? const Value.absent()
+          : Value(writeZoneOffsetMinutes),
+      writeZoneName: writeZoneName == null && nullToAbsent
+          ? const Value.absent()
+          : Value(writeZoneName),
     );
   }
 
@@ -3457,6 +3917,15 @@ class CaptureNoteRow extends DataClass implements Insertable<CaptureNoteRow> {
       createdAtMillis: serializer.fromJson<int>(json['createdAtMillis']),
       updatedAtMillis: serializer.fromJson<int>(json['updatedAtMillis']),
       keepInComfortKit: serializer.fromJson<bool>(json['keepInComfortKit']),
+      experiencedDay: serializer.fromJson<int?>(json['experiencedDay']),
+      provenance: serializer.fromJson<String?>(json['provenance']),
+      originalProvenance: serializer.fromJson<String?>(
+        json['originalProvenance'],
+      ),
+      writeZoneOffsetMinutes: serializer.fromJson<int?>(
+        json['writeZoneOffsetMinutes'],
+      ),
+      writeZoneName: serializer.fromJson<String?>(json['writeZoneName']),
     );
   }
   @override
@@ -3469,6 +3938,11 @@ class CaptureNoteRow extends DataClass implements Insertable<CaptureNoteRow> {
       'createdAtMillis': serializer.toJson<int>(createdAtMillis),
       'updatedAtMillis': serializer.toJson<int>(updatedAtMillis),
       'keepInComfortKit': serializer.toJson<bool>(keepInComfortKit),
+      'experiencedDay': serializer.toJson<int?>(experiencedDay),
+      'provenance': serializer.toJson<String?>(provenance),
+      'originalProvenance': serializer.toJson<String?>(originalProvenance),
+      'writeZoneOffsetMinutes': serializer.toJson<int?>(writeZoneOffsetMinutes),
+      'writeZoneName': serializer.toJson<String?>(writeZoneName),
     };
   }
 
@@ -3479,6 +3953,11 @@ class CaptureNoteRow extends DataClass implements Insertable<CaptureNoteRow> {
     int? createdAtMillis,
     int? updatedAtMillis,
     bool? keepInComfortKit,
+    Value<int?> experiencedDay = const Value.absent(),
+    Value<String?> provenance = const Value.absent(),
+    Value<String?> originalProvenance = const Value.absent(),
+    Value<int?> writeZoneOffsetMinutes = const Value.absent(),
+    Value<String?> writeZoneName = const Value.absent(),
   }) => CaptureNoteRow(
     id: id ?? this.id,
     content: content ?? this.content,
@@ -3486,6 +3965,19 @@ class CaptureNoteRow extends DataClass implements Insertable<CaptureNoteRow> {
     createdAtMillis: createdAtMillis ?? this.createdAtMillis,
     updatedAtMillis: updatedAtMillis ?? this.updatedAtMillis,
     keepInComfortKit: keepInComfortKit ?? this.keepInComfortKit,
+    experiencedDay: experiencedDay.present
+        ? experiencedDay.value
+        : this.experiencedDay,
+    provenance: provenance.present ? provenance.value : this.provenance,
+    originalProvenance: originalProvenance.present
+        ? originalProvenance.value
+        : this.originalProvenance,
+    writeZoneOffsetMinutes: writeZoneOffsetMinutes.present
+        ? writeZoneOffsetMinutes.value
+        : this.writeZoneOffsetMinutes,
+    writeZoneName: writeZoneName.present
+        ? writeZoneName.value
+        : this.writeZoneName,
   );
   CaptureNoteRow copyWithCompanion(CaptureNoteRowsCompanion data) {
     return CaptureNoteRow(
@@ -3501,6 +3993,21 @@ class CaptureNoteRow extends DataClass implements Insertable<CaptureNoteRow> {
       keepInComfortKit: data.keepInComfortKit.present
           ? data.keepInComfortKit.value
           : this.keepInComfortKit,
+      experiencedDay: data.experiencedDay.present
+          ? data.experiencedDay.value
+          : this.experiencedDay,
+      provenance: data.provenance.present
+          ? data.provenance.value
+          : this.provenance,
+      originalProvenance: data.originalProvenance.present
+          ? data.originalProvenance.value
+          : this.originalProvenance,
+      writeZoneOffsetMinutes: data.writeZoneOffsetMinutes.present
+          ? data.writeZoneOffsetMinutes.value
+          : this.writeZoneOffsetMinutes,
+      writeZoneName: data.writeZoneName.present
+          ? data.writeZoneName.value
+          : this.writeZoneName,
     );
   }
 
@@ -3512,7 +4019,12 @@ class CaptureNoteRow extends DataClass implements Insertable<CaptureNoteRow> {
           ..write('source: $source, ')
           ..write('createdAtMillis: $createdAtMillis, ')
           ..write('updatedAtMillis: $updatedAtMillis, ')
-          ..write('keepInComfortKit: $keepInComfortKit')
+          ..write('keepInComfortKit: $keepInComfortKit, ')
+          ..write('experiencedDay: $experiencedDay, ')
+          ..write('provenance: $provenance, ')
+          ..write('originalProvenance: $originalProvenance, ')
+          ..write('writeZoneOffsetMinutes: $writeZoneOffsetMinutes, ')
+          ..write('writeZoneName: $writeZoneName')
           ..write(')'))
         .toString();
   }
@@ -3525,6 +4037,11 @@ class CaptureNoteRow extends DataClass implements Insertable<CaptureNoteRow> {
     createdAtMillis,
     updatedAtMillis,
     keepInComfortKit,
+    experiencedDay,
+    provenance,
+    originalProvenance,
+    writeZoneOffsetMinutes,
+    writeZoneName,
   );
   @override
   bool operator ==(Object other) =>
@@ -3535,7 +4052,12 @@ class CaptureNoteRow extends DataClass implements Insertable<CaptureNoteRow> {
           other.source == this.source &&
           other.createdAtMillis == this.createdAtMillis &&
           other.updatedAtMillis == this.updatedAtMillis &&
-          other.keepInComfortKit == this.keepInComfortKit);
+          other.keepInComfortKit == this.keepInComfortKit &&
+          other.experiencedDay == this.experiencedDay &&
+          other.provenance == this.provenance &&
+          other.originalProvenance == this.originalProvenance &&
+          other.writeZoneOffsetMinutes == this.writeZoneOffsetMinutes &&
+          other.writeZoneName == this.writeZoneName);
 }
 
 class CaptureNoteRowsCompanion extends UpdateCompanion<CaptureNoteRow> {
@@ -3545,6 +4067,11 @@ class CaptureNoteRowsCompanion extends UpdateCompanion<CaptureNoteRow> {
   final Value<int> createdAtMillis;
   final Value<int> updatedAtMillis;
   final Value<bool> keepInComfortKit;
+  final Value<int?> experiencedDay;
+  final Value<String?> provenance;
+  final Value<String?> originalProvenance;
+  final Value<int?> writeZoneOffsetMinutes;
+  final Value<String?> writeZoneName;
   final Value<int> rowid;
   const CaptureNoteRowsCompanion({
     this.id = const Value.absent(),
@@ -3553,6 +4080,11 @@ class CaptureNoteRowsCompanion extends UpdateCompanion<CaptureNoteRow> {
     this.createdAtMillis = const Value.absent(),
     this.updatedAtMillis = const Value.absent(),
     this.keepInComfortKit = const Value.absent(),
+    this.experiencedDay = const Value.absent(),
+    this.provenance = const Value.absent(),
+    this.originalProvenance = const Value.absent(),
+    this.writeZoneOffsetMinutes = const Value.absent(),
+    this.writeZoneName = const Value.absent(),
     this.rowid = const Value.absent(),
   });
   CaptureNoteRowsCompanion.insert({
@@ -3562,6 +4094,11 @@ class CaptureNoteRowsCompanion extends UpdateCompanion<CaptureNoteRow> {
     required int createdAtMillis,
     this.updatedAtMillis = const Value.absent(),
     this.keepInComfortKit = const Value.absent(),
+    this.experiencedDay = const Value.absent(),
+    this.provenance = const Value.absent(),
+    this.originalProvenance = const Value.absent(),
+    this.writeZoneOffsetMinutes = const Value.absent(),
+    this.writeZoneName = const Value.absent(),
     this.rowid = const Value.absent(),
   }) : id = Value(id),
        content = Value(content),
@@ -3574,6 +4111,11 @@ class CaptureNoteRowsCompanion extends UpdateCompanion<CaptureNoteRow> {
     Expression<int>? createdAtMillis,
     Expression<int>? updatedAtMillis,
     Expression<bool>? keepInComfortKit,
+    Expression<int>? experiencedDay,
+    Expression<String>? provenance,
+    Expression<String>? originalProvenance,
+    Expression<int>? writeZoneOffsetMinutes,
+    Expression<String>? writeZoneName,
     Expression<int>? rowid,
   }) {
     return RawValuesInsertable({
@@ -3583,6 +4125,12 @@ class CaptureNoteRowsCompanion extends UpdateCompanion<CaptureNoteRow> {
       if (createdAtMillis != null) 'created_at_millis': createdAtMillis,
       if (updatedAtMillis != null) 'updated_at_millis': updatedAtMillis,
       if (keepInComfortKit != null) 'keep_in_comfort_kit': keepInComfortKit,
+      if (experiencedDay != null) 'experienced_day': experiencedDay,
+      if (provenance != null) 'provenance': provenance,
+      if (originalProvenance != null) 'original_provenance': originalProvenance,
+      if (writeZoneOffsetMinutes != null)
+        'write_zone_offset_minutes': writeZoneOffsetMinutes,
+      if (writeZoneName != null) 'write_zone_name': writeZoneName,
       if (rowid != null) 'rowid': rowid,
     });
   }
@@ -3594,6 +4142,11 @@ class CaptureNoteRowsCompanion extends UpdateCompanion<CaptureNoteRow> {
     Value<int>? createdAtMillis,
     Value<int>? updatedAtMillis,
     Value<bool>? keepInComfortKit,
+    Value<int?>? experiencedDay,
+    Value<String?>? provenance,
+    Value<String?>? originalProvenance,
+    Value<int?>? writeZoneOffsetMinutes,
+    Value<String?>? writeZoneName,
     Value<int>? rowid,
   }) {
     return CaptureNoteRowsCompanion(
@@ -3603,6 +4156,12 @@ class CaptureNoteRowsCompanion extends UpdateCompanion<CaptureNoteRow> {
       createdAtMillis: createdAtMillis ?? this.createdAtMillis,
       updatedAtMillis: updatedAtMillis ?? this.updatedAtMillis,
       keepInComfortKit: keepInComfortKit ?? this.keepInComfortKit,
+      experiencedDay: experiencedDay ?? this.experiencedDay,
+      provenance: provenance ?? this.provenance,
+      originalProvenance: originalProvenance ?? this.originalProvenance,
+      writeZoneOffsetMinutes:
+          writeZoneOffsetMinutes ?? this.writeZoneOffsetMinutes,
+      writeZoneName: writeZoneName ?? this.writeZoneName,
       rowid: rowid ?? this.rowid,
     );
   }
@@ -3628,6 +4187,23 @@ class CaptureNoteRowsCompanion extends UpdateCompanion<CaptureNoteRow> {
     if (keepInComfortKit.present) {
       map['keep_in_comfort_kit'] = Variable<bool>(keepInComfortKit.value);
     }
+    if (experiencedDay.present) {
+      map['experienced_day'] = Variable<int>(experiencedDay.value);
+    }
+    if (provenance.present) {
+      map['provenance'] = Variable<String>(provenance.value);
+    }
+    if (originalProvenance.present) {
+      map['original_provenance'] = Variable<String>(originalProvenance.value);
+    }
+    if (writeZoneOffsetMinutes.present) {
+      map['write_zone_offset_minutes'] = Variable<int>(
+        writeZoneOffsetMinutes.value,
+      );
+    }
+    if (writeZoneName.present) {
+      map['write_zone_name'] = Variable<String>(writeZoneName.value);
+    }
     if (rowid.present) {
       map['rowid'] = Variable<int>(rowid.value);
     }
@@ -3643,6 +4219,11 @@ class CaptureNoteRowsCompanion extends UpdateCompanion<CaptureNoteRow> {
           ..write('createdAtMillis: $createdAtMillis, ')
           ..write('updatedAtMillis: $updatedAtMillis, ')
           ..write('keepInComfortKit: $keepInComfortKit, ')
+          ..write('experiencedDay: $experiencedDay, ')
+          ..write('provenance: $provenance, ')
+          ..write('originalProvenance: $originalProvenance, ')
+          ..write('writeZoneOffsetMinutes: $writeZoneOffsetMinutes, ')
+          ..write('writeZoneName: $writeZoneName, ')
           ..write('rowid: $rowid')
           ..write(')'))
         .toString();
@@ -3695,12 +4276,107 @@ class $MomentCheckInRowsTable extends MomentCheckInRows
     type: DriftSqlType.int,
     requiredDuringInsert: true,
   );
+  static const VerificationMeta _experiencedDayMeta = const VerificationMeta(
+    'experiencedDay',
+  );
+  @override
+  late final GeneratedColumn<int> experiencedDay = GeneratedColumn<int>(
+    'experienced_day',
+    aliasedName,
+    true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _provenanceMeta = const VerificationMeta(
+    'provenance',
+  );
+  @override
+  late final GeneratedColumn<String> provenance = GeneratedColumn<String>(
+    'provenance',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _writeZoneOffsetMinutesMeta =
+      const VerificationMeta('writeZoneOffsetMinutes');
+  @override
+  late final GeneratedColumn<int> writeZoneOffsetMinutes = GeneratedColumn<int>(
+    'write_zone_offset_minutes',
+    aliasedName,
+    true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _writeZoneNameMeta = const VerificationMeta(
+    'writeZoneName',
+  );
+  @override
+  late final GeneratedColumn<String> writeZoneName = GeneratedColumn<String>(
+    'write_zone_name',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _updatedAtMillisMeta = const VerificationMeta(
+    'updatedAtMillis',
+  );
+  @override
+  late final GeneratedColumn<int> updatedAtMillis = GeneratedColumn<int>(
+    'updated_at_millis',
+    aliasedName,
+    true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _originalProvenanceMeta =
+      const VerificationMeta('originalProvenance');
+  @override
+  late final GeneratedColumn<String> originalProvenance =
+      GeneratedColumn<String>(
+        'original_provenance',
+        aliasedName,
+        true,
+        type: DriftSqlType.string,
+        requiredDuringInsert: false,
+      );
+  static const VerificationMeta _updatedZoneOffsetMinutesMeta =
+      const VerificationMeta('updatedZoneOffsetMinutes');
+  @override
+  late final GeneratedColumn<int> updatedZoneOffsetMinutes =
+      GeneratedColumn<int>(
+        'updated_zone_offset_minutes',
+        aliasedName,
+        true,
+        type: DriftSqlType.int,
+        requiredDuringInsert: false,
+      );
+  static const VerificationMeta _updatedZoneNameMeta = const VerificationMeta(
+    'updatedZoneName',
+  );
+  @override
+  late final GeneratedColumn<String> updatedZoneName = GeneratedColumn<String>(
+    'updated_zone_name',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
   @override
   List<GeneratedColumn> get $columns => [
     id,
     state,
     occurredAtMillis,
     createdAtMillis,
+    experiencedDay,
+    provenance,
+    writeZoneOffsetMinutes,
+    writeZoneName,
+    updatedAtMillis,
+    originalProvenance,
+    updatedZoneOffsetMinutes,
+    updatedZoneName,
   ];
   @override
   String get aliasedName => _alias ?? actualTableName;
@@ -3749,6 +4425,75 @@ class $MomentCheckInRowsTable extends MomentCheckInRows
     } else if (isInserting) {
       context.missing(_createdAtMillisMeta);
     }
+    if (data.containsKey('experienced_day')) {
+      context.handle(
+        _experiencedDayMeta,
+        experiencedDay.isAcceptableOrUnknown(
+          data['experienced_day']!,
+          _experiencedDayMeta,
+        ),
+      );
+    }
+    if (data.containsKey('provenance')) {
+      context.handle(
+        _provenanceMeta,
+        provenance.isAcceptableOrUnknown(data['provenance']!, _provenanceMeta),
+      );
+    }
+    if (data.containsKey('write_zone_offset_minutes')) {
+      context.handle(
+        _writeZoneOffsetMinutesMeta,
+        writeZoneOffsetMinutes.isAcceptableOrUnknown(
+          data['write_zone_offset_minutes']!,
+          _writeZoneOffsetMinutesMeta,
+        ),
+      );
+    }
+    if (data.containsKey('write_zone_name')) {
+      context.handle(
+        _writeZoneNameMeta,
+        writeZoneName.isAcceptableOrUnknown(
+          data['write_zone_name']!,
+          _writeZoneNameMeta,
+        ),
+      );
+    }
+    if (data.containsKey('updated_at_millis')) {
+      context.handle(
+        _updatedAtMillisMeta,
+        updatedAtMillis.isAcceptableOrUnknown(
+          data['updated_at_millis']!,
+          _updatedAtMillisMeta,
+        ),
+      );
+    }
+    if (data.containsKey('original_provenance')) {
+      context.handle(
+        _originalProvenanceMeta,
+        originalProvenance.isAcceptableOrUnknown(
+          data['original_provenance']!,
+          _originalProvenanceMeta,
+        ),
+      );
+    }
+    if (data.containsKey('updated_zone_offset_minutes')) {
+      context.handle(
+        _updatedZoneOffsetMinutesMeta,
+        updatedZoneOffsetMinutes.isAcceptableOrUnknown(
+          data['updated_zone_offset_minutes']!,
+          _updatedZoneOffsetMinutesMeta,
+        ),
+      );
+    }
+    if (data.containsKey('updated_zone_name')) {
+      context.handle(
+        _updatedZoneNameMeta,
+        updatedZoneName.isAcceptableOrUnknown(
+          data['updated_zone_name']!,
+          _updatedZoneNameMeta,
+        ),
+      );
+    }
     return context;
   }
 
@@ -3774,6 +4519,38 @@ class $MomentCheckInRowsTable extends MomentCheckInRows
         DriftSqlType.int,
         data['${effectivePrefix}created_at_millis'],
       )!,
+      experiencedDay: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}experienced_day'],
+      ),
+      provenance: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}provenance'],
+      ),
+      writeZoneOffsetMinutes: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}write_zone_offset_minutes'],
+      ),
+      writeZoneName: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}write_zone_name'],
+      ),
+      updatedAtMillis: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}updated_at_millis'],
+      ),
+      originalProvenance: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}original_provenance'],
+      ),
+      updatedZoneOffsetMinutes: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}updated_zone_offset_minutes'],
+      ),
+      updatedZoneName: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}updated_zone_name'],
+      ),
     );
   }
 
@@ -3789,11 +4566,27 @@ class MomentCheckInRow extends DataClass
   final String state;
   final int occurredAtMillis;
   final int createdAtMillis;
+  final int? experiencedDay;
+  final String? provenance;
+  final int? writeZoneOffsetMinutes;
+  final String? writeZoneName;
+  final int? updatedAtMillis;
+  final String? originalProvenance;
+  final int? updatedZoneOffsetMinutes;
+  final String? updatedZoneName;
   const MomentCheckInRow({
     required this.id,
     required this.state,
     required this.occurredAtMillis,
     required this.createdAtMillis,
+    this.experiencedDay,
+    this.provenance,
+    this.writeZoneOffsetMinutes,
+    this.writeZoneName,
+    this.updatedAtMillis,
+    this.originalProvenance,
+    this.updatedZoneOffsetMinutes,
+    this.updatedZoneName,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -3802,6 +4595,32 @@ class MomentCheckInRow extends DataClass
     map['state'] = Variable<String>(state);
     map['occurred_at_millis'] = Variable<int>(occurredAtMillis);
     map['created_at_millis'] = Variable<int>(createdAtMillis);
+    if (!nullToAbsent || experiencedDay != null) {
+      map['experienced_day'] = Variable<int>(experiencedDay);
+    }
+    if (!nullToAbsent || provenance != null) {
+      map['provenance'] = Variable<String>(provenance);
+    }
+    if (!nullToAbsent || writeZoneOffsetMinutes != null) {
+      map['write_zone_offset_minutes'] = Variable<int>(writeZoneOffsetMinutes);
+    }
+    if (!nullToAbsent || writeZoneName != null) {
+      map['write_zone_name'] = Variable<String>(writeZoneName);
+    }
+    if (!nullToAbsent || updatedAtMillis != null) {
+      map['updated_at_millis'] = Variable<int>(updatedAtMillis);
+    }
+    if (!nullToAbsent || originalProvenance != null) {
+      map['original_provenance'] = Variable<String>(originalProvenance);
+    }
+    if (!nullToAbsent || updatedZoneOffsetMinutes != null) {
+      map['updated_zone_offset_minutes'] = Variable<int>(
+        updatedZoneOffsetMinutes,
+      );
+    }
+    if (!nullToAbsent || updatedZoneName != null) {
+      map['updated_zone_name'] = Variable<String>(updatedZoneName);
+    }
     return map;
   }
 
@@ -3811,6 +4630,30 @@ class MomentCheckInRow extends DataClass
       state: Value(state),
       occurredAtMillis: Value(occurredAtMillis),
       createdAtMillis: Value(createdAtMillis),
+      experiencedDay: experiencedDay == null && nullToAbsent
+          ? const Value.absent()
+          : Value(experiencedDay),
+      provenance: provenance == null && nullToAbsent
+          ? const Value.absent()
+          : Value(provenance),
+      writeZoneOffsetMinutes: writeZoneOffsetMinutes == null && nullToAbsent
+          ? const Value.absent()
+          : Value(writeZoneOffsetMinutes),
+      writeZoneName: writeZoneName == null && nullToAbsent
+          ? const Value.absent()
+          : Value(writeZoneName),
+      updatedAtMillis: updatedAtMillis == null && nullToAbsent
+          ? const Value.absent()
+          : Value(updatedAtMillis),
+      originalProvenance: originalProvenance == null && nullToAbsent
+          ? const Value.absent()
+          : Value(originalProvenance),
+      updatedZoneOffsetMinutes: updatedZoneOffsetMinutes == null && nullToAbsent
+          ? const Value.absent()
+          : Value(updatedZoneOffsetMinutes),
+      updatedZoneName: updatedZoneName == null && nullToAbsent
+          ? const Value.absent()
+          : Value(updatedZoneName),
     );
   }
 
@@ -3824,6 +4667,20 @@ class MomentCheckInRow extends DataClass
       state: serializer.fromJson<String>(json['state']),
       occurredAtMillis: serializer.fromJson<int>(json['occurredAtMillis']),
       createdAtMillis: serializer.fromJson<int>(json['createdAtMillis']),
+      experiencedDay: serializer.fromJson<int?>(json['experiencedDay']),
+      provenance: serializer.fromJson<String?>(json['provenance']),
+      writeZoneOffsetMinutes: serializer.fromJson<int?>(
+        json['writeZoneOffsetMinutes'],
+      ),
+      writeZoneName: serializer.fromJson<String?>(json['writeZoneName']),
+      updatedAtMillis: serializer.fromJson<int?>(json['updatedAtMillis']),
+      originalProvenance: serializer.fromJson<String?>(
+        json['originalProvenance'],
+      ),
+      updatedZoneOffsetMinutes: serializer.fromJson<int?>(
+        json['updatedZoneOffsetMinutes'],
+      ),
+      updatedZoneName: serializer.fromJson<String?>(json['updatedZoneName']),
     );
   }
   @override
@@ -3834,6 +4691,16 @@ class MomentCheckInRow extends DataClass
       'state': serializer.toJson<String>(state),
       'occurredAtMillis': serializer.toJson<int>(occurredAtMillis),
       'createdAtMillis': serializer.toJson<int>(createdAtMillis),
+      'experiencedDay': serializer.toJson<int?>(experiencedDay),
+      'provenance': serializer.toJson<String?>(provenance),
+      'writeZoneOffsetMinutes': serializer.toJson<int?>(writeZoneOffsetMinutes),
+      'writeZoneName': serializer.toJson<String?>(writeZoneName),
+      'updatedAtMillis': serializer.toJson<int?>(updatedAtMillis),
+      'originalProvenance': serializer.toJson<String?>(originalProvenance),
+      'updatedZoneOffsetMinutes': serializer.toJson<int?>(
+        updatedZoneOffsetMinutes,
+      ),
+      'updatedZoneName': serializer.toJson<String?>(updatedZoneName),
     };
   }
 
@@ -3842,11 +4709,41 @@ class MomentCheckInRow extends DataClass
     String? state,
     int? occurredAtMillis,
     int? createdAtMillis,
+    Value<int?> experiencedDay = const Value.absent(),
+    Value<String?> provenance = const Value.absent(),
+    Value<int?> writeZoneOffsetMinutes = const Value.absent(),
+    Value<String?> writeZoneName = const Value.absent(),
+    Value<int?> updatedAtMillis = const Value.absent(),
+    Value<String?> originalProvenance = const Value.absent(),
+    Value<int?> updatedZoneOffsetMinutes = const Value.absent(),
+    Value<String?> updatedZoneName = const Value.absent(),
   }) => MomentCheckInRow(
     id: id ?? this.id,
     state: state ?? this.state,
     occurredAtMillis: occurredAtMillis ?? this.occurredAtMillis,
     createdAtMillis: createdAtMillis ?? this.createdAtMillis,
+    experiencedDay: experiencedDay.present
+        ? experiencedDay.value
+        : this.experiencedDay,
+    provenance: provenance.present ? provenance.value : this.provenance,
+    writeZoneOffsetMinutes: writeZoneOffsetMinutes.present
+        ? writeZoneOffsetMinutes.value
+        : this.writeZoneOffsetMinutes,
+    writeZoneName: writeZoneName.present
+        ? writeZoneName.value
+        : this.writeZoneName,
+    updatedAtMillis: updatedAtMillis.present
+        ? updatedAtMillis.value
+        : this.updatedAtMillis,
+    originalProvenance: originalProvenance.present
+        ? originalProvenance.value
+        : this.originalProvenance,
+    updatedZoneOffsetMinutes: updatedZoneOffsetMinutes.present
+        ? updatedZoneOffsetMinutes.value
+        : this.updatedZoneOffsetMinutes,
+    updatedZoneName: updatedZoneName.present
+        ? updatedZoneName.value
+        : this.updatedZoneName,
   );
   MomentCheckInRow copyWithCompanion(MomentCheckInRowsCompanion data) {
     return MomentCheckInRow(
@@ -3858,6 +4755,30 @@ class MomentCheckInRow extends DataClass
       createdAtMillis: data.createdAtMillis.present
           ? data.createdAtMillis.value
           : this.createdAtMillis,
+      experiencedDay: data.experiencedDay.present
+          ? data.experiencedDay.value
+          : this.experiencedDay,
+      provenance: data.provenance.present
+          ? data.provenance.value
+          : this.provenance,
+      writeZoneOffsetMinutes: data.writeZoneOffsetMinutes.present
+          ? data.writeZoneOffsetMinutes.value
+          : this.writeZoneOffsetMinutes,
+      writeZoneName: data.writeZoneName.present
+          ? data.writeZoneName.value
+          : this.writeZoneName,
+      updatedAtMillis: data.updatedAtMillis.present
+          ? data.updatedAtMillis.value
+          : this.updatedAtMillis,
+      originalProvenance: data.originalProvenance.present
+          ? data.originalProvenance.value
+          : this.originalProvenance,
+      updatedZoneOffsetMinutes: data.updatedZoneOffsetMinutes.present
+          ? data.updatedZoneOffsetMinutes.value
+          : this.updatedZoneOffsetMinutes,
+      updatedZoneName: data.updatedZoneName.present
+          ? data.updatedZoneName.value
+          : this.updatedZoneName,
     );
   }
 
@@ -3867,13 +4788,34 @@ class MomentCheckInRow extends DataClass
           ..write('id: $id, ')
           ..write('state: $state, ')
           ..write('occurredAtMillis: $occurredAtMillis, ')
-          ..write('createdAtMillis: $createdAtMillis')
+          ..write('createdAtMillis: $createdAtMillis, ')
+          ..write('experiencedDay: $experiencedDay, ')
+          ..write('provenance: $provenance, ')
+          ..write('writeZoneOffsetMinutes: $writeZoneOffsetMinutes, ')
+          ..write('writeZoneName: $writeZoneName, ')
+          ..write('updatedAtMillis: $updatedAtMillis, ')
+          ..write('originalProvenance: $originalProvenance, ')
+          ..write('updatedZoneOffsetMinutes: $updatedZoneOffsetMinutes, ')
+          ..write('updatedZoneName: $updatedZoneName')
           ..write(')'))
         .toString();
   }
 
   @override
-  int get hashCode => Object.hash(id, state, occurredAtMillis, createdAtMillis);
+  int get hashCode => Object.hash(
+    id,
+    state,
+    occurredAtMillis,
+    createdAtMillis,
+    experiencedDay,
+    provenance,
+    writeZoneOffsetMinutes,
+    writeZoneName,
+    updatedAtMillis,
+    originalProvenance,
+    updatedZoneOffsetMinutes,
+    updatedZoneName,
+  );
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -3881,7 +4823,15 @@ class MomentCheckInRow extends DataClass
           other.id == this.id &&
           other.state == this.state &&
           other.occurredAtMillis == this.occurredAtMillis &&
-          other.createdAtMillis == this.createdAtMillis);
+          other.createdAtMillis == this.createdAtMillis &&
+          other.experiencedDay == this.experiencedDay &&
+          other.provenance == this.provenance &&
+          other.writeZoneOffsetMinutes == this.writeZoneOffsetMinutes &&
+          other.writeZoneName == this.writeZoneName &&
+          other.updatedAtMillis == this.updatedAtMillis &&
+          other.originalProvenance == this.originalProvenance &&
+          other.updatedZoneOffsetMinutes == this.updatedZoneOffsetMinutes &&
+          other.updatedZoneName == this.updatedZoneName);
 }
 
 class MomentCheckInRowsCompanion extends UpdateCompanion<MomentCheckInRow> {
@@ -3889,12 +4839,28 @@ class MomentCheckInRowsCompanion extends UpdateCompanion<MomentCheckInRow> {
   final Value<String> state;
   final Value<int> occurredAtMillis;
   final Value<int> createdAtMillis;
+  final Value<int?> experiencedDay;
+  final Value<String?> provenance;
+  final Value<int?> writeZoneOffsetMinutes;
+  final Value<String?> writeZoneName;
+  final Value<int?> updatedAtMillis;
+  final Value<String?> originalProvenance;
+  final Value<int?> updatedZoneOffsetMinutes;
+  final Value<String?> updatedZoneName;
   final Value<int> rowid;
   const MomentCheckInRowsCompanion({
     this.id = const Value.absent(),
     this.state = const Value.absent(),
     this.occurredAtMillis = const Value.absent(),
     this.createdAtMillis = const Value.absent(),
+    this.experiencedDay = const Value.absent(),
+    this.provenance = const Value.absent(),
+    this.writeZoneOffsetMinutes = const Value.absent(),
+    this.writeZoneName = const Value.absent(),
+    this.updatedAtMillis = const Value.absent(),
+    this.originalProvenance = const Value.absent(),
+    this.updatedZoneOffsetMinutes = const Value.absent(),
+    this.updatedZoneName = const Value.absent(),
     this.rowid = const Value.absent(),
   });
   MomentCheckInRowsCompanion.insert({
@@ -3902,6 +4868,14 @@ class MomentCheckInRowsCompanion extends UpdateCompanion<MomentCheckInRow> {
     required String state,
     required int occurredAtMillis,
     required int createdAtMillis,
+    this.experiencedDay = const Value.absent(),
+    this.provenance = const Value.absent(),
+    this.writeZoneOffsetMinutes = const Value.absent(),
+    this.writeZoneName = const Value.absent(),
+    this.updatedAtMillis = const Value.absent(),
+    this.originalProvenance = const Value.absent(),
+    this.updatedZoneOffsetMinutes = const Value.absent(),
+    this.updatedZoneName = const Value.absent(),
     this.rowid = const Value.absent(),
   }) : id = Value(id),
        state = Value(state),
@@ -3912,6 +4886,14 @@ class MomentCheckInRowsCompanion extends UpdateCompanion<MomentCheckInRow> {
     Expression<String>? state,
     Expression<int>? occurredAtMillis,
     Expression<int>? createdAtMillis,
+    Expression<int>? experiencedDay,
+    Expression<String>? provenance,
+    Expression<int>? writeZoneOffsetMinutes,
+    Expression<String>? writeZoneName,
+    Expression<int>? updatedAtMillis,
+    Expression<String>? originalProvenance,
+    Expression<int>? updatedZoneOffsetMinutes,
+    Expression<String>? updatedZoneName,
     Expression<int>? rowid,
   }) {
     return RawValuesInsertable({
@@ -3919,6 +4901,16 @@ class MomentCheckInRowsCompanion extends UpdateCompanion<MomentCheckInRow> {
       if (state != null) 'state': state,
       if (occurredAtMillis != null) 'occurred_at_millis': occurredAtMillis,
       if (createdAtMillis != null) 'created_at_millis': createdAtMillis,
+      if (experiencedDay != null) 'experienced_day': experiencedDay,
+      if (provenance != null) 'provenance': provenance,
+      if (writeZoneOffsetMinutes != null)
+        'write_zone_offset_minutes': writeZoneOffsetMinutes,
+      if (writeZoneName != null) 'write_zone_name': writeZoneName,
+      if (updatedAtMillis != null) 'updated_at_millis': updatedAtMillis,
+      if (originalProvenance != null) 'original_provenance': originalProvenance,
+      if (updatedZoneOffsetMinutes != null)
+        'updated_zone_offset_minutes': updatedZoneOffsetMinutes,
+      if (updatedZoneName != null) 'updated_zone_name': updatedZoneName,
       if (rowid != null) 'rowid': rowid,
     });
   }
@@ -3928,6 +4920,14 @@ class MomentCheckInRowsCompanion extends UpdateCompanion<MomentCheckInRow> {
     Value<String>? state,
     Value<int>? occurredAtMillis,
     Value<int>? createdAtMillis,
+    Value<int?>? experiencedDay,
+    Value<String?>? provenance,
+    Value<int?>? writeZoneOffsetMinutes,
+    Value<String?>? writeZoneName,
+    Value<int?>? updatedAtMillis,
+    Value<String?>? originalProvenance,
+    Value<int?>? updatedZoneOffsetMinutes,
+    Value<String?>? updatedZoneName,
     Value<int>? rowid,
   }) {
     return MomentCheckInRowsCompanion(
@@ -3935,6 +4935,16 @@ class MomentCheckInRowsCompanion extends UpdateCompanion<MomentCheckInRow> {
       state: state ?? this.state,
       occurredAtMillis: occurredAtMillis ?? this.occurredAtMillis,
       createdAtMillis: createdAtMillis ?? this.createdAtMillis,
+      experiencedDay: experiencedDay ?? this.experiencedDay,
+      provenance: provenance ?? this.provenance,
+      writeZoneOffsetMinutes:
+          writeZoneOffsetMinutes ?? this.writeZoneOffsetMinutes,
+      writeZoneName: writeZoneName ?? this.writeZoneName,
+      updatedAtMillis: updatedAtMillis ?? this.updatedAtMillis,
+      originalProvenance: originalProvenance ?? this.originalProvenance,
+      updatedZoneOffsetMinutes:
+          updatedZoneOffsetMinutes ?? this.updatedZoneOffsetMinutes,
+      updatedZoneName: updatedZoneName ?? this.updatedZoneName,
       rowid: rowid ?? this.rowid,
     );
   }
@@ -3954,6 +4964,34 @@ class MomentCheckInRowsCompanion extends UpdateCompanion<MomentCheckInRow> {
     if (createdAtMillis.present) {
       map['created_at_millis'] = Variable<int>(createdAtMillis.value);
     }
+    if (experiencedDay.present) {
+      map['experienced_day'] = Variable<int>(experiencedDay.value);
+    }
+    if (provenance.present) {
+      map['provenance'] = Variable<String>(provenance.value);
+    }
+    if (writeZoneOffsetMinutes.present) {
+      map['write_zone_offset_minutes'] = Variable<int>(
+        writeZoneOffsetMinutes.value,
+      );
+    }
+    if (writeZoneName.present) {
+      map['write_zone_name'] = Variable<String>(writeZoneName.value);
+    }
+    if (updatedAtMillis.present) {
+      map['updated_at_millis'] = Variable<int>(updatedAtMillis.value);
+    }
+    if (originalProvenance.present) {
+      map['original_provenance'] = Variable<String>(originalProvenance.value);
+    }
+    if (updatedZoneOffsetMinutes.present) {
+      map['updated_zone_offset_minutes'] = Variable<int>(
+        updatedZoneOffsetMinutes.value,
+      );
+    }
+    if (updatedZoneName.present) {
+      map['updated_zone_name'] = Variable<String>(updatedZoneName.value);
+    }
     if (rowid.present) {
       map['rowid'] = Variable<int>(rowid.value);
     }
@@ -3967,6 +5005,14 @@ class MomentCheckInRowsCompanion extends UpdateCompanion<MomentCheckInRow> {
           ..write('state: $state, ')
           ..write('occurredAtMillis: $occurredAtMillis, ')
           ..write('createdAtMillis: $createdAtMillis, ')
+          ..write('experiencedDay: $experiencedDay, ')
+          ..write('provenance: $provenance, ')
+          ..write('writeZoneOffsetMinutes: $writeZoneOffsetMinutes, ')
+          ..write('writeZoneName: $writeZoneName, ')
+          ..write('updatedAtMillis: $updatedAtMillis, ')
+          ..write('originalProvenance: $originalProvenance, ')
+          ..write('updatedZoneOffsetMinutes: $updatedZoneOffsetMinutes, ')
+          ..write('updatedZoneName: $updatedZoneName, ')
           ..write('rowid: $rowid')
           ..write(')'))
         .toString();
@@ -5928,6 +6974,14892 @@ class ComfortReminderPreferenceRowsCompanion
   }
 }
 
+class $RecordHubImpactRowsTable extends RecordHubImpactRows
+    with TableInfo<$RecordHubImpactRowsTable, RecordHubImpactRow> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $RecordHubImpactRowsTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<String> id = GeneratedColumn<String>(
+    'id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _experiencedDayMeta = const VerificationMeta(
+    'experiencedDay',
+  );
+  @override
+  late final GeneratedColumn<int> experiencedDay = GeneratedColumn<int>(
+    'experienced_day',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _recordedAtMillisMeta = const VerificationMeta(
+    'recordedAtMillis',
+  );
+  @override
+  late final GeneratedColumn<int> recordedAtMillis = GeneratedColumn<int>(
+    'recorded_at_millis',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _updatedAtMillisMeta = const VerificationMeta(
+    'updatedAtMillis',
+  );
+  @override
+  late final GeneratedColumn<int> updatedAtMillis = GeneratedColumn<int>(
+    'updated_at_millis',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _originalProvenanceMeta =
+      const VerificationMeta('originalProvenance');
+  @override
+  late final GeneratedColumn<String> originalProvenance =
+      GeneratedColumn<String>(
+        'original_provenance',
+        aliasedName,
+        false,
+        type: DriftSqlType.string,
+        requiredDuringInsert: true,
+      );
+  static const VerificationMeta _provenanceMeta = const VerificationMeta(
+    'provenance',
+  );
+  @override
+  late final GeneratedColumn<String> provenance = GeneratedColumn<String>(
+    'provenance',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _originalWriteZoneIdMeta =
+      const VerificationMeta('originalWriteZoneId');
+  @override
+  late final GeneratedColumn<String> originalWriteZoneId =
+      GeneratedColumn<String>(
+        'original_write_zone_id',
+        aliasedName,
+        true,
+        type: DriftSqlType.string,
+        requiredDuringInsert: false,
+      );
+  static const VerificationMeta _writeZoneIdMeta = const VerificationMeta(
+    'writeZoneId',
+  );
+  @override
+  late final GeneratedColumn<String> writeZoneId = GeneratedColumn<String>(
+    'write_zone_id',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _originalUtcOffsetMinutesMeta =
+      const VerificationMeta('originalUtcOffsetMinutes');
+  @override
+  late final GeneratedColumn<int> originalUtcOffsetMinutes =
+      GeneratedColumn<int>(
+        'original_utc_offset_minutes',
+        aliasedName,
+        true,
+        type: DriftSqlType.int,
+        requiredDuringInsert: false,
+      );
+  static const VerificationMeta _utcOffsetMinutesMeta = const VerificationMeta(
+    'utcOffsetMinutes',
+  );
+  @override
+  late final GeneratedColumn<int> utcOffsetMinutes = GeneratedColumn<int>(
+    'utc_offset_minutes',
+    aliasedName,
+    true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _vocabularyVersionMeta = const VerificationMeta(
+    'vocabularyVersion',
+  );
+  @override
+  late final GeneratedColumn<int> vocabularyVersion = GeneratedColumn<int>(
+    'vocabulary_version',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(1),
+  );
+  static const VerificationMeta _overallMeta = const VerificationMeta(
+    'overall',
+  );
+  @override
+  late final GeneratedColumn<int> overall = GeneratedColumn<int>(
+    'overall',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _workOrSchoolMeta = const VerificationMeta(
+    'workOrSchool',
+  );
+  @override
+  late final GeneratedColumn<bool> workOrSchool = GeneratedColumn<bool>(
+    'work_or_school',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("work_or_school" IN (0, 1))',
+    ),
+    defaultValue: const Constant(false),
+  );
+  static const VerificationMeta _homeResponsibilitiesMeta =
+      const VerificationMeta('homeResponsibilities');
+  @override
+  late final GeneratedColumn<bool> homeResponsibilities = GeneratedColumn<bool>(
+    'home_responsibilities',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("home_responsibilities" IN (0, 1))',
+    ),
+    defaultValue: const Constant(false),
+  );
+  static const VerificationMeta _relationshipsMeta = const VerificationMeta(
+    'relationships',
+  );
+  @override
+  late final GeneratedColumn<bool> relationships = GeneratedColumn<bool>(
+    'relationships',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("relationships" IN (0, 1))',
+    ),
+    defaultValue: const Constant(false),
+  );
+  static const VerificationMeta _socialActivityMeta = const VerificationMeta(
+    'socialActivity',
+  );
+  @override
+  late final GeneratedColumn<bool> socialActivity = GeneratedColumn<bool>(
+    'social_activity',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("social_activity" IN (0, 1))',
+    ),
+    defaultValue: const Constant(false),
+  );
+  static const VerificationMeta _sleepMeta = const VerificationMeta('sleep');
+  @override
+  late final GeneratedColumn<bool> sleep = GeneratedColumn<bool>(
+    'sleep',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("sleep" IN (0, 1))',
+    ),
+    defaultValue: const Constant(false),
+  );
+  static const VerificationMeta _hobbiesOrInterestsMeta =
+      const VerificationMeta('hobbiesOrInterests');
+  @override
+  late final GeneratedColumn<bool> hobbiesOrInterests = GeneratedColumn<bool>(
+    'hobbies_or_interests',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("hobbies_or_interests" IN (0, 1))',
+    ),
+    defaultValue: const Constant(false),
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    id,
+    experiencedDay,
+    recordedAtMillis,
+    updatedAtMillis,
+    originalProvenance,
+    provenance,
+    originalWriteZoneId,
+    writeZoneId,
+    originalUtcOffsetMinutes,
+    utcOffsetMinutes,
+    vocabularyVersion,
+    overall,
+    workOrSchool,
+    homeResponsibilities,
+    relationships,
+    socialActivity,
+    sleep,
+    hobbiesOrInterests,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'record_hub_impact_rows';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<RecordHubImpactRow> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    } else if (isInserting) {
+      context.missing(_idMeta);
+    }
+    if (data.containsKey('experienced_day')) {
+      context.handle(
+        _experiencedDayMeta,
+        experiencedDay.isAcceptableOrUnknown(
+          data['experienced_day']!,
+          _experiencedDayMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_experiencedDayMeta);
+    }
+    if (data.containsKey('recorded_at_millis')) {
+      context.handle(
+        _recordedAtMillisMeta,
+        recordedAtMillis.isAcceptableOrUnknown(
+          data['recorded_at_millis']!,
+          _recordedAtMillisMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_recordedAtMillisMeta);
+    }
+    if (data.containsKey('updated_at_millis')) {
+      context.handle(
+        _updatedAtMillisMeta,
+        updatedAtMillis.isAcceptableOrUnknown(
+          data['updated_at_millis']!,
+          _updatedAtMillisMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_updatedAtMillisMeta);
+    }
+    if (data.containsKey('original_provenance')) {
+      context.handle(
+        _originalProvenanceMeta,
+        originalProvenance.isAcceptableOrUnknown(
+          data['original_provenance']!,
+          _originalProvenanceMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_originalProvenanceMeta);
+    }
+    if (data.containsKey('provenance')) {
+      context.handle(
+        _provenanceMeta,
+        provenance.isAcceptableOrUnknown(data['provenance']!, _provenanceMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_provenanceMeta);
+    }
+    if (data.containsKey('original_write_zone_id')) {
+      context.handle(
+        _originalWriteZoneIdMeta,
+        originalWriteZoneId.isAcceptableOrUnknown(
+          data['original_write_zone_id']!,
+          _originalWriteZoneIdMeta,
+        ),
+      );
+    }
+    if (data.containsKey('write_zone_id')) {
+      context.handle(
+        _writeZoneIdMeta,
+        writeZoneId.isAcceptableOrUnknown(
+          data['write_zone_id']!,
+          _writeZoneIdMeta,
+        ),
+      );
+    }
+    if (data.containsKey('original_utc_offset_minutes')) {
+      context.handle(
+        _originalUtcOffsetMinutesMeta,
+        originalUtcOffsetMinutes.isAcceptableOrUnknown(
+          data['original_utc_offset_minutes']!,
+          _originalUtcOffsetMinutesMeta,
+        ),
+      );
+    }
+    if (data.containsKey('utc_offset_minutes')) {
+      context.handle(
+        _utcOffsetMinutesMeta,
+        utcOffsetMinutes.isAcceptableOrUnknown(
+          data['utc_offset_minutes']!,
+          _utcOffsetMinutesMeta,
+        ),
+      );
+    }
+    if (data.containsKey('vocabulary_version')) {
+      context.handle(
+        _vocabularyVersionMeta,
+        vocabularyVersion.isAcceptableOrUnknown(
+          data['vocabulary_version']!,
+          _vocabularyVersionMeta,
+        ),
+      );
+    }
+    if (data.containsKey('overall')) {
+      context.handle(
+        _overallMeta,
+        overall.isAcceptableOrUnknown(data['overall']!, _overallMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_overallMeta);
+    }
+    if (data.containsKey('work_or_school')) {
+      context.handle(
+        _workOrSchoolMeta,
+        workOrSchool.isAcceptableOrUnknown(
+          data['work_or_school']!,
+          _workOrSchoolMeta,
+        ),
+      );
+    }
+    if (data.containsKey('home_responsibilities')) {
+      context.handle(
+        _homeResponsibilitiesMeta,
+        homeResponsibilities.isAcceptableOrUnknown(
+          data['home_responsibilities']!,
+          _homeResponsibilitiesMeta,
+        ),
+      );
+    }
+    if (data.containsKey('relationships')) {
+      context.handle(
+        _relationshipsMeta,
+        relationships.isAcceptableOrUnknown(
+          data['relationships']!,
+          _relationshipsMeta,
+        ),
+      );
+    }
+    if (data.containsKey('social_activity')) {
+      context.handle(
+        _socialActivityMeta,
+        socialActivity.isAcceptableOrUnknown(
+          data['social_activity']!,
+          _socialActivityMeta,
+        ),
+      );
+    }
+    if (data.containsKey('sleep')) {
+      context.handle(
+        _sleepMeta,
+        sleep.isAcceptableOrUnknown(data['sleep']!, _sleepMeta),
+      );
+    }
+    if (data.containsKey('hobbies_or_interests')) {
+      context.handle(
+        _hobbiesOrInterestsMeta,
+        hobbiesOrInterests.isAcceptableOrUnknown(
+          data['hobbies_or_interests']!,
+          _hobbiesOrInterestsMeta,
+        ),
+      );
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  List<Set<GeneratedColumn>> get uniqueKeys => [
+    {experiencedDay},
+  ];
+  @override
+  RecordHubImpactRow map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return RecordHubImpactRow(
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}id'],
+      )!,
+      experiencedDay: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}experienced_day'],
+      )!,
+      recordedAtMillis: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}recorded_at_millis'],
+      )!,
+      updatedAtMillis: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}updated_at_millis'],
+      )!,
+      originalProvenance: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}original_provenance'],
+      )!,
+      provenance: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}provenance'],
+      )!,
+      originalWriteZoneId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}original_write_zone_id'],
+      ),
+      writeZoneId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}write_zone_id'],
+      ),
+      originalUtcOffsetMinutes: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}original_utc_offset_minutes'],
+      ),
+      utcOffsetMinutes: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}utc_offset_minutes'],
+      ),
+      vocabularyVersion: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}vocabulary_version'],
+      )!,
+      overall: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}overall'],
+      )!,
+      workOrSchool: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}work_or_school'],
+      )!,
+      homeResponsibilities: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}home_responsibilities'],
+      )!,
+      relationships: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}relationships'],
+      )!,
+      socialActivity: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}social_activity'],
+      )!,
+      sleep: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}sleep'],
+      )!,
+      hobbiesOrInterests: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}hobbies_or_interests'],
+      )!,
+    );
+  }
+
+  @override
+  $RecordHubImpactRowsTable createAlias(String alias) {
+    return $RecordHubImpactRowsTable(attachedDatabase, alias);
+  }
+}
+
+class RecordHubImpactRow extends DataClass
+    implements Insertable<RecordHubImpactRow> {
+  final String id;
+  final int experiencedDay;
+  final int recordedAtMillis;
+  final int updatedAtMillis;
+  final String originalProvenance;
+  final String provenance;
+  final String? originalWriteZoneId;
+  final String? writeZoneId;
+  final int? originalUtcOffsetMinutes;
+  final int? utcOffsetMinutes;
+  final int vocabularyVersion;
+  final int overall;
+  final bool workOrSchool;
+  final bool homeResponsibilities;
+  final bool relationships;
+  final bool socialActivity;
+  final bool sleep;
+  final bool hobbiesOrInterests;
+  const RecordHubImpactRow({
+    required this.id,
+    required this.experiencedDay,
+    required this.recordedAtMillis,
+    required this.updatedAtMillis,
+    required this.originalProvenance,
+    required this.provenance,
+    this.originalWriteZoneId,
+    this.writeZoneId,
+    this.originalUtcOffsetMinutes,
+    this.utcOffsetMinutes,
+    required this.vocabularyVersion,
+    required this.overall,
+    required this.workOrSchool,
+    required this.homeResponsibilities,
+    required this.relationships,
+    required this.socialActivity,
+    required this.sleep,
+    required this.hobbiesOrInterests,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<String>(id);
+    map['experienced_day'] = Variable<int>(experiencedDay);
+    map['recorded_at_millis'] = Variable<int>(recordedAtMillis);
+    map['updated_at_millis'] = Variable<int>(updatedAtMillis);
+    map['original_provenance'] = Variable<String>(originalProvenance);
+    map['provenance'] = Variable<String>(provenance);
+    if (!nullToAbsent || originalWriteZoneId != null) {
+      map['original_write_zone_id'] = Variable<String>(originalWriteZoneId);
+    }
+    if (!nullToAbsent || writeZoneId != null) {
+      map['write_zone_id'] = Variable<String>(writeZoneId);
+    }
+    if (!nullToAbsent || originalUtcOffsetMinutes != null) {
+      map['original_utc_offset_minutes'] = Variable<int>(
+        originalUtcOffsetMinutes,
+      );
+    }
+    if (!nullToAbsent || utcOffsetMinutes != null) {
+      map['utc_offset_minutes'] = Variable<int>(utcOffsetMinutes);
+    }
+    map['vocabulary_version'] = Variable<int>(vocabularyVersion);
+    map['overall'] = Variable<int>(overall);
+    map['work_or_school'] = Variable<bool>(workOrSchool);
+    map['home_responsibilities'] = Variable<bool>(homeResponsibilities);
+    map['relationships'] = Variable<bool>(relationships);
+    map['social_activity'] = Variable<bool>(socialActivity);
+    map['sleep'] = Variable<bool>(sleep);
+    map['hobbies_or_interests'] = Variable<bool>(hobbiesOrInterests);
+    return map;
+  }
+
+  RecordHubImpactRowsCompanion toCompanion(bool nullToAbsent) {
+    return RecordHubImpactRowsCompanion(
+      id: Value(id),
+      experiencedDay: Value(experiencedDay),
+      recordedAtMillis: Value(recordedAtMillis),
+      updatedAtMillis: Value(updatedAtMillis),
+      originalProvenance: Value(originalProvenance),
+      provenance: Value(provenance),
+      originalWriteZoneId: originalWriteZoneId == null && nullToAbsent
+          ? const Value.absent()
+          : Value(originalWriteZoneId),
+      writeZoneId: writeZoneId == null && nullToAbsent
+          ? const Value.absent()
+          : Value(writeZoneId),
+      originalUtcOffsetMinutes: originalUtcOffsetMinutes == null && nullToAbsent
+          ? const Value.absent()
+          : Value(originalUtcOffsetMinutes),
+      utcOffsetMinutes: utcOffsetMinutes == null && nullToAbsent
+          ? const Value.absent()
+          : Value(utcOffsetMinutes),
+      vocabularyVersion: Value(vocabularyVersion),
+      overall: Value(overall),
+      workOrSchool: Value(workOrSchool),
+      homeResponsibilities: Value(homeResponsibilities),
+      relationships: Value(relationships),
+      socialActivity: Value(socialActivity),
+      sleep: Value(sleep),
+      hobbiesOrInterests: Value(hobbiesOrInterests),
+    );
+  }
+
+  factory RecordHubImpactRow.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return RecordHubImpactRow(
+      id: serializer.fromJson<String>(json['id']),
+      experiencedDay: serializer.fromJson<int>(json['experiencedDay']),
+      recordedAtMillis: serializer.fromJson<int>(json['recordedAtMillis']),
+      updatedAtMillis: serializer.fromJson<int>(json['updatedAtMillis']),
+      originalProvenance: serializer.fromJson<String>(
+        json['originalProvenance'],
+      ),
+      provenance: serializer.fromJson<String>(json['provenance']),
+      originalWriteZoneId: serializer.fromJson<String?>(
+        json['originalWriteZoneId'],
+      ),
+      writeZoneId: serializer.fromJson<String?>(json['writeZoneId']),
+      originalUtcOffsetMinutes: serializer.fromJson<int?>(
+        json['originalUtcOffsetMinutes'],
+      ),
+      utcOffsetMinutes: serializer.fromJson<int?>(json['utcOffsetMinutes']),
+      vocabularyVersion: serializer.fromJson<int>(json['vocabularyVersion']),
+      overall: serializer.fromJson<int>(json['overall']),
+      workOrSchool: serializer.fromJson<bool>(json['workOrSchool']),
+      homeResponsibilities: serializer.fromJson<bool>(
+        json['homeResponsibilities'],
+      ),
+      relationships: serializer.fromJson<bool>(json['relationships']),
+      socialActivity: serializer.fromJson<bool>(json['socialActivity']),
+      sleep: serializer.fromJson<bool>(json['sleep']),
+      hobbiesOrInterests: serializer.fromJson<bool>(json['hobbiesOrInterests']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<String>(id),
+      'experiencedDay': serializer.toJson<int>(experiencedDay),
+      'recordedAtMillis': serializer.toJson<int>(recordedAtMillis),
+      'updatedAtMillis': serializer.toJson<int>(updatedAtMillis),
+      'originalProvenance': serializer.toJson<String>(originalProvenance),
+      'provenance': serializer.toJson<String>(provenance),
+      'originalWriteZoneId': serializer.toJson<String?>(originalWriteZoneId),
+      'writeZoneId': serializer.toJson<String?>(writeZoneId),
+      'originalUtcOffsetMinutes': serializer.toJson<int?>(
+        originalUtcOffsetMinutes,
+      ),
+      'utcOffsetMinutes': serializer.toJson<int?>(utcOffsetMinutes),
+      'vocabularyVersion': serializer.toJson<int>(vocabularyVersion),
+      'overall': serializer.toJson<int>(overall),
+      'workOrSchool': serializer.toJson<bool>(workOrSchool),
+      'homeResponsibilities': serializer.toJson<bool>(homeResponsibilities),
+      'relationships': serializer.toJson<bool>(relationships),
+      'socialActivity': serializer.toJson<bool>(socialActivity),
+      'sleep': serializer.toJson<bool>(sleep),
+      'hobbiesOrInterests': serializer.toJson<bool>(hobbiesOrInterests),
+    };
+  }
+
+  RecordHubImpactRow copyWith({
+    String? id,
+    int? experiencedDay,
+    int? recordedAtMillis,
+    int? updatedAtMillis,
+    String? originalProvenance,
+    String? provenance,
+    Value<String?> originalWriteZoneId = const Value.absent(),
+    Value<String?> writeZoneId = const Value.absent(),
+    Value<int?> originalUtcOffsetMinutes = const Value.absent(),
+    Value<int?> utcOffsetMinutes = const Value.absent(),
+    int? vocabularyVersion,
+    int? overall,
+    bool? workOrSchool,
+    bool? homeResponsibilities,
+    bool? relationships,
+    bool? socialActivity,
+    bool? sleep,
+    bool? hobbiesOrInterests,
+  }) => RecordHubImpactRow(
+    id: id ?? this.id,
+    experiencedDay: experiencedDay ?? this.experiencedDay,
+    recordedAtMillis: recordedAtMillis ?? this.recordedAtMillis,
+    updatedAtMillis: updatedAtMillis ?? this.updatedAtMillis,
+    originalProvenance: originalProvenance ?? this.originalProvenance,
+    provenance: provenance ?? this.provenance,
+    originalWriteZoneId: originalWriteZoneId.present
+        ? originalWriteZoneId.value
+        : this.originalWriteZoneId,
+    writeZoneId: writeZoneId.present ? writeZoneId.value : this.writeZoneId,
+    originalUtcOffsetMinutes: originalUtcOffsetMinutes.present
+        ? originalUtcOffsetMinutes.value
+        : this.originalUtcOffsetMinutes,
+    utcOffsetMinutes: utcOffsetMinutes.present
+        ? utcOffsetMinutes.value
+        : this.utcOffsetMinutes,
+    vocabularyVersion: vocabularyVersion ?? this.vocabularyVersion,
+    overall: overall ?? this.overall,
+    workOrSchool: workOrSchool ?? this.workOrSchool,
+    homeResponsibilities: homeResponsibilities ?? this.homeResponsibilities,
+    relationships: relationships ?? this.relationships,
+    socialActivity: socialActivity ?? this.socialActivity,
+    sleep: sleep ?? this.sleep,
+    hobbiesOrInterests: hobbiesOrInterests ?? this.hobbiesOrInterests,
+  );
+  RecordHubImpactRow copyWithCompanion(RecordHubImpactRowsCompanion data) {
+    return RecordHubImpactRow(
+      id: data.id.present ? data.id.value : this.id,
+      experiencedDay: data.experiencedDay.present
+          ? data.experiencedDay.value
+          : this.experiencedDay,
+      recordedAtMillis: data.recordedAtMillis.present
+          ? data.recordedAtMillis.value
+          : this.recordedAtMillis,
+      updatedAtMillis: data.updatedAtMillis.present
+          ? data.updatedAtMillis.value
+          : this.updatedAtMillis,
+      originalProvenance: data.originalProvenance.present
+          ? data.originalProvenance.value
+          : this.originalProvenance,
+      provenance: data.provenance.present
+          ? data.provenance.value
+          : this.provenance,
+      originalWriteZoneId: data.originalWriteZoneId.present
+          ? data.originalWriteZoneId.value
+          : this.originalWriteZoneId,
+      writeZoneId: data.writeZoneId.present
+          ? data.writeZoneId.value
+          : this.writeZoneId,
+      originalUtcOffsetMinutes: data.originalUtcOffsetMinutes.present
+          ? data.originalUtcOffsetMinutes.value
+          : this.originalUtcOffsetMinutes,
+      utcOffsetMinutes: data.utcOffsetMinutes.present
+          ? data.utcOffsetMinutes.value
+          : this.utcOffsetMinutes,
+      vocabularyVersion: data.vocabularyVersion.present
+          ? data.vocabularyVersion.value
+          : this.vocabularyVersion,
+      overall: data.overall.present ? data.overall.value : this.overall,
+      workOrSchool: data.workOrSchool.present
+          ? data.workOrSchool.value
+          : this.workOrSchool,
+      homeResponsibilities: data.homeResponsibilities.present
+          ? data.homeResponsibilities.value
+          : this.homeResponsibilities,
+      relationships: data.relationships.present
+          ? data.relationships.value
+          : this.relationships,
+      socialActivity: data.socialActivity.present
+          ? data.socialActivity.value
+          : this.socialActivity,
+      sleep: data.sleep.present ? data.sleep.value : this.sleep,
+      hobbiesOrInterests: data.hobbiesOrInterests.present
+          ? data.hobbiesOrInterests.value
+          : this.hobbiesOrInterests,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('RecordHubImpactRow(')
+          ..write('id: $id, ')
+          ..write('experiencedDay: $experiencedDay, ')
+          ..write('recordedAtMillis: $recordedAtMillis, ')
+          ..write('updatedAtMillis: $updatedAtMillis, ')
+          ..write('originalProvenance: $originalProvenance, ')
+          ..write('provenance: $provenance, ')
+          ..write('originalWriteZoneId: $originalWriteZoneId, ')
+          ..write('writeZoneId: $writeZoneId, ')
+          ..write('originalUtcOffsetMinutes: $originalUtcOffsetMinutes, ')
+          ..write('utcOffsetMinutes: $utcOffsetMinutes, ')
+          ..write('vocabularyVersion: $vocabularyVersion, ')
+          ..write('overall: $overall, ')
+          ..write('workOrSchool: $workOrSchool, ')
+          ..write('homeResponsibilities: $homeResponsibilities, ')
+          ..write('relationships: $relationships, ')
+          ..write('socialActivity: $socialActivity, ')
+          ..write('sleep: $sleep, ')
+          ..write('hobbiesOrInterests: $hobbiesOrInterests')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(
+    id,
+    experiencedDay,
+    recordedAtMillis,
+    updatedAtMillis,
+    originalProvenance,
+    provenance,
+    originalWriteZoneId,
+    writeZoneId,
+    originalUtcOffsetMinutes,
+    utcOffsetMinutes,
+    vocabularyVersion,
+    overall,
+    workOrSchool,
+    homeResponsibilities,
+    relationships,
+    socialActivity,
+    sleep,
+    hobbiesOrInterests,
+  );
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is RecordHubImpactRow &&
+          other.id == this.id &&
+          other.experiencedDay == this.experiencedDay &&
+          other.recordedAtMillis == this.recordedAtMillis &&
+          other.updatedAtMillis == this.updatedAtMillis &&
+          other.originalProvenance == this.originalProvenance &&
+          other.provenance == this.provenance &&
+          other.originalWriteZoneId == this.originalWriteZoneId &&
+          other.writeZoneId == this.writeZoneId &&
+          other.originalUtcOffsetMinutes == this.originalUtcOffsetMinutes &&
+          other.utcOffsetMinutes == this.utcOffsetMinutes &&
+          other.vocabularyVersion == this.vocabularyVersion &&
+          other.overall == this.overall &&
+          other.workOrSchool == this.workOrSchool &&
+          other.homeResponsibilities == this.homeResponsibilities &&
+          other.relationships == this.relationships &&
+          other.socialActivity == this.socialActivity &&
+          other.sleep == this.sleep &&
+          other.hobbiesOrInterests == this.hobbiesOrInterests);
+}
+
+class RecordHubImpactRowsCompanion extends UpdateCompanion<RecordHubImpactRow> {
+  final Value<String> id;
+  final Value<int> experiencedDay;
+  final Value<int> recordedAtMillis;
+  final Value<int> updatedAtMillis;
+  final Value<String> originalProvenance;
+  final Value<String> provenance;
+  final Value<String?> originalWriteZoneId;
+  final Value<String?> writeZoneId;
+  final Value<int?> originalUtcOffsetMinutes;
+  final Value<int?> utcOffsetMinutes;
+  final Value<int> vocabularyVersion;
+  final Value<int> overall;
+  final Value<bool> workOrSchool;
+  final Value<bool> homeResponsibilities;
+  final Value<bool> relationships;
+  final Value<bool> socialActivity;
+  final Value<bool> sleep;
+  final Value<bool> hobbiesOrInterests;
+  final Value<int> rowid;
+  const RecordHubImpactRowsCompanion({
+    this.id = const Value.absent(),
+    this.experiencedDay = const Value.absent(),
+    this.recordedAtMillis = const Value.absent(),
+    this.updatedAtMillis = const Value.absent(),
+    this.originalProvenance = const Value.absent(),
+    this.provenance = const Value.absent(),
+    this.originalWriteZoneId = const Value.absent(),
+    this.writeZoneId = const Value.absent(),
+    this.originalUtcOffsetMinutes = const Value.absent(),
+    this.utcOffsetMinutes = const Value.absent(),
+    this.vocabularyVersion = const Value.absent(),
+    this.overall = const Value.absent(),
+    this.workOrSchool = const Value.absent(),
+    this.homeResponsibilities = const Value.absent(),
+    this.relationships = const Value.absent(),
+    this.socialActivity = const Value.absent(),
+    this.sleep = const Value.absent(),
+    this.hobbiesOrInterests = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  RecordHubImpactRowsCompanion.insert({
+    required String id,
+    required int experiencedDay,
+    required int recordedAtMillis,
+    required int updatedAtMillis,
+    required String originalProvenance,
+    required String provenance,
+    this.originalWriteZoneId = const Value.absent(),
+    this.writeZoneId = const Value.absent(),
+    this.originalUtcOffsetMinutes = const Value.absent(),
+    this.utcOffsetMinutes = const Value.absent(),
+    this.vocabularyVersion = const Value.absent(),
+    required int overall,
+    this.workOrSchool = const Value.absent(),
+    this.homeResponsibilities = const Value.absent(),
+    this.relationships = const Value.absent(),
+    this.socialActivity = const Value.absent(),
+    this.sleep = const Value.absent(),
+    this.hobbiesOrInterests = const Value.absent(),
+    this.rowid = const Value.absent(),
+  }) : id = Value(id),
+       experiencedDay = Value(experiencedDay),
+       recordedAtMillis = Value(recordedAtMillis),
+       updatedAtMillis = Value(updatedAtMillis),
+       originalProvenance = Value(originalProvenance),
+       provenance = Value(provenance),
+       overall = Value(overall);
+  static Insertable<RecordHubImpactRow> custom({
+    Expression<String>? id,
+    Expression<int>? experiencedDay,
+    Expression<int>? recordedAtMillis,
+    Expression<int>? updatedAtMillis,
+    Expression<String>? originalProvenance,
+    Expression<String>? provenance,
+    Expression<String>? originalWriteZoneId,
+    Expression<String>? writeZoneId,
+    Expression<int>? originalUtcOffsetMinutes,
+    Expression<int>? utcOffsetMinutes,
+    Expression<int>? vocabularyVersion,
+    Expression<int>? overall,
+    Expression<bool>? workOrSchool,
+    Expression<bool>? homeResponsibilities,
+    Expression<bool>? relationships,
+    Expression<bool>? socialActivity,
+    Expression<bool>? sleep,
+    Expression<bool>? hobbiesOrInterests,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (experiencedDay != null) 'experienced_day': experiencedDay,
+      if (recordedAtMillis != null) 'recorded_at_millis': recordedAtMillis,
+      if (updatedAtMillis != null) 'updated_at_millis': updatedAtMillis,
+      if (originalProvenance != null) 'original_provenance': originalProvenance,
+      if (provenance != null) 'provenance': provenance,
+      if (originalWriteZoneId != null)
+        'original_write_zone_id': originalWriteZoneId,
+      if (writeZoneId != null) 'write_zone_id': writeZoneId,
+      if (originalUtcOffsetMinutes != null)
+        'original_utc_offset_minutes': originalUtcOffsetMinutes,
+      if (utcOffsetMinutes != null) 'utc_offset_minutes': utcOffsetMinutes,
+      if (vocabularyVersion != null) 'vocabulary_version': vocabularyVersion,
+      if (overall != null) 'overall': overall,
+      if (workOrSchool != null) 'work_or_school': workOrSchool,
+      if (homeResponsibilities != null)
+        'home_responsibilities': homeResponsibilities,
+      if (relationships != null) 'relationships': relationships,
+      if (socialActivity != null) 'social_activity': socialActivity,
+      if (sleep != null) 'sleep': sleep,
+      if (hobbiesOrInterests != null)
+        'hobbies_or_interests': hobbiesOrInterests,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  RecordHubImpactRowsCompanion copyWith({
+    Value<String>? id,
+    Value<int>? experiencedDay,
+    Value<int>? recordedAtMillis,
+    Value<int>? updatedAtMillis,
+    Value<String>? originalProvenance,
+    Value<String>? provenance,
+    Value<String?>? originalWriteZoneId,
+    Value<String?>? writeZoneId,
+    Value<int?>? originalUtcOffsetMinutes,
+    Value<int?>? utcOffsetMinutes,
+    Value<int>? vocabularyVersion,
+    Value<int>? overall,
+    Value<bool>? workOrSchool,
+    Value<bool>? homeResponsibilities,
+    Value<bool>? relationships,
+    Value<bool>? socialActivity,
+    Value<bool>? sleep,
+    Value<bool>? hobbiesOrInterests,
+    Value<int>? rowid,
+  }) {
+    return RecordHubImpactRowsCompanion(
+      id: id ?? this.id,
+      experiencedDay: experiencedDay ?? this.experiencedDay,
+      recordedAtMillis: recordedAtMillis ?? this.recordedAtMillis,
+      updatedAtMillis: updatedAtMillis ?? this.updatedAtMillis,
+      originalProvenance: originalProvenance ?? this.originalProvenance,
+      provenance: provenance ?? this.provenance,
+      originalWriteZoneId: originalWriteZoneId ?? this.originalWriteZoneId,
+      writeZoneId: writeZoneId ?? this.writeZoneId,
+      originalUtcOffsetMinutes:
+          originalUtcOffsetMinutes ?? this.originalUtcOffsetMinutes,
+      utcOffsetMinutes: utcOffsetMinutes ?? this.utcOffsetMinutes,
+      vocabularyVersion: vocabularyVersion ?? this.vocabularyVersion,
+      overall: overall ?? this.overall,
+      workOrSchool: workOrSchool ?? this.workOrSchool,
+      homeResponsibilities: homeResponsibilities ?? this.homeResponsibilities,
+      relationships: relationships ?? this.relationships,
+      socialActivity: socialActivity ?? this.socialActivity,
+      sleep: sleep ?? this.sleep,
+      hobbiesOrInterests: hobbiesOrInterests ?? this.hobbiesOrInterests,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<String>(id.value);
+    }
+    if (experiencedDay.present) {
+      map['experienced_day'] = Variable<int>(experiencedDay.value);
+    }
+    if (recordedAtMillis.present) {
+      map['recorded_at_millis'] = Variable<int>(recordedAtMillis.value);
+    }
+    if (updatedAtMillis.present) {
+      map['updated_at_millis'] = Variable<int>(updatedAtMillis.value);
+    }
+    if (originalProvenance.present) {
+      map['original_provenance'] = Variable<String>(originalProvenance.value);
+    }
+    if (provenance.present) {
+      map['provenance'] = Variable<String>(provenance.value);
+    }
+    if (originalWriteZoneId.present) {
+      map['original_write_zone_id'] = Variable<String>(
+        originalWriteZoneId.value,
+      );
+    }
+    if (writeZoneId.present) {
+      map['write_zone_id'] = Variable<String>(writeZoneId.value);
+    }
+    if (originalUtcOffsetMinutes.present) {
+      map['original_utc_offset_minutes'] = Variable<int>(
+        originalUtcOffsetMinutes.value,
+      );
+    }
+    if (utcOffsetMinutes.present) {
+      map['utc_offset_minutes'] = Variable<int>(utcOffsetMinutes.value);
+    }
+    if (vocabularyVersion.present) {
+      map['vocabulary_version'] = Variable<int>(vocabularyVersion.value);
+    }
+    if (overall.present) {
+      map['overall'] = Variable<int>(overall.value);
+    }
+    if (workOrSchool.present) {
+      map['work_or_school'] = Variable<bool>(workOrSchool.value);
+    }
+    if (homeResponsibilities.present) {
+      map['home_responsibilities'] = Variable<bool>(homeResponsibilities.value);
+    }
+    if (relationships.present) {
+      map['relationships'] = Variable<bool>(relationships.value);
+    }
+    if (socialActivity.present) {
+      map['social_activity'] = Variable<bool>(socialActivity.value);
+    }
+    if (sleep.present) {
+      map['sleep'] = Variable<bool>(sleep.value);
+    }
+    if (hobbiesOrInterests.present) {
+      map['hobbies_or_interests'] = Variable<bool>(hobbiesOrInterests.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('RecordHubImpactRowsCompanion(')
+          ..write('id: $id, ')
+          ..write('experiencedDay: $experiencedDay, ')
+          ..write('recordedAtMillis: $recordedAtMillis, ')
+          ..write('updatedAtMillis: $updatedAtMillis, ')
+          ..write('originalProvenance: $originalProvenance, ')
+          ..write('provenance: $provenance, ')
+          ..write('originalWriteZoneId: $originalWriteZoneId, ')
+          ..write('writeZoneId: $writeZoneId, ')
+          ..write('originalUtcOffsetMinutes: $originalUtcOffsetMinutes, ')
+          ..write('utcOffsetMinutes: $utcOffsetMinutes, ')
+          ..write('vocabularyVersion: $vocabularyVersion, ')
+          ..write('overall: $overall, ')
+          ..write('workOrSchool: $workOrSchool, ')
+          ..write('homeResponsibilities: $homeResponsibilities, ')
+          ..write('relationships: $relationships, ')
+          ..write('socialActivity: $socialActivity, ')
+          ..write('sleep: $sleep, ')
+          ..write('hobbiesOrInterests: $hobbiesOrInterests, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
+class $RecordHubBleedingRowsTable extends RecordHubBleedingRows
+    with TableInfo<$RecordHubBleedingRowsTable, RecordHubBleedingRow> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $RecordHubBleedingRowsTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<String> id = GeneratedColumn<String>(
+    'id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _experiencedDayMeta = const VerificationMeta(
+    'experiencedDay',
+  );
+  @override
+  late final GeneratedColumn<int> experiencedDay = GeneratedColumn<int>(
+    'experienced_day',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _recordedAtMillisMeta = const VerificationMeta(
+    'recordedAtMillis',
+  );
+  @override
+  late final GeneratedColumn<int> recordedAtMillis = GeneratedColumn<int>(
+    'recorded_at_millis',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _updatedAtMillisMeta = const VerificationMeta(
+    'updatedAtMillis',
+  );
+  @override
+  late final GeneratedColumn<int> updatedAtMillis = GeneratedColumn<int>(
+    'updated_at_millis',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _originalProvenanceMeta =
+      const VerificationMeta('originalProvenance');
+  @override
+  late final GeneratedColumn<String> originalProvenance =
+      GeneratedColumn<String>(
+        'original_provenance',
+        aliasedName,
+        false,
+        type: DriftSqlType.string,
+        requiredDuringInsert: true,
+      );
+  static const VerificationMeta _provenanceMeta = const VerificationMeta(
+    'provenance',
+  );
+  @override
+  late final GeneratedColumn<String> provenance = GeneratedColumn<String>(
+    'provenance',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _originalWriteZoneIdMeta =
+      const VerificationMeta('originalWriteZoneId');
+  @override
+  late final GeneratedColumn<String> originalWriteZoneId =
+      GeneratedColumn<String>(
+        'original_write_zone_id',
+        aliasedName,
+        true,
+        type: DriftSqlType.string,
+        requiredDuringInsert: false,
+      );
+  static const VerificationMeta _writeZoneIdMeta = const VerificationMeta(
+    'writeZoneId',
+  );
+  @override
+  late final GeneratedColumn<String> writeZoneId = GeneratedColumn<String>(
+    'write_zone_id',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _originalUtcOffsetMinutesMeta =
+      const VerificationMeta('originalUtcOffsetMinutes');
+  @override
+  late final GeneratedColumn<int> originalUtcOffsetMinutes =
+      GeneratedColumn<int>(
+        'original_utc_offset_minutes',
+        aliasedName,
+        true,
+        type: DriftSqlType.int,
+        requiredDuringInsert: false,
+      );
+  static const VerificationMeta _utcOffsetMinutesMeta = const VerificationMeta(
+    'utcOffsetMinutes',
+  );
+  @override
+  late final GeneratedColumn<int> utcOffsetMinutes = GeneratedColumn<int>(
+    'utc_offset_minutes',
+    aliasedName,
+    true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _vocabularyVersionMeta = const VerificationMeta(
+    'vocabularyVersion',
+  );
+  @override
+  late final GeneratedColumn<int> vocabularyVersion = GeneratedColumn<int>(
+    'vocabulary_version',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(1),
+  );
+  static const VerificationMeta _flowMeta = const VerificationMeta('flow');
+  @override
+  late final GeneratedColumn<String> flow = GeneratedColumn<String>(
+    'flow',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _periodIdMeta = const VerificationMeta(
+    'periodId',
+  );
+  @override
+  late final GeneratedColumn<String> periodId = GeneratedColumn<String>(
+    'period_id',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _colorMeta = const VerificationMeta('color');
+  @override
+  late final GeneratedColumn<String> color = GeneratedColumn<String>(
+    'color',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _clotsMeta = const VerificationMeta('clots');
+  @override
+  late final GeneratedColumn<String> clots = GeneratedColumn<String>(
+    'clots',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    id,
+    experiencedDay,
+    recordedAtMillis,
+    updatedAtMillis,
+    originalProvenance,
+    provenance,
+    originalWriteZoneId,
+    writeZoneId,
+    originalUtcOffsetMinutes,
+    utcOffsetMinutes,
+    vocabularyVersion,
+    flow,
+    periodId,
+    color,
+    clots,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'record_hub_bleeding_rows';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<RecordHubBleedingRow> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    } else if (isInserting) {
+      context.missing(_idMeta);
+    }
+    if (data.containsKey('experienced_day')) {
+      context.handle(
+        _experiencedDayMeta,
+        experiencedDay.isAcceptableOrUnknown(
+          data['experienced_day']!,
+          _experiencedDayMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_experiencedDayMeta);
+    }
+    if (data.containsKey('recorded_at_millis')) {
+      context.handle(
+        _recordedAtMillisMeta,
+        recordedAtMillis.isAcceptableOrUnknown(
+          data['recorded_at_millis']!,
+          _recordedAtMillisMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_recordedAtMillisMeta);
+    }
+    if (data.containsKey('updated_at_millis')) {
+      context.handle(
+        _updatedAtMillisMeta,
+        updatedAtMillis.isAcceptableOrUnknown(
+          data['updated_at_millis']!,
+          _updatedAtMillisMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_updatedAtMillisMeta);
+    }
+    if (data.containsKey('original_provenance')) {
+      context.handle(
+        _originalProvenanceMeta,
+        originalProvenance.isAcceptableOrUnknown(
+          data['original_provenance']!,
+          _originalProvenanceMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_originalProvenanceMeta);
+    }
+    if (data.containsKey('provenance')) {
+      context.handle(
+        _provenanceMeta,
+        provenance.isAcceptableOrUnknown(data['provenance']!, _provenanceMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_provenanceMeta);
+    }
+    if (data.containsKey('original_write_zone_id')) {
+      context.handle(
+        _originalWriteZoneIdMeta,
+        originalWriteZoneId.isAcceptableOrUnknown(
+          data['original_write_zone_id']!,
+          _originalWriteZoneIdMeta,
+        ),
+      );
+    }
+    if (data.containsKey('write_zone_id')) {
+      context.handle(
+        _writeZoneIdMeta,
+        writeZoneId.isAcceptableOrUnknown(
+          data['write_zone_id']!,
+          _writeZoneIdMeta,
+        ),
+      );
+    }
+    if (data.containsKey('original_utc_offset_minutes')) {
+      context.handle(
+        _originalUtcOffsetMinutesMeta,
+        originalUtcOffsetMinutes.isAcceptableOrUnknown(
+          data['original_utc_offset_minutes']!,
+          _originalUtcOffsetMinutesMeta,
+        ),
+      );
+    }
+    if (data.containsKey('utc_offset_minutes')) {
+      context.handle(
+        _utcOffsetMinutesMeta,
+        utcOffsetMinutes.isAcceptableOrUnknown(
+          data['utc_offset_minutes']!,
+          _utcOffsetMinutesMeta,
+        ),
+      );
+    }
+    if (data.containsKey('vocabulary_version')) {
+      context.handle(
+        _vocabularyVersionMeta,
+        vocabularyVersion.isAcceptableOrUnknown(
+          data['vocabulary_version']!,
+          _vocabularyVersionMeta,
+        ),
+      );
+    }
+    if (data.containsKey('flow')) {
+      context.handle(
+        _flowMeta,
+        flow.isAcceptableOrUnknown(data['flow']!, _flowMeta),
+      );
+    }
+    if (data.containsKey('period_id')) {
+      context.handle(
+        _periodIdMeta,
+        periodId.isAcceptableOrUnknown(data['period_id']!, _periodIdMeta),
+      );
+    }
+    if (data.containsKey('color')) {
+      context.handle(
+        _colorMeta,
+        color.isAcceptableOrUnknown(data['color']!, _colorMeta),
+      );
+    }
+    if (data.containsKey('clots')) {
+      context.handle(
+        _clotsMeta,
+        clots.isAcceptableOrUnknown(data['clots']!, _clotsMeta),
+      );
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  List<Set<GeneratedColumn>> get uniqueKeys => [
+    {experiencedDay},
+  ];
+  @override
+  RecordHubBleedingRow map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return RecordHubBleedingRow(
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}id'],
+      )!,
+      experiencedDay: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}experienced_day'],
+      )!,
+      recordedAtMillis: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}recorded_at_millis'],
+      )!,
+      updatedAtMillis: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}updated_at_millis'],
+      )!,
+      originalProvenance: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}original_provenance'],
+      )!,
+      provenance: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}provenance'],
+      )!,
+      originalWriteZoneId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}original_write_zone_id'],
+      ),
+      writeZoneId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}write_zone_id'],
+      ),
+      originalUtcOffsetMinutes: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}original_utc_offset_minutes'],
+      ),
+      utcOffsetMinutes: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}utc_offset_minutes'],
+      ),
+      vocabularyVersion: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}vocabulary_version'],
+      )!,
+      flow: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}flow'],
+      ),
+      periodId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}period_id'],
+      ),
+      color: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}color'],
+      ),
+      clots: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}clots'],
+      ),
+    );
+  }
+
+  @override
+  $RecordHubBleedingRowsTable createAlias(String alias) {
+    return $RecordHubBleedingRowsTable(attachedDatabase, alias);
+  }
+}
+
+class RecordHubBleedingRow extends DataClass
+    implements Insertable<RecordHubBleedingRow> {
+  final String id;
+  final int experiencedDay;
+  final int recordedAtMillis;
+  final int updatedAtMillis;
+  final String originalProvenance;
+  final String provenance;
+  final String? originalWriteZoneId;
+  final String? writeZoneId;
+  final int? originalUtcOffsetMinutes;
+  final int? utcOffsetMinutes;
+  final int vocabularyVersion;
+  final String? flow;
+  final String? periodId;
+  final String? color;
+  final String? clots;
+  const RecordHubBleedingRow({
+    required this.id,
+    required this.experiencedDay,
+    required this.recordedAtMillis,
+    required this.updatedAtMillis,
+    required this.originalProvenance,
+    required this.provenance,
+    this.originalWriteZoneId,
+    this.writeZoneId,
+    this.originalUtcOffsetMinutes,
+    this.utcOffsetMinutes,
+    required this.vocabularyVersion,
+    this.flow,
+    this.periodId,
+    this.color,
+    this.clots,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<String>(id);
+    map['experienced_day'] = Variable<int>(experiencedDay);
+    map['recorded_at_millis'] = Variable<int>(recordedAtMillis);
+    map['updated_at_millis'] = Variable<int>(updatedAtMillis);
+    map['original_provenance'] = Variable<String>(originalProvenance);
+    map['provenance'] = Variable<String>(provenance);
+    if (!nullToAbsent || originalWriteZoneId != null) {
+      map['original_write_zone_id'] = Variable<String>(originalWriteZoneId);
+    }
+    if (!nullToAbsent || writeZoneId != null) {
+      map['write_zone_id'] = Variable<String>(writeZoneId);
+    }
+    if (!nullToAbsent || originalUtcOffsetMinutes != null) {
+      map['original_utc_offset_minutes'] = Variable<int>(
+        originalUtcOffsetMinutes,
+      );
+    }
+    if (!nullToAbsent || utcOffsetMinutes != null) {
+      map['utc_offset_minutes'] = Variable<int>(utcOffsetMinutes);
+    }
+    map['vocabulary_version'] = Variable<int>(vocabularyVersion);
+    if (!nullToAbsent || flow != null) {
+      map['flow'] = Variable<String>(flow);
+    }
+    if (!nullToAbsent || periodId != null) {
+      map['period_id'] = Variable<String>(periodId);
+    }
+    if (!nullToAbsent || color != null) {
+      map['color'] = Variable<String>(color);
+    }
+    if (!nullToAbsent || clots != null) {
+      map['clots'] = Variable<String>(clots);
+    }
+    return map;
+  }
+
+  RecordHubBleedingRowsCompanion toCompanion(bool nullToAbsent) {
+    return RecordHubBleedingRowsCompanion(
+      id: Value(id),
+      experiencedDay: Value(experiencedDay),
+      recordedAtMillis: Value(recordedAtMillis),
+      updatedAtMillis: Value(updatedAtMillis),
+      originalProvenance: Value(originalProvenance),
+      provenance: Value(provenance),
+      originalWriteZoneId: originalWriteZoneId == null && nullToAbsent
+          ? const Value.absent()
+          : Value(originalWriteZoneId),
+      writeZoneId: writeZoneId == null && nullToAbsent
+          ? const Value.absent()
+          : Value(writeZoneId),
+      originalUtcOffsetMinutes: originalUtcOffsetMinutes == null && nullToAbsent
+          ? const Value.absent()
+          : Value(originalUtcOffsetMinutes),
+      utcOffsetMinutes: utcOffsetMinutes == null && nullToAbsent
+          ? const Value.absent()
+          : Value(utcOffsetMinutes),
+      vocabularyVersion: Value(vocabularyVersion),
+      flow: flow == null && nullToAbsent ? const Value.absent() : Value(flow),
+      periodId: periodId == null && nullToAbsent
+          ? const Value.absent()
+          : Value(periodId),
+      color: color == null && nullToAbsent
+          ? const Value.absent()
+          : Value(color),
+      clots: clots == null && nullToAbsent
+          ? const Value.absent()
+          : Value(clots),
+    );
+  }
+
+  factory RecordHubBleedingRow.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return RecordHubBleedingRow(
+      id: serializer.fromJson<String>(json['id']),
+      experiencedDay: serializer.fromJson<int>(json['experiencedDay']),
+      recordedAtMillis: serializer.fromJson<int>(json['recordedAtMillis']),
+      updatedAtMillis: serializer.fromJson<int>(json['updatedAtMillis']),
+      originalProvenance: serializer.fromJson<String>(
+        json['originalProvenance'],
+      ),
+      provenance: serializer.fromJson<String>(json['provenance']),
+      originalWriteZoneId: serializer.fromJson<String?>(
+        json['originalWriteZoneId'],
+      ),
+      writeZoneId: serializer.fromJson<String?>(json['writeZoneId']),
+      originalUtcOffsetMinutes: serializer.fromJson<int?>(
+        json['originalUtcOffsetMinutes'],
+      ),
+      utcOffsetMinutes: serializer.fromJson<int?>(json['utcOffsetMinutes']),
+      vocabularyVersion: serializer.fromJson<int>(json['vocabularyVersion']),
+      flow: serializer.fromJson<String?>(json['flow']),
+      periodId: serializer.fromJson<String?>(json['periodId']),
+      color: serializer.fromJson<String?>(json['color']),
+      clots: serializer.fromJson<String?>(json['clots']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<String>(id),
+      'experiencedDay': serializer.toJson<int>(experiencedDay),
+      'recordedAtMillis': serializer.toJson<int>(recordedAtMillis),
+      'updatedAtMillis': serializer.toJson<int>(updatedAtMillis),
+      'originalProvenance': serializer.toJson<String>(originalProvenance),
+      'provenance': serializer.toJson<String>(provenance),
+      'originalWriteZoneId': serializer.toJson<String?>(originalWriteZoneId),
+      'writeZoneId': serializer.toJson<String?>(writeZoneId),
+      'originalUtcOffsetMinutes': serializer.toJson<int?>(
+        originalUtcOffsetMinutes,
+      ),
+      'utcOffsetMinutes': serializer.toJson<int?>(utcOffsetMinutes),
+      'vocabularyVersion': serializer.toJson<int>(vocabularyVersion),
+      'flow': serializer.toJson<String?>(flow),
+      'periodId': serializer.toJson<String?>(periodId),
+      'color': serializer.toJson<String?>(color),
+      'clots': serializer.toJson<String?>(clots),
+    };
+  }
+
+  RecordHubBleedingRow copyWith({
+    String? id,
+    int? experiencedDay,
+    int? recordedAtMillis,
+    int? updatedAtMillis,
+    String? originalProvenance,
+    String? provenance,
+    Value<String?> originalWriteZoneId = const Value.absent(),
+    Value<String?> writeZoneId = const Value.absent(),
+    Value<int?> originalUtcOffsetMinutes = const Value.absent(),
+    Value<int?> utcOffsetMinutes = const Value.absent(),
+    int? vocabularyVersion,
+    Value<String?> flow = const Value.absent(),
+    Value<String?> periodId = const Value.absent(),
+    Value<String?> color = const Value.absent(),
+    Value<String?> clots = const Value.absent(),
+  }) => RecordHubBleedingRow(
+    id: id ?? this.id,
+    experiencedDay: experiencedDay ?? this.experiencedDay,
+    recordedAtMillis: recordedAtMillis ?? this.recordedAtMillis,
+    updatedAtMillis: updatedAtMillis ?? this.updatedAtMillis,
+    originalProvenance: originalProvenance ?? this.originalProvenance,
+    provenance: provenance ?? this.provenance,
+    originalWriteZoneId: originalWriteZoneId.present
+        ? originalWriteZoneId.value
+        : this.originalWriteZoneId,
+    writeZoneId: writeZoneId.present ? writeZoneId.value : this.writeZoneId,
+    originalUtcOffsetMinutes: originalUtcOffsetMinutes.present
+        ? originalUtcOffsetMinutes.value
+        : this.originalUtcOffsetMinutes,
+    utcOffsetMinutes: utcOffsetMinutes.present
+        ? utcOffsetMinutes.value
+        : this.utcOffsetMinutes,
+    vocabularyVersion: vocabularyVersion ?? this.vocabularyVersion,
+    flow: flow.present ? flow.value : this.flow,
+    periodId: periodId.present ? periodId.value : this.periodId,
+    color: color.present ? color.value : this.color,
+    clots: clots.present ? clots.value : this.clots,
+  );
+  RecordHubBleedingRow copyWithCompanion(RecordHubBleedingRowsCompanion data) {
+    return RecordHubBleedingRow(
+      id: data.id.present ? data.id.value : this.id,
+      experiencedDay: data.experiencedDay.present
+          ? data.experiencedDay.value
+          : this.experiencedDay,
+      recordedAtMillis: data.recordedAtMillis.present
+          ? data.recordedAtMillis.value
+          : this.recordedAtMillis,
+      updatedAtMillis: data.updatedAtMillis.present
+          ? data.updatedAtMillis.value
+          : this.updatedAtMillis,
+      originalProvenance: data.originalProvenance.present
+          ? data.originalProvenance.value
+          : this.originalProvenance,
+      provenance: data.provenance.present
+          ? data.provenance.value
+          : this.provenance,
+      originalWriteZoneId: data.originalWriteZoneId.present
+          ? data.originalWriteZoneId.value
+          : this.originalWriteZoneId,
+      writeZoneId: data.writeZoneId.present
+          ? data.writeZoneId.value
+          : this.writeZoneId,
+      originalUtcOffsetMinutes: data.originalUtcOffsetMinutes.present
+          ? data.originalUtcOffsetMinutes.value
+          : this.originalUtcOffsetMinutes,
+      utcOffsetMinutes: data.utcOffsetMinutes.present
+          ? data.utcOffsetMinutes.value
+          : this.utcOffsetMinutes,
+      vocabularyVersion: data.vocabularyVersion.present
+          ? data.vocabularyVersion.value
+          : this.vocabularyVersion,
+      flow: data.flow.present ? data.flow.value : this.flow,
+      periodId: data.periodId.present ? data.periodId.value : this.periodId,
+      color: data.color.present ? data.color.value : this.color,
+      clots: data.clots.present ? data.clots.value : this.clots,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('RecordHubBleedingRow(')
+          ..write('id: $id, ')
+          ..write('experiencedDay: $experiencedDay, ')
+          ..write('recordedAtMillis: $recordedAtMillis, ')
+          ..write('updatedAtMillis: $updatedAtMillis, ')
+          ..write('originalProvenance: $originalProvenance, ')
+          ..write('provenance: $provenance, ')
+          ..write('originalWriteZoneId: $originalWriteZoneId, ')
+          ..write('writeZoneId: $writeZoneId, ')
+          ..write('originalUtcOffsetMinutes: $originalUtcOffsetMinutes, ')
+          ..write('utcOffsetMinutes: $utcOffsetMinutes, ')
+          ..write('vocabularyVersion: $vocabularyVersion, ')
+          ..write('flow: $flow, ')
+          ..write('periodId: $periodId, ')
+          ..write('color: $color, ')
+          ..write('clots: $clots')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(
+    id,
+    experiencedDay,
+    recordedAtMillis,
+    updatedAtMillis,
+    originalProvenance,
+    provenance,
+    originalWriteZoneId,
+    writeZoneId,
+    originalUtcOffsetMinutes,
+    utcOffsetMinutes,
+    vocabularyVersion,
+    flow,
+    periodId,
+    color,
+    clots,
+  );
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is RecordHubBleedingRow &&
+          other.id == this.id &&
+          other.experiencedDay == this.experiencedDay &&
+          other.recordedAtMillis == this.recordedAtMillis &&
+          other.updatedAtMillis == this.updatedAtMillis &&
+          other.originalProvenance == this.originalProvenance &&
+          other.provenance == this.provenance &&
+          other.originalWriteZoneId == this.originalWriteZoneId &&
+          other.writeZoneId == this.writeZoneId &&
+          other.originalUtcOffsetMinutes == this.originalUtcOffsetMinutes &&
+          other.utcOffsetMinutes == this.utcOffsetMinutes &&
+          other.vocabularyVersion == this.vocabularyVersion &&
+          other.flow == this.flow &&
+          other.periodId == this.periodId &&
+          other.color == this.color &&
+          other.clots == this.clots);
+}
+
+class RecordHubBleedingRowsCompanion
+    extends UpdateCompanion<RecordHubBleedingRow> {
+  final Value<String> id;
+  final Value<int> experiencedDay;
+  final Value<int> recordedAtMillis;
+  final Value<int> updatedAtMillis;
+  final Value<String> originalProvenance;
+  final Value<String> provenance;
+  final Value<String?> originalWriteZoneId;
+  final Value<String?> writeZoneId;
+  final Value<int?> originalUtcOffsetMinutes;
+  final Value<int?> utcOffsetMinutes;
+  final Value<int> vocabularyVersion;
+  final Value<String?> flow;
+  final Value<String?> periodId;
+  final Value<String?> color;
+  final Value<String?> clots;
+  final Value<int> rowid;
+  const RecordHubBleedingRowsCompanion({
+    this.id = const Value.absent(),
+    this.experiencedDay = const Value.absent(),
+    this.recordedAtMillis = const Value.absent(),
+    this.updatedAtMillis = const Value.absent(),
+    this.originalProvenance = const Value.absent(),
+    this.provenance = const Value.absent(),
+    this.originalWriteZoneId = const Value.absent(),
+    this.writeZoneId = const Value.absent(),
+    this.originalUtcOffsetMinutes = const Value.absent(),
+    this.utcOffsetMinutes = const Value.absent(),
+    this.vocabularyVersion = const Value.absent(),
+    this.flow = const Value.absent(),
+    this.periodId = const Value.absent(),
+    this.color = const Value.absent(),
+    this.clots = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  RecordHubBleedingRowsCompanion.insert({
+    required String id,
+    required int experiencedDay,
+    required int recordedAtMillis,
+    required int updatedAtMillis,
+    required String originalProvenance,
+    required String provenance,
+    this.originalWriteZoneId = const Value.absent(),
+    this.writeZoneId = const Value.absent(),
+    this.originalUtcOffsetMinutes = const Value.absent(),
+    this.utcOffsetMinutes = const Value.absent(),
+    this.vocabularyVersion = const Value.absent(),
+    this.flow = const Value.absent(),
+    this.periodId = const Value.absent(),
+    this.color = const Value.absent(),
+    this.clots = const Value.absent(),
+    this.rowid = const Value.absent(),
+  }) : id = Value(id),
+       experiencedDay = Value(experiencedDay),
+       recordedAtMillis = Value(recordedAtMillis),
+       updatedAtMillis = Value(updatedAtMillis),
+       originalProvenance = Value(originalProvenance),
+       provenance = Value(provenance);
+  static Insertable<RecordHubBleedingRow> custom({
+    Expression<String>? id,
+    Expression<int>? experiencedDay,
+    Expression<int>? recordedAtMillis,
+    Expression<int>? updatedAtMillis,
+    Expression<String>? originalProvenance,
+    Expression<String>? provenance,
+    Expression<String>? originalWriteZoneId,
+    Expression<String>? writeZoneId,
+    Expression<int>? originalUtcOffsetMinutes,
+    Expression<int>? utcOffsetMinutes,
+    Expression<int>? vocabularyVersion,
+    Expression<String>? flow,
+    Expression<String>? periodId,
+    Expression<String>? color,
+    Expression<String>? clots,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (experiencedDay != null) 'experienced_day': experiencedDay,
+      if (recordedAtMillis != null) 'recorded_at_millis': recordedAtMillis,
+      if (updatedAtMillis != null) 'updated_at_millis': updatedAtMillis,
+      if (originalProvenance != null) 'original_provenance': originalProvenance,
+      if (provenance != null) 'provenance': provenance,
+      if (originalWriteZoneId != null)
+        'original_write_zone_id': originalWriteZoneId,
+      if (writeZoneId != null) 'write_zone_id': writeZoneId,
+      if (originalUtcOffsetMinutes != null)
+        'original_utc_offset_minutes': originalUtcOffsetMinutes,
+      if (utcOffsetMinutes != null) 'utc_offset_minutes': utcOffsetMinutes,
+      if (vocabularyVersion != null) 'vocabulary_version': vocabularyVersion,
+      if (flow != null) 'flow': flow,
+      if (periodId != null) 'period_id': periodId,
+      if (color != null) 'color': color,
+      if (clots != null) 'clots': clots,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  RecordHubBleedingRowsCompanion copyWith({
+    Value<String>? id,
+    Value<int>? experiencedDay,
+    Value<int>? recordedAtMillis,
+    Value<int>? updatedAtMillis,
+    Value<String>? originalProvenance,
+    Value<String>? provenance,
+    Value<String?>? originalWriteZoneId,
+    Value<String?>? writeZoneId,
+    Value<int?>? originalUtcOffsetMinutes,
+    Value<int?>? utcOffsetMinutes,
+    Value<int>? vocabularyVersion,
+    Value<String?>? flow,
+    Value<String?>? periodId,
+    Value<String?>? color,
+    Value<String?>? clots,
+    Value<int>? rowid,
+  }) {
+    return RecordHubBleedingRowsCompanion(
+      id: id ?? this.id,
+      experiencedDay: experiencedDay ?? this.experiencedDay,
+      recordedAtMillis: recordedAtMillis ?? this.recordedAtMillis,
+      updatedAtMillis: updatedAtMillis ?? this.updatedAtMillis,
+      originalProvenance: originalProvenance ?? this.originalProvenance,
+      provenance: provenance ?? this.provenance,
+      originalWriteZoneId: originalWriteZoneId ?? this.originalWriteZoneId,
+      writeZoneId: writeZoneId ?? this.writeZoneId,
+      originalUtcOffsetMinutes:
+          originalUtcOffsetMinutes ?? this.originalUtcOffsetMinutes,
+      utcOffsetMinutes: utcOffsetMinutes ?? this.utcOffsetMinutes,
+      vocabularyVersion: vocabularyVersion ?? this.vocabularyVersion,
+      flow: flow ?? this.flow,
+      periodId: periodId ?? this.periodId,
+      color: color ?? this.color,
+      clots: clots ?? this.clots,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<String>(id.value);
+    }
+    if (experiencedDay.present) {
+      map['experienced_day'] = Variable<int>(experiencedDay.value);
+    }
+    if (recordedAtMillis.present) {
+      map['recorded_at_millis'] = Variable<int>(recordedAtMillis.value);
+    }
+    if (updatedAtMillis.present) {
+      map['updated_at_millis'] = Variable<int>(updatedAtMillis.value);
+    }
+    if (originalProvenance.present) {
+      map['original_provenance'] = Variable<String>(originalProvenance.value);
+    }
+    if (provenance.present) {
+      map['provenance'] = Variable<String>(provenance.value);
+    }
+    if (originalWriteZoneId.present) {
+      map['original_write_zone_id'] = Variable<String>(
+        originalWriteZoneId.value,
+      );
+    }
+    if (writeZoneId.present) {
+      map['write_zone_id'] = Variable<String>(writeZoneId.value);
+    }
+    if (originalUtcOffsetMinutes.present) {
+      map['original_utc_offset_minutes'] = Variable<int>(
+        originalUtcOffsetMinutes.value,
+      );
+    }
+    if (utcOffsetMinutes.present) {
+      map['utc_offset_minutes'] = Variable<int>(utcOffsetMinutes.value);
+    }
+    if (vocabularyVersion.present) {
+      map['vocabulary_version'] = Variable<int>(vocabularyVersion.value);
+    }
+    if (flow.present) {
+      map['flow'] = Variable<String>(flow.value);
+    }
+    if (periodId.present) {
+      map['period_id'] = Variable<String>(periodId.value);
+    }
+    if (color.present) {
+      map['color'] = Variable<String>(color.value);
+    }
+    if (clots.present) {
+      map['clots'] = Variable<String>(clots.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('RecordHubBleedingRowsCompanion(')
+          ..write('id: $id, ')
+          ..write('experiencedDay: $experiencedDay, ')
+          ..write('recordedAtMillis: $recordedAtMillis, ')
+          ..write('updatedAtMillis: $updatedAtMillis, ')
+          ..write('originalProvenance: $originalProvenance, ')
+          ..write('provenance: $provenance, ')
+          ..write('originalWriteZoneId: $originalWriteZoneId, ')
+          ..write('writeZoneId: $writeZoneId, ')
+          ..write('originalUtcOffsetMinutes: $originalUtcOffsetMinutes, ')
+          ..write('utcOffsetMinutes: $utcOffsetMinutes, ')
+          ..write('vocabularyVersion: $vocabularyVersion, ')
+          ..write('flow: $flow, ')
+          ..write('periodId: $periodId, ')
+          ..write('color: $color, ')
+          ..write('clots: $clots, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
+class $RecordHubSleepRowsTable extends RecordHubSleepRows
+    with TableInfo<$RecordHubSleepRowsTable, RecordHubSleepRow> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $RecordHubSleepRowsTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<String> id = GeneratedColumn<String>(
+    'id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _experiencedDayMeta = const VerificationMeta(
+    'experiencedDay',
+  );
+  @override
+  late final GeneratedColumn<int> experiencedDay = GeneratedColumn<int>(
+    'experienced_day',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _recordedAtMillisMeta = const VerificationMeta(
+    'recordedAtMillis',
+  );
+  @override
+  late final GeneratedColumn<int> recordedAtMillis = GeneratedColumn<int>(
+    'recorded_at_millis',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _updatedAtMillisMeta = const VerificationMeta(
+    'updatedAtMillis',
+  );
+  @override
+  late final GeneratedColumn<int> updatedAtMillis = GeneratedColumn<int>(
+    'updated_at_millis',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _originalProvenanceMeta =
+      const VerificationMeta('originalProvenance');
+  @override
+  late final GeneratedColumn<String> originalProvenance =
+      GeneratedColumn<String>(
+        'original_provenance',
+        aliasedName,
+        false,
+        type: DriftSqlType.string,
+        requiredDuringInsert: true,
+      );
+  static const VerificationMeta _provenanceMeta = const VerificationMeta(
+    'provenance',
+  );
+  @override
+  late final GeneratedColumn<String> provenance = GeneratedColumn<String>(
+    'provenance',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _originalWriteZoneIdMeta =
+      const VerificationMeta('originalWriteZoneId');
+  @override
+  late final GeneratedColumn<String> originalWriteZoneId =
+      GeneratedColumn<String>(
+        'original_write_zone_id',
+        aliasedName,
+        true,
+        type: DriftSqlType.string,
+        requiredDuringInsert: false,
+      );
+  static const VerificationMeta _writeZoneIdMeta = const VerificationMeta(
+    'writeZoneId',
+  );
+  @override
+  late final GeneratedColumn<String> writeZoneId = GeneratedColumn<String>(
+    'write_zone_id',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _originalUtcOffsetMinutesMeta =
+      const VerificationMeta('originalUtcOffsetMinutes');
+  @override
+  late final GeneratedColumn<int> originalUtcOffsetMinutes =
+      GeneratedColumn<int>(
+        'original_utc_offset_minutes',
+        aliasedName,
+        true,
+        type: DriftSqlType.int,
+        requiredDuringInsert: false,
+      );
+  static const VerificationMeta _utcOffsetMinutesMeta = const VerificationMeta(
+    'utcOffsetMinutes',
+  );
+  @override
+  late final GeneratedColumn<int> utcOffsetMinutes = GeneratedColumn<int>(
+    'utc_offset_minutes',
+    aliasedName,
+    true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _vocabularyVersionMeta = const VerificationMeta(
+    'vocabularyVersion',
+  );
+  @override
+  late final GeneratedColumn<int> vocabularyVersion = GeneratedColumn<int>(
+    'vocabulary_version',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(1),
+  );
+  static const VerificationMeta _durationBucketMeta = const VerificationMeta(
+    'durationBucket',
+  );
+  @override
+  late final GeneratedColumn<String> durationBucket = GeneratedColumn<String>(
+    'duration_bucket',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _durationLabelMeta = const VerificationMeta(
+    'durationLabel',
+  );
+  @override
+  late final GeneratedColumn<String> durationLabel = GeneratedColumn<String>(
+    'duration_label',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _durationCatalogVersionMeta =
+      const VerificationMeta('durationCatalogVersion');
+  @override
+  late final GeneratedColumn<int> durationCatalogVersion = GeneratedColumn<int>(
+    'duration_catalog_version',
+    aliasedName,
+    true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _exactMinutesMeta = const VerificationMeta(
+    'exactMinutes',
+  );
+  @override
+  late final GeneratedColumn<int> exactMinutes = GeneratedColumn<int>(
+    'exact_minutes',
+    aliasedName,
+    true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _qualityMeta = const VerificationMeta(
+    'quality',
+  );
+  @override
+  late final GeneratedColumn<int> quality = GeneratedColumn<int>(
+    'quality',
+    aliasedName,
+    true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _troubleFallingAsleepMeta =
+      const VerificationMeta('troubleFallingAsleep');
+  @override
+  late final GeneratedColumn<bool> troubleFallingAsleep = GeneratedColumn<bool>(
+    'trouble_falling_asleep',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("trouble_falling_asleep" IN (0, 1))',
+    ),
+    defaultValue: const Constant(false),
+  );
+  static const VerificationMeta _wakingDuringNightMeta = const VerificationMeta(
+    'wakingDuringNight',
+  );
+  @override
+  late final GeneratedColumn<bool> wakingDuringNight = GeneratedColumn<bool>(
+    'waking_during_night',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("waking_during_night" IN (0, 1))',
+    ),
+    defaultValue: const Constant(false),
+  );
+  static const VerificationMeta _muchMoreThanUsualMeta = const VerificationMeta(
+    'muchMoreThanUsual',
+  );
+  @override
+  late final GeneratedColumn<bool> muchMoreThanUsual = GeneratedColumn<bool>(
+    'much_more_than_usual',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("much_more_than_usual" IN (0, 1))',
+    ),
+    defaultValue: const Constant(false),
+  );
+  static const VerificationMeta _muchLessThanUsualMeta = const VerificationMeta(
+    'muchLessThanUsual',
+  );
+  @override
+  late final GeneratedColumn<bool> muchLessThanUsual = GeneratedColumn<bool>(
+    'much_less_than_usual',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("much_less_than_usual" IN (0, 1))',
+    ),
+    defaultValue: const Constant(false),
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    id,
+    experiencedDay,
+    recordedAtMillis,
+    updatedAtMillis,
+    originalProvenance,
+    provenance,
+    originalWriteZoneId,
+    writeZoneId,
+    originalUtcOffsetMinutes,
+    utcOffsetMinutes,
+    vocabularyVersion,
+    durationBucket,
+    durationLabel,
+    durationCatalogVersion,
+    exactMinutes,
+    quality,
+    troubleFallingAsleep,
+    wakingDuringNight,
+    muchMoreThanUsual,
+    muchLessThanUsual,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'record_hub_sleep_rows';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<RecordHubSleepRow> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    } else if (isInserting) {
+      context.missing(_idMeta);
+    }
+    if (data.containsKey('experienced_day')) {
+      context.handle(
+        _experiencedDayMeta,
+        experiencedDay.isAcceptableOrUnknown(
+          data['experienced_day']!,
+          _experiencedDayMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_experiencedDayMeta);
+    }
+    if (data.containsKey('recorded_at_millis')) {
+      context.handle(
+        _recordedAtMillisMeta,
+        recordedAtMillis.isAcceptableOrUnknown(
+          data['recorded_at_millis']!,
+          _recordedAtMillisMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_recordedAtMillisMeta);
+    }
+    if (data.containsKey('updated_at_millis')) {
+      context.handle(
+        _updatedAtMillisMeta,
+        updatedAtMillis.isAcceptableOrUnknown(
+          data['updated_at_millis']!,
+          _updatedAtMillisMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_updatedAtMillisMeta);
+    }
+    if (data.containsKey('original_provenance')) {
+      context.handle(
+        _originalProvenanceMeta,
+        originalProvenance.isAcceptableOrUnknown(
+          data['original_provenance']!,
+          _originalProvenanceMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_originalProvenanceMeta);
+    }
+    if (data.containsKey('provenance')) {
+      context.handle(
+        _provenanceMeta,
+        provenance.isAcceptableOrUnknown(data['provenance']!, _provenanceMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_provenanceMeta);
+    }
+    if (data.containsKey('original_write_zone_id')) {
+      context.handle(
+        _originalWriteZoneIdMeta,
+        originalWriteZoneId.isAcceptableOrUnknown(
+          data['original_write_zone_id']!,
+          _originalWriteZoneIdMeta,
+        ),
+      );
+    }
+    if (data.containsKey('write_zone_id')) {
+      context.handle(
+        _writeZoneIdMeta,
+        writeZoneId.isAcceptableOrUnknown(
+          data['write_zone_id']!,
+          _writeZoneIdMeta,
+        ),
+      );
+    }
+    if (data.containsKey('original_utc_offset_minutes')) {
+      context.handle(
+        _originalUtcOffsetMinutesMeta,
+        originalUtcOffsetMinutes.isAcceptableOrUnknown(
+          data['original_utc_offset_minutes']!,
+          _originalUtcOffsetMinutesMeta,
+        ),
+      );
+    }
+    if (data.containsKey('utc_offset_minutes')) {
+      context.handle(
+        _utcOffsetMinutesMeta,
+        utcOffsetMinutes.isAcceptableOrUnknown(
+          data['utc_offset_minutes']!,
+          _utcOffsetMinutesMeta,
+        ),
+      );
+    }
+    if (data.containsKey('vocabulary_version')) {
+      context.handle(
+        _vocabularyVersionMeta,
+        vocabularyVersion.isAcceptableOrUnknown(
+          data['vocabulary_version']!,
+          _vocabularyVersionMeta,
+        ),
+      );
+    }
+    if (data.containsKey('duration_bucket')) {
+      context.handle(
+        _durationBucketMeta,
+        durationBucket.isAcceptableOrUnknown(
+          data['duration_bucket']!,
+          _durationBucketMeta,
+        ),
+      );
+    }
+    if (data.containsKey('duration_label')) {
+      context.handle(
+        _durationLabelMeta,
+        durationLabel.isAcceptableOrUnknown(
+          data['duration_label']!,
+          _durationLabelMeta,
+        ),
+      );
+    }
+    if (data.containsKey('duration_catalog_version')) {
+      context.handle(
+        _durationCatalogVersionMeta,
+        durationCatalogVersion.isAcceptableOrUnknown(
+          data['duration_catalog_version']!,
+          _durationCatalogVersionMeta,
+        ),
+      );
+    }
+    if (data.containsKey('exact_minutes')) {
+      context.handle(
+        _exactMinutesMeta,
+        exactMinutes.isAcceptableOrUnknown(
+          data['exact_minutes']!,
+          _exactMinutesMeta,
+        ),
+      );
+    }
+    if (data.containsKey('quality')) {
+      context.handle(
+        _qualityMeta,
+        quality.isAcceptableOrUnknown(data['quality']!, _qualityMeta),
+      );
+    }
+    if (data.containsKey('trouble_falling_asleep')) {
+      context.handle(
+        _troubleFallingAsleepMeta,
+        troubleFallingAsleep.isAcceptableOrUnknown(
+          data['trouble_falling_asleep']!,
+          _troubleFallingAsleepMeta,
+        ),
+      );
+    }
+    if (data.containsKey('waking_during_night')) {
+      context.handle(
+        _wakingDuringNightMeta,
+        wakingDuringNight.isAcceptableOrUnknown(
+          data['waking_during_night']!,
+          _wakingDuringNightMeta,
+        ),
+      );
+    }
+    if (data.containsKey('much_more_than_usual')) {
+      context.handle(
+        _muchMoreThanUsualMeta,
+        muchMoreThanUsual.isAcceptableOrUnknown(
+          data['much_more_than_usual']!,
+          _muchMoreThanUsualMeta,
+        ),
+      );
+    }
+    if (data.containsKey('much_less_than_usual')) {
+      context.handle(
+        _muchLessThanUsualMeta,
+        muchLessThanUsual.isAcceptableOrUnknown(
+          data['much_less_than_usual']!,
+          _muchLessThanUsualMeta,
+        ),
+      );
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  List<Set<GeneratedColumn>> get uniqueKeys => [
+    {experiencedDay},
+  ];
+  @override
+  RecordHubSleepRow map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return RecordHubSleepRow(
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}id'],
+      )!,
+      experiencedDay: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}experienced_day'],
+      )!,
+      recordedAtMillis: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}recorded_at_millis'],
+      )!,
+      updatedAtMillis: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}updated_at_millis'],
+      )!,
+      originalProvenance: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}original_provenance'],
+      )!,
+      provenance: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}provenance'],
+      )!,
+      originalWriteZoneId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}original_write_zone_id'],
+      ),
+      writeZoneId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}write_zone_id'],
+      ),
+      originalUtcOffsetMinutes: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}original_utc_offset_minutes'],
+      ),
+      utcOffsetMinutes: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}utc_offset_minutes'],
+      ),
+      vocabularyVersion: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}vocabulary_version'],
+      )!,
+      durationBucket: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}duration_bucket'],
+      ),
+      durationLabel: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}duration_label'],
+      ),
+      durationCatalogVersion: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}duration_catalog_version'],
+      ),
+      exactMinutes: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}exact_minutes'],
+      ),
+      quality: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}quality'],
+      ),
+      troubleFallingAsleep: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}trouble_falling_asleep'],
+      )!,
+      wakingDuringNight: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}waking_during_night'],
+      )!,
+      muchMoreThanUsual: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}much_more_than_usual'],
+      )!,
+      muchLessThanUsual: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}much_less_than_usual'],
+      )!,
+    );
+  }
+
+  @override
+  $RecordHubSleepRowsTable createAlias(String alias) {
+    return $RecordHubSleepRowsTable(attachedDatabase, alias);
+  }
+}
+
+class RecordHubSleepRow extends DataClass
+    implements Insertable<RecordHubSleepRow> {
+  final String id;
+  final int experiencedDay;
+  final int recordedAtMillis;
+  final int updatedAtMillis;
+  final String originalProvenance;
+  final String provenance;
+  final String? originalWriteZoneId;
+  final String? writeZoneId;
+  final int? originalUtcOffsetMinutes;
+  final int? utcOffsetMinutes;
+  final int vocabularyVersion;
+  final String? durationBucket;
+  final String? durationLabel;
+  final int? durationCatalogVersion;
+  final int? exactMinutes;
+  final int? quality;
+  final bool troubleFallingAsleep;
+  final bool wakingDuringNight;
+  final bool muchMoreThanUsual;
+  final bool muchLessThanUsual;
+  const RecordHubSleepRow({
+    required this.id,
+    required this.experiencedDay,
+    required this.recordedAtMillis,
+    required this.updatedAtMillis,
+    required this.originalProvenance,
+    required this.provenance,
+    this.originalWriteZoneId,
+    this.writeZoneId,
+    this.originalUtcOffsetMinutes,
+    this.utcOffsetMinutes,
+    required this.vocabularyVersion,
+    this.durationBucket,
+    this.durationLabel,
+    this.durationCatalogVersion,
+    this.exactMinutes,
+    this.quality,
+    required this.troubleFallingAsleep,
+    required this.wakingDuringNight,
+    required this.muchMoreThanUsual,
+    required this.muchLessThanUsual,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<String>(id);
+    map['experienced_day'] = Variable<int>(experiencedDay);
+    map['recorded_at_millis'] = Variable<int>(recordedAtMillis);
+    map['updated_at_millis'] = Variable<int>(updatedAtMillis);
+    map['original_provenance'] = Variable<String>(originalProvenance);
+    map['provenance'] = Variable<String>(provenance);
+    if (!nullToAbsent || originalWriteZoneId != null) {
+      map['original_write_zone_id'] = Variable<String>(originalWriteZoneId);
+    }
+    if (!nullToAbsent || writeZoneId != null) {
+      map['write_zone_id'] = Variable<String>(writeZoneId);
+    }
+    if (!nullToAbsent || originalUtcOffsetMinutes != null) {
+      map['original_utc_offset_minutes'] = Variable<int>(
+        originalUtcOffsetMinutes,
+      );
+    }
+    if (!nullToAbsent || utcOffsetMinutes != null) {
+      map['utc_offset_minutes'] = Variable<int>(utcOffsetMinutes);
+    }
+    map['vocabulary_version'] = Variable<int>(vocabularyVersion);
+    if (!nullToAbsent || durationBucket != null) {
+      map['duration_bucket'] = Variable<String>(durationBucket);
+    }
+    if (!nullToAbsent || durationLabel != null) {
+      map['duration_label'] = Variable<String>(durationLabel);
+    }
+    if (!nullToAbsent || durationCatalogVersion != null) {
+      map['duration_catalog_version'] = Variable<int>(durationCatalogVersion);
+    }
+    if (!nullToAbsent || exactMinutes != null) {
+      map['exact_minutes'] = Variable<int>(exactMinutes);
+    }
+    if (!nullToAbsent || quality != null) {
+      map['quality'] = Variable<int>(quality);
+    }
+    map['trouble_falling_asleep'] = Variable<bool>(troubleFallingAsleep);
+    map['waking_during_night'] = Variable<bool>(wakingDuringNight);
+    map['much_more_than_usual'] = Variable<bool>(muchMoreThanUsual);
+    map['much_less_than_usual'] = Variable<bool>(muchLessThanUsual);
+    return map;
+  }
+
+  RecordHubSleepRowsCompanion toCompanion(bool nullToAbsent) {
+    return RecordHubSleepRowsCompanion(
+      id: Value(id),
+      experiencedDay: Value(experiencedDay),
+      recordedAtMillis: Value(recordedAtMillis),
+      updatedAtMillis: Value(updatedAtMillis),
+      originalProvenance: Value(originalProvenance),
+      provenance: Value(provenance),
+      originalWriteZoneId: originalWriteZoneId == null && nullToAbsent
+          ? const Value.absent()
+          : Value(originalWriteZoneId),
+      writeZoneId: writeZoneId == null && nullToAbsent
+          ? const Value.absent()
+          : Value(writeZoneId),
+      originalUtcOffsetMinutes: originalUtcOffsetMinutes == null && nullToAbsent
+          ? const Value.absent()
+          : Value(originalUtcOffsetMinutes),
+      utcOffsetMinutes: utcOffsetMinutes == null && nullToAbsent
+          ? const Value.absent()
+          : Value(utcOffsetMinutes),
+      vocabularyVersion: Value(vocabularyVersion),
+      durationBucket: durationBucket == null && nullToAbsent
+          ? const Value.absent()
+          : Value(durationBucket),
+      durationLabel: durationLabel == null && nullToAbsent
+          ? const Value.absent()
+          : Value(durationLabel),
+      durationCatalogVersion: durationCatalogVersion == null && nullToAbsent
+          ? const Value.absent()
+          : Value(durationCatalogVersion),
+      exactMinutes: exactMinutes == null && nullToAbsent
+          ? const Value.absent()
+          : Value(exactMinutes),
+      quality: quality == null && nullToAbsent
+          ? const Value.absent()
+          : Value(quality),
+      troubleFallingAsleep: Value(troubleFallingAsleep),
+      wakingDuringNight: Value(wakingDuringNight),
+      muchMoreThanUsual: Value(muchMoreThanUsual),
+      muchLessThanUsual: Value(muchLessThanUsual),
+    );
+  }
+
+  factory RecordHubSleepRow.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return RecordHubSleepRow(
+      id: serializer.fromJson<String>(json['id']),
+      experiencedDay: serializer.fromJson<int>(json['experiencedDay']),
+      recordedAtMillis: serializer.fromJson<int>(json['recordedAtMillis']),
+      updatedAtMillis: serializer.fromJson<int>(json['updatedAtMillis']),
+      originalProvenance: serializer.fromJson<String>(
+        json['originalProvenance'],
+      ),
+      provenance: serializer.fromJson<String>(json['provenance']),
+      originalWriteZoneId: serializer.fromJson<String?>(
+        json['originalWriteZoneId'],
+      ),
+      writeZoneId: serializer.fromJson<String?>(json['writeZoneId']),
+      originalUtcOffsetMinutes: serializer.fromJson<int?>(
+        json['originalUtcOffsetMinutes'],
+      ),
+      utcOffsetMinutes: serializer.fromJson<int?>(json['utcOffsetMinutes']),
+      vocabularyVersion: serializer.fromJson<int>(json['vocabularyVersion']),
+      durationBucket: serializer.fromJson<String?>(json['durationBucket']),
+      durationLabel: serializer.fromJson<String?>(json['durationLabel']),
+      durationCatalogVersion: serializer.fromJson<int?>(
+        json['durationCatalogVersion'],
+      ),
+      exactMinutes: serializer.fromJson<int?>(json['exactMinutes']),
+      quality: serializer.fromJson<int?>(json['quality']),
+      troubleFallingAsleep: serializer.fromJson<bool>(
+        json['troubleFallingAsleep'],
+      ),
+      wakingDuringNight: serializer.fromJson<bool>(json['wakingDuringNight']),
+      muchMoreThanUsual: serializer.fromJson<bool>(json['muchMoreThanUsual']),
+      muchLessThanUsual: serializer.fromJson<bool>(json['muchLessThanUsual']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<String>(id),
+      'experiencedDay': serializer.toJson<int>(experiencedDay),
+      'recordedAtMillis': serializer.toJson<int>(recordedAtMillis),
+      'updatedAtMillis': serializer.toJson<int>(updatedAtMillis),
+      'originalProvenance': serializer.toJson<String>(originalProvenance),
+      'provenance': serializer.toJson<String>(provenance),
+      'originalWriteZoneId': serializer.toJson<String?>(originalWriteZoneId),
+      'writeZoneId': serializer.toJson<String?>(writeZoneId),
+      'originalUtcOffsetMinutes': serializer.toJson<int?>(
+        originalUtcOffsetMinutes,
+      ),
+      'utcOffsetMinutes': serializer.toJson<int?>(utcOffsetMinutes),
+      'vocabularyVersion': serializer.toJson<int>(vocabularyVersion),
+      'durationBucket': serializer.toJson<String?>(durationBucket),
+      'durationLabel': serializer.toJson<String?>(durationLabel),
+      'durationCatalogVersion': serializer.toJson<int?>(durationCatalogVersion),
+      'exactMinutes': serializer.toJson<int?>(exactMinutes),
+      'quality': serializer.toJson<int?>(quality),
+      'troubleFallingAsleep': serializer.toJson<bool>(troubleFallingAsleep),
+      'wakingDuringNight': serializer.toJson<bool>(wakingDuringNight),
+      'muchMoreThanUsual': serializer.toJson<bool>(muchMoreThanUsual),
+      'muchLessThanUsual': serializer.toJson<bool>(muchLessThanUsual),
+    };
+  }
+
+  RecordHubSleepRow copyWith({
+    String? id,
+    int? experiencedDay,
+    int? recordedAtMillis,
+    int? updatedAtMillis,
+    String? originalProvenance,
+    String? provenance,
+    Value<String?> originalWriteZoneId = const Value.absent(),
+    Value<String?> writeZoneId = const Value.absent(),
+    Value<int?> originalUtcOffsetMinutes = const Value.absent(),
+    Value<int?> utcOffsetMinutes = const Value.absent(),
+    int? vocabularyVersion,
+    Value<String?> durationBucket = const Value.absent(),
+    Value<String?> durationLabel = const Value.absent(),
+    Value<int?> durationCatalogVersion = const Value.absent(),
+    Value<int?> exactMinutes = const Value.absent(),
+    Value<int?> quality = const Value.absent(),
+    bool? troubleFallingAsleep,
+    bool? wakingDuringNight,
+    bool? muchMoreThanUsual,
+    bool? muchLessThanUsual,
+  }) => RecordHubSleepRow(
+    id: id ?? this.id,
+    experiencedDay: experiencedDay ?? this.experiencedDay,
+    recordedAtMillis: recordedAtMillis ?? this.recordedAtMillis,
+    updatedAtMillis: updatedAtMillis ?? this.updatedAtMillis,
+    originalProvenance: originalProvenance ?? this.originalProvenance,
+    provenance: provenance ?? this.provenance,
+    originalWriteZoneId: originalWriteZoneId.present
+        ? originalWriteZoneId.value
+        : this.originalWriteZoneId,
+    writeZoneId: writeZoneId.present ? writeZoneId.value : this.writeZoneId,
+    originalUtcOffsetMinutes: originalUtcOffsetMinutes.present
+        ? originalUtcOffsetMinutes.value
+        : this.originalUtcOffsetMinutes,
+    utcOffsetMinutes: utcOffsetMinutes.present
+        ? utcOffsetMinutes.value
+        : this.utcOffsetMinutes,
+    vocabularyVersion: vocabularyVersion ?? this.vocabularyVersion,
+    durationBucket: durationBucket.present
+        ? durationBucket.value
+        : this.durationBucket,
+    durationLabel: durationLabel.present
+        ? durationLabel.value
+        : this.durationLabel,
+    durationCatalogVersion: durationCatalogVersion.present
+        ? durationCatalogVersion.value
+        : this.durationCatalogVersion,
+    exactMinutes: exactMinutes.present ? exactMinutes.value : this.exactMinutes,
+    quality: quality.present ? quality.value : this.quality,
+    troubleFallingAsleep: troubleFallingAsleep ?? this.troubleFallingAsleep,
+    wakingDuringNight: wakingDuringNight ?? this.wakingDuringNight,
+    muchMoreThanUsual: muchMoreThanUsual ?? this.muchMoreThanUsual,
+    muchLessThanUsual: muchLessThanUsual ?? this.muchLessThanUsual,
+  );
+  RecordHubSleepRow copyWithCompanion(RecordHubSleepRowsCompanion data) {
+    return RecordHubSleepRow(
+      id: data.id.present ? data.id.value : this.id,
+      experiencedDay: data.experiencedDay.present
+          ? data.experiencedDay.value
+          : this.experiencedDay,
+      recordedAtMillis: data.recordedAtMillis.present
+          ? data.recordedAtMillis.value
+          : this.recordedAtMillis,
+      updatedAtMillis: data.updatedAtMillis.present
+          ? data.updatedAtMillis.value
+          : this.updatedAtMillis,
+      originalProvenance: data.originalProvenance.present
+          ? data.originalProvenance.value
+          : this.originalProvenance,
+      provenance: data.provenance.present
+          ? data.provenance.value
+          : this.provenance,
+      originalWriteZoneId: data.originalWriteZoneId.present
+          ? data.originalWriteZoneId.value
+          : this.originalWriteZoneId,
+      writeZoneId: data.writeZoneId.present
+          ? data.writeZoneId.value
+          : this.writeZoneId,
+      originalUtcOffsetMinutes: data.originalUtcOffsetMinutes.present
+          ? data.originalUtcOffsetMinutes.value
+          : this.originalUtcOffsetMinutes,
+      utcOffsetMinutes: data.utcOffsetMinutes.present
+          ? data.utcOffsetMinutes.value
+          : this.utcOffsetMinutes,
+      vocabularyVersion: data.vocabularyVersion.present
+          ? data.vocabularyVersion.value
+          : this.vocabularyVersion,
+      durationBucket: data.durationBucket.present
+          ? data.durationBucket.value
+          : this.durationBucket,
+      durationLabel: data.durationLabel.present
+          ? data.durationLabel.value
+          : this.durationLabel,
+      durationCatalogVersion: data.durationCatalogVersion.present
+          ? data.durationCatalogVersion.value
+          : this.durationCatalogVersion,
+      exactMinutes: data.exactMinutes.present
+          ? data.exactMinutes.value
+          : this.exactMinutes,
+      quality: data.quality.present ? data.quality.value : this.quality,
+      troubleFallingAsleep: data.troubleFallingAsleep.present
+          ? data.troubleFallingAsleep.value
+          : this.troubleFallingAsleep,
+      wakingDuringNight: data.wakingDuringNight.present
+          ? data.wakingDuringNight.value
+          : this.wakingDuringNight,
+      muchMoreThanUsual: data.muchMoreThanUsual.present
+          ? data.muchMoreThanUsual.value
+          : this.muchMoreThanUsual,
+      muchLessThanUsual: data.muchLessThanUsual.present
+          ? data.muchLessThanUsual.value
+          : this.muchLessThanUsual,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('RecordHubSleepRow(')
+          ..write('id: $id, ')
+          ..write('experiencedDay: $experiencedDay, ')
+          ..write('recordedAtMillis: $recordedAtMillis, ')
+          ..write('updatedAtMillis: $updatedAtMillis, ')
+          ..write('originalProvenance: $originalProvenance, ')
+          ..write('provenance: $provenance, ')
+          ..write('originalWriteZoneId: $originalWriteZoneId, ')
+          ..write('writeZoneId: $writeZoneId, ')
+          ..write('originalUtcOffsetMinutes: $originalUtcOffsetMinutes, ')
+          ..write('utcOffsetMinutes: $utcOffsetMinutes, ')
+          ..write('vocabularyVersion: $vocabularyVersion, ')
+          ..write('durationBucket: $durationBucket, ')
+          ..write('durationLabel: $durationLabel, ')
+          ..write('durationCatalogVersion: $durationCatalogVersion, ')
+          ..write('exactMinutes: $exactMinutes, ')
+          ..write('quality: $quality, ')
+          ..write('troubleFallingAsleep: $troubleFallingAsleep, ')
+          ..write('wakingDuringNight: $wakingDuringNight, ')
+          ..write('muchMoreThanUsual: $muchMoreThanUsual, ')
+          ..write('muchLessThanUsual: $muchLessThanUsual')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(
+    id,
+    experiencedDay,
+    recordedAtMillis,
+    updatedAtMillis,
+    originalProvenance,
+    provenance,
+    originalWriteZoneId,
+    writeZoneId,
+    originalUtcOffsetMinutes,
+    utcOffsetMinutes,
+    vocabularyVersion,
+    durationBucket,
+    durationLabel,
+    durationCatalogVersion,
+    exactMinutes,
+    quality,
+    troubleFallingAsleep,
+    wakingDuringNight,
+    muchMoreThanUsual,
+    muchLessThanUsual,
+  );
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is RecordHubSleepRow &&
+          other.id == this.id &&
+          other.experiencedDay == this.experiencedDay &&
+          other.recordedAtMillis == this.recordedAtMillis &&
+          other.updatedAtMillis == this.updatedAtMillis &&
+          other.originalProvenance == this.originalProvenance &&
+          other.provenance == this.provenance &&
+          other.originalWriteZoneId == this.originalWriteZoneId &&
+          other.writeZoneId == this.writeZoneId &&
+          other.originalUtcOffsetMinutes == this.originalUtcOffsetMinutes &&
+          other.utcOffsetMinutes == this.utcOffsetMinutes &&
+          other.vocabularyVersion == this.vocabularyVersion &&
+          other.durationBucket == this.durationBucket &&
+          other.durationLabel == this.durationLabel &&
+          other.durationCatalogVersion == this.durationCatalogVersion &&
+          other.exactMinutes == this.exactMinutes &&
+          other.quality == this.quality &&
+          other.troubleFallingAsleep == this.troubleFallingAsleep &&
+          other.wakingDuringNight == this.wakingDuringNight &&
+          other.muchMoreThanUsual == this.muchMoreThanUsual &&
+          other.muchLessThanUsual == this.muchLessThanUsual);
+}
+
+class RecordHubSleepRowsCompanion extends UpdateCompanion<RecordHubSleepRow> {
+  final Value<String> id;
+  final Value<int> experiencedDay;
+  final Value<int> recordedAtMillis;
+  final Value<int> updatedAtMillis;
+  final Value<String> originalProvenance;
+  final Value<String> provenance;
+  final Value<String?> originalWriteZoneId;
+  final Value<String?> writeZoneId;
+  final Value<int?> originalUtcOffsetMinutes;
+  final Value<int?> utcOffsetMinutes;
+  final Value<int> vocabularyVersion;
+  final Value<String?> durationBucket;
+  final Value<String?> durationLabel;
+  final Value<int?> durationCatalogVersion;
+  final Value<int?> exactMinutes;
+  final Value<int?> quality;
+  final Value<bool> troubleFallingAsleep;
+  final Value<bool> wakingDuringNight;
+  final Value<bool> muchMoreThanUsual;
+  final Value<bool> muchLessThanUsual;
+  final Value<int> rowid;
+  const RecordHubSleepRowsCompanion({
+    this.id = const Value.absent(),
+    this.experiencedDay = const Value.absent(),
+    this.recordedAtMillis = const Value.absent(),
+    this.updatedAtMillis = const Value.absent(),
+    this.originalProvenance = const Value.absent(),
+    this.provenance = const Value.absent(),
+    this.originalWriteZoneId = const Value.absent(),
+    this.writeZoneId = const Value.absent(),
+    this.originalUtcOffsetMinutes = const Value.absent(),
+    this.utcOffsetMinutes = const Value.absent(),
+    this.vocabularyVersion = const Value.absent(),
+    this.durationBucket = const Value.absent(),
+    this.durationLabel = const Value.absent(),
+    this.durationCatalogVersion = const Value.absent(),
+    this.exactMinutes = const Value.absent(),
+    this.quality = const Value.absent(),
+    this.troubleFallingAsleep = const Value.absent(),
+    this.wakingDuringNight = const Value.absent(),
+    this.muchMoreThanUsual = const Value.absent(),
+    this.muchLessThanUsual = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  RecordHubSleepRowsCompanion.insert({
+    required String id,
+    required int experiencedDay,
+    required int recordedAtMillis,
+    required int updatedAtMillis,
+    required String originalProvenance,
+    required String provenance,
+    this.originalWriteZoneId = const Value.absent(),
+    this.writeZoneId = const Value.absent(),
+    this.originalUtcOffsetMinutes = const Value.absent(),
+    this.utcOffsetMinutes = const Value.absent(),
+    this.vocabularyVersion = const Value.absent(),
+    this.durationBucket = const Value.absent(),
+    this.durationLabel = const Value.absent(),
+    this.durationCatalogVersion = const Value.absent(),
+    this.exactMinutes = const Value.absent(),
+    this.quality = const Value.absent(),
+    this.troubleFallingAsleep = const Value.absent(),
+    this.wakingDuringNight = const Value.absent(),
+    this.muchMoreThanUsual = const Value.absent(),
+    this.muchLessThanUsual = const Value.absent(),
+    this.rowid = const Value.absent(),
+  }) : id = Value(id),
+       experiencedDay = Value(experiencedDay),
+       recordedAtMillis = Value(recordedAtMillis),
+       updatedAtMillis = Value(updatedAtMillis),
+       originalProvenance = Value(originalProvenance),
+       provenance = Value(provenance);
+  static Insertable<RecordHubSleepRow> custom({
+    Expression<String>? id,
+    Expression<int>? experiencedDay,
+    Expression<int>? recordedAtMillis,
+    Expression<int>? updatedAtMillis,
+    Expression<String>? originalProvenance,
+    Expression<String>? provenance,
+    Expression<String>? originalWriteZoneId,
+    Expression<String>? writeZoneId,
+    Expression<int>? originalUtcOffsetMinutes,
+    Expression<int>? utcOffsetMinutes,
+    Expression<int>? vocabularyVersion,
+    Expression<String>? durationBucket,
+    Expression<String>? durationLabel,
+    Expression<int>? durationCatalogVersion,
+    Expression<int>? exactMinutes,
+    Expression<int>? quality,
+    Expression<bool>? troubleFallingAsleep,
+    Expression<bool>? wakingDuringNight,
+    Expression<bool>? muchMoreThanUsual,
+    Expression<bool>? muchLessThanUsual,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (experiencedDay != null) 'experienced_day': experiencedDay,
+      if (recordedAtMillis != null) 'recorded_at_millis': recordedAtMillis,
+      if (updatedAtMillis != null) 'updated_at_millis': updatedAtMillis,
+      if (originalProvenance != null) 'original_provenance': originalProvenance,
+      if (provenance != null) 'provenance': provenance,
+      if (originalWriteZoneId != null)
+        'original_write_zone_id': originalWriteZoneId,
+      if (writeZoneId != null) 'write_zone_id': writeZoneId,
+      if (originalUtcOffsetMinutes != null)
+        'original_utc_offset_minutes': originalUtcOffsetMinutes,
+      if (utcOffsetMinutes != null) 'utc_offset_minutes': utcOffsetMinutes,
+      if (vocabularyVersion != null) 'vocabulary_version': vocabularyVersion,
+      if (durationBucket != null) 'duration_bucket': durationBucket,
+      if (durationLabel != null) 'duration_label': durationLabel,
+      if (durationCatalogVersion != null)
+        'duration_catalog_version': durationCatalogVersion,
+      if (exactMinutes != null) 'exact_minutes': exactMinutes,
+      if (quality != null) 'quality': quality,
+      if (troubleFallingAsleep != null)
+        'trouble_falling_asleep': troubleFallingAsleep,
+      if (wakingDuringNight != null) 'waking_during_night': wakingDuringNight,
+      if (muchMoreThanUsual != null) 'much_more_than_usual': muchMoreThanUsual,
+      if (muchLessThanUsual != null) 'much_less_than_usual': muchLessThanUsual,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  RecordHubSleepRowsCompanion copyWith({
+    Value<String>? id,
+    Value<int>? experiencedDay,
+    Value<int>? recordedAtMillis,
+    Value<int>? updatedAtMillis,
+    Value<String>? originalProvenance,
+    Value<String>? provenance,
+    Value<String?>? originalWriteZoneId,
+    Value<String?>? writeZoneId,
+    Value<int?>? originalUtcOffsetMinutes,
+    Value<int?>? utcOffsetMinutes,
+    Value<int>? vocabularyVersion,
+    Value<String?>? durationBucket,
+    Value<String?>? durationLabel,
+    Value<int?>? durationCatalogVersion,
+    Value<int?>? exactMinutes,
+    Value<int?>? quality,
+    Value<bool>? troubleFallingAsleep,
+    Value<bool>? wakingDuringNight,
+    Value<bool>? muchMoreThanUsual,
+    Value<bool>? muchLessThanUsual,
+    Value<int>? rowid,
+  }) {
+    return RecordHubSleepRowsCompanion(
+      id: id ?? this.id,
+      experiencedDay: experiencedDay ?? this.experiencedDay,
+      recordedAtMillis: recordedAtMillis ?? this.recordedAtMillis,
+      updatedAtMillis: updatedAtMillis ?? this.updatedAtMillis,
+      originalProvenance: originalProvenance ?? this.originalProvenance,
+      provenance: provenance ?? this.provenance,
+      originalWriteZoneId: originalWriteZoneId ?? this.originalWriteZoneId,
+      writeZoneId: writeZoneId ?? this.writeZoneId,
+      originalUtcOffsetMinutes:
+          originalUtcOffsetMinutes ?? this.originalUtcOffsetMinutes,
+      utcOffsetMinutes: utcOffsetMinutes ?? this.utcOffsetMinutes,
+      vocabularyVersion: vocabularyVersion ?? this.vocabularyVersion,
+      durationBucket: durationBucket ?? this.durationBucket,
+      durationLabel: durationLabel ?? this.durationLabel,
+      durationCatalogVersion:
+          durationCatalogVersion ?? this.durationCatalogVersion,
+      exactMinutes: exactMinutes ?? this.exactMinutes,
+      quality: quality ?? this.quality,
+      troubleFallingAsleep: troubleFallingAsleep ?? this.troubleFallingAsleep,
+      wakingDuringNight: wakingDuringNight ?? this.wakingDuringNight,
+      muchMoreThanUsual: muchMoreThanUsual ?? this.muchMoreThanUsual,
+      muchLessThanUsual: muchLessThanUsual ?? this.muchLessThanUsual,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<String>(id.value);
+    }
+    if (experiencedDay.present) {
+      map['experienced_day'] = Variable<int>(experiencedDay.value);
+    }
+    if (recordedAtMillis.present) {
+      map['recorded_at_millis'] = Variable<int>(recordedAtMillis.value);
+    }
+    if (updatedAtMillis.present) {
+      map['updated_at_millis'] = Variable<int>(updatedAtMillis.value);
+    }
+    if (originalProvenance.present) {
+      map['original_provenance'] = Variable<String>(originalProvenance.value);
+    }
+    if (provenance.present) {
+      map['provenance'] = Variable<String>(provenance.value);
+    }
+    if (originalWriteZoneId.present) {
+      map['original_write_zone_id'] = Variable<String>(
+        originalWriteZoneId.value,
+      );
+    }
+    if (writeZoneId.present) {
+      map['write_zone_id'] = Variable<String>(writeZoneId.value);
+    }
+    if (originalUtcOffsetMinutes.present) {
+      map['original_utc_offset_minutes'] = Variable<int>(
+        originalUtcOffsetMinutes.value,
+      );
+    }
+    if (utcOffsetMinutes.present) {
+      map['utc_offset_minutes'] = Variable<int>(utcOffsetMinutes.value);
+    }
+    if (vocabularyVersion.present) {
+      map['vocabulary_version'] = Variable<int>(vocabularyVersion.value);
+    }
+    if (durationBucket.present) {
+      map['duration_bucket'] = Variable<String>(durationBucket.value);
+    }
+    if (durationLabel.present) {
+      map['duration_label'] = Variable<String>(durationLabel.value);
+    }
+    if (durationCatalogVersion.present) {
+      map['duration_catalog_version'] = Variable<int>(
+        durationCatalogVersion.value,
+      );
+    }
+    if (exactMinutes.present) {
+      map['exact_minutes'] = Variable<int>(exactMinutes.value);
+    }
+    if (quality.present) {
+      map['quality'] = Variable<int>(quality.value);
+    }
+    if (troubleFallingAsleep.present) {
+      map['trouble_falling_asleep'] = Variable<bool>(
+        troubleFallingAsleep.value,
+      );
+    }
+    if (wakingDuringNight.present) {
+      map['waking_during_night'] = Variable<bool>(wakingDuringNight.value);
+    }
+    if (muchMoreThanUsual.present) {
+      map['much_more_than_usual'] = Variable<bool>(muchMoreThanUsual.value);
+    }
+    if (muchLessThanUsual.present) {
+      map['much_less_than_usual'] = Variable<bool>(muchLessThanUsual.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('RecordHubSleepRowsCompanion(')
+          ..write('id: $id, ')
+          ..write('experiencedDay: $experiencedDay, ')
+          ..write('recordedAtMillis: $recordedAtMillis, ')
+          ..write('updatedAtMillis: $updatedAtMillis, ')
+          ..write('originalProvenance: $originalProvenance, ')
+          ..write('provenance: $provenance, ')
+          ..write('originalWriteZoneId: $originalWriteZoneId, ')
+          ..write('writeZoneId: $writeZoneId, ')
+          ..write('originalUtcOffsetMinutes: $originalUtcOffsetMinutes, ')
+          ..write('utcOffsetMinutes: $utcOffsetMinutes, ')
+          ..write('vocabularyVersion: $vocabularyVersion, ')
+          ..write('durationBucket: $durationBucket, ')
+          ..write('durationLabel: $durationLabel, ')
+          ..write('durationCatalogVersion: $durationCatalogVersion, ')
+          ..write('exactMinutes: $exactMinutes, ')
+          ..write('quality: $quality, ')
+          ..write('troubleFallingAsleep: $troubleFallingAsleep, ')
+          ..write('wakingDuringNight: $wakingDuringNight, ')
+          ..write('muchMoreThanUsual: $muchMoreThanUsual, ')
+          ..write('muchLessThanUsual: $muchLessThanUsual, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
+class $RecordHubAppetiteRowsTable extends RecordHubAppetiteRows
+    with TableInfo<$RecordHubAppetiteRowsTable, RecordHubAppetiteRow> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $RecordHubAppetiteRowsTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<String> id = GeneratedColumn<String>(
+    'id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _experiencedDayMeta = const VerificationMeta(
+    'experiencedDay',
+  );
+  @override
+  late final GeneratedColumn<int> experiencedDay = GeneratedColumn<int>(
+    'experienced_day',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _recordedAtMillisMeta = const VerificationMeta(
+    'recordedAtMillis',
+  );
+  @override
+  late final GeneratedColumn<int> recordedAtMillis = GeneratedColumn<int>(
+    'recorded_at_millis',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _updatedAtMillisMeta = const VerificationMeta(
+    'updatedAtMillis',
+  );
+  @override
+  late final GeneratedColumn<int> updatedAtMillis = GeneratedColumn<int>(
+    'updated_at_millis',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _originalProvenanceMeta =
+      const VerificationMeta('originalProvenance');
+  @override
+  late final GeneratedColumn<String> originalProvenance =
+      GeneratedColumn<String>(
+        'original_provenance',
+        aliasedName,
+        false,
+        type: DriftSqlType.string,
+        requiredDuringInsert: true,
+      );
+  static const VerificationMeta _provenanceMeta = const VerificationMeta(
+    'provenance',
+  );
+  @override
+  late final GeneratedColumn<String> provenance = GeneratedColumn<String>(
+    'provenance',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _originalWriteZoneIdMeta =
+      const VerificationMeta('originalWriteZoneId');
+  @override
+  late final GeneratedColumn<String> originalWriteZoneId =
+      GeneratedColumn<String>(
+        'original_write_zone_id',
+        aliasedName,
+        true,
+        type: DriftSqlType.string,
+        requiredDuringInsert: false,
+      );
+  static const VerificationMeta _writeZoneIdMeta = const VerificationMeta(
+    'writeZoneId',
+  );
+  @override
+  late final GeneratedColumn<String> writeZoneId = GeneratedColumn<String>(
+    'write_zone_id',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _originalUtcOffsetMinutesMeta =
+      const VerificationMeta('originalUtcOffsetMinutes');
+  @override
+  late final GeneratedColumn<int> originalUtcOffsetMinutes =
+      GeneratedColumn<int>(
+        'original_utc_offset_minutes',
+        aliasedName,
+        true,
+        type: DriftSqlType.int,
+        requiredDuringInsert: false,
+      );
+  static const VerificationMeta _utcOffsetMinutesMeta = const VerificationMeta(
+    'utcOffsetMinutes',
+  );
+  @override
+  late final GeneratedColumn<int> utcOffsetMinutes = GeneratedColumn<int>(
+    'utc_offset_minutes',
+    aliasedName,
+    true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _vocabularyVersionMeta = const VerificationMeta(
+    'vocabularyVersion',
+  );
+  @override
+  late final GeneratedColumn<int> vocabularyVersion = GeneratedColumn<int>(
+    'vocabulary_version',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(1),
+  );
+  static const VerificationMeta _appetiteMeta = const VerificationMeta(
+    'appetite',
+  );
+  @override
+  late final GeneratedColumn<String> appetite = GeneratedColumn<String>(
+    'appetite',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _cravingScoreMeta = const VerificationMeta(
+    'cravingScore',
+  );
+  @override
+  late final GeneratedColumn<int> cravingScore = GeneratedColumn<int>(
+    'craving_score',
+    aliasedName,
+    true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _cravingTypeMeta = const VerificationMeta(
+    'cravingType',
+  );
+  @override
+  late final GeneratedColumn<String> cravingType = GeneratedColumn<String>(
+    'craving_type',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _customCravingMeta = const VerificationMeta(
+    'customCraving',
+  );
+  @override
+  late final GeneratedColumn<String> customCraving = GeneratedColumn<String>(
+    'custom_craving',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    id,
+    experiencedDay,
+    recordedAtMillis,
+    updatedAtMillis,
+    originalProvenance,
+    provenance,
+    originalWriteZoneId,
+    writeZoneId,
+    originalUtcOffsetMinutes,
+    utcOffsetMinutes,
+    vocabularyVersion,
+    appetite,
+    cravingScore,
+    cravingType,
+    customCraving,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'record_hub_appetite_rows';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<RecordHubAppetiteRow> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    } else if (isInserting) {
+      context.missing(_idMeta);
+    }
+    if (data.containsKey('experienced_day')) {
+      context.handle(
+        _experiencedDayMeta,
+        experiencedDay.isAcceptableOrUnknown(
+          data['experienced_day']!,
+          _experiencedDayMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_experiencedDayMeta);
+    }
+    if (data.containsKey('recorded_at_millis')) {
+      context.handle(
+        _recordedAtMillisMeta,
+        recordedAtMillis.isAcceptableOrUnknown(
+          data['recorded_at_millis']!,
+          _recordedAtMillisMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_recordedAtMillisMeta);
+    }
+    if (data.containsKey('updated_at_millis')) {
+      context.handle(
+        _updatedAtMillisMeta,
+        updatedAtMillis.isAcceptableOrUnknown(
+          data['updated_at_millis']!,
+          _updatedAtMillisMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_updatedAtMillisMeta);
+    }
+    if (data.containsKey('original_provenance')) {
+      context.handle(
+        _originalProvenanceMeta,
+        originalProvenance.isAcceptableOrUnknown(
+          data['original_provenance']!,
+          _originalProvenanceMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_originalProvenanceMeta);
+    }
+    if (data.containsKey('provenance')) {
+      context.handle(
+        _provenanceMeta,
+        provenance.isAcceptableOrUnknown(data['provenance']!, _provenanceMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_provenanceMeta);
+    }
+    if (data.containsKey('original_write_zone_id')) {
+      context.handle(
+        _originalWriteZoneIdMeta,
+        originalWriteZoneId.isAcceptableOrUnknown(
+          data['original_write_zone_id']!,
+          _originalWriteZoneIdMeta,
+        ),
+      );
+    }
+    if (data.containsKey('write_zone_id')) {
+      context.handle(
+        _writeZoneIdMeta,
+        writeZoneId.isAcceptableOrUnknown(
+          data['write_zone_id']!,
+          _writeZoneIdMeta,
+        ),
+      );
+    }
+    if (data.containsKey('original_utc_offset_minutes')) {
+      context.handle(
+        _originalUtcOffsetMinutesMeta,
+        originalUtcOffsetMinutes.isAcceptableOrUnknown(
+          data['original_utc_offset_minutes']!,
+          _originalUtcOffsetMinutesMeta,
+        ),
+      );
+    }
+    if (data.containsKey('utc_offset_minutes')) {
+      context.handle(
+        _utcOffsetMinutesMeta,
+        utcOffsetMinutes.isAcceptableOrUnknown(
+          data['utc_offset_minutes']!,
+          _utcOffsetMinutesMeta,
+        ),
+      );
+    }
+    if (data.containsKey('vocabulary_version')) {
+      context.handle(
+        _vocabularyVersionMeta,
+        vocabularyVersion.isAcceptableOrUnknown(
+          data['vocabulary_version']!,
+          _vocabularyVersionMeta,
+        ),
+      );
+    }
+    if (data.containsKey('appetite')) {
+      context.handle(
+        _appetiteMeta,
+        appetite.isAcceptableOrUnknown(data['appetite']!, _appetiteMeta),
+      );
+    }
+    if (data.containsKey('craving_score')) {
+      context.handle(
+        _cravingScoreMeta,
+        cravingScore.isAcceptableOrUnknown(
+          data['craving_score']!,
+          _cravingScoreMeta,
+        ),
+      );
+    }
+    if (data.containsKey('craving_type')) {
+      context.handle(
+        _cravingTypeMeta,
+        cravingType.isAcceptableOrUnknown(
+          data['craving_type']!,
+          _cravingTypeMeta,
+        ),
+      );
+    }
+    if (data.containsKey('custom_craving')) {
+      context.handle(
+        _customCravingMeta,
+        customCraving.isAcceptableOrUnknown(
+          data['custom_craving']!,
+          _customCravingMeta,
+        ),
+      );
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  List<Set<GeneratedColumn>> get uniqueKeys => [
+    {experiencedDay},
+  ];
+  @override
+  RecordHubAppetiteRow map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return RecordHubAppetiteRow(
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}id'],
+      )!,
+      experiencedDay: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}experienced_day'],
+      )!,
+      recordedAtMillis: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}recorded_at_millis'],
+      )!,
+      updatedAtMillis: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}updated_at_millis'],
+      )!,
+      originalProvenance: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}original_provenance'],
+      )!,
+      provenance: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}provenance'],
+      )!,
+      originalWriteZoneId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}original_write_zone_id'],
+      ),
+      writeZoneId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}write_zone_id'],
+      ),
+      originalUtcOffsetMinutes: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}original_utc_offset_minutes'],
+      ),
+      utcOffsetMinutes: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}utc_offset_minutes'],
+      ),
+      vocabularyVersion: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}vocabulary_version'],
+      )!,
+      appetite: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}appetite'],
+      ),
+      cravingScore: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}craving_score'],
+      ),
+      cravingType: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}craving_type'],
+      ),
+      customCraving: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}custom_craving'],
+      ),
+    );
+  }
+
+  @override
+  $RecordHubAppetiteRowsTable createAlias(String alias) {
+    return $RecordHubAppetiteRowsTable(attachedDatabase, alias);
+  }
+}
+
+class RecordHubAppetiteRow extends DataClass
+    implements Insertable<RecordHubAppetiteRow> {
+  final String id;
+  final int experiencedDay;
+  final int recordedAtMillis;
+  final int updatedAtMillis;
+  final String originalProvenance;
+  final String provenance;
+  final String? originalWriteZoneId;
+  final String? writeZoneId;
+  final int? originalUtcOffsetMinutes;
+  final int? utcOffsetMinutes;
+  final int vocabularyVersion;
+  final String? appetite;
+  final int? cravingScore;
+  final String? cravingType;
+  final String? customCraving;
+  const RecordHubAppetiteRow({
+    required this.id,
+    required this.experiencedDay,
+    required this.recordedAtMillis,
+    required this.updatedAtMillis,
+    required this.originalProvenance,
+    required this.provenance,
+    this.originalWriteZoneId,
+    this.writeZoneId,
+    this.originalUtcOffsetMinutes,
+    this.utcOffsetMinutes,
+    required this.vocabularyVersion,
+    this.appetite,
+    this.cravingScore,
+    this.cravingType,
+    this.customCraving,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<String>(id);
+    map['experienced_day'] = Variable<int>(experiencedDay);
+    map['recorded_at_millis'] = Variable<int>(recordedAtMillis);
+    map['updated_at_millis'] = Variable<int>(updatedAtMillis);
+    map['original_provenance'] = Variable<String>(originalProvenance);
+    map['provenance'] = Variable<String>(provenance);
+    if (!nullToAbsent || originalWriteZoneId != null) {
+      map['original_write_zone_id'] = Variable<String>(originalWriteZoneId);
+    }
+    if (!nullToAbsent || writeZoneId != null) {
+      map['write_zone_id'] = Variable<String>(writeZoneId);
+    }
+    if (!nullToAbsent || originalUtcOffsetMinutes != null) {
+      map['original_utc_offset_minutes'] = Variable<int>(
+        originalUtcOffsetMinutes,
+      );
+    }
+    if (!nullToAbsent || utcOffsetMinutes != null) {
+      map['utc_offset_minutes'] = Variable<int>(utcOffsetMinutes);
+    }
+    map['vocabulary_version'] = Variable<int>(vocabularyVersion);
+    if (!nullToAbsent || appetite != null) {
+      map['appetite'] = Variable<String>(appetite);
+    }
+    if (!nullToAbsent || cravingScore != null) {
+      map['craving_score'] = Variable<int>(cravingScore);
+    }
+    if (!nullToAbsent || cravingType != null) {
+      map['craving_type'] = Variable<String>(cravingType);
+    }
+    if (!nullToAbsent || customCraving != null) {
+      map['custom_craving'] = Variable<String>(customCraving);
+    }
+    return map;
+  }
+
+  RecordHubAppetiteRowsCompanion toCompanion(bool nullToAbsent) {
+    return RecordHubAppetiteRowsCompanion(
+      id: Value(id),
+      experiencedDay: Value(experiencedDay),
+      recordedAtMillis: Value(recordedAtMillis),
+      updatedAtMillis: Value(updatedAtMillis),
+      originalProvenance: Value(originalProvenance),
+      provenance: Value(provenance),
+      originalWriteZoneId: originalWriteZoneId == null && nullToAbsent
+          ? const Value.absent()
+          : Value(originalWriteZoneId),
+      writeZoneId: writeZoneId == null && nullToAbsent
+          ? const Value.absent()
+          : Value(writeZoneId),
+      originalUtcOffsetMinutes: originalUtcOffsetMinutes == null && nullToAbsent
+          ? const Value.absent()
+          : Value(originalUtcOffsetMinutes),
+      utcOffsetMinutes: utcOffsetMinutes == null && nullToAbsent
+          ? const Value.absent()
+          : Value(utcOffsetMinutes),
+      vocabularyVersion: Value(vocabularyVersion),
+      appetite: appetite == null && nullToAbsent
+          ? const Value.absent()
+          : Value(appetite),
+      cravingScore: cravingScore == null && nullToAbsent
+          ? const Value.absent()
+          : Value(cravingScore),
+      cravingType: cravingType == null && nullToAbsent
+          ? const Value.absent()
+          : Value(cravingType),
+      customCraving: customCraving == null && nullToAbsent
+          ? const Value.absent()
+          : Value(customCraving),
+    );
+  }
+
+  factory RecordHubAppetiteRow.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return RecordHubAppetiteRow(
+      id: serializer.fromJson<String>(json['id']),
+      experiencedDay: serializer.fromJson<int>(json['experiencedDay']),
+      recordedAtMillis: serializer.fromJson<int>(json['recordedAtMillis']),
+      updatedAtMillis: serializer.fromJson<int>(json['updatedAtMillis']),
+      originalProvenance: serializer.fromJson<String>(
+        json['originalProvenance'],
+      ),
+      provenance: serializer.fromJson<String>(json['provenance']),
+      originalWriteZoneId: serializer.fromJson<String?>(
+        json['originalWriteZoneId'],
+      ),
+      writeZoneId: serializer.fromJson<String?>(json['writeZoneId']),
+      originalUtcOffsetMinutes: serializer.fromJson<int?>(
+        json['originalUtcOffsetMinutes'],
+      ),
+      utcOffsetMinutes: serializer.fromJson<int?>(json['utcOffsetMinutes']),
+      vocabularyVersion: serializer.fromJson<int>(json['vocabularyVersion']),
+      appetite: serializer.fromJson<String?>(json['appetite']),
+      cravingScore: serializer.fromJson<int?>(json['cravingScore']),
+      cravingType: serializer.fromJson<String?>(json['cravingType']),
+      customCraving: serializer.fromJson<String?>(json['customCraving']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<String>(id),
+      'experiencedDay': serializer.toJson<int>(experiencedDay),
+      'recordedAtMillis': serializer.toJson<int>(recordedAtMillis),
+      'updatedAtMillis': serializer.toJson<int>(updatedAtMillis),
+      'originalProvenance': serializer.toJson<String>(originalProvenance),
+      'provenance': serializer.toJson<String>(provenance),
+      'originalWriteZoneId': serializer.toJson<String?>(originalWriteZoneId),
+      'writeZoneId': serializer.toJson<String?>(writeZoneId),
+      'originalUtcOffsetMinutes': serializer.toJson<int?>(
+        originalUtcOffsetMinutes,
+      ),
+      'utcOffsetMinutes': serializer.toJson<int?>(utcOffsetMinutes),
+      'vocabularyVersion': serializer.toJson<int>(vocabularyVersion),
+      'appetite': serializer.toJson<String?>(appetite),
+      'cravingScore': serializer.toJson<int?>(cravingScore),
+      'cravingType': serializer.toJson<String?>(cravingType),
+      'customCraving': serializer.toJson<String?>(customCraving),
+    };
+  }
+
+  RecordHubAppetiteRow copyWith({
+    String? id,
+    int? experiencedDay,
+    int? recordedAtMillis,
+    int? updatedAtMillis,
+    String? originalProvenance,
+    String? provenance,
+    Value<String?> originalWriteZoneId = const Value.absent(),
+    Value<String?> writeZoneId = const Value.absent(),
+    Value<int?> originalUtcOffsetMinutes = const Value.absent(),
+    Value<int?> utcOffsetMinutes = const Value.absent(),
+    int? vocabularyVersion,
+    Value<String?> appetite = const Value.absent(),
+    Value<int?> cravingScore = const Value.absent(),
+    Value<String?> cravingType = const Value.absent(),
+    Value<String?> customCraving = const Value.absent(),
+  }) => RecordHubAppetiteRow(
+    id: id ?? this.id,
+    experiencedDay: experiencedDay ?? this.experiencedDay,
+    recordedAtMillis: recordedAtMillis ?? this.recordedAtMillis,
+    updatedAtMillis: updatedAtMillis ?? this.updatedAtMillis,
+    originalProvenance: originalProvenance ?? this.originalProvenance,
+    provenance: provenance ?? this.provenance,
+    originalWriteZoneId: originalWriteZoneId.present
+        ? originalWriteZoneId.value
+        : this.originalWriteZoneId,
+    writeZoneId: writeZoneId.present ? writeZoneId.value : this.writeZoneId,
+    originalUtcOffsetMinutes: originalUtcOffsetMinutes.present
+        ? originalUtcOffsetMinutes.value
+        : this.originalUtcOffsetMinutes,
+    utcOffsetMinutes: utcOffsetMinutes.present
+        ? utcOffsetMinutes.value
+        : this.utcOffsetMinutes,
+    vocabularyVersion: vocabularyVersion ?? this.vocabularyVersion,
+    appetite: appetite.present ? appetite.value : this.appetite,
+    cravingScore: cravingScore.present ? cravingScore.value : this.cravingScore,
+    cravingType: cravingType.present ? cravingType.value : this.cravingType,
+    customCraving: customCraving.present
+        ? customCraving.value
+        : this.customCraving,
+  );
+  RecordHubAppetiteRow copyWithCompanion(RecordHubAppetiteRowsCompanion data) {
+    return RecordHubAppetiteRow(
+      id: data.id.present ? data.id.value : this.id,
+      experiencedDay: data.experiencedDay.present
+          ? data.experiencedDay.value
+          : this.experiencedDay,
+      recordedAtMillis: data.recordedAtMillis.present
+          ? data.recordedAtMillis.value
+          : this.recordedAtMillis,
+      updatedAtMillis: data.updatedAtMillis.present
+          ? data.updatedAtMillis.value
+          : this.updatedAtMillis,
+      originalProvenance: data.originalProvenance.present
+          ? data.originalProvenance.value
+          : this.originalProvenance,
+      provenance: data.provenance.present
+          ? data.provenance.value
+          : this.provenance,
+      originalWriteZoneId: data.originalWriteZoneId.present
+          ? data.originalWriteZoneId.value
+          : this.originalWriteZoneId,
+      writeZoneId: data.writeZoneId.present
+          ? data.writeZoneId.value
+          : this.writeZoneId,
+      originalUtcOffsetMinutes: data.originalUtcOffsetMinutes.present
+          ? data.originalUtcOffsetMinutes.value
+          : this.originalUtcOffsetMinutes,
+      utcOffsetMinutes: data.utcOffsetMinutes.present
+          ? data.utcOffsetMinutes.value
+          : this.utcOffsetMinutes,
+      vocabularyVersion: data.vocabularyVersion.present
+          ? data.vocabularyVersion.value
+          : this.vocabularyVersion,
+      appetite: data.appetite.present ? data.appetite.value : this.appetite,
+      cravingScore: data.cravingScore.present
+          ? data.cravingScore.value
+          : this.cravingScore,
+      cravingType: data.cravingType.present
+          ? data.cravingType.value
+          : this.cravingType,
+      customCraving: data.customCraving.present
+          ? data.customCraving.value
+          : this.customCraving,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('RecordHubAppetiteRow(')
+          ..write('id: $id, ')
+          ..write('experiencedDay: $experiencedDay, ')
+          ..write('recordedAtMillis: $recordedAtMillis, ')
+          ..write('updatedAtMillis: $updatedAtMillis, ')
+          ..write('originalProvenance: $originalProvenance, ')
+          ..write('provenance: $provenance, ')
+          ..write('originalWriteZoneId: $originalWriteZoneId, ')
+          ..write('writeZoneId: $writeZoneId, ')
+          ..write('originalUtcOffsetMinutes: $originalUtcOffsetMinutes, ')
+          ..write('utcOffsetMinutes: $utcOffsetMinutes, ')
+          ..write('vocabularyVersion: $vocabularyVersion, ')
+          ..write('appetite: $appetite, ')
+          ..write('cravingScore: $cravingScore, ')
+          ..write('cravingType: $cravingType, ')
+          ..write('customCraving: $customCraving')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(
+    id,
+    experiencedDay,
+    recordedAtMillis,
+    updatedAtMillis,
+    originalProvenance,
+    provenance,
+    originalWriteZoneId,
+    writeZoneId,
+    originalUtcOffsetMinutes,
+    utcOffsetMinutes,
+    vocabularyVersion,
+    appetite,
+    cravingScore,
+    cravingType,
+    customCraving,
+  );
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is RecordHubAppetiteRow &&
+          other.id == this.id &&
+          other.experiencedDay == this.experiencedDay &&
+          other.recordedAtMillis == this.recordedAtMillis &&
+          other.updatedAtMillis == this.updatedAtMillis &&
+          other.originalProvenance == this.originalProvenance &&
+          other.provenance == this.provenance &&
+          other.originalWriteZoneId == this.originalWriteZoneId &&
+          other.writeZoneId == this.writeZoneId &&
+          other.originalUtcOffsetMinutes == this.originalUtcOffsetMinutes &&
+          other.utcOffsetMinutes == this.utcOffsetMinutes &&
+          other.vocabularyVersion == this.vocabularyVersion &&
+          other.appetite == this.appetite &&
+          other.cravingScore == this.cravingScore &&
+          other.cravingType == this.cravingType &&
+          other.customCraving == this.customCraving);
+}
+
+class RecordHubAppetiteRowsCompanion
+    extends UpdateCompanion<RecordHubAppetiteRow> {
+  final Value<String> id;
+  final Value<int> experiencedDay;
+  final Value<int> recordedAtMillis;
+  final Value<int> updatedAtMillis;
+  final Value<String> originalProvenance;
+  final Value<String> provenance;
+  final Value<String?> originalWriteZoneId;
+  final Value<String?> writeZoneId;
+  final Value<int?> originalUtcOffsetMinutes;
+  final Value<int?> utcOffsetMinutes;
+  final Value<int> vocabularyVersion;
+  final Value<String?> appetite;
+  final Value<int?> cravingScore;
+  final Value<String?> cravingType;
+  final Value<String?> customCraving;
+  final Value<int> rowid;
+  const RecordHubAppetiteRowsCompanion({
+    this.id = const Value.absent(),
+    this.experiencedDay = const Value.absent(),
+    this.recordedAtMillis = const Value.absent(),
+    this.updatedAtMillis = const Value.absent(),
+    this.originalProvenance = const Value.absent(),
+    this.provenance = const Value.absent(),
+    this.originalWriteZoneId = const Value.absent(),
+    this.writeZoneId = const Value.absent(),
+    this.originalUtcOffsetMinutes = const Value.absent(),
+    this.utcOffsetMinutes = const Value.absent(),
+    this.vocabularyVersion = const Value.absent(),
+    this.appetite = const Value.absent(),
+    this.cravingScore = const Value.absent(),
+    this.cravingType = const Value.absent(),
+    this.customCraving = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  RecordHubAppetiteRowsCompanion.insert({
+    required String id,
+    required int experiencedDay,
+    required int recordedAtMillis,
+    required int updatedAtMillis,
+    required String originalProvenance,
+    required String provenance,
+    this.originalWriteZoneId = const Value.absent(),
+    this.writeZoneId = const Value.absent(),
+    this.originalUtcOffsetMinutes = const Value.absent(),
+    this.utcOffsetMinutes = const Value.absent(),
+    this.vocabularyVersion = const Value.absent(),
+    this.appetite = const Value.absent(),
+    this.cravingScore = const Value.absent(),
+    this.cravingType = const Value.absent(),
+    this.customCraving = const Value.absent(),
+    this.rowid = const Value.absent(),
+  }) : id = Value(id),
+       experiencedDay = Value(experiencedDay),
+       recordedAtMillis = Value(recordedAtMillis),
+       updatedAtMillis = Value(updatedAtMillis),
+       originalProvenance = Value(originalProvenance),
+       provenance = Value(provenance);
+  static Insertable<RecordHubAppetiteRow> custom({
+    Expression<String>? id,
+    Expression<int>? experiencedDay,
+    Expression<int>? recordedAtMillis,
+    Expression<int>? updatedAtMillis,
+    Expression<String>? originalProvenance,
+    Expression<String>? provenance,
+    Expression<String>? originalWriteZoneId,
+    Expression<String>? writeZoneId,
+    Expression<int>? originalUtcOffsetMinutes,
+    Expression<int>? utcOffsetMinutes,
+    Expression<int>? vocabularyVersion,
+    Expression<String>? appetite,
+    Expression<int>? cravingScore,
+    Expression<String>? cravingType,
+    Expression<String>? customCraving,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (experiencedDay != null) 'experienced_day': experiencedDay,
+      if (recordedAtMillis != null) 'recorded_at_millis': recordedAtMillis,
+      if (updatedAtMillis != null) 'updated_at_millis': updatedAtMillis,
+      if (originalProvenance != null) 'original_provenance': originalProvenance,
+      if (provenance != null) 'provenance': provenance,
+      if (originalWriteZoneId != null)
+        'original_write_zone_id': originalWriteZoneId,
+      if (writeZoneId != null) 'write_zone_id': writeZoneId,
+      if (originalUtcOffsetMinutes != null)
+        'original_utc_offset_minutes': originalUtcOffsetMinutes,
+      if (utcOffsetMinutes != null) 'utc_offset_minutes': utcOffsetMinutes,
+      if (vocabularyVersion != null) 'vocabulary_version': vocabularyVersion,
+      if (appetite != null) 'appetite': appetite,
+      if (cravingScore != null) 'craving_score': cravingScore,
+      if (cravingType != null) 'craving_type': cravingType,
+      if (customCraving != null) 'custom_craving': customCraving,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  RecordHubAppetiteRowsCompanion copyWith({
+    Value<String>? id,
+    Value<int>? experiencedDay,
+    Value<int>? recordedAtMillis,
+    Value<int>? updatedAtMillis,
+    Value<String>? originalProvenance,
+    Value<String>? provenance,
+    Value<String?>? originalWriteZoneId,
+    Value<String?>? writeZoneId,
+    Value<int?>? originalUtcOffsetMinutes,
+    Value<int?>? utcOffsetMinutes,
+    Value<int>? vocabularyVersion,
+    Value<String?>? appetite,
+    Value<int?>? cravingScore,
+    Value<String?>? cravingType,
+    Value<String?>? customCraving,
+    Value<int>? rowid,
+  }) {
+    return RecordHubAppetiteRowsCompanion(
+      id: id ?? this.id,
+      experiencedDay: experiencedDay ?? this.experiencedDay,
+      recordedAtMillis: recordedAtMillis ?? this.recordedAtMillis,
+      updatedAtMillis: updatedAtMillis ?? this.updatedAtMillis,
+      originalProvenance: originalProvenance ?? this.originalProvenance,
+      provenance: provenance ?? this.provenance,
+      originalWriteZoneId: originalWriteZoneId ?? this.originalWriteZoneId,
+      writeZoneId: writeZoneId ?? this.writeZoneId,
+      originalUtcOffsetMinutes:
+          originalUtcOffsetMinutes ?? this.originalUtcOffsetMinutes,
+      utcOffsetMinutes: utcOffsetMinutes ?? this.utcOffsetMinutes,
+      vocabularyVersion: vocabularyVersion ?? this.vocabularyVersion,
+      appetite: appetite ?? this.appetite,
+      cravingScore: cravingScore ?? this.cravingScore,
+      cravingType: cravingType ?? this.cravingType,
+      customCraving: customCraving ?? this.customCraving,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<String>(id.value);
+    }
+    if (experiencedDay.present) {
+      map['experienced_day'] = Variable<int>(experiencedDay.value);
+    }
+    if (recordedAtMillis.present) {
+      map['recorded_at_millis'] = Variable<int>(recordedAtMillis.value);
+    }
+    if (updatedAtMillis.present) {
+      map['updated_at_millis'] = Variable<int>(updatedAtMillis.value);
+    }
+    if (originalProvenance.present) {
+      map['original_provenance'] = Variable<String>(originalProvenance.value);
+    }
+    if (provenance.present) {
+      map['provenance'] = Variable<String>(provenance.value);
+    }
+    if (originalWriteZoneId.present) {
+      map['original_write_zone_id'] = Variable<String>(
+        originalWriteZoneId.value,
+      );
+    }
+    if (writeZoneId.present) {
+      map['write_zone_id'] = Variable<String>(writeZoneId.value);
+    }
+    if (originalUtcOffsetMinutes.present) {
+      map['original_utc_offset_minutes'] = Variable<int>(
+        originalUtcOffsetMinutes.value,
+      );
+    }
+    if (utcOffsetMinutes.present) {
+      map['utc_offset_minutes'] = Variable<int>(utcOffsetMinutes.value);
+    }
+    if (vocabularyVersion.present) {
+      map['vocabulary_version'] = Variable<int>(vocabularyVersion.value);
+    }
+    if (appetite.present) {
+      map['appetite'] = Variable<String>(appetite.value);
+    }
+    if (cravingScore.present) {
+      map['craving_score'] = Variable<int>(cravingScore.value);
+    }
+    if (cravingType.present) {
+      map['craving_type'] = Variable<String>(cravingType.value);
+    }
+    if (customCraving.present) {
+      map['custom_craving'] = Variable<String>(customCraving.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('RecordHubAppetiteRowsCompanion(')
+          ..write('id: $id, ')
+          ..write('experiencedDay: $experiencedDay, ')
+          ..write('recordedAtMillis: $recordedAtMillis, ')
+          ..write('updatedAtMillis: $updatedAtMillis, ')
+          ..write('originalProvenance: $originalProvenance, ')
+          ..write('provenance: $provenance, ')
+          ..write('originalWriteZoneId: $originalWriteZoneId, ')
+          ..write('writeZoneId: $writeZoneId, ')
+          ..write('originalUtcOffsetMinutes: $originalUtcOffsetMinutes, ')
+          ..write('utcOffsetMinutes: $utcOffsetMinutes, ')
+          ..write('vocabularyVersion: $vocabularyVersion, ')
+          ..write('appetite: $appetite, ')
+          ..write('cravingScore: $cravingScore, ')
+          ..write('cravingType: $cravingType, ')
+          ..write('customCraving: $customCraving, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
+class $RecordHubActivityRowsTable extends RecordHubActivityRows
+    with TableInfo<$RecordHubActivityRowsTable, RecordHubActivityRow> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $RecordHubActivityRowsTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<String> id = GeneratedColumn<String>(
+    'id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _experiencedDayMeta = const VerificationMeta(
+    'experiencedDay',
+  );
+  @override
+  late final GeneratedColumn<int> experiencedDay = GeneratedColumn<int>(
+    'experienced_day',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _recordedAtMillisMeta = const VerificationMeta(
+    'recordedAtMillis',
+  );
+  @override
+  late final GeneratedColumn<int> recordedAtMillis = GeneratedColumn<int>(
+    'recorded_at_millis',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _updatedAtMillisMeta = const VerificationMeta(
+    'updatedAtMillis',
+  );
+  @override
+  late final GeneratedColumn<int> updatedAtMillis = GeneratedColumn<int>(
+    'updated_at_millis',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _originalProvenanceMeta =
+      const VerificationMeta('originalProvenance');
+  @override
+  late final GeneratedColumn<String> originalProvenance =
+      GeneratedColumn<String>(
+        'original_provenance',
+        aliasedName,
+        false,
+        type: DriftSqlType.string,
+        requiredDuringInsert: true,
+      );
+  static const VerificationMeta _provenanceMeta = const VerificationMeta(
+    'provenance',
+  );
+  @override
+  late final GeneratedColumn<String> provenance = GeneratedColumn<String>(
+    'provenance',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _originalWriteZoneIdMeta =
+      const VerificationMeta('originalWriteZoneId');
+  @override
+  late final GeneratedColumn<String> originalWriteZoneId =
+      GeneratedColumn<String>(
+        'original_write_zone_id',
+        aliasedName,
+        true,
+        type: DriftSqlType.string,
+        requiredDuringInsert: false,
+      );
+  static const VerificationMeta _writeZoneIdMeta = const VerificationMeta(
+    'writeZoneId',
+  );
+  @override
+  late final GeneratedColumn<String> writeZoneId = GeneratedColumn<String>(
+    'write_zone_id',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _originalUtcOffsetMinutesMeta =
+      const VerificationMeta('originalUtcOffsetMinutes');
+  @override
+  late final GeneratedColumn<int> originalUtcOffsetMinutes =
+      GeneratedColumn<int>(
+        'original_utc_offset_minutes',
+        aliasedName,
+        true,
+        type: DriftSqlType.int,
+        requiredDuringInsert: false,
+      );
+  static const VerificationMeta _utcOffsetMinutesMeta = const VerificationMeta(
+    'utcOffsetMinutes',
+  );
+  @override
+  late final GeneratedColumn<int> utcOffsetMinutes = GeneratedColumn<int>(
+    'utc_offset_minutes',
+    aliasedName,
+    true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _vocabularyVersionMeta = const VerificationMeta(
+    'vocabularyVersion',
+  );
+  @override
+  late final GeneratedColumn<int> vocabularyVersion = GeneratedColumn<int>(
+    'vocabulary_version',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(1),
+  );
+  static const VerificationMeta _durationBucketMeta = const VerificationMeta(
+    'durationBucket',
+  );
+  @override
+  late final GeneratedColumn<String> durationBucket = GeneratedColumn<String>(
+    'duration_bucket',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _durationLabelMeta = const VerificationMeta(
+    'durationLabel',
+  );
+  @override
+  late final GeneratedColumn<String> durationLabel = GeneratedColumn<String>(
+    'duration_label',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _durationCatalogVersionMeta =
+      const VerificationMeta('durationCatalogVersion');
+  @override
+  late final GeneratedColumn<int> durationCatalogVersion = GeneratedColumn<int>(
+    'duration_catalog_version',
+    aliasedName,
+    true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _exactMinutesMeta = const VerificationMeta(
+    'exactMinutes',
+  );
+  @override
+  late final GeneratedColumn<int> exactMinutes = GeneratedColumn<int>(
+    'exact_minutes',
+    aliasedName,
+    true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _typeMeta = const VerificationMeta('type');
+  @override
+  late final GeneratedColumn<String> type = GeneratedColumn<String>(
+    'type',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _intensityMeta = const VerificationMeta(
+    'intensity',
+  );
+  @override
+  late final GeneratedColumn<String> intensity = GeneratedColumn<String>(
+    'intensity',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _customNameMeta = const VerificationMeta(
+    'customName',
+  );
+  @override
+  late final GeneratedColumn<String> customName = GeneratedColumn<String>(
+    'custom_name',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    id,
+    experiencedDay,
+    recordedAtMillis,
+    updatedAtMillis,
+    originalProvenance,
+    provenance,
+    originalWriteZoneId,
+    writeZoneId,
+    originalUtcOffsetMinutes,
+    utcOffsetMinutes,
+    vocabularyVersion,
+    durationBucket,
+    durationLabel,
+    durationCatalogVersion,
+    exactMinutes,
+    type,
+    intensity,
+    customName,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'record_hub_activity_rows';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<RecordHubActivityRow> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    } else if (isInserting) {
+      context.missing(_idMeta);
+    }
+    if (data.containsKey('experienced_day')) {
+      context.handle(
+        _experiencedDayMeta,
+        experiencedDay.isAcceptableOrUnknown(
+          data['experienced_day']!,
+          _experiencedDayMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_experiencedDayMeta);
+    }
+    if (data.containsKey('recorded_at_millis')) {
+      context.handle(
+        _recordedAtMillisMeta,
+        recordedAtMillis.isAcceptableOrUnknown(
+          data['recorded_at_millis']!,
+          _recordedAtMillisMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_recordedAtMillisMeta);
+    }
+    if (data.containsKey('updated_at_millis')) {
+      context.handle(
+        _updatedAtMillisMeta,
+        updatedAtMillis.isAcceptableOrUnknown(
+          data['updated_at_millis']!,
+          _updatedAtMillisMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_updatedAtMillisMeta);
+    }
+    if (data.containsKey('original_provenance')) {
+      context.handle(
+        _originalProvenanceMeta,
+        originalProvenance.isAcceptableOrUnknown(
+          data['original_provenance']!,
+          _originalProvenanceMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_originalProvenanceMeta);
+    }
+    if (data.containsKey('provenance')) {
+      context.handle(
+        _provenanceMeta,
+        provenance.isAcceptableOrUnknown(data['provenance']!, _provenanceMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_provenanceMeta);
+    }
+    if (data.containsKey('original_write_zone_id')) {
+      context.handle(
+        _originalWriteZoneIdMeta,
+        originalWriteZoneId.isAcceptableOrUnknown(
+          data['original_write_zone_id']!,
+          _originalWriteZoneIdMeta,
+        ),
+      );
+    }
+    if (data.containsKey('write_zone_id')) {
+      context.handle(
+        _writeZoneIdMeta,
+        writeZoneId.isAcceptableOrUnknown(
+          data['write_zone_id']!,
+          _writeZoneIdMeta,
+        ),
+      );
+    }
+    if (data.containsKey('original_utc_offset_minutes')) {
+      context.handle(
+        _originalUtcOffsetMinutesMeta,
+        originalUtcOffsetMinutes.isAcceptableOrUnknown(
+          data['original_utc_offset_minutes']!,
+          _originalUtcOffsetMinutesMeta,
+        ),
+      );
+    }
+    if (data.containsKey('utc_offset_minutes')) {
+      context.handle(
+        _utcOffsetMinutesMeta,
+        utcOffsetMinutes.isAcceptableOrUnknown(
+          data['utc_offset_minutes']!,
+          _utcOffsetMinutesMeta,
+        ),
+      );
+    }
+    if (data.containsKey('vocabulary_version')) {
+      context.handle(
+        _vocabularyVersionMeta,
+        vocabularyVersion.isAcceptableOrUnknown(
+          data['vocabulary_version']!,
+          _vocabularyVersionMeta,
+        ),
+      );
+    }
+    if (data.containsKey('duration_bucket')) {
+      context.handle(
+        _durationBucketMeta,
+        durationBucket.isAcceptableOrUnknown(
+          data['duration_bucket']!,
+          _durationBucketMeta,
+        ),
+      );
+    }
+    if (data.containsKey('duration_label')) {
+      context.handle(
+        _durationLabelMeta,
+        durationLabel.isAcceptableOrUnknown(
+          data['duration_label']!,
+          _durationLabelMeta,
+        ),
+      );
+    }
+    if (data.containsKey('duration_catalog_version')) {
+      context.handle(
+        _durationCatalogVersionMeta,
+        durationCatalogVersion.isAcceptableOrUnknown(
+          data['duration_catalog_version']!,
+          _durationCatalogVersionMeta,
+        ),
+      );
+    }
+    if (data.containsKey('exact_minutes')) {
+      context.handle(
+        _exactMinutesMeta,
+        exactMinutes.isAcceptableOrUnknown(
+          data['exact_minutes']!,
+          _exactMinutesMeta,
+        ),
+      );
+    }
+    if (data.containsKey('type')) {
+      context.handle(
+        _typeMeta,
+        type.isAcceptableOrUnknown(data['type']!, _typeMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_typeMeta);
+    }
+    if (data.containsKey('intensity')) {
+      context.handle(
+        _intensityMeta,
+        intensity.isAcceptableOrUnknown(data['intensity']!, _intensityMeta),
+      );
+    }
+    if (data.containsKey('custom_name')) {
+      context.handle(
+        _customNameMeta,
+        customName.isAcceptableOrUnknown(data['custom_name']!, _customNameMeta),
+      );
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  RecordHubActivityRow map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return RecordHubActivityRow(
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}id'],
+      )!,
+      experiencedDay: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}experienced_day'],
+      )!,
+      recordedAtMillis: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}recorded_at_millis'],
+      )!,
+      updatedAtMillis: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}updated_at_millis'],
+      )!,
+      originalProvenance: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}original_provenance'],
+      )!,
+      provenance: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}provenance'],
+      )!,
+      originalWriteZoneId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}original_write_zone_id'],
+      ),
+      writeZoneId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}write_zone_id'],
+      ),
+      originalUtcOffsetMinutes: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}original_utc_offset_minutes'],
+      ),
+      utcOffsetMinutes: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}utc_offset_minutes'],
+      ),
+      vocabularyVersion: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}vocabulary_version'],
+      )!,
+      durationBucket: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}duration_bucket'],
+      ),
+      durationLabel: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}duration_label'],
+      ),
+      durationCatalogVersion: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}duration_catalog_version'],
+      ),
+      exactMinutes: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}exact_minutes'],
+      ),
+      type: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}type'],
+      )!,
+      intensity: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}intensity'],
+      ),
+      customName: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}custom_name'],
+      ),
+    );
+  }
+
+  @override
+  $RecordHubActivityRowsTable createAlias(String alias) {
+    return $RecordHubActivityRowsTable(attachedDatabase, alias);
+  }
+}
+
+class RecordHubActivityRow extends DataClass
+    implements Insertable<RecordHubActivityRow> {
+  final String id;
+  final int experiencedDay;
+  final int recordedAtMillis;
+  final int updatedAtMillis;
+  final String originalProvenance;
+  final String provenance;
+  final String? originalWriteZoneId;
+  final String? writeZoneId;
+  final int? originalUtcOffsetMinutes;
+  final int? utcOffsetMinutes;
+  final int vocabularyVersion;
+  final String? durationBucket;
+  final String? durationLabel;
+  final int? durationCatalogVersion;
+  final int? exactMinutes;
+  final String type;
+  final String? intensity;
+  final String? customName;
+  const RecordHubActivityRow({
+    required this.id,
+    required this.experiencedDay,
+    required this.recordedAtMillis,
+    required this.updatedAtMillis,
+    required this.originalProvenance,
+    required this.provenance,
+    this.originalWriteZoneId,
+    this.writeZoneId,
+    this.originalUtcOffsetMinutes,
+    this.utcOffsetMinutes,
+    required this.vocabularyVersion,
+    this.durationBucket,
+    this.durationLabel,
+    this.durationCatalogVersion,
+    this.exactMinutes,
+    required this.type,
+    this.intensity,
+    this.customName,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<String>(id);
+    map['experienced_day'] = Variable<int>(experiencedDay);
+    map['recorded_at_millis'] = Variable<int>(recordedAtMillis);
+    map['updated_at_millis'] = Variable<int>(updatedAtMillis);
+    map['original_provenance'] = Variable<String>(originalProvenance);
+    map['provenance'] = Variable<String>(provenance);
+    if (!nullToAbsent || originalWriteZoneId != null) {
+      map['original_write_zone_id'] = Variable<String>(originalWriteZoneId);
+    }
+    if (!nullToAbsent || writeZoneId != null) {
+      map['write_zone_id'] = Variable<String>(writeZoneId);
+    }
+    if (!nullToAbsent || originalUtcOffsetMinutes != null) {
+      map['original_utc_offset_minutes'] = Variable<int>(
+        originalUtcOffsetMinutes,
+      );
+    }
+    if (!nullToAbsent || utcOffsetMinutes != null) {
+      map['utc_offset_minutes'] = Variable<int>(utcOffsetMinutes);
+    }
+    map['vocabulary_version'] = Variable<int>(vocabularyVersion);
+    if (!nullToAbsent || durationBucket != null) {
+      map['duration_bucket'] = Variable<String>(durationBucket);
+    }
+    if (!nullToAbsent || durationLabel != null) {
+      map['duration_label'] = Variable<String>(durationLabel);
+    }
+    if (!nullToAbsent || durationCatalogVersion != null) {
+      map['duration_catalog_version'] = Variable<int>(durationCatalogVersion);
+    }
+    if (!nullToAbsent || exactMinutes != null) {
+      map['exact_minutes'] = Variable<int>(exactMinutes);
+    }
+    map['type'] = Variable<String>(type);
+    if (!nullToAbsent || intensity != null) {
+      map['intensity'] = Variable<String>(intensity);
+    }
+    if (!nullToAbsent || customName != null) {
+      map['custom_name'] = Variable<String>(customName);
+    }
+    return map;
+  }
+
+  RecordHubActivityRowsCompanion toCompanion(bool nullToAbsent) {
+    return RecordHubActivityRowsCompanion(
+      id: Value(id),
+      experiencedDay: Value(experiencedDay),
+      recordedAtMillis: Value(recordedAtMillis),
+      updatedAtMillis: Value(updatedAtMillis),
+      originalProvenance: Value(originalProvenance),
+      provenance: Value(provenance),
+      originalWriteZoneId: originalWriteZoneId == null && nullToAbsent
+          ? const Value.absent()
+          : Value(originalWriteZoneId),
+      writeZoneId: writeZoneId == null && nullToAbsent
+          ? const Value.absent()
+          : Value(writeZoneId),
+      originalUtcOffsetMinutes: originalUtcOffsetMinutes == null && nullToAbsent
+          ? const Value.absent()
+          : Value(originalUtcOffsetMinutes),
+      utcOffsetMinutes: utcOffsetMinutes == null && nullToAbsent
+          ? const Value.absent()
+          : Value(utcOffsetMinutes),
+      vocabularyVersion: Value(vocabularyVersion),
+      durationBucket: durationBucket == null && nullToAbsent
+          ? const Value.absent()
+          : Value(durationBucket),
+      durationLabel: durationLabel == null && nullToAbsent
+          ? const Value.absent()
+          : Value(durationLabel),
+      durationCatalogVersion: durationCatalogVersion == null && nullToAbsent
+          ? const Value.absent()
+          : Value(durationCatalogVersion),
+      exactMinutes: exactMinutes == null && nullToAbsent
+          ? const Value.absent()
+          : Value(exactMinutes),
+      type: Value(type),
+      intensity: intensity == null && nullToAbsent
+          ? const Value.absent()
+          : Value(intensity),
+      customName: customName == null && nullToAbsent
+          ? const Value.absent()
+          : Value(customName),
+    );
+  }
+
+  factory RecordHubActivityRow.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return RecordHubActivityRow(
+      id: serializer.fromJson<String>(json['id']),
+      experiencedDay: serializer.fromJson<int>(json['experiencedDay']),
+      recordedAtMillis: serializer.fromJson<int>(json['recordedAtMillis']),
+      updatedAtMillis: serializer.fromJson<int>(json['updatedAtMillis']),
+      originalProvenance: serializer.fromJson<String>(
+        json['originalProvenance'],
+      ),
+      provenance: serializer.fromJson<String>(json['provenance']),
+      originalWriteZoneId: serializer.fromJson<String?>(
+        json['originalWriteZoneId'],
+      ),
+      writeZoneId: serializer.fromJson<String?>(json['writeZoneId']),
+      originalUtcOffsetMinutes: serializer.fromJson<int?>(
+        json['originalUtcOffsetMinutes'],
+      ),
+      utcOffsetMinutes: serializer.fromJson<int?>(json['utcOffsetMinutes']),
+      vocabularyVersion: serializer.fromJson<int>(json['vocabularyVersion']),
+      durationBucket: serializer.fromJson<String?>(json['durationBucket']),
+      durationLabel: serializer.fromJson<String?>(json['durationLabel']),
+      durationCatalogVersion: serializer.fromJson<int?>(
+        json['durationCatalogVersion'],
+      ),
+      exactMinutes: serializer.fromJson<int?>(json['exactMinutes']),
+      type: serializer.fromJson<String>(json['type']),
+      intensity: serializer.fromJson<String?>(json['intensity']),
+      customName: serializer.fromJson<String?>(json['customName']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<String>(id),
+      'experiencedDay': serializer.toJson<int>(experiencedDay),
+      'recordedAtMillis': serializer.toJson<int>(recordedAtMillis),
+      'updatedAtMillis': serializer.toJson<int>(updatedAtMillis),
+      'originalProvenance': serializer.toJson<String>(originalProvenance),
+      'provenance': serializer.toJson<String>(provenance),
+      'originalWriteZoneId': serializer.toJson<String?>(originalWriteZoneId),
+      'writeZoneId': serializer.toJson<String?>(writeZoneId),
+      'originalUtcOffsetMinutes': serializer.toJson<int?>(
+        originalUtcOffsetMinutes,
+      ),
+      'utcOffsetMinutes': serializer.toJson<int?>(utcOffsetMinutes),
+      'vocabularyVersion': serializer.toJson<int>(vocabularyVersion),
+      'durationBucket': serializer.toJson<String?>(durationBucket),
+      'durationLabel': serializer.toJson<String?>(durationLabel),
+      'durationCatalogVersion': serializer.toJson<int?>(durationCatalogVersion),
+      'exactMinutes': serializer.toJson<int?>(exactMinutes),
+      'type': serializer.toJson<String>(type),
+      'intensity': serializer.toJson<String?>(intensity),
+      'customName': serializer.toJson<String?>(customName),
+    };
+  }
+
+  RecordHubActivityRow copyWith({
+    String? id,
+    int? experiencedDay,
+    int? recordedAtMillis,
+    int? updatedAtMillis,
+    String? originalProvenance,
+    String? provenance,
+    Value<String?> originalWriteZoneId = const Value.absent(),
+    Value<String?> writeZoneId = const Value.absent(),
+    Value<int?> originalUtcOffsetMinutes = const Value.absent(),
+    Value<int?> utcOffsetMinutes = const Value.absent(),
+    int? vocabularyVersion,
+    Value<String?> durationBucket = const Value.absent(),
+    Value<String?> durationLabel = const Value.absent(),
+    Value<int?> durationCatalogVersion = const Value.absent(),
+    Value<int?> exactMinutes = const Value.absent(),
+    String? type,
+    Value<String?> intensity = const Value.absent(),
+    Value<String?> customName = const Value.absent(),
+  }) => RecordHubActivityRow(
+    id: id ?? this.id,
+    experiencedDay: experiencedDay ?? this.experiencedDay,
+    recordedAtMillis: recordedAtMillis ?? this.recordedAtMillis,
+    updatedAtMillis: updatedAtMillis ?? this.updatedAtMillis,
+    originalProvenance: originalProvenance ?? this.originalProvenance,
+    provenance: provenance ?? this.provenance,
+    originalWriteZoneId: originalWriteZoneId.present
+        ? originalWriteZoneId.value
+        : this.originalWriteZoneId,
+    writeZoneId: writeZoneId.present ? writeZoneId.value : this.writeZoneId,
+    originalUtcOffsetMinutes: originalUtcOffsetMinutes.present
+        ? originalUtcOffsetMinutes.value
+        : this.originalUtcOffsetMinutes,
+    utcOffsetMinutes: utcOffsetMinutes.present
+        ? utcOffsetMinutes.value
+        : this.utcOffsetMinutes,
+    vocabularyVersion: vocabularyVersion ?? this.vocabularyVersion,
+    durationBucket: durationBucket.present
+        ? durationBucket.value
+        : this.durationBucket,
+    durationLabel: durationLabel.present
+        ? durationLabel.value
+        : this.durationLabel,
+    durationCatalogVersion: durationCatalogVersion.present
+        ? durationCatalogVersion.value
+        : this.durationCatalogVersion,
+    exactMinutes: exactMinutes.present ? exactMinutes.value : this.exactMinutes,
+    type: type ?? this.type,
+    intensity: intensity.present ? intensity.value : this.intensity,
+    customName: customName.present ? customName.value : this.customName,
+  );
+  RecordHubActivityRow copyWithCompanion(RecordHubActivityRowsCompanion data) {
+    return RecordHubActivityRow(
+      id: data.id.present ? data.id.value : this.id,
+      experiencedDay: data.experiencedDay.present
+          ? data.experiencedDay.value
+          : this.experiencedDay,
+      recordedAtMillis: data.recordedAtMillis.present
+          ? data.recordedAtMillis.value
+          : this.recordedAtMillis,
+      updatedAtMillis: data.updatedAtMillis.present
+          ? data.updatedAtMillis.value
+          : this.updatedAtMillis,
+      originalProvenance: data.originalProvenance.present
+          ? data.originalProvenance.value
+          : this.originalProvenance,
+      provenance: data.provenance.present
+          ? data.provenance.value
+          : this.provenance,
+      originalWriteZoneId: data.originalWriteZoneId.present
+          ? data.originalWriteZoneId.value
+          : this.originalWriteZoneId,
+      writeZoneId: data.writeZoneId.present
+          ? data.writeZoneId.value
+          : this.writeZoneId,
+      originalUtcOffsetMinutes: data.originalUtcOffsetMinutes.present
+          ? data.originalUtcOffsetMinutes.value
+          : this.originalUtcOffsetMinutes,
+      utcOffsetMinutes: data.utcOffsetMinutes.present
+          ? data.utcOffsetMinutes.value
+          : this.utcOffsetMinutes,
+      vocabularyVersion: data.vocabularyVersion.present
+          ? data.vocabularyVersion.value
+          : this.vocabularyVersion,
+      durationBucket: data.durationBucket.present
+          ? data.durationBucket.value
+          : this.durationBucket,
+      durationLabel: data.durationLabel.present
+          ? data.durationLabel.value
+          : this.durationLabel,
+      durationCatalogVersion: data.durationCatalogVersion.present
+          ? data.durationCatalogVersion.value
+          : this.durationCatalogVersion,
+      exactMinutes: data.exactMinutes.present
+          ? data.exactMinutes.value
+          : this.exactMinutes,
+      type: data.type.present ? data.type.value : this.type,
+      intensity: data.intensity.present ? data.intensity.value : this.intensity,
+      customName: data.customName.present
+          ? data.customName.value
+          : this.customName,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('RecordHubActivityRow(')
+          ..write('id: $id, ')
+          ..write('experiencedDay: $experiencedDay, ')
+          ..write('recordedAtMillis: $recordedAtMillis, ')
+          ..write('updatedAtMillis: $updatedAtMillis, ')
+          ..write('originalProvenance: $originalProvenance, ')
+          ..write('provenance: $provenance, ')
+          ..write('originalWriteZoneId: $originalWriteZoneId, ')
+          ..write('writeZoneId: $writeZoneId, ')
+          ..write('originalUtcOffsetMinutes: $originalUtcOffsetMinutes, ')
+          ..write('utcOffsetMinutes: $utcOffsetMinutes, ')
+          ..write('vocabularyVersion: $vocabularyVersion, ')
+          ..write('durationBucket: $durationBucket, ')
+          ..write('durationLabel: $durationLabel, ')
+          ..write('durationCatalogVersion: $durationCatalogVersion, ')
+          ..write('exactMinutes: $exactMinutes, ')
+          ..write('type: $type, ')
+          ..write('intensity: $intensity, ')
+          ..write('customName: $customName')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(
+    id,
+    experiencedDay,
+    recordedAtMillis,
+    updatedAtMillis,
+    originalProvenance,
+    provenance,
+    originalWriteZoneId,
+    writeZoneId,
+    originalUtcOffsetMinutes,
+    utcOffsetMinutes,
+    vocabularyVersion,
+    durationBucket,
+    durationLabel,
+    durationCatalogVersion,
+    exactMinutes,
+    type,
+    intensity,
+    customName,
+  );
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is RecordHubActivityRow &&
+          other.id == this.id &&
+          other.experiencedDay == this.experiencedDay &&
+          other.recordedAtMillis == this.recordedAtMillis &&
+          other.updatedAtMillis == this.updatedAtMillis &&
+          other.originalProvenance == this.originalProvenance &&
+          other.provenance == this.provenance &&
+          other.originalWriteZoneId == this.originalWriteZoneId &&
+          other.writeZoneId == this.writeZoneId &&
+          other.originalUtcOffsetMinutes == this.originalUtcOffsetMinutes &&
+          other.utcOffsetMinutes == this.utcOffsetMinutes &&
+          other.vocabularyVersion == this.vocabularyVersion &&
+          other.durationBucket == this.durationBucket &&
+          other.durationLabel == this.durationLabel &&
+          other.durationCatalogVersion == this.durationCatalogVersion &&
+          other.exactMinutes == this.exactMinutes &&
+          other.type == this.type &&
+          other.intensity == this.intensity &&
+          other.customName == this.customName);
+}
+
+class RecordHubActivityRowsCompanion
+    extends UpdateCompanion<RecordHubActivityRow> {
+  final Value<String> id;
+  final Value<int> experiencedDay;
+  final Value<int> recordedAtMillis;
+  final Value<int> updatedAtMillis;
+  final Value<String> originalProvenance;
+  final Value<String> provenance;
+  final Value<String?> originalWriteZoneId;
+  final Value<String?> writeZoneId;
+  final Value<int?> originalUtcOffsetMinutes;
+  final Value<int?> utcOffsetMinutes;
+  final Value<int> vocabularyVersion;
+  final Value<String?> durationBucket;
+  final Value<String?> durationLabel;
+  final Value<int?> durationCatalogVersion;
+  final Value<int?> exactMinutes;
+  final Value<String> type;
+  final Value<String?> intensity;
+  final Value<String?> customName;
+  final Value<int> rowid;
+  const RecordHubActivityRowsCompanion({
+    this.id = const Value.absent(),
+    this.experiencedDay = const Value.absent(),
+    this.recordedAtMillis = const Value.absent(),
+    this.updatedAtMillis = const Value.absent(),
+    this.originalProvenance = const Value.absent(),
+    this.provenance = const Value.absent(),
+    this.originalWriteZoneId = const Value.absent(),
+    this.writeZoneId = const Value.absent(),
+    this.originalUtcOffsetMinutes = const Value.absent(),
+    this.utcOffsetMinutes = const Value.absent(),
+    this.vocabularyVersion = const Value.absent(),
+    this.durationBucket = const Value.absent(),
+    this.durationLabel = const Value.absent(),
+    this.durationCatalogVersion = const Value.absent(),
+    this.exactMinutes = const Value.absent(),
+    this.type = const Value.absent(),
+    this.intensity = const Value.absent(),
+    this.customName = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  RecordHubActivityRowsCompanion.insert({
+    required String id,
+    required int experiencedDay,
+    required int recordedAtMillis,
+    required int updatedAtMillis,
+    required String originalProvenance,
+    required String provenance,
+    this.originalWriteZoneId = const Value.absent(),
+    this.writeZoneId = const Value.absent(),
+    this.originalUtcOffsetMinutes = const Value.absent(),
+    this.utcOffsetMinutes = const Value.absent(),
+    this.vocabularyVersion = const Value.absent(),
+    this.durationBucket = const Value.absent(),
+    this.durationLabel = const Value.absent(),
+    this.durationCatalogVersion = const Value.absent(),
+    this.exactMinutes = const Value.absent(),
+    required String type,
+    this.intensity = const Value.absent(),
+    this.customName = const Value.absent(),
+    this.rowid = const Value.absent(),
+  }) : id = Value(id),
+       experiencedDay = Value(experiencedDay),
+       recordedAtMillis = Value(recordedAtMillis),
+       updatedAtMillis = Value(updatedAtMillis),
+       originalProvenance = Value(originalProvenance),
+       provenance = Value(provenance),
+       type = Value(type);
+  static Insertable<RecordHubActivityRow> custom({
+    Expression<String>? id,
+    Expression<int>? experiencedDay,
+    Expression<int>? recordedAtMillis,
+    Expression<int>? updatedAtMillis,
+    Expression<String>? originalProvenance,
+    Expression<String>? provenance,
+    Expression<String>? originalWriteZoneId,
+    Expression<String>? writeZoneId,
+    Expression<int>? originalUtcOffsetMinutes,
+    Expression<int>? utcOffsetMinutes,
+    Expression<int>? vocabularyVersion,
+    Expression<String>? durationBucket,
+    Expression<String>? durationLabel,
+    Expression<int>? durationCatalogVersion,
+    Expression<int>? exactMinutes,
+    Expression<String>? type,
+    Expression<String>? intensity,
+    Expression<String>? customName,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (experiencedDay != null) 'experienced_day': experiencedDay,
+      if (recordedAtMillis != null) 'recorded_at_millis': recordedAtMillis,
+      if (updatedAtMillis != null) 'updated_at_millis': updatedAtMillis,
+      if (originalProvenance != null) 'original_provenance': originalProvenance,
+      if (provenance != null) 'provenance': provenance,
+      if (originalWriteZoneId != null)
+        'original_write_zone_id': originalWriteZoneId,
+      if (writeZoneId != null) 'write_zone_id': writeZoneId,
+      if (originalUtcOffsetMinutes != null)
+        'original_utc_offset_minutes': originalUtcOffsetMinutes,
+      if (utcOffsetMinutes != null) 'utc_offset_minutes': utcOffsetMinutes,
+      if (vocabularyVersion != null) 'vocabulary_version': vocabularyVersion,
+      if (durationBucket != null) 'duration_bucket': durationBucket,
+      if (durationLabel != null) 'duration_label': durationLabel,
+      if (durationCatalogVersion != null)
+        'duration_catalog_version': durationCatalogVersion,
+      if (exactMinutes != null) 'exact_minutes': exactMinutes,
+      if (type != null) 'type': type,
+      if (intensity != null) 'intensity': intensity,
+      if (customName != null) 'custom_name': customName,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  RecordHubActivityRowsCompanion copyWith({
+    Value<String>? id,
+    Value<int>? experiencedDay,
+    Value<int>? recordedAtMillis,
+    Value<int>? updatedAtMillis,
+    Value<String>? originalProvenance,
+    Value<String>? provenance,
+    Value<String?>? originalWriteZoneId,
+    Value<String?>? writeZoneId,
+    Value<int?>? originalUtcOffsetMinutes,
+    Value<int?>? utcOffsetMinutes,
+    Value<int>? vocabularyVersion,
+    Value<String?>? durationBucket,
+    Value<String?>? durationLabel,
+    Value<int?>? durationCatalogVersion,
+    Value<int?>? exactMinutes,
+    Value<String>? type,
+    Value<String?>? intensity,
+    Value<String?>? customName,
+    Value<int>? rowid,
+  }) {
+    return RecordHubActivityRowsCompanion(
+      id: id ?? this.id,
+      experiencedDay: experiencedDay ?? this.experiencedDay,
+      recordedAtMillis: recordedAtMillis ?? this.recordedAtMillis,
+      updatedAtMillis: updatedAtMillis ?? this.updatedAtMillis,
+      originalProvenance: originalProvenance ?? this.originalProvenance,
+      provenance: provenance ?? this.provenance,
+      originalWriteZoneId: originalWriteZoneId ?? this.originalWriteZoneId,
+      writeZoneId: writeZoneId ?? this.writeZoneId,
+      originalUtcOffsetMinutes:
+          originalUtcOffsetMinutes ?? this.originalUtcOffsetMinutes,
+      utcOffsetMinutes: utcOffsetMinutes ?? this.utcOffsetMinutes,
+      vocabularyVersion: vocabularyVersion ?? this.vocabularyVersion,
+      durationBucket: durationBucket ?? this.durationBucket,
+      durationLabel: durationLabel ?? this.durationLabel,
+      durationCatalogVersion:
+          durationCatalogVersion ?? this.durationCatalogVersion,
+      exactMinutes: exactMinutes ?? this.exactMinutes,
+      type: type ?? this.type,
+      intensity: intensity ?? this.intensity,
+      customName: customName ?? this.customName,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<String>(id.value);
+    }
+    if (experiencedDay.present) {
+      map['experienced_day'] = Variable<int>(experiencedDay.value);
+    }
+    if (recordedAtMillis.present) {
+      map['recorded_at_millis'] = Variable<int>(recordedAtMillis.value);
+    }
+    if (updatedAtMillis.present) {
+      map['updated_at_millis'] = Variable<int>(updatedAtMillis.value);
+    }
+    if (originalProvenance.present) {
+      map['original_provenance'] = Variable<String>(originalProvenance.value);
+    }
+    if (provenance.present) {
+      map['provenance'] = Variable<String>(provenance.value);
+    }
+    if (originalWriteZoneId.present) {
+      map['original_write_zone_id'] = Variable<String>(
+        originalWriteZoneId.value,
+      );
+    }
+    if (writeZoneId.present) {
+      map['write_zone_id'] = Variable<String>(writeZoneId.value);
+    }
+    if (originalUtcOffsetMinutes.present) {
+      map['original_utc_offset_minutes'] = Variable<int>(
+        originalUtcOffsetMinutes.value,
+      );
+    }
+    if (utcOffsetMinutes.present) {
+      map['utc_offset_minutes'] = Variable<int>(utcOffsetMinutes.value);
+    }
+    if (vocabularyVersion.present) {
+      map['vocabulary_version'] = Variable<int>(vocabularyVersion.value);
+    }
+    if (durationBucket.present) {
+      map['duration_bucket'] = Variable<String>(durationBucket.value);
+    }
+    if (durationLabel.present) {
+      map['duration_label'] = Variable<String>(durationLabel.value);
+    }
+    if (durationCatalogVersion.present) {
+      map['duration_catalog_version'] = Variable<int>(
+        durationCatalogVersion.value,
+      );
+    }
+    if (exactMinutes.present) {
+      map['exact_minutes'] = Variable<int>(exactMinutes.value);
+    }
+    if (type.present) {
+      map['type'] = Variable<String>(type.value);
+    }
+    if (intensity.present) {
+      map['intensity'] = Variable<String>(intensity.value);
+    }
+    if (customName.present) {
+      map['custom_name'] = Variable<String>(customName.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('RecordHubActivityRowsCompanion(')
+          ..write('id: $id, ')
+          ..write('experiencedDay: $experiencedDay, ')
+          ..write('recordedAtMillis: $recordedAtMillis, ')
+          ..write('updatedAtMillis: $updatedAtMillis, ')
+          ..write('originalProvenance: $originalProvenance, ')
+          ..write('provenance: $provenance, ')
+          ..write('originalWriteZoneId: $originalWriteZoneId, ')
+          ..write('writeZoneId: $writeZoneId, ')
+          ..write('originalUtcOffsetMinutes: $originalUtcOffsetMinutes, ')
+          ..write('utcOffsetMinutes: $utcOffsetMinutes, ')
+          ..write('vocabularyVersion: $vocabularyVersion, ')
+          ..write('durationBucket: $durationBucket, ')
+          ..write('durationLabel: $durationLabel, ')
+          ..write('durationCatalogVersion: $durationCatalogVersion, ')
+          ..write('exactMinutes: $exactMinutes, ')
+          ..write('type: $type, ')
+          ..write('intensity: $intensity, ')
+          ..write('customName: $customName, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
+class $RecordHubEventRowsTable extends RecordHubEventRows
+    with TableInfo<$RecordHubEventRowsTable, RecordHubEventRow> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $RecordHubEventRowsTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<String> id = GeneratedColumn<String>(
+    'id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _experiencedDayMeta = const VerificationMeta(
+    'experiencedDay',
+  );
+  @override
+  late final GeneratedColumn<int> experiencedDay = GeneratedColumn<int>(
+    'experienced_day',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _recordedAtMillisMeta = const VerificationMeta(
+    'recordedAtMillis',
+  );
+  @override
+  late final GeneratedColumn<int> recordedAtMillis = GeneratedColumn<int>(
+    'recorded_at_millis',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _updatedAtMillisMeta = const VerificationMeta(
+    'updatedAtMillis',
+  );
+  @override
+  late final GeneratedColumn<int> updatedAtMillis = GeneratedColumn<int>(
+    'updated_at_millis',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _originalProvenanceMeta =
+      const VerificationMeta('originalProvenance');
+  @override
+  late final GeneratedColumn<String> originalProvenance =
+      GeneratedColumn<String>(
+        'original_provenance',
+        aliasedName,
+        false,
+        type: DriftSqlType.string,
+        requiredDuringInsert: true,
+      );
+  static const VerificationMeta _provenanceMeta = const VerificationMeta(
+    'provenance',
+  );
+  @override
+  late final GeneratedColumn<String> provenance = GeneratedColumn<String>(
+    'provenance',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _originalWriteZoneIdMeta =
+      const VerificationMeta('originalWriteZoneId');
+  @override
+  late final GeneratedColumn<String> originalWriteZoneId =
+      GeneratedColumn<String>(
+        'original_write_zone_id',
+        aliasedName,
+        true,
+        type: DriftSqlType.string,
+        requiredDuringInsert: false,
+      );
+  static const VerificationMeta _writeZoneIdMeta = const VerificationMeta(
+    'writeZoneId',
+  );
+  @override
+  late final GeneratedColumn<String> writeZoneId = GeneratedColumn<String>(
+    'write_zone_id',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _originalUtcOffsetMinutesMeta =
+      const VerificationMeta('originalUtcOffsetMinutes');
+  @override
+  late final GeneratedColumn<int> originalUtcOffsetMinutes =
+      GeneratedColumn<int>(
+        'original_utc_offset_minutes',
+        aliasedName,
+        true,
+        type: DriftSqlType.int,
+        requiredDuringInsert: false,
+      );
+  static const VerificationMeta _utcOffsetMinutesMeta = const VerificationMeta(
+    'utcOffsetMinutes',
+  );
+  @override
+  late final GeneratedColumn<int> utcOffsetMinutes = GeneratedColumn<int>(
+    'utc_offset_minutes',
+    aliasedName,
+    true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _vocabularyVersionMeta = const VerificationMeta(
+    'vocabularyVersion',
+  );
+  @override
+  late final GeneratedColumn<int> vocabularyVersion = GeneratedColumn<int>(
+    'vocabulary_version',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(1),
+  );
+  static const VerificationMeta _typeMeta = const VerificationMeta('type');
+  @override
+  late final GeneratedColumn<String> type = GeneratedColumn<String>(
+    'type',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _intensityMeta = const VerificationMeta(
+    'intensity',
+  );
+  @override
+  late final GeneratedColumn<String> intensity = GeneratedColumn<String>(
+    'intensity',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _customNameMeta = const VerificationMeta(
+    'customName',
+  );
+  @override
+  late final GeneratedColumn<String> customName = GeneratedColumn<String>(
+    'custom_name',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _noteMeta = const VerificationMeta('note');
+  @override
+  late final GeneratedColumn<String> note = GeneratedColumn<String>(
+    'note',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    id,
+    experiencedDay,
+    recordedAtMillis,
+    updatedAtMillis,
+    originalProvenance,
+    provenance,
+    originalWriteZoneId,
+    writeZoneId,
+    originalUtcOffsetMinutes,
+    utcOffsetMinutes,
+    vocabularyVersion,
+    type,
+    intensity,
+    customName,
+    note,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'record_hub_event_rows';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<RecordHubEventRow> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    } else if (isInserting) {
+      context.missing(_idMeta);
+    }
+    if (data.containsKey('experienced_day')) {
+      context.handle(
+        _experiencedDayMeta,
+        experiencedDay.isAcceptableOrUnknown(
+          data['experienced_day']!,
+          _experiencedDayMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_experiencedDayMeta);
+    }
+    if (data.containsKey('recorded_at_millis')) {
+      context.handle(
+        _recordedAtMillisMeta,
+        recordedAtMillis.isAcceptableOrUnknown(
+          data['recorded_at_millis']!,
+          _recordedAtMillisMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_recordedAtMillisMeta);
+    }
+    if (data.containsKey('updated_at_millis')) {
+      context.handle(
+        _updatedAtMillisMeta,
+        updatedAtMillis.isAcceptableOrUnknown(
+          data['updated_at_millis']!,
+          _updatedAtMillisMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_updatedAtMillisMeta);
+    }
+    if (data.containsKey('original_provenance')) {
+      context.handle(
+        _originalProvenanceMeta,
+        originalProvenance.isAcceptableOrUnknown(
+          data['original_provenance']!,
+          _originalProvenanceMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_originalProvenanceMeta);
+    }
+    if (data.containsKey('provenance')) {
+      context.handle(
+        _provenanceMeta,
+        provenance.isAcceptableOrUnknown(data['provenance']!, _provenanceMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_provenanceMeta);
+    }
+    if (data.containsKey('original_write_zone_id')) {
+      context.handle(
+        _originalWriteZoneIdMeta,
+        originalWriteZoneId.isAcceptableOrUnknown(
+          data['original_write_zone_id']!,
+          _originalWriteZoneIdMeta,
+        ),
+      );
+    }
+    if (data.containsKey('write_zone_id')) {
+      context.handle(
+        _writeZoneIdMeta,
+        writeZoneId.isAcceptableOrUnknown(
+          data['write_zone_id']!,
+          _writeZoneIdMeta,
+        ),
+      );
+    }
+    if (data.containsKey('original_utc_offset_minutes')) {
+      context.handle(
+        _originalUtcOffsetMinutesMeta,
+        originalUtcOffsetMinutes.isAcceptableOrUnknown(
+          data['original_utc_offset_minutes']!,
+          _originalUtcOffsetMinutesMeta,
+        ),
+      );
+    }
+    if (data.containsKey('utc_offset_minutes')) {
+      context.handle(
+        _utcOffsetMinutesMeta,
+        utcOffsetMinutes.isAcceptableOrUnknown(
+          data['utc_offset_minutes']!,
+          _utcOffsetMinutesMeta,
+        ),
+      );
+    }
+    if (data.containsKey('vocabulary_version')) {
+      context.handle(
+        _vocabularyVersionMeta,
+        vocabularyVersion.isAcceptableOrUnknown(
+          data['vocabulary_version']!,
+          _vocabularyVersionMeta,
+        ),
+      );
+    }
+    if (data.containsKey('type')) {
+      context.handle(
+        _typeMeta,
+        type.isAcceptableOrUnknown(data['type']!, _typeMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_typeMeta);
+    }
+    if (data.containsKey('intensity')) {
+      context.handle(
+        _intensityMeta,
+        intensity.isAcceptableOrUnknown(data['intensity']!, _intensityMeta),
+      );
+    }
+    if (data.containsKey('custom_name')) {
+      context.handle(
+        _customNameMeta,
+        customName.isAcceptableOrUnknown(data['custom_name']!, _customNameMeta),
+      );
+    }
+    if (data.containsKey('note')) {
+      context.handle(
+        _noteMeta,
+        note.isAcceptableOrUnknown(data['note']!, _noteMeta),
+      );
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  RecordHubEventRow map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return RecordHubEventRow(
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}id'],
+      )!,
+      experiencedDay: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}experienced_day'],
+      )!,
+      recordedAtMillis: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}recorded_at_millis'],
+      )!,
+      updatedAtMillis: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}updated_at_millis'],
+      )!,
+      originalProvenance: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}original_provenance'],
+      )!,
+      provenance: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}provenance'],
+      )!,
+      originalWriteZoneId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}original_write_zone_id'],
+      ),
+      writeZoneId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}write_zone_id'],
+      ),
+      originalUtcOffsetMinutes: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}original_utc_offset_minutes'],
+      ),
+      utcOffsetMinutes: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}utc_offset_minutes'],
+      ),
+      vocabularyVersion: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}vocabulary_version'],
+      )!,
+      type: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}type'],
+      )!,
+      intensity: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}intensity'],
+      ),
+      customName: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}custom_name'],
+      ),
+      note: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}note'],
+      ),
+    );
+  }
+
+  @override
+  $RecordHubEventRowsTable createAlias(String alias) {
+    return $RecordHubEventRowsTable(attachedDatabase, alias);
+  }
+}
+
+class RecordHubEventRow extends DataClass
+    implements Insertable<RecordHubEventRow> {
+  final String id;
+  final int experiencedDay;
+  final int recordedAtMillis;
+  final int updatedAtMillis;
+  final String originalProvenance;
+  final String provenance;
+  final String? originalWriteZoneId;
+  final String? writeZoneId;
+  final int? originalUtcOffsetMinutes;
+  final int? utcOffsetMinutes;
+  final int vocabularyVersion;
+  final String type;
+  final String? intensity;
+  final String? customName;
+  final String? note;
+  const RecordHubEventRow({
+    required this.id,
+    required this.experiencedDay,
+    required this.recordedAtMillis,
+    required this.updatedAtMillis,
+    required this.originalProvenance,
+    required this.provenance,
+    this.originalWriteZoneId,
+    this.writeZoneId,
+    this.originalUtcOffsetMinutes,
+    this.utcOffsetMinutes,
+    required this.vocabularyVersion,
+    required this.type,
+    this.intensity,
+    this.customName,
+    this.note,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<String>(id);
+    map['experienced_day'] = Variable<int>(experiencedDay);
+    map['recorded_at_millis'] = Variable<int>(recordedAtMillis);
+    map['updated_at_millis'] = Variable<int>(updatedAtMillis);
+    map['original_provenance'] = Variable<String>(originalProvenance);
+    map['provenance'] = Variable<String>(provenance);
+    if (!nullToAbsent || originalWriteZoneId != null) {
+      map['original_write_zone_id'] = Variable<String>(originalWriteZoneId);
+    }
+    if (!nullToAbsent || writeZoneId != null) {
+      map['write_zone_id'] = Variable<String>(writeZoneId);
+    }
+    if (!nullToAbsent || originalUtcOffsetMinutes != null) {
+      map['original_utc_offset_minutes'] = Variable<int>(
+        originalUtcOffsetMinutes,
+      );
+    }
+    if (!nullToAbsent || utcOffsetMinutes != null) {
+      map['utc_offset_minutes'] = Variable<int>(utcOffsetMinutes);
+    }
+    map['vocabulary_version'] = Variable<int>(vocabularyVersion);
+    map['type'] = Variable<String>(type);
+    if (!nullToAbsent || intensity != null) {
+      map['intensity'] = Variable<String>(intensity);
+    }
+    if (!nullToAbsent || customName != null) {
+      map['custom_name'] = Variable<String>(customName);
+    }
+    if (!nullToAbsent || note != null) {
+      map['note'] = Variable<String>(note);
+    }
+    return map;
+  }
+
+  RecordHubEventRowsCompanion toCompanion(bool nullToAbsent) {
+    return RecordHubEventRowsCompanion(
+      id: Value(id),
+      experiencedDay: Value(experiencedDay),
+      recordedAtMillis: Value(recordedAtMillis),
+      updatedAtMillis: Value(updatedAtMillis),
+      originalProvenance: Value(originalProvenance),
+      provenance: Value(provenance),
+      originalWriteZoneId: originalWriteZoneId == null && nullToAbsent
+          ? const Value.absent()
+          : Value(originalWriteZoneId),
+      writeZoneId: writeZoneId == null && nullToAbsent
+          ? const Value.absent()
+          : Value(writeZoneId),
+      originalUtcOffsetMinutes: originalUtcOffsetMinutes == null && nullToAbsent
+          ? const Value.absent()
+          : Value(originalUtcOffsetMinutes),
+      utcOffsetMinutes: utcOffsetMinutes == null && nullToAbsent
+          ? const Value.absent()
+          : Value(utcOffsetMinutes),
+      vocabularyVersion: Value(vocabularyVersion),
+      type: Value(type),
+      intensity: intensity == null && nullToAbsent
+          ? const Value.absent()
+          : Value(intensity),
+      customName: customName == null && nullToAbsent
+          ? const Value.absent()
+          : Value(customName),
+      note: note == null && nullToAbsent ? const Value.absent() : Value(note),
+    );
+  }
+
+  factory RecordHubEventRow.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return RecordHubEventRow(
+      id: serializer.fromJson<String>(json['id']),
+      experiencedDay: serializer.fromJson<int>(json['experiencedDay']),
+      recordedAtMillis: serializer.fromJson<int>(json['recordedAtMillis']),
+      updatedAtMillis: serializer.fromJson<int>(json['updatedAtMillis']),
+      originalProvenance: serializer.fromJson<String>(
+        json['originalProvenance'],
+      ),
+      provenance: serializer.fromJson<String>(json['provenance']),
+      originalWriteZoneId: serializer.fromJson<String?>(
+        json['originalWriteZoneId'],
+      ),
+      writeZoneId: serializer.fromJson<String?>(json['writeZoneId']),
+      originalUtcOffsetMinutes: serializer.fromJson<int?>(
+        json['originalUtcOffsetMinutes'],
+      ),
+      utcOffsetMinutes: serializer.fromJson<int?>(json['utcOffsetMinutes']),
+      vocabularyVersion: serializer.fromJson<int>(json['vocabularyVersion']),
+      type: serializer.fromJson<String>(json['type']),
+      intensity: serializer.fromJson<String?>(json['intensity']),
+      customName: serializer.fromJson<String?>(json['customName']),
+      note: serializer.fromJson<String?>(json['note']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<String>(id),
+      'experiencedDay': serializer.toJson<int>(experiencedDay),
+      'recordedAtMillis': serializer.toJson<int>(recordedAtMillis),
+      'updatedAtMillis': serializer.toJson<int>(updatedAtMillis),
+      'originalProvenance': serializer.toJson<String>(originalProvenance),
+      'provenance': serializer.toJson<String>(provenance),
+      'originalWriteZoneId': serializer.toJson<String?>(originalWriteZoneId),
+      'writeZoneId': serializer.toJson<String?>(writeZoneId),
+      'originalUtcOffsetMinutes': serializer.toJson<int?>(
+        originalUtcOffsetMinutes,
+      ),
+      'utcOffsetMinutes': serializer.toJson<int?>(utcOffsetMinutes),
+      'vocabularyVersion': serializer.toJson<int>(vocabularyVersion),
+      'type': serializer.toJson<String>(type),
+      'intensity': serializer.toJson<String?>(intensity),
+      'customName': serializer.toJson<String?>(customName),
+      'note': serializer.toJson<String?>(note),
+    };
+  }
+
+  RecordHubEventRow copyWith({
+    String? id,
+    int? experiencedDay,
+    int? recordedAtMillis,
+    int? updatedAtMillis,
+    String? originalProvenance,
+    String? provenance,
+    Value<String?> originalWriteZoneId = const Value.absent(),
+    Value<String?> writeZoneId = const Value.absent(),
+    Value<int?> originalUtcOffsetMinutes = const Value.absent(),
+    Value<int?> utcOffsetMinutes = const Value.absent(),
+    int? vocabularyVersion,
+    String? type,
+    Value<String?> intensity = const Value.absent(),
+    Value<String?> customName = const Value.absent(),
+    Value<String?> note = const Value.absent(),
+  }) => RecordHubEventRow(
+    id: id ?? this.id,
+    experiencedDay: experiencedDay ?? this.experiencedDay,
+    recordedAtMillis: recordedAtMillis ?? this.recordedAtMillis,
+    updatedAtMillis: updatedAtMillis ?? this.updatedAtMillis,
+    originalProvenance: originalProvenance ?? this.originalProvenance,
+    provenance: provenance ?? this.provenance,
+    originalWriteZoneId: originalWriteZoneId.present
+        ? originalWriteZoneId.value
+        : this.originalWriteZoneId,
+    writeZoneId: writeZoneId.present ? writeZoneId.value : this.writeZoneId,
+    originalUtcOffsetMinutes: originalUtcOffsetMinutes.present
+        ? originalUtcOffsetMinutes.value
+        : this.originalUtcOffsetMinutes,
+    utcOffsetMinutes: utcOffsetMinutes.present
+        ? utcOffsetMinutes.value
+        : this.utcOffsetMinutes,
+    vocabularyVersion: vocabularyVersion ?? this.vocabularyVersion,
+    type: type ?? this.type,
+    intensity: intensity.present ? intensity.value : this.intensity,
+    customName: customName.present ? customName.value : this.customName,
+    note: note.present ? note.value : this.note,
+  );
+  RecordHubEventRow copyWithCompanion(RecordHubEventRowsCompanion data) {
+    return RecordHubEventRow(
+      id: data.id.present ? data.id.value : this.id,
+      experiencedDay: data.experiencedDay.present
+          ? data.experiencedDay.value
+          : this.experiencedDay,
+      recordedAtMillis: data.recordedAtMillis.present
+          ? data.recordedAtMillis.value
+          : this.recordedAtMillis,
+      updatedAtMillis: data.updatedAtMillis.present
+          ? data.updatedAtMillis.value
+          : this.updatedAtMillis,
+      originalProvenance: data.originalProvenance.present
+          ? data.originalProvenance.value
+          : this.originalProvenance,
+      provenance: data.provenance.present
+          ? data.provenance.value
+          : this.provenance,
+      originalWriteZoneId: data.originalWriteZoneId.present
+          ? data.originalWriteZoneId.value
+          : this.originalWriteZoneId,
+      writeZoneId: data.writeZoneId.present
+          ? data.writeZoneId.value
+          : this.writeZoneId,
+      originalUtcOffsetMinutes: data.originalUtcOffsetMinutes.present
+          ? data.originalUtcOffsetMinutes.value
+          : this.originalUtcOffsetMinutes,
+      utcOffsetMinutes: data.utcOffsetMinutes.present
+          ? data.utcOffsetMinutes.value
+          : this.utcOffsetMinutes,
+      vocabularyVersion: data.vocabularyVersion.present
+          ? data.vocabularyVersion.value
+          : this.vocabularyVersion,
+      type: data.type.present ? data.type.value : this.type,
+      intensity: data.intensity.present ? data.intensity.value : this.intensity,
+      customName: data.customName.present
+          ? data.customName.value
+          : this.customName,
+      note: data.note.present ? data.note.value : this.note,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('RecordHubEventRow(')
+          ..write('id: $id, ')
+          ..write('experiencedDay: $experiencedDay, ')
+          ..write('recordedAtMillis: $recordedAtMillis, ')
+          ..write('updatedAtMillis: $updatedAtMillis, ')
+          ..write('originalProvenance: $originalProvenance, ')
+          ..write('provenance: $provenance, ')
+          ..write('originalWriteZoneId: $originalWriteZoneId, ')
+          ..write('writeZoneId: $writeZoneId, ')
+          ..write('originalUtcOffsetMinutes: $originalUtcOffsetMinutes, ')
+          ..write('utcOffsetMinutes: $utcOffsetMinutes, ')
+          ..write('vocabularyVersion: $vocabularyVersion, ')
+          ..write('type: $type, ')
+          ..write('intensity: $intensity, ')
+          ..write('customName: $customName, ')
+          ..write('note: $note')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(
+    id,
+    experiencedDay,
+    recordedAtMillis,
+    updatedAtMillis,
+    originalProvenance,
+    provenance,
+    originalWriteZoneId,
+    writeZoneId,
+    originalUtcOffsetMinutes,
+    utcOffsetMinutes,
+    vocabularyVersion,
+    type,
+    intensity,
+    customName,
+    note,
+  );
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is RecordHubEventRow &&
+          other.id == this.id &&
+          other.experiencedDay == this.experiencedDay &&
+          other.recordedAtMillis == this.recordedAtMillis &&
+          other.updatedAtMillis == this.updatedAtMillis &&
+          other.originalProvenance == this.originalProvenance &&
+          other.provenance == this.provenance &&
+          other.originalWriteZoneId == this.originalWriteZoneId &&
+          other.writeZoneId == this.writeZoneId &&
+          other.originalUtcOffsetMinutes == this.originalUtcOffsetMinutes &&
+          other.utcOffsetMinutes == this.utcOffsetMinutes &&
+          other.vocabularyVersion == this.vocabularyVersion &&
+          other.type == this.type &&
+          other.intensity == this.intensity &&
+          other.customName == this.customName &&
+          other.note == this.note);
+}
+
+class RecordHubEventRowsCompanion extends UpdateCompanion<RecordHubEventRow> {
+  final Value<String> id;
+  final Value<int> experiencedDay;
+  final Value<int> recordedAtMillis;
+  final Value<int> updatedAtMillis;
+  final Value<String> originalProvenance;
+  final Value<String> provenance;
+  final Value<String?> originalWriteZoneId;
+  final Value<String?> writeZoneId;
+  final Value<int?> originalUtcOffsetMinutes;
+  final Value<int?> utcOffsetMinutes;
+  final Value<int> vocabularyVersion;
+  final Value<String> type;
+  final Value<String?> intensity;
+  final Value<String?> customName;
+  final Value<String?> note;
+  final Value<int> rowid;
+  const RecordHubEventRowsCompanion({
+    this.id = const Value.absent(),
+    this.experiencedDay = const Value.absent(),
+    this.recordedAtMillis = const Value.absent(),
+    this.updatedAtMillis = const Value.absent(),
+    this.originalProvenance = const Value.absent(),
+    this.provenance = const Value.absent(),
+    this.originalWriteZoneId = const Value.absent(),
+    this.writeZoneId = const Value.absent(),
+    this.originalUtcOffsetMinutes = const Value.absent(),
+    this.utcOffsetMinutes = const Value.absent(),
+    this.vocabularyVersion = const Value.absent(),
+    this.type = const Value.absent(),
+    this.intensity = const Value.absent(),
+    this.customName = const Value.absent(),
+    this.note = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  RecordHubEventRowsCompanion.insert({
+    required String id,
+    required int experiencedDay,
+    required int recordedAtMillis,
+    required int updatedAtMillis,
+    required String originalProvenance,
+    required String provenance,
+    this.originalWriteZoneId = const Value.absent(),
+    this.writeZoneId = const Value.absent(),
+    this.originalUtcOffsetMinutes = const Value.absent(),
+    this.utcOffsetMinutes = const Value.absent(),
+    this.vocabularyVersion = const Value.absent(),
+    required String type,
+    this.intensity = const Value.absent(),
+    this.customName = const Value.absent(),
+    this.note = const Value.absent(),
+    this.rowid = const Value.absent(),
+  }) : id = Value(id),
+       experiencedDay = Value(experiencedDay),
+       recordedAtMillis = Value(recordedAtMillis),
+       updatedAtMillis = Value(updatedAtMillis),
+       originalProvenance = Value(originalProvenance),
+       provenance = Value(provenance),
+       type = Value(type);
+  static Insertable<RecordHubEventRow> custom({
+    Expression<String>? id,
+    Expression<int>? experiencedDay,
+    Expression<int>? recordedAtMillis,
+    Expression<int>? updatedAtMillis,
+    Expression<String>? originalProvenance,
+    Expression<String>? provenance,
+    Expression<String>? originalWriteZoneId,
+    Expression<String>? writeZoneId,
+    Expression<int>? originalUtcOffsetMinutes,
+    Expression<int>? utcOffsetMinutes,
+    Expression<int>? vocabularyVersion,
+    Expression<String>? type,
+    Expression<String>? intensity,
+    Expression<String>? customName,
+    Expression<String>? note,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (experiencedDay != null) 'experienced_day': experiencedDay,
+      if (recordedAtMillis != null) 'recorded_at_millis': recordedAtMillis,
+      if (updatedAtMillis != null) 'updated_at_millis': updatedAtMillis,
+      if (originalProvenance != null) 'original_provenance': originalProvenance,
+      if (provenance != null) 'provenance': provenance,
+      if (originalWriteZoneId != null)
+        'original_write_zone_id': originalWriteZoneId,
+      if (writeZoneId != null) 'write_zone_id': writeZoneId,
+      if (originalUtcOffsetMinutes != null)
+        'original_utc_offset_minutes': originalUtcOffsetMinutes,
+      if (utcOffsetMinutes != null) 'utc_offset_minutes': utcOffsetMinutes,
+      if (vocabularyVersion != null) 'vocabulary_version': vocabularyVersion,
+      if (type != null) 'type': type,
+      if (intensity != null) 'intensity': intensity,
+      if (customName != null) 'custom_name': customName,
+      if (note != null) 'note': note,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  RecordHubEventRowsCompanion copyWith({
+    Value<String>? id,
+    Value<int>? experiencedDay,
+    Value<int>? recordedAtMillis,
+    Value<int>? updatedAtMillis,
+    Value<String>? originalProvenance,
+    Value<String>? provenance,
+    Value<String?>? originalWriteZoneId,
+    Value<String?>? writeZoneId,
+    Value<int?>? originalUtcOffsetMinutes,
+    Value<int?>? utcOffsetMinutes,
+    Value<int>? vocabularyVersion,
+    Value<String>? type,
+    Value<String?>? intensity,
+    Value<String?>? customName,
+    Value<String?>? note,
+    Value<int>? rowid,
+  }) {
+    return RecordHubEventRowsCompanion(
+      id: id ?? this.id,
+      experiencedDay: experiencedDay ?? this.experiencedDay,
+      recordedAtMillis: recordedAtMillis ?? this.recordedAtMillis,
+      updatedAtMillis: updatedAtMillis ?? this.updatedAtMillis,
+      originalProvenance: originalProvenance ?? this.originalProvenance,
+      provenance: provenance ?? this.provenance,
+      originalWriteZoneId: originalWriteZoneId ?? this.originalWriteZoneId,
+      writeZoneId: writeZoneId ?? this.writeZoneId,
+      originalUtcOffsetMinutes:
+          originalUtcOffsetMinutes ?? this.originalUtcOffsetMinutes,
+      utcOffsetMinutes: utcOffsetMinutes ?? this.utcOffsetMinutes,
+      vocabularyVersion: vocabularyVersion ?? this.vocabularyVersion,
+      type: type ?? this.type,
+      intensity: intensity ?? this.intensity,
+      customName: customName ?? this.customName,
+      note: note ?? this.note,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<String>(id.value);
+    }
+    if (experiencedDay.present) {
+      map['experienced_day'] = Variable<int>(experiencedDay.value);
+    }
+    if (recordedAtMillis.present) {
+      map['recorded_at_millis'] = Variable<int>(recordedAtMillis.value);
+    }
+    if (updatedAtMillis.present) {
+      map['updated_at_millis'] = Variable<int>(updatedAtMillis.value);
+    }
+    if (originalProvenance.present) {
+      map['original_provenance'] = Variable<String>(originalProvenance.value);
+    }
+    if (provenance.present) {
+      map['provenance'] = Variable<String>(provenance.value);
+    }
+    if (originalWriteZoneId.present) {
+      map['original_write_zone_id'] = Variable<String>(
+        originalWriteZoneId.value,
+      );
+    }
+    if (writeZoneId.present) {
+      map['write_zone_id'] = Variable<String>(writeZoneId.value);
+    }
+    if (originalUtcOffsetMinutes.present) {
+      map['original_utc_offset_minutes'] = Variable<int>(
+        originalUtcOffsetMinutes.value,
+      );
+    }
+    if (utcOffsetMinutes.present) {
+      map['utc_offset_minutes'] = Variable<int>(utcOffsetMinutes.value);
+    }
+    if (vocabularyVersion.present) {
+      map['vocabulary_version'] = Variable<int>(vocabularyVersion.value);
+    }
+    if (type.present) {
+      map['type'] = Variable<String>(type.value);
+    }
+    if (intensity.present) {
+      map['intensity'] = Variable<String>(intensity.value);
+    }
+    if (customName.present) {
+      map['custom_name'] = Variable<String>(customName.value);
+    }
+    if (note.present) {
+      map['note'] = Variable<String>(note.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('RecordHubEventRowsCompanion(')
+          ..write('id: $id, ')
+          ..write('experiencedDay: $experiencedDay, ')
+          ..write('recordedAtMillis: $recordedAtMillis, ')
+          ..write('updatedAtMillis: $updatedAtMillis, ')
+          ..write('originalProvenance: $originalProvenance, ')
+          ..write('provenance: $provenance, ')
+          ..write('originalWriteZoneId: $originalWriteZoneId, ')
+          ..write('writeZoneId: $writeZoneId, ')
+          ..write('originalUtcOffsetMinutes: $originalUtcOffsetMinutes, ')
+          ..write('utcOffsetMinutes: $utcOffsetMinutes, ')
+          ..write('vocabularyVersion: $vocabularyVersion, ')
+          ..write('type: $type, ')
+          ..write('intensity: $intensity, ')
+          ..write('customName: $customName, ')
+          ..write('note: $note, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
+class $RecordHubTemperatureRowsTable extends RecordHubTemperatureRows
+    with TableInfo<$RecordHubTemperatureRowsTable, RecordHubTemperatureRow> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $RecordHubTemperatureRowsTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<String> id = GeneratedColumn<String>(
+    'id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _experiencedDayMeta = const VerificationMeta(
+    'experiencedDay',
+  );
+  @override
+  late final GeneratedColumn<int> experiencedDay = GeneratedColumn<int>(
+    'experienced_day',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _recordedAtMillisMeta = const VerificationMeta(
+    'recordedAtMillis',
+  );
+  @override
+  late final GeneratedColumn<int> recordedAtMillis = GeneratedColumn<int>(
+    'recorded_at_millis',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _updatedAtMillisMeta = const VerificationMeta(
+    'updatedAtMillis',
+  );
+  @override
+  late final GeneratedColumn<int> updatedAtMillis = GeneratedColumn<int>(
+    'updated_at_millis',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _originalProvenanceMeta =
+      const VerificationMeta('originalProvenance');
+  @override
+  late final GeneratedColumn<String> originalProvenance =
+      GeneratedColumn<String>(
+        'original_provenance',
+        aliasedName,
+        false,
+        type: DriftSqlType.string,
+        requiredDuringInsert: true,
+      );
+  static const VerificationMeta _provenanceMeta = const VerificationMeta(
+    'provenance',
+  );
+  @override
+  late final GeneratedColumn<String> provenance = GeneratedColumn<String>(
+    'provenance',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _originalWriteZoneIdMeta =
+      const VerificationMeta('originalWriteZoneId');
+  @override
+  late final GeneratedColumn<String> originalWriteZoneId =
+      GeneratedColumn<String>(
+        'original_write_zone_id',
+        aliasedName,
+        true,
+        type: DriftSqlType.string,
+        requiredDuringInsert: false,
+      );
+  static const VerificationMeta _writeZoneIdMeta = const VerificationMeta(
+    'writeZoneId',
+  );
+  @override
+  late final GeneratedColumn<String> writeZoneId = GeneratedColumn<String>(
+    'write_zone_id',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _originalUtcOffsetMinutesMeta =
+      const VerificationMeta('originalUtcOffsetMinutes');
+  @override
+  late final GeneratedColumn<int> originalUtcOffsetMinutes =
+      GeneratedColumn<int>(
+        'original_utc_offset_minutes',
+        aliasedName,
+        true,
+        type: DriftSqlType.int,
+        requiredDuringInsert: false,
+      );
+  static const VerificationMeta _utcOffsetMinutesMeta = const VerificationMeta(
+    'utcOffsetMinutes',
+  );
+  @override
+  late final GeneratedColumn<int> utcOffsetMinutes = GeneratedColumn<int>(
+    'utc_offset_minutes',
+    aliasedName,
+    true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _vocabularyVersionMeta = const VerificationMeta(
+    'vocabularyVersion',
+  );
+  @override
+  late final GeneratedColumn<int> vocabularyVersion = GeneratedColumn<int>(
+    'vocabulary_version',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(1),
+  );
+  static const VerificationMeta _enteredValueMeta = const VerificationMeta(
+    'enteredValue',
+  );
+  @override
+  late final GeneratedColumn<double> enteredValue = GeneratedColumn<double>(
+    'entered_value',
+    aliasedName,
+    false,
+    type: DriftSqlType.double,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _unitMeta = const VerificationMeta('unit');
+  @override
+  late final GeneratedColumn<String> unit = GeneratedColumn<String>(
+    'unit',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _methodMeta = const VerificationMeta('method');
+  @override
+  late final GeneratedColumn<String> method = GeneratedColumn<String>(
+    'method',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _measuredHourMeta = const VerificationMeta(
+    'measuredHour',
+  );
+  @override
+  late final GeneratedColumn<int> measuredHour = GeneratedColumn<int>(
+    'measured_hour',
+    aliasedName,
+    true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _measuredMinuteMeta = const VerificationMeta(
+    'measuredMinute',
+  );
+  @override
+  late final GeneratedColumn<int> measuredMinute = GeneratedColumn<int>(
+    'measured_minute',
+    aliasedName,
+    true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _feverOrIllnessMeta = const VerificationMeta(
+    'feverOrIllness',
+  );
+  @override
+  late final GeneratedColumn<bool> feverOrIllness = GeneratedColumn<bool>(
+    'fever_or_illness',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("fever_or_illness" IN (0, 1))',
+    ),
+    defaultValue: const Constant(false),
+  );
+  static const VerificationMeta _poorSleepMeta = const VerificationMeta(
+    'poorSleep',
+  );
+  @override
+  late final GeneratedColumn<bool> poorSleep = GeneratedColumn<bool>(
+    'poor_sleep',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("poor_sleep" IN (0, 1))',
+    ),
+    defaultValue: const Constant(false),
+  );
+  static const VerificationMeta _alcoholMeta = const VerificationMeta(
+    'alcohol',
+  );
+  @override
+  late final GeneratedColumn<bool> alcohol = GeneratedColumn<bool>(
+    'alcohol',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("alcohol" IN (0, 1))',
+    ),
+    defaultValue: const Constant(false),
+  );
+  static const VerificationMeta _travelOrTimeZoneChangeMeta =
+      const VerificationMeta('travelOrTimeZoneChange');
+  @override
+  late final GeneratedColumn<bool> travelOrTimeZoneChange =
+      GeneratedColumn<bool>(
+        'travel_or_time_zone_change',
+        aliasedName,
+        false,
+        type: DriftSqlType.bool,
+        requiredDuringInsert: false,
+        defaultConstraints: GeneratedColumn.constraintIsAlways(
+          'CHECK ("travel_or_time_zone_change" IN (0, 1))',
+        ),
+        defaultValue: const Constant(false),
+      );
+  @override
+  List<GeneratedColumn> get $columns => [
+    id,
+    experiencedDay,
+    recordedAtMillis,
+    updatedAtMillis,
+    originalProvenance,
+    provenance,
+    originalWriteZoneId,
+    writeZoneId,
+    originalUtcOffsetMinutes,
+    utcOffsetMinutes,
+    vocabularyVersion,
+    enteredValue,
+    unit,
+    method,
+    measuredHour,
+    measuredMinute,
+    feverOrIllness,
+    poorSleep,
+    alcohol,
+    travelOrTimeZoneChange,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'record_hub_temperature_rows';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<RecordHubTemperatureRow> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    } else if (isInserting) {
+      context.missing(_idMeta);
+    }
+    if (data.containsKey('experienced_day')) {
+      context.handle(
+        _experiencedDayMeta,
+        experiencedDay.isAcceptableOrUnknown(
+          data['experienced_day']!,
+          _experiencedDayMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_experiencedDayMeta);
+    }
+    if (data.containsKey('recorded_at_millis')) {
+      context.handle(
+        _recordedAtMillisMeta,
+        recordedAtMillis.isAcceptableOrUnknown(
+          data['recorded_at_millis']!,
+          _recordedAtMillisMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_recordedAtMillisMeta);
+    }
+    if (data.containsKey('updated_at_millis')) {
+      context.handle(
+        _updatedAtMillisMeta,
+        updatedAtMillis.isAcceptableOrUnknown(
+          data['updated_at_millis']!,
+          _updatedAtMillisMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_updatedAtMillisMeta);
+    }
+    if (data.containsKey('original_provenance')) {
+      context.handle(
+        _originalProvenanceMeta,
+        originalProvenance.isAcceptableOrUnknown(
+          data['original_provenance']!,
+          _originalProvenanceMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_originalProvenanceMeta);
+    }
+    if (data.containsKey('provenance')) {
+      context.handle(
+        _provenanceMeta,
+        provenance.isAcceptableOrUnknown(data['provenance']!, _provenanceMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_provenanceMeta);
+    }
+    if (data.containsKey('original_write_zone_id')) {
+      context.handle(
+        _originalWriteZoneIdMeta,
+        originalWriteZoneId.isAcceptableOrUnknown(
+          data['original_write_zone_id']!,
+          _originalWriteZoneIdMeta,
+        ),
+      );
+    }
+    if (data.containsKey('write_zone_id')) {
+      context.handle(
+        _writeZoneIdMeta,
+        writeZoneId.isAcceptableOrUnknown(
+          data['write_zone_id']!,
+          _writeZoneIdMeta,
+        ),
+      );
+    }
+    if (data.containsKey('original_utc_offset_minutes')) {
+      context.handle(
+        _originalUtcOffsetMinutesMeta,
+        originalUtcOffsetMinutes.isAcceptableOrUnknown(
+          data['original_utc_offset_minutes']!,
+          _originalUtcOffsetMinutesMeta,
+        ),
+      );
+    }
+    if (data.containsKey('utc_offset_minutes')) {
+      context.handle(
+        _utcOffsetMinutesMeta,
+        utcOffsetMinutes.isAcceptableOrUnknown(
+          data['utc_offset_minutes']!,
+          _utcOffsetMinutesMeta,
+        ),
+      );
+    }
+    if (data.containsKey('vocabulary_version')) {
+      context.handle(
+        _vocabularyVersionMeta,
+        vocabularyVersion.isAcceptableOrUnknown(
+          data['vocabulary_version']!,
+          _vocabularyVersionMeta,
+        ),
+      );
+    }
+    if (data.containsKey('entered_value')) {
+      context.handle(
+        _enteredValueMeta,
+        enteredValue.isAcceptableOrUnknown(
+          data['entered_value']!,
+          _enteredValueMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_enteredValueMeta);
+    }
+    if (data.containsKey('unit')) {
+      context.handle(
+        _unitMeta,
+        unit.isAcceptableOrUnknown(data['unit']!, _unitMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_unitMeta);
+    }
+    if (data.containsKey('method')) {
+      context.handle(
+        _methodMeta,
+        method.isAcceptableOrUnknown(data['method']!, _methodMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_methodMeta);
+    }
+    if (data.containsKey('measured_hour')) {
+      context.handle(
+        _measuredHourMeta,
+        measuredHour.isAcceptableOrUnknown(
+          data['measured_hour']!,
+          _measuredHourMeta,
+        ),
+      );
+    }
+    if (data.containsKey('measured_minute')) {
+      context.handle(
+        _measuredMinuteMeta,
+        measuredMinute.isAcceptableOrUnknown(
+          data['measured_minute']!,
+          _measuredMinuteMeta,
+        ),
+      );
+    }
+    if (data.containsKey('fever_or_illness')) {
+      context.handle(
+        _feverOrIllnessMeta,
+        feverOrIllness.isAcceptableOrUnknown(
+          data['fever_or_illness']!,
+          _feverOrIllnessMeta,
+        ),
+      );
+    }
+    if (data.containsKey('poor_sleep')) {
+      context.handle(
+        _poorSleepMeta,
+        poorSleep.isAcceptableOrUnknown(data['poor_sleep']!, _poorSleepMeta),
+      );
+    }
+    if (data.containsKey('alcohol')) {
+      context.handle(
+        _alcoholMeta,
+        alcohol.isAcceptableOrUnknown(data['alcohol']!, _alcoholMeta),
+      );
+    }
+    if (data.containsKey('travel_or_time_zone_change')) {
+      context.handle(
+        _travelOrTimeZoneChangeMeta,
+        travelOrTimeZoneChange.isAcceptableOrUnknown(
+          data['travel_or_time_zone_change']!,
+          _travelOrTimeZoneChangeMeta,
+        ),
+      );
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  RecordHubTemperatureRow map(
+    Map<String, dynamic> data, {
+    String? tablePrefix,
+  }) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return RecordHubTemperatureRow(
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}id'],
+      )!,
+      experiencedDay: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}experienced_day'],
+      )!,
+      recordedAtMillis: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}recorded_at_millis'],
+      )!,
+      updatedAtMillis: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}updated_at_millis'],
+      )!,
+      originalProvenance: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}original_provenance'],
+      )!,
+      provenance: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}provenance'],
+      )!,
+      originalWriteZoneId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}original_write_zone_id'],
+      ),
+      writeZoneId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}write_zone_id'],
+      ),
+      originalUtcOffsetMinutes: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}original_utc_offset_minutes'],
+      ),
+      utcOffsetMinutes: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}utc_offset_minutes'],
+      ),
+      vocabularyVersion: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}vocabulary_version'],
+      )!,
+      enteredValue: attachedDatabase.typeMapping.read(
+        DriftSqlType.double,
+        data['${effectivePrefix}entered_value'],
+      )!,
+      unit: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}unit'],
+      )!,
+      method: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}method'],
+      )!,
+      measuredHour: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}measured_hour'],
+      ),
+      measuredMinute: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}measured_minute'],
+      ),
+      feverOrIllness: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}fever_or_illness'],
+      )!,
+      poorSleep: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}poor_sleep'],
+      )!,
+      alcohol: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}alcohol'],
+      )!,
+      travelOrTimeZoneChange: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}travel_or_time_zone_change'],
+      )!,
+    );
+  }
+
+  @override
+  $RecordHubTemperatureRowsTable createAlias(String alias) {
+    return $RecordHubTemperatureRowsTable(attachedDatabase, alias);
+  }
+}
+
+class RecordHubTemperatureRow extends DataClass
+    implements Insertable<RecordHubTemperatureRow> {
+  final String id;
+  final int experiencedDay;
+  final int recordedAtMillis;
+  final int updatedAtMillis;
+  final String originalProvenance;
+  final String provenance;
+  final String? originalWriteZoneId;
+  final String? writeZoneId;
+  final int? originalUtcOffsetMinutes;
+  final int? utcOffsetMinutes;
+  final int vocabularyVersion;
+  final double enteredValue;
+  final String unit;
+  final String method;
+  final int? measuredHour;
+  final int? measuredMinute;
+  final bool feverOrIllness;
+  final bool poorSleep;
+  final bool alcohol;
+  final bool travelOrTimeZoneChange;
+  const RecordHubTemperatureRow({
+    required this.id,
+    required this.experiencedDay,
+    required this.recordedAtMillis,
+    required this.updatedAtMillis,
+    required this.originalProvenance,
+    required this.provenance,
+    this.originalWriteZoneId,
+    this.writeZoneId,
+    this.originalUtcOffsetMinutes,
+    this.utcOffsetMinutes,
+    required this.vocabularyVersion,
+    required this.enteredValue,
+    required this.unit,
+    required this.method,
+    this.measuredHour,
+    this.measuredMinute,
+    required this.feverOrIllness,
+    required this.poorSleep,
+    required this.alcohol,
+    required this.travelOrTimeZoneChange,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<String>(id);
+    map['experienced_day'] = Variable<int>(experiencedDay);
+    map['recorded_at_millis'] = Variable<int>(recordedAtMillis);
+    map['updated_at_millis'] = Variable<int>(updatedAtMillis);
+    map['original_provenance'] = Variable<String>(originalProvenance);
+    map['provenance'] = Variable<String>(provenance);
+    if (!nullToAbsent || originalWriteZoneId != null) {
+      map['original_write_zone_id'] = Variable<String>(originalWriteZoneId);
+    }
+    if (!nullToAbsent || writeZoneId != null) {
+      map['write_zone_id'] = Variable<String>(writeZoneId);
+    }
+    if (!nullToAbsent || originalUtcOffsetMinutes != null) {
+      map['original_utc_offset_minutes'] = Variable<int>(
+        originalUtcOffsetMinutes,
+      );
+    }
+    if (!nullToAbsent || utcOffsetMinutes != null) {
+      map['utc_offset_minutes'] = Variable<int>(utcOffsetMinutes);
+    }
+    map['vocabulary_version'] = Variable<int>(vocabularyVersion);
+    map['entered_value'] = Variable<double>(enteredValue);
+    map['unit'] = Variable<String>(unit);
+    map['method'] = Variable<String>(method);
+    if (!nullToAbsent || measuredHour != null) {
+      map['measured_hour'] = Variable<int>(measuredHour);
+    }
+    if (!nullToAbsent || measuredMinute != null) {
+      map['measured_minute'] = Variable<int>(measuredMinute);
+    }
+    map['fever_or_illness'] = Variable<bool>(feverOrIllness);
+    map['poor_sleep'] = Variable<bool>(poorSleep);
+    map['alcohol'] = Variable<bool>(alcohol);
+    map['travel_or_time_zone_change'] = Variable<bool>(travelOrTimeZoneChange);
+    return map;
+  }
+
+  RecordHubTemperatureRowsCompanion toCompanion(bool nullToAbsent) {
+    return RecordHubTemperatureRowsCompanion(
+      id: Value(id),
+      experiencedDay: Value(experiencedDay),
+      recordedAtMillis: Value(recordedAtMillis),
+      updatedAtMillis: Value(updatedAtMillis),
+      originalProvenance: Value(originalProvenance),
+      provenance: Value(provenance),
+      originalWriteZoneId: originalWriteZoneId == null && nullToAbsent
+          ? const Value.absent()
+          : Value(originalWriteZoneId),
+      writeZoneId: writeZoneId == null && nullToAbsent
+          ? const Value.absent()
+          : Value(writeZoneId),
+      originalUtcOffsetMinutes: originalUtcOffsetMinutes == null && nullToAbsent
+          ? const Value.absent()
+          : Value(originalUtcOffsetMinutes),
+      utcOffsetMinutes: utcOffsetMinutes == null && nullToAbsent
+          ? const Value.absent()
+          : Value(utcOffsetMinutes),
+      vocabularyVersion: Value(vocabularyVersion),
+      enteredValue: Value(enteredValue),
+      unit: Value(unit),
+      method: Value(method),
+      measuredHour: measuredHour == null && nullToAbsent
+          ? const Value.absent()
+          : Value(measuredHour),
+      measuredMinute: measuredMinute == null && nullToAbsent
+          ? const Value.absent()
+          : Value(measuredMinute),
+      feverOrIllness: Value(feverOrIllness),
+      poorSleep: Value(poorSleep),
+      alcohol: Value(alcohol),
+      travelOrTimeZoneChange: Value(travelOrTimeZoneChange),
+    );
+  }
+
+  factory RecordHubTemperatureRow.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return RecordHubTemperatureRow(
+      id: serializer.fromJson<String>(json['id']),
+      experiencedDay: serializer.fromJson<int>(json['experiencedDay']),
+      recordedAtMillis: serializer.fromJson<int>(json['recordedAtMillis']),
+      updatedAtMillis: serializer.fromJson<int>(json['updatedAtMillis']),
+      originalProvenance: serializer.fromJson<String>(
+        json['originalProvenance'],
+      ),
+      provenance: serializer.fromJson<String>(json['provenance']),
+      originalWriteZoneId: serializer.fromJson<String?>(
+        json['originalWriteZoneId'],
+      ),
+      writeZoneId: serializer.fromJson<String?>(json['writeZoneId']),
+      originalUtcOffsetMinutes: serializer.fromJson<int?>(
+        json['originalUtcOffsetMinutes'],
+      ),
+      utcOffsetMinutes: serializer.fromJson<int?>(json['utcOffsetMinutes']),
+      vocabularyVersion: serializer.fromJson<int>(json['vocabularyVersion']),
+      enteredValue: serializer.fromJson<double>(json['enteredValue']),
+      unit: serializer.fromJson<String>(json['unit']),
+      method: serializer.fromJson<String>(json['method']),
+      measuredHour: serializer.fromJson<int?>(json['measuredHour']),
+      measuredMinute: serializer.fromJson<int?>(json['measuredMinute']),
+      feverOrIllness: serializer.fromJson<bool>(json['feverOrIllness']),
+      poorSleep: serializer.fromJson<bool>(json['poorSleep']),
+      alcohol: serializer.fromJson<bool>(json['alcohol']),
+      travelOrTimeZoneChange: serializer.fromJson<bool>(
+        json['travelOrTimeZoneChange'],
+      ),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<String>(id),
+      'experiencedDay': serializer.toJson<int>(experiencedDay),
+      'recordedAtMillis': serializer.toJson<int>(recordedAtMillis),
+      'updatedAtMillis': serializer.toJson<int>(updatedAtMillis),
+      'originalProvenance': serializer.toJson<String>(originalProvenance),
+      'provenance': serializer.toJson<String>(provenance),
+      'originalWriteZoneId': serializer.toJson<String?>(originalWriteZoneId),
+      'writeZoneId': serializer.toJson<String?>(writeZoneId),
+      'originalUtcOffsetMinutes': serializer.toJson<int?>(
+        originalUtcOffsetMinutes,
+      ),
+      'utcOffsetMinutes': serializer.toJson<int?>(utcOffsetMinutes),
+      'vocabularyVersion': serializer.toJson<int>(vocabularyVersion),
+      'enteredValue': serializer.toJson<double>(enteredValue),
+      'unit': serializer.toJson<String>(unit),
+      'method': serializer.toJson<String>(method),
+      'measuredHour': serializer.toJson<int?>(measuredHour),
+      'measuredMinute': serializer.toJson<int?>(measuredMinute),
+      'feverOrIllness': serializer.toJson<bool>(feverOrIllness),
+      'poorSleep': serializer.toJson<bool>(poorSleep),
+      'alcohol': serializer.toJson<bool>(alcohol),
+      'travelOrTimeZoneChange': serializer.toJson<bool>(travelOrTimeZoneChange),
+    };
+  }
+
+  RecordHubTemperatureRow copyWith({
+    String? id,
+    int? experiencedDay,
+    int? recordedAtMillis,
+    int? updatedAtMillis,
+    String? originalProvenance,
+    String? provenance,
+    Value<String?> originalWriteZoneId = const Value.absent(),
+    Value<String?> writeZoneId = const Value.absent(),
+    Value<int?> originalUtcOffsetMinutes = const Value.absent(),
+    Value<int?> utcOffsetMinutes = const Value.absent(),
+    int? vocabularyVersion,
+    double? enteredValue,
+    String? unit,
+    String? method,
+    Value<int?> measuredHour = const Value.absent(),
+    Value<int?> measuredMinute = const Value.absent(),
+    bool? feverOrIllness,
+    bool? poorSleep,
+    bool? alcohol,
+    bool? travelOrTimeZoneChange,
+  }) => RecordHubTemperatureRow(
+    id: id ?? this.id,
+    experiencedDay: experiencedDay ?? this.experiencedDay,
+    recordedAtMillis: recordedAtMillis ?? this.recordedAtMillis,
+    updatedAtMillis: updatedAtMillis ?? this.updatedAtMillis,
+    originalProvenance: originalProvenance ?? this.originalProvenance,
+    provenance: provenance ?? this.provenance,
+    originalWriteZoneId: originalWriteZoneId.present
+        ? originalWriteZoneId.value
+        : this.originalWriteZoneId,
+    writeZoneId: writeZoneId.present ? writeZoneId.value : this.writeZoneId,
+    originalUtcOffsetMinutes: originalUtcOffsetMinutes.present
+        ? originalUtcOffsetMinutes.value
+        : this.originalUtcOffsetMinutes,
+    utcOffsetMinutes: utcOffsetMinutes.present
+        ? utcOffsetMinutes.value
+        : this.utcOffsetMinutes,
+    vocabularyVersion: vocabularyVersion ?? this.vocabularyVersion,
+    enteredValue: enteredValue ?? this.enteredValue,
+    unit: unit ?? this.unit,
+    method: method ?? this.method,
+    measuredHour: measuredHour.present ? measuredHour.value : this.measuredHour,
+    measuredMinute: measuredMinute.present
+        ? measuredMinute.value
+        : this.measuredMinute,
+    feverOrIllness: feverOrIllness ?? this.feverOrIllness,
+    poorSleep: poorSleep ?? this.poorSleep,
+    alcohol: alcohol ?? this.alcohol,
+    travelOrTimeZoneChange:
+        travelOrTimeZoneChange ?? this.travelOrTimeZoneChange,
+  );
+  RecordHubTemperatureRow copyWithCompanion(
+    RecordHubTemperatureRowsCompanion data,
+  ) {
+    return RecordHubTemperatureRow(
+      id: data.id.present ? data.id.value : this.id,
+      experiencedDay: data.experiencedDay.present
+          ? data.experiencedDay.value
+          : this.experiencedDay,
+      recordedAtMillis: data.recordedAtMillis.present
+          ? data.recordedAtMillis.value
+          : this.recordedAtMillis,
+      updatedAtMillis: data.updatedAtMillis.present
+          ? data.updatedAtMillis.value
+          : this.updatedAtMillis,
+      originalProvenance: data.originalProvenance.present
+          ? data.originalProvenance.value
+          : this.originalProvenance,
+      provenance: data.provenance.present
+          ? data.provenance.value
+          : this.provenance,
+      originalWriteZoneId: data.originalWriteZoneId.present
+          ? data.originalWriteZoneId.value
+          : this.originalWriteZoneId,
+      writeZoneId: data.writeZoneId.present
+          ? data.writeZoneId.value
+          : this.writeZoneId,
+      originalUtcOffsetMinutes: data.originalUtcOffsetMinutes.present
+          ? data.originalUtcOffsetMinutes.value
+          : this.originalUtcOffsetMinutes,
+      utcOffsetMinutes: data.utcOffsetMinutes.present
+          ? data.utcOffsetMinutes.value
+          : this.utcOffsetMinutes,
+      vocabularyVersion: data.vocabularyVersion.present
+          ? data.vocabularyVersion.value
+          : this.vocabularyVersion,
+      enteredValue: data.enteredValue.present
+          ? data.enteredValue.value
+          : this.enteredValue,
+      unit: data.unit.present ? data.unit.value : this.unit,
+      method: data.method.present ? data.method.value : this.method,
+      measuredHour: data.measuredHour.present
+          ? data.measuredHour.value
+          : this.measuredHour,
+      measuredMinute: data.measuredMinute.present
+          ? data.measuredMinute.value
+          : this.measuredMinute,
+      feverOrIllness: data.feverOrIllness.present
+          ? data.feverOrIllness.value
+          : this.feverOrIllness,
+      poorSleep: data.poorSleep.present ? data.poorSleep.value : this.poorSleep,
+      alcohol: data.alcohol.present ? data.alcohol.value : this.alcohol,
+      travelOrTimeZoneChange: data.travelOrTimeZoneChange.present
+          ? data.travelOrTimeZoneChange.value
+          : this.travelOrTimeZoneChange,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('RecordHubTemperatureRow(')
+          ..write('id: $id, ')
+          ..write('experiencedDay: $experiencedDay, ')
+          ..write('recordedAtMillis: $recordedAtMillis, ')
+          ..write('updatedAtMillis: $updatedAtMillis, ')
+          ..write('originalProvenance: $originalProvenance, ')
+          ..write('provenance: $provenance, ')
+          ..write('originalWriteZoneId: $originalWriteZoneId, ')
+          ..write('writeZoneId: $writeZoneId, ')
+          ..write('originalUtcOffsetMinutes: $originalUtcOffsetMinutes, ')
+          ..write('utcOffsetMinutes: $utcOffsetMinutes, ')
+          ..write('vocabularyVersion: $vocabularyVersion, ')
+          ..write('enteredValue: $enteredValue, ')
+          ..write('unit: $unit, ')
+          ..write('method: $method, ')
+          ..write('measuredHour: $measuredHour, ')
+          ..write('measuredMinute: $measuredMinute, ')
+          ..write('feverOrIllness: $feverOrIllness, ')
+          ..write('poorSleep: $poorSleep, ')
+          ..write('alcohol: $alcohol, ')
+          ..write('travelOrTimeZoneChange: $travelOrTimeZoneChange')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(
+    id,
+    experiencedDay,
+    recordedAtMillis,
+    updatedAtMillis,
+    originalProvenance,
+    provenance,
+    originalWriteZoneId,
+    writeZoneId,
+    originalUtcOffsetMinutes,
+    utcOffsetMinutes,
+    vocabularyVersion,
+    enteredValue,
+    unit,
+    method,
+    measuredHour,
+    measuredMinute,
+    feverOrIllness,
+    poorSleep,
+    alcohol,
+    travelOrTimeZoneChange,
+  );
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is RecordHubTemperatureRow &&
+          other.id == this.id &&
+          other.experiencedDay == this.experiencedDay &&
+          other.recordedAtMillis == this.recordedAtMillis &&
+          other.updatedAtMillis == this.updatedAtMillis &&
+          other.originalProvenance == this.originalProvenance &&
+          other.provenance == this.provenance &&
+          other.originalWriteZoneId == this.originalWriteZoneId &&
+          other.writeZoneId == this.writeZoneId &&
+          other.originalUtcOffsetMinutes == this.originalUtcOffsetMinutes &&
+          other.utcOffsetMinutes == this.utcOffsetMinutes &&
+          other.vocabularyVersion == this.vocabularyVersion &&
+          other.enteredValue == this.enteredValue &&
+          other.unit == this.unit &&
+          other.method == this.method &&
+          other.measuredHour == this.measuredHour &&
+          other.measuredMinute == this.measuredMinute &&
+          other.feverOrIllness == this.feverOrIllness &&
+          other.poorSleep == this.poorSleep &&
+          other.alcohol == this.alcohol &&
+          other.travelOrTimeZoneChange == this.travelOrTimeZoneChange);
+}
+
+class RecordHubTemperatureRowsCompanion
+    extends UpdateCompanion<RecordHubTemperatureRow> {
+  final Value<String> id;
+  final Value<int> experiencedDay;
+  final Value<int> recordedAtMillis;
+  final Value<int> updatedAtMillis;
+  final Value<String> originalProvenance;
+  final Value<String> provenance;
+  final Value<String?> originalWriteZoneId;
+  final Value<String?> writeZoneId;
+  final Value<int?> originalUtcOffsetMinutes;
+  final Value<int?> utcOffsetMinutes;
+  final Value<int> vocabularyVersion;
+  final Value<double> enteredValue;
+  final Value<String> unit;
+  final Value<String> method;
+  final Value<int?> measuredHour;
+  final Value<int?> measuredMinute;
+  final Value<bool> feverOrIllness;
+  final Value<bool> poorSleep;
+  final Value<bool> alcohol;
+  final Value<bool> travelOrTimeZoneChange;
+  final Value<int> rowid;
+  const RecordHubTemperatureRowsCompanion({
+    this.id = const Value.absent(),
+    this.experiencedDay = const Value.absent(),
+    this.recordedAtMillis = const Value.absent(),
+    this.updatedAtMillis = const Value.absent(),
+    this.originalProvenance = const Value.absent(),
+    this.provenance = const Value.absent(),
+    this.originalWriteZoneId = const Value.absent(),
+    this.writeZoneId = const Value.absent(),
+    this.originalUtcOffsetMinutes = const Value.absent(),
+    this.utcOffsetMinutes = const Value.absent(),
+    this.vocabularyVersion = const Value.absent(),
+    this.enteredValue = const Value.absent(),
+    this.unit = const Value.absent(),
+    this.method = const Value.absent(),
+    this.measuredHour = const Value.absent(),
+    this.measuredMinute = const Value.absent(),
+    this.feverOrIllness = const Value.absent(),
+    this.poorSleep = const Value.absent(),
+    this.alcohol = const Value.absent(),
+    this.travelOrTimeZoneChange = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  RecordHubTemperatureRowsCompanion.insert({
+    required String id,
+    required int experiencedDay,
+    required int recordedAtMillis,
+    required int updatedAtMillis,
+    required String originalProvenance,
+    required String provenance,
+    this.originalWriteZoneId = const Value.absent(),
+    this.writeZoneId = const Value.absent(),
+    this.originalUtcOffsetMinutes = const Value.absent(),
+    this.utcOffsetMinutes = const Value.absent(),
+    this.vocabularyVersion = const Value.absent(),
+    required double enteredValue,
+    required String unit,
+    required String method,
+    this.measuredHour = const Value.absent(),
+    this.measuredMinute = const Value.absent(),
+    this.feverOrIllness = const Value.absent(),
+    this.poorSleep = const Value.absent(),
+    this.alcohol = const Value.absent(),
+    this.travelOrTimeZoneChange = const Value.absent(),
+    this.rowid = const Value.absent(),
+  }) : id = Value(id),
+       experiencedDay = Value(experiencedDay),
+       recordedAtMillis = Value(recordedAtMillis),
+       updatedAtMillis = Value(updatedAtMillis),
+       originalProvenance = Value(originalProvenance),
+       provenance = Value(provenance),
+       enteredValue = Value(enteredValue),
+       unit = Value(unit),
+       method = Value(method);
+  static Insertable<RecordHubTemperatureRow> custom({
+    Expression<String>? id,
+    Expression<int>? experiencedDay,
+    Expression<int>? recordedAtMillis,
+    Expression<int>? updatedAtMillis,
+    Expression<String>? originalProvenance,
+    Expression<String>? provenance,
+    Expression<String>? originalWriteZoneId,
+    Expression<String>? writeZoneId,
+    Expression<int>? originalUtcOffsetMinutes,
+    Expression<int>? utcOffsetMinutes,
+    Expression<int>? vocabularyVersion,
+    Expression<double>? enteredValue,
+    Expression<String>? unit,
+    Expression<String>? method,
+    Expression<int>? measuredHour,
+    Expression<int>? measuredMinute,
+    Expression<bool>? feverOrIllness,
+    Expression<bool>? poorSleep,
+    Expression<bool>? alcohol,
+    Expression<bool>? travelOrTimeZoneChange,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (experiencedDay != null) 'experienced_day': experiencedDay,
+      if (recordedAtMillis != null) 'recorded_at_millis': recordedAtMillis,
+      if (updatedAtMillis != null) 'updated_at_millis': updatedAtMillis,
+      if (originalProvenance != null) 'original_provenance': originalProvenance,
+      if (provenance != null) 'provenance': provenance,
+      if (originalWriteZoneId != null)
+        'original_write_zone_id': originalWriteZoneId,
+      if (writeZoneId != null) 'write_zone_id': writeZoneId,
+      if (originalUtcOffsetMinutes != null)
+        'original_utc_offset_minutes': originalUtcOffsetMinutes,
+      if (utcOffsetMinutes != null) 'utc_offset_minutes': utcOffsetMinutes,
+      if (vocabularyVersion != null) 'vocabulary_version': vocabularyVersion,
+      if (enteredValue != null) 'entered_value': enteredValue,
+      if (unit != null) 'unit': unit,
+      if (method != null) 'method': method,
+      if (measuredHour != null) 'measured_hour': measuredHour,
+      if (measuredMinute != null) 'measured_minute': measuredMinute,
+      if (feverOrIllness != null) 'fever_or_illness': feverOrIllness,
+      if (poorSleep != null) 'poor_sleep': poorSleep,
+      if (alcohol != null) 'alcohol': alcohol,
+      if (travelOrTimeZoneChange != null)
+        'travel_or_time_zone_change': travelOrTimeZoneChange,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  RecordHubTemperatureRowsCompanion copyWith({
+    Value<String>? id,
+    Value<int>? experiencedDay,
+    Value<int>? recordedAtMillis,
+    Value<int>? updatedAtMillis,
+    Value<String>? originalProvenance,
+    Value<String>? provenance,
+    Value<String?>? originalWriteZoneId,
+    Value<String?>? writeZoneId,
+    Value<int?>? originalUtcOffsetMinutes,
+    Value<int?>? utcOffsetMinutes,
+    Value<int>? vocabularyVersion,
+    Value<double>? enteredValue,
+    Value<String>? unit,
+    Value<String>? method,
+    Value<int?>? measuredHour,
+    Value<int?>? measuredMinute,
+    Value<bool>? feverOrIllness,
+    Value<bool>? poorSleep,
+    Value<bool>? alcohol,
+    Value<bool>? travelOrTimeZoneChange,
+    Value<int>? rowid,
+  }) {
+    return RecordHubTemperatureRowsCompanion(
+      id: id ?? this.id,
+      experiencedDay: experiencedDay ?? this.experiencedDay,
+      recordedAtMillis: recordedAtMillis ?? this.recordedAtMillis,
+      updatedAtMillis: updatedAtMillis ?? this.updatedAtMillis,
+      originalProvenance: originalProvenance ?? this.originalProvenance,
+      provenance: provenance ?? this.provenance,
+      originalWriteZoneId: originalWriteZoneId ?? this.originalWriteZoneId,
+      writeZoneId: writeZoneId ?? this.writeZoneId,
+      originalUtcOffsetMinutes:
+          originalUtcOffsetMinutes ?? this.originalUtcOffsetMinutes,
+      utcOffsetMinutes: utcOffsetMinutes ?? this.utcOffsetMinutes,
+      vocabularyVersion: vocabularyVersion ?? this.vocabularyVersion,
+      enteredValue: enteredValue ?? this.enteredValue,
+      unit: unit ?? this.unit,
+      method: method ?? this.method,
+      measuredHour: measuredHour ?? this.measuredHour,
+      measuredMinute: measuredMinute ?? this.measuredMinute,
+      feverOrIllness: feverOrIllness ?? this.feverOrIllness,
+      poorSleep: poorSleep ?? this.poorSleep,
+      alcohol: alcohol ?? this.alcohol,
+      travelOrTimeZoneChange:
+          travelOrTimeZoneChange ?? this.travelOrTimeZoneChange,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<String>(id.value);
+    }
+    if (experiencedDay.present) {
+      map['experienced_day'] = Variable<int>(experiencedDay.value);
+    }
+    if (recordedAtMillis.present) {
+      map['recorded_at_millis'] = Variable<int>(recordedAtMillis.value);
+    }
+    if (updatedAtMillis.present) {
+      map['updated_at_millis'] = Variable<int>(updatedAtMillis.value);
+    }
+    if (originalProvenance.present) {
+      map['original_provenance'] = Variable<String>(originalProvenance.value);
+    }
+    if (provenance.present) {
+      map['provenance'] = Variable<String>(provenance.value);
+    }
+    if (originalWriteZoneId.present) {
+      map['original_write_zone_id'] = Variable<String>(
+        originalWriteZoneId.value,
+      );
+    }
+    if (writeZoneId.present) {
+      map['write_zone_id'] = Variable<String>(writeZoneId.value);
+    }
+    if (originalUtcOffsetMinutes.present) {
+      map['original_utc_offset_minutes'] = Variable<int>(
+        originalUtcOffsetMinutes.value,
+      );
+    }
+    if (utcOffsetMinutes.present) {
+      map['utc_offset_minutes'] = Variable<int>(utcOffsetMinutes.value);
+    }
+    if (vocabularyVersion.present) {
+      map['vocabulary_version'] = Variable<int>(vocabularyVersion.value);
+    }
+    if (enteredValue.present) {
+      map['entered_value'] = Variable<double>(enteredValue.value);
+    }
+    if (unit.present) {
+      map['unit'] = Variable<String>(unit.value);
+    }
+    if (method.present) {
+      map['method'] = Variable<String>(method.value);
+    }
+    if (measuredHour.present) {
+      map['measured_hour'] = Variable<int>(measuredHour.value);
+    }
+    if (measuredMinute.present) {
+      map['measured_minute'] = Variable<int>(measuredMinute.value);
+    }
+    if (feverOrIllness.present) {
+      map['fever_or_illness'] = Variable<bool>(feverOrIllness.value);
+    }
+    if (poorSleep.present) {
+      map['poor_sleep'] = Variable<bool>(poorSleep.value);
+    }
+    if (alcohol.present) {
+      map['alcohol'] = Variable<bool>(alcohol.value);
+    }
+    if (travelOrTimeZoneChange.present) {
+      map['travel_or_time_zone_change'] = Variable<bool>(
+        travelOrTimeZoneChange.value,
+      );
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('RecordHubTemperatureRowsCompanion(')
+          ..write('id: $id, ')
+          ..write('experiencedDay: $experiencedDay, ')
+          ..write('recordedAtMillis: $recordedAtMillis, ')
+          ..write('updatedAtMillis: $updatedAtMillis, ')
+          ..write('originalProvenance: $originalProvenance, ')
+          ..write('provenance: $provenance, ')
+          ..write('originalWriteZoneId: $originalWriteZoneId, ')
+          ..write('writeZoneId: $writeZoneId, ')
+          ..write('originalUtcOffsetMinutes: $originalUtcOffsetMinutes, ')
+          ..write('utcOffsetMinutes: $utcOffsetMinutes, ')
+          ..write('vocabularyVersion: $vocabularyVersion, ')
+          ..write('enteredValue: $enteredValue, ')
+          ..write('unit: $unit, ')
+          ..write('method: $method, ')
+          ..write('measuredHour: $measuredHour, ')
+          ..write('measuredMinute: $measuredMinute, ')
+          ..write('feverOrIllness: $feverOrIllness, ')
+          ..write('poorSleep: $poorSleep, ')
+          ..write('alcohol: $alcohol, ')
+          ..write('travelOrTimeZoneChange: $travelOrTimeZoneChange, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
+class $RecordHubPinRowsTable extends RecordHubPinRows
+    with TableInfo<$RecordHubPinRowsTable, RecordHubPinRow> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $RecordHubPinRowsTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _symptomMeta = const VerificationMeta(
+    'symptom',
+  );
+  @override
+  late final GeneratedColumn<String> symptom = GeneratedColumn<String>(
+    'symptom',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _positionMeta = const VerificationMeta(
+    'position',
+  );
+  @override
+  late final GeneratedColumn<int> position = GeneratedColumn<int>(
+    'position',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [symptom, position];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'record_hub_pin_rows';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<RecordHubPinRow> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('symptom')) {
+      context.handle(
+        _symptomMeta,
+        symptom.isAcceptableOrUnknown(data['symptom']!, _symptomMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_symptomMeta);
+    }
+    if (data.containsKey('position')) {
+      context.handle(
+        _positionMeta,
+        position.isAcceptableOrUnknown(data['position']!, _positionMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_positionMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {symptom};
+  @override
+  List<Set<GeneratedColumn>> get uniqueKeys => [
+    {position},
+  ];
+  @override
+  RecordHubPinRow map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return RecordHubPinRow(
+      symptom: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}symptom'],
+      )!,
+      position: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}position'],
+      )!,
+    );
+  }
+
+  @override
+  $RecordHubPinRowsTable createAlias(String alias) {
+    return $RecordHubPinRowsTable(attachedDatabase, alias);
+  }
+}
+
+class RecordHubPinRow extends DataClass implements Insertable<RecordHubPinRow> {
+  final String symptom;
+  final int position;
+  const RecordHubPinRow({required this.symptom, required this.position});
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['symptom'] = Variable<String>(symptom);
+    map['position'] = Variable<int>(position);
+    return map;
+  }
+
+  RecordHubPinRowsCompanion toCompanion(bool nullToAbsent) {
+    return RecordHubPinRowsCompanion(
+      symptom: Value(symptom),
+      position: Value(position),
+    );
+  }
+
+  factory RecordHubPinRow.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return RecordHubPinRow(
+      symptom: serializer.fromJson<String>(json['symptom']),
+      position: serializer.fromJson<int>(json['position']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'symptom': serializer.toJson<String>(symptom),
+      'position': serializer.toJson<int>(position),
+    };
+  }
+
+  RecordHubPinRow copyWith({String? symptom, int? position}) => RecordHubPinRow(
+    symptom: symptom ?? this.symptom,
+    position: position ?? this.position,
+  );
+  RecordHubPinRow copyWithCompanion(RecordHubPinRowsCompanion data) {
+    return RecordHubPinRow(
+      symptom: data.symptom.present ? data.symptom.value : this.symptom,
+      position: data.position.present ? data.position.value : this.position,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('RecordHubPinRow(')
+          ..write('symptom: $symptom, ')
+          ..write('position: $position')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(symptom, position);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is RecordHubPinRow &&
+          other.symptom == this.symptom &&
+          other.position == this.position);
+}
+
+class RecordHubPinRowsCompanion extends UpdateCompanion<RecordHubPinRow> {
+  final Value<String> symptom;
+  final Value<int> position;
+  final Value<int> rowid;
+  const RecordHubPinRowsCompanion({
+    this.symptom = const Value.absent(),
+    this.position = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  RecordHubPinRowsCompanion.insert({
+    required String symptom,
+    required int position,
+    this.rowid = const Value.absent(),
+  }) : symptom = Value(symptom),
+       position = Value(position);
+  static Insertable<RecordHubPinRow> custom({
+    Expression<String>? symptom,
+    Expression<int>? position,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (symptom != null) 'symptom': symptom,
+      if (position != null) 'position': position,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  RecordHubPinRowsCompanion copyWith({
+    Value<String>? symptom,
+    Value<int>? position,
+    Value<int>? rowid,
+  }) {
+    return RecordHubPinRowsCompanion(
+      symptom: symptom ?? this.symptom,
+      position: position ?? this.position,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (symptom.present) {
+      map['symptom'] = Variable<String>(symptom.value);
+    }
+    if (position.present) {
+      map['position'] = Variable<int>(position.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('RecordHubPinRowsCompanion(')
+          ..write('symptom: $symptom, ')
+          ..write('position: $position, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
+class $RecordProductEpisodeRowsTable extends RecordProductEpisodeRows
+    with TableInfo<$RecordProductEpisodeRowsTable, RecordProductEpisodeRow> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $RecordProductEpisodeRowsTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<String> id = GeneratedColumn<String>(
+    'id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _experiencedDayMeta = const VerificationMeta(
+    'experiencedDay',
+  );
+  @override
+  late final GeneratedColumn<int> experiencedDay = GeneratedColumn<int>(
+    'experienced_day',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _recordedAtMillisMeta = const VerificationMeta(
+    'recordedAtMillis',
+  );
+  @override
+  late final GeneratedColumn<int> recordedAtMillis = GeneratedColumn<int>(
+    'recorded_at_millis',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _updatedAtMillisMeta = const VerificationMeta(
+    'updatedAtMillis',
+  );
+  @override
+  late final GeneratedColumn<int> updatedAtMillis = GeneratedColumn<int>(
+    'updated_at_millis',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _originalProvenanceMeta =
+      const VerificationMeta('originalProvenance');
+  @override
+  late final GeneratedColumn<String> originalProvenance =
+      GeneratedColumn<String>(
+        'original_provenance',
+        aliasedName,
+        false,
+        type: DriftSqlType.string,
+        requiredDuringInsert: true,
+      );
+  static const VerificationMeta _provenanceMeta = const VerificationMeta(
+    'provenance',
+  );
+  @override
+  late final GeneratedColumn<String> provenance = GeneratedColumn<String>(
+    'provenance',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _originalWriteZoneIdMeta =
+      const VerificationMeta('originalWriteZoneId');
+  @override
+  late final GeneratedColumn<String> originalWriteZoneId =
+      GeneratedColumn<String>(
+        'original_write_zone_id',
+        aliasedName,
+        true,
+        type: DriftSqlType.string,
+        requiredDuringInsert: false,
+      );
+  static const VerificationMeta _writeZoneIdMeta = const VerificationMeta(
+    'writeZoneId',
+  );
+  @override
+  late final GeneratedColumn<String> writeZoneId = GeneratedColumn<String>(
+    'write_zone_id',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _originalUtcOffsetMinutesMeta =
+      const VerificationMeta('originalUtcOffsetMinutes');
+  @override
+  late final GeneratedColumn<int> originalUtcOffsetMinutes =
+      GeneratedColumn<int>(
+        'original_utc_offset_minutes',
+        aliasedName,
+        true,
+        type: DriftSqlType.int,
+        requiredDuringInsert: false,
+      );
+  static const VerificationMeta _utcOffsetMinutesMeta = const VerificationMeta(
+    'utcOffsetMinutes',
+  );
+  @override
+  late final GeneratedColumn<int> utcOffsetMinutes = GeneratedColumn<int>(
+    'utc_offset_minutes',
+    aliasedName,
+    true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _vocabularyVersionMeta = const VerificationMeta(
+    'vocabularyVersion',
+  );
+  @override
+  late final GeneratedColumn<int> vocabularyVersion = GeneratedColumn<int>(
+    'vocabulary_version',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(1),
+  );
+  static const VerificationMeta _familyMeta = const VerificationMeta('family');
+  @override
+  late final GeneratedColumn<String> family = GeneratedColumn<String>(
+    'family',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _startDayMeta = const VerificationMeta(
+    'startDay',
+  );
+  @override
+  late final GeneratedColumn<int> startDay = GeneratedColumn<int>(
+    'start_day',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _endDayMeta = const VerificationMeta('endDay');
+  @override
+  late final GeneratedColumn<int> endDay = GeneratedColumn<int>(
+    'end_day',
+    aliasedName,
+    true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _archivedMeta = const VerificationMeta(
+    'archived',
+  );
+  @override
+  late final GeneratedColumn<bool> archived = GeneratedColumn<bool>(
+    'archived',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("archived" IN (0, 1))',
+    ),
+    defaultValue: const Constant(false),
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    id,
+    experiencedDay,
+    recordedAtMillis,
+    updatedAtMillis,
+    originalProvenance,
+    provenance,
+    originalWriteZoneId,
+    writeZoneId,
+    originalUtcOffsetMinutes,
+    utcOffsetMinutes,
+    vocabularyVersion,
+    family,
+    startDay,
+    endDay,
+    archived,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'record_product_episode_rows';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<RecordProductEpisodeRow> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    } else if (isInserting) {
+      context.missing(_idMeta);
+    }
+    if (data.containsKey('experienced_day')) {
+      context.handle(
+        _experiencedDayMeta,
+        experiencedDay.isAcceptableOrUnknown(
+          data['experienced_day']!,
+          _experiencedDayMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_experiencedDayMeta);
+    }
+    if (data.containsKey('recorded_at_millis')) {
+      context.handle(
+        _recordedAtMillisMeta,
+        recordedAtMillis.isAcceptableOrUnknown(
+          data['recorded_at_millis']!,
+          _recordedAtMillisMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_recordedAtMillisMeta);
+    }
+    if (data.containsKey('updated_at_millis')) {
+      context.handle(
+        _updatedAtMillisMeta,
+        updatedAtMillis.isAcceptableOrUnknown(
+          data['updated_at_millis']!,
+          _updatedAtMillisMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_updatedAtMillisMeta);
+    }
+    if (data.containsKey('original_provenance')) {
+      context.handle(
+        _originalProvenanceMeta,
+        originalProvenance.isAcceptableOrUnknown(
+          data['original_provenance']!,
+          _originalProvenanceMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_originalProvenanceMeta);
+    }
+    if (data.containsKey('provenance')) {
+      context.handle(
+        _provenanceMeta,
+        provenance.isAcceptableOrUnknown(data['provenance']!, _provenanceMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_provenanceMeta);
+    }
+    if (data.containsKey('original_write_zone_id')) {
+      context.handle(
+        _originalWriteZoneIdMeta,
+        originalWriteZoneId.isAcceptableOrUnknown(
+          data['original_write_zone_id']!,
+          _originalWriteZoneIdMeta,
+        ),
+      );
+    }
+    if (data.containsKey('write_zone_id')) {
+      context.handle(
+        _writeZoneIdMeta,
+        writeZoneId.isAcceptableOrUnknown(
+          data['write_zone_id']!,
+          _writeZoneIdMeta,
+        ),
+      );
+    }
+    if (data.containsKey('original_utc_offset_minutes')) {
+      context.handle(
+        _originalUtcOffsetMinutesMeta,
+        originalUtcOffsetMinutes.isAcceptableOrUnknown(
+          data['original_utc_offset_minutes']!,
+          _originalUtcOffsetMinutesMeta,
+        ),
+      );
+    }
+    if (data.containsKey('utc_offset_minutes')) {
+      context.handle(
+        _utcOffsetMinutesMeta,
+        utcOffsetMinutes.isAcceptableOrUnknown(
+          data['utc_offset_minutes']!,
+          _utcOffsetMinutesMeta,
+        ),
+      );
+    }
+    if (data.containsKey('vocabulary_version')) {
+      context.handle(
+        _vocabularyVersionMeta,
+        vocabularyVersion.isAcceptableOrUnknown(
+          data['vocabulary_version']!,
+          _vocabularyVersionMeta,
+        ),
+      );
+    }
+    if (data.containsKey('family')) {
+      context.handle(
+        _familyMeta,
+        family.isAcceptableOrUnknown(data['family']!, _familyMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_familyMeta);
+    }
+    if (data.containsKey('start_day')) {
+      context.handle(
+        _startDayMeta,
+        startDay.isAcceptableOrUnknown(data['start_day']!, _startDayMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_startDayMeta);
+    }
+    if (data.containsKey('end_day')) {
+      context.handle(
+        _endDayMeta,
+        endDay.isAcceptableOrUnknown(data['end_day']!, _endDayMeta),
+      );
+    }
+    if (data.containsKey('archived')) {
+      context.handle(
+        _archivedMeta,
+        archived.isAcceptableOrUnknown(data['archived']!, _archivedMeta),
+      );
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  RecordProductEpisodeRow map(
+    Map<String, dynamic> data, {
+    String? tablePrefix,
+  }) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return RecordProductEpisodeRow(
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}id'],
+      )!,
+      experiencedDay: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}experienced_day'],
+      )!,
+      recordedAtMillis: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}recorded_at_millis'],
+      )!,
+      updatedAtMillis: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}updated_at_millis'],
+      )!,
+      originalProvenance: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}original_provenance'],
+      )!,
+      provenance: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}provenance'],
+      )!,
+      originalWriteZoneId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}original_write_zone_id'],
+      ),
+      writeZoneId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}write_zone_id'],
+      ),
+      originalUtcOffsetMinutes: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}original_utc_offset_minutes'],
+      ),
+      utcOffsetMinutes: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}utc_offset_minutes'],
+      ),
+      vocabularyVersion: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}vocabulary_version'],
+      )!,
+      family: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}family'],
+      )!,
+      startDay: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}start_day'],
+      )!,
+      endDay: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}end_day'],
+      ),
+      archived: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}archived'],
+      )!,
+    );
+  }
+
+  @override
+  $RecordProductEpisodeRowsTable createAlias(String alias) {
+    return $RecordProductEpisodeRowsTable(attachedDatabase, alias);
+  }
+}
+
+class RecordProductEpisodeRow extends DataClass
+    implements Insertable<RecordProductEpisodeRow> {
+  final String id;
+  final int experiencedDay;
+  final int recordedAtMillis;
+  final int updatedAtMillis;
+  final String originalProvenance;
+  final String provenance;
+  final String? originalWriteZoneId;
+  final String? writeZoneId;
+  final int? originalUtcOffsetMinutes;
+  final int? utcOffsetMinutes;
+  final int vocabularyVersion;
+  final String family;
+  final int startDay;
+  final int? endDay;
+  final bool archived;
+  const RecordProductEpisodeRow({
+    required this.id,
+    required this.experiencedDay,
+    required this.recordedAtMillis,
+    required this.updatedAtMillis,
+    required this.originalProvenance,
+    required this.provenance,
+    this.originalWriteZoneId,
+    this.writeZoneId,
+    this.originalUtcOffsetMinutes,
+    this.utcOffsetMinutes,
+    required this.vocabularyVersion,
+    required this.family,
+    required this.startDay,
+    this.endDay,
+    required this.archived,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<String>(id);
+    map['experienced_day'] = Variable<int>(experiencedDay);
+    map['recorded_at_millis'] = Variable<int>(recordedAtMillis);
+    map['updated_at_millis'] = Variable<int>(updatedAtMillis);
+    map['original_provenance'] = Variable<String>(originalProvenance);
+    map['provenance'] = Variable<String>(provenance);
+    if (!nullToAbsent || originalWriteZoneId != null) {
+      map['original_write_zone_id'] = Variable<String>(originalWriteZoneId);
+    }
+    if (!nullToAbsent || writeZoneId != null) {
+      map['write_zone_id'] = Variable<String>(writeZoneId);
+    }
+    if (!nullToAbsent || originalUtcOffsetMinutes != null) {
+      map['original_utc_offset_minutes'] = Variable<int>(
+        originalUtcOffsetMinutes,
+      );
+    }
+    if (!nullToAbsent || utcOffsetMinutes != null) {
+      map['utc_offset_minutes'] = Variable<int>(utcOffsetMinutes);
+    }
+    map['vocabulary_version'] = Variable<int>(vocabularyVersion);
+    map['family'] = Variable<String>(family);
+    map['start_day'] = Variable<int>(startDay);
+    if (!nullToAbsent || endDay != null) {
+      map['end_day'] = Variable<int>(endDay);
+    }
+    map['archived'] = Variable<bool>(archived);
+    return map;
+  }
+
+  RecordProductEpisodeRowsCompanion toCompanion(bool nullToAbsent) {
+    return RecordProductEpisodeRowsCompanion(
+      id: Value(id),
+      experiencedDay: Value(experiencedDay),
+      recordedAtMillis: Value(recordedAtMillis),
+      updatedAtMillis: Value(updatedAtMillis),
+      originalProvenance: Value(originalProvenance),
+      provenance: Value(provenance),
+      originalWriteZoneId: originalWriteZoneId == null && nullToAbsent
+          ? const Value.absent()
+          : Value(originalWriteZoneId),
+      writeZoneId: writeZoneId == null && nullToAbsent
+          ? const Value.absent()
+          : Value(writeZoneId),
+      originalUtcOffsetMinutes: originalUtcOffsetMinutes == null && nullToAbsent
+          ? const Value.absent()
+          : Value(originalUtcOffsetMinutes),
+      utcOffsetMinutes: utcOffsetMinutes == null && nullToAbsent
+          ? const Value.absent()
+          : Value(utcOffsetMinutes),
+      vocabularyVersion: Value(vocabularyVersion),
+      family: Value(family),
+      startDay: Value(startDay),
+      endDay: endDay == null && nullToAbsent
+          ? const Value.absent()
+          : Value(endDay),
+      archived: Value(archived),
+    );
+  }
+
+  factory RecordProductEpisodeRow.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return RecordProductEpisodeRow(
+      id: serializer.fromJson<String>(json['id']),
+      experiencedDay: serializer.fromJson<int>(json['experiencedDay']),
+      recordedAtMillis: serializer.fromJson<int>(json['recordedAtMillis']),
+      updatedAtMillis: serializer.fromJson<int>(json['updatedAtMillis']),
+      originalProvenance: serializer.fromJson<String>(
+        json['originalProvenance'],
+      ),
+      provenance: serializer.fromJson<String>(json['provenance']),
+      originalWriteZoneId: serializer.fromJson<String?>(
+        json['originalWriteZoneId'],
+      ),
+      writeZoneId: serializer.fromJson<String?>(json['writeZoneId']),
+      originalUtcOffsetMinutes: serializer.fromJson<int?>(
+        json['originalUtcOffsetMinutes'],
+      ),
+      utcOffsetMinutes: serializer.fromJson<int?>(json['utcOffsetMinutes']),
+      vocabularyVersion: serializer.fromJson<int>(json['vocabularyVersion']),
+      family: serializer.fromJson<String>(json['family']),
+      startDay: serializer.fromJson<int>(json['startDay']),
+      endDay: serializer.fromJson<int?>(json['endDay']),
+      archived: serializer.fromJson<bool>(json['archived']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<String>(id),
+      'experiencedDay': serializer.toJson<int>(experiencedDay),
+      'recordedAtMillis': serializer.toJson<int>(recordedAtMillis),
+      'updatedAtMillis': serializer.toJson<int>(updatedAtMillis),
+      'originalProvenance': serializer.toJson<String>(originalProvenance),
+      'provenance': serializer.toJson<String>(provenance),
+      'originalWriteZoneId': serializer.toJson<String?>(originalWriteZoneId),
+      'writeZoneId': serializer.toJson<String?>(writeZoneId),
+      'originalUtcOffsetMinutes': serializer.toJson<int?>(
+        originalUtcOffsetMinutes,
+      ),
+      'utcOffsetMinutes': serializer.toJson<int?>(utcOffsetMinutes),
+      'vocabularyVersion': serializer.toJson<int>(vocabularyVersion),
+      'family': serializer.toJson<String>(family),
+      'startDay': serializer.toJson<int>(startDay),
+      'endDay': serializer.toJson<int?>(endDay),
+      'archived': serializer.toJson<bool>(archived),
+    };
+  }
+
+  RecordProductEpisodeRow copyWith({
+    String? id,
+    int? experiencedDay,
+    int? recordedAtMillis,
+    int? updatedAtMillis,
+    String? originalProvenance,
+    String? provenance,
+    Value<String?> originalWriteZoneId = const Value.absent(),
+    Value<String?> writeZoneId = const Value.absent(),
+    Value<int?> originalUtcOffsetMinutes = const Value.absent(),
+    Value<int?> utcOffsetMinutes = const Value.absent(),
+    int? vocabularyVersion,
+    String? family,
+    int? startDay,
+    Value<int?> endDay = const Value.absent(),
+    bool? archived,
+  }) => RecordProductEpisodeRow(
+    id: id ?? this.id,
+    experiencedDay: experiencedDay ?? this.experiencedDay,
+    recordedAtMillis: recordedAtMillis ?? this.recordedAtMillis,
+    updatedAtMillis: updatedAtMillis ?? this.updatedAtMillis,
+    originalProvenance: originalProvenance ?? this.originalProvenance,
+    provenance: provenance ?? this.provenance,
+    originalWriteZoneId: originalWriteZoneId.present
+        ? originalWriteZoneId.value
+        : this.originalWriteZoneId,
+    writeZoneId: writeZoneId.present ? writeZoneId.value : this.writeZoneId,
+    originalUtcOffsetMinutes: originalUtcOffsetMinutes.present
+        ? originalUtcOffsetMinutes.value
+        : this.originalUtcOffsetMinutes,
+    utcOffsetMinutes: utcOffsetMinutes.present
+        ? utcOffsetMinutes.value
+        : this.utcOffsetMinutes,
+    vocabularyVersion: vocabularyVersion ?? this.vocabularyVersion,
+    family: family ?? this.family,
+    startDay: startDay ?? this.startDay,
+    endDay: endDay.present ? endDay.value : this.endDay,
+    archived: archived ?? this.archived,
+  );
+  RecordProductEpisodeRow copyWithCompanion(
+    RecordProductEpisodeRowsCompanion data,
+  ) {
+    return RecordProductEpisodeRow(
+      id: data.id.present ? data.id.value : this.id,
+      experiencedDay: data.experiencedDay.present
+          ? data.experiencedDay.value
+          : this.experiencedDay,
+      recordedAtMillis: data.recordedAtMillis.present
+          ? data.recordedAtMillis.value
+          : this.recordedAtMillis,
+      updatedAtMillis: data.updatedAtMillis.present
+          ? data.updatedAtMillis.value
+          : this.updatedAtMillis,
+      originalProvenance: data.originalProvenance.present
+          ? data.originalProvenance.value
+          : this.originalProvenance,
+      provenance: data.provenance.present
+          ? data.provenance.value
+          : this.provenance,
+      originalWriteZoneId: data.originalWriteZoneId.present
+          ? data.originalWriteZoneId.value
+          : this.originalWriteZoneId,
+      writeZoneId: data.writeZoneId.present
+          ? data.writeZoneId.value
+          : this.writeZoneId,
+      originalUtcOffsetMinutes: data.originalUtcOffsetMinutes.present
+          ? data.originalUtcOffsetMinutes.value
+          : this.originalUtcOffsetMinutes,
+      utcOffsetMinutes: data.utcOffsetMinutes.present
+          ? data.utcOffsetMinutes.value
+          : this.utcOffsetMinutes,
+      vocabularyVersion: data.vocabularyVersion.present
+          ? data.vocabularyVersion.value
+          : this.vocabularyVersion,
+      family: data.family.present ? data.family.value : this.family,
+      startDay: data.startDay.present ? data.startDay.value : this.startDay,
+      endDay: data.endDay.present ? data.endDay.value : this.endDay,
+      archived: data.archived.present ? data.archived.value : this.archived,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('RecordProductEpisodeRow(')
+          ..write('id: $id, ')
+          ..write('experiencedDay: $experiencedDay, ')
+          ..write('recordedAtMillis: $recordedAtMillis, ')
+          ..write('updatedAtMillis: $updatedAtMillis, ')
+          ..write('originalProvenance: $originalProvenance, ')
+          ..write('provenance: $provenance, ')
+          ..write('originalWriteZoneId: $originalWriteZoneId, ')
+          ..write('writeZoneId: $writeZoneId, ')
+          ..write('originalUtcOffsetMinutes: $originalUtcOffsetMinutes, ')
+          ..write('utcOffsetMinutes: $utcOffsetMinutes, ')
+          ..write('vocabularyVersion: $vocabularyVersion, ')
+          ..write('family: $family, ')
+          ..write('startDay: $startDay, ')
+          ..write('endDay: $endDay, ')
+          ..write('archived: $archived')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(
+    id,
+    experiencedDay,
+    recordedAtMillis,
+    updatedAtMillis,
+    originalProvenance,
+    provenance,
+    originalWriteZoneId,
+    writeZoneId,
+    originalUtcOffsetMinutes,
+    utcOffsetMinutes,
+    vocabularyVersion,
+    family,
+    startDay,
+    endDay,
+    archived,
+  );
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is RecordProductEpisodeRow &&
+          other.id == this.id &&
+          other.experiencedDay == this.experiencedDay &&
+          other.recordedAtMillis == this.recordedAtMillis &&
+          other.updatedAtMillis == this.updatedAtMillis &&
+          other.originalProvenance == this.originalProvenance &&
+          other.provenance == this.provenance &&
+          other.originalWriteZoneId == this.originalWriteZoneId &&
+          other.writeZoneId == this.writeZoneId &&
+          other.originalUtcOffsetMinutes == this.originalUtcOffsetMinutes &&
+          other.utcOffsetMinutes == this.utcOffsetMinutes &&
+          other.vocabularyVersion == this.vocabularyVersion &&
+          other.family == this.family &&
+          other.startDay == this.startDay &&
+          other.endDay == this.endDay &&
+          other.archived == this.archived);
+}
+
+class RecordProductEpisodeRowsCompanion
+    extends UpdateCompanion<RecordProductEpisodeRow> {
+  final Value<String> id;
+  final Value<int> experiencedDay;
+  final Value<int> recordedAtMillis;
+  final Value<int> updatedAtMillis;
+  final Value<String> originalProvenance;
+  final Value<String> provenance;
+  final Value<String?> originalWriteZoneId;
+  final Value<String?> writeZoneId;
+  final Value<int?> originalUtcOffsetMinutes;
+  final Value<int?> utcOffsetMinutes;
+  final Value<int> vocabularyVersion;
+  final Value<String> family;
+  final Value<int> startDay;
+  final Value<int?> endDay;
+  final Value<bool> archived;
+  final Value<int> rowid;
+  const RecordProductEpisodeRowsCompanion({
+    this.id = const Value.absent(),
+    this.experiencedDay = const Value.absent(),
+    this.recordedAtMillis = const Value.absent(),
+    this.updatedAtMillis = const Value.absent(),
+    this.originalProvenance = const Value.absent(),
+    this.provenance = const Value.absent(),
+    this.originalWriteZoneId = const Value.absent(),
+    this.writeZoneId = const Value.absent(),
+    this.originalUtcOffsetMinutes = const Value.absent(),
+    this.utcOffsetMinutes = const Value.absent(),
+    this.vocabularyVersion = const Value.absent(),
+    this.family = const Value.absent(),
+    this.startDay = const Value.absent(),
+    this.endDay = const Value.absent(),
+    this.archived = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  RecordProductEpisodeRowsCompanion.insert({
+    required String id,
+    required int experiencedDay,
+    required int recordedAtMillis,
+    required int updatedAtMillis,
+    required String originalProvenance,
+    required String provenance,
+    this.originalWriteZoneId = const Value.absent(),
+    this.writeZoneId = const Value.absent(),
+    this.originalUtcOffsetMinutes = const Value.absent(),
+    this.utcOffsetMinutes = const Value.absent(),
+    this.vocabularyVersion = const Value.absent(),
+    required String family,
+    required int startDay,
+    this.endDay = const Value.absent(),
+    this.archived = const Value.absent(),
+    this.rowid = const Value.absent(),
+  }) : id = Value(id),
+       experiencedDay = Value(experiencedDay),
+       recordedAtMillis = Value(recordedAtMillis),
+       updatedAtMillis = Value(updatedAtMillis),
+       originalProvenance = Value(originalProvenance),
+       provenance = Value(provenance),
+       family = Value(family),
+       startDay = Value(startDay);
+  static Insertable<RecordProductEpisodeRow> custom({
+    Expression<String>? id,
+    Expression<int>? experiencedDay,
+    Expression<int>? recordedAtMillis,
+    Expression<int>? updatedAtMillis,
+    Expression<String>? originalProvenance,
+    Expression<String>? provenance,
+    Expression<String>? originalWriteZoneId,
+    Expression<String>? writeZoneId,
+    Expression<int>? originalUtcOffsetMinutes,
+    Expression<int>? utcOffsetMinutes,
+    Expression<int>? vocabularyVersion,
+    Expression<String>? family,
+    Expression<int>? startDay,
+    Expression<int>? endDay,
+    Expression<bool>? archived,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (experiencedDay != null) 'experienced_day': experiencedDay,
+      if (recordedAtMillis != null) 'recorded_at_millis': recordedAtMillis,
+      if (updatedAtMillis != null) 'updated_at_millis': updatedAtMillis,
+      if (originalProvenance != null) 'original_provenance': originalProvenance,
+      if (provenance != null) 'provenance': provenance,
+      if (originalWriteZoneId != null)
+        'original_write_zone_id': originalWriteZoneId,
+      if (writeZoneId != null) 'write_zone_id': writeZoneId,
+      if (originalUtcOffsetMinutes != null)
+        'original_utc_offset_minutes': originalUtcOffsetMinutes,
+      if (utcOffsetMinutes != null) 'utc_offset_minutes': utcOffsetMinutes,
+      if (vocabularyVersion != null) 'vocabulary_version': vocabularyVersion,
+      if (family != null) 'family': family,
+      if (startDay != null) 'start_day': startDay,
+      if (endDay != null) 'end_day': endDay,
+      if (archived != null) 'archived': archived,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  RecordProductEpisodeRowsCompanion copyWith({
+    Value<String>? id,
+    Value<int>? experiencedDay,
+    Value<int>? recordedAtMillis,
+    Value<int>? updatedAtMillis,
+    Value<String>? originalProvenance,
+    Value<String>? provenance,
+    Value<String?>? originalWriteZoneId,
+    Value<String?>? writeZoneId,
+    Value<int?>? originalUtcOffsetMinutes,
+    Value<int?>? utcOffsetMinutes,
+    Value<int>? vocabularyVersion,
+    Value<String>? family,
+    Value<int>? startDay,
+    Value<int?>? endDay,
+    Value<bool>? archived,
+    Value<int>? rowid,
+  }) {
+    return RecordProductEpisodeRowsCompanion(
+      id: id ?? this.id,
+      experiencedDay: experiencedDay ?? this.experiencedDay,
+      recordedAtMillis: recordedAtMillis ?? this.recordedAtMillis,
+      updatedAtMillis: updatedAtMillis ?? this.updatedAtMillis,
+      originalProvenance: originalProvenance ?? this.originalProvenance,
+      provenance: provenance ?? this.provenance,
+      originalWriteZoneId: originalWriteZoneId ?? this.originalWriteZoneId,
+      writeZoneId: writeZoneId ?? this.writeZoneId,
+      originalUtcOffsetMinutes:
+          originalUtcOffsetMinutes ?? this.originalUtcOffsetMinutes,
+      utcOffsetMinutes: utcOffsetMinutes ?? this.utcOffsetMinutes,
+      vocabularyVersion: vocabularyVersion ?? this.vocabularyVersion,
+      family: family ?? this.family,
+      startDay: startDay ?? this.startDay,
+      endDay: endDay ?? this.endDay,
+      archived: archived ?? this.archived,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<String>(id.value);
+    }
+    if (experiencedDay.present) {
+      map['experienced_day'] = Variable<int>(experiencedDay.value);
+    }
+    if (recordedAtMillis.present) {
+      map['recorded_at_millis'] = Variable<int>(recordedAtMillis.value);
+    }
+    if (updatedAtMillis.present) {
+      map['updated_at_millis'] = Variable<int>(updatedAtMillis.value);
+    }
+    if (originalProvenance.present) {
+      map['original_provenance'] = Variable<String>(originalProvenance.value);
+    }
+    if (provenance.present) {
+      map['provenance'] = Variable<String>(provenance.value);
+    }
+    if (originalWriteZoneId.present) {
+      map['original_write_zone_id'] = Variable<String>(
+        originalWriteZoneId.value,
+      );
+    }
+    if (writeZoneId.present) {
+      map['write_zone_id'] = Variable<String>(writeZoneId.value);
+    }
+    if (originalUtcOffsetMinutes.present) {
+      map['original_utc_offset_minutes'] = Variable<int>(
+        originalUtcOffsetMinutes.value,
+      );
+    }
+    if (utcOffsetMinutes.present) {
+      map['utc_offset_minutes'] = Variable<int>(utcOffsetMinutes.value);
+    }
+    if (vocabularyVersion.present) {
+      map['vocabulary_version'] = Variable<int>(vocabularyVersion.value);
+    }
+    if (family.present) {
+      map['family'] = Variable<String>(family.value);
+    }
+    if (startDay.present) {
+      map['start_day'] = Variable<int>(startDay.value);
+    }
+    if (endDay.present) {
+      map['end_day'] = Variable<int>(endDay.value);
+    }
+    if (archived.present) {
+      map['archived'] = Variable<bool>(archived.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('RecordProductEpisodeRowsCompanion(')
+          ..write('id: $id, ')
+          ..write('experiencedDay: $experiencedDay, ')
+          ..write('recordedAtMillis: $recordedAtMillis, ')
+          ..write('updatedAtMillis: $updatedAtMillis, ')
+          ..write('originalProvenance: $originalProvenance, ')
+          ..write('provenance: $provenance, ')
+          ..write('originalWriteZoneId: $originalWriteZoneId, ')
+          ..write('writeZoneId: $writeZoneId, ')
+          ..write('originalUtcOffsetMinutes: $originalUtcOffsetMinutes, ')
+          ..write('utcOffsetMinutes: $utcOffsetMinutes, ')
+          ..write('vocabularyVersion: $vocabularyVersion, ')
+          ..write('family: $family, ')
+          ..write('startDay: $startDay, ')
+          ..write('endDay: $endDay, ')
+          ..write('archived: $archived, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
+class $RecordProductVersionRowsTable extends RecordProductVersionRows
+    with TableInfo<$RecordProductVersionRowsTable, RecordProductVersionRow> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $RecordProductVersionRowsTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<String> id = GeneratedColumn<String>(
+    'id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _experiencedDayMeta = const VerificationMeta(
+    'experiencedDay',
+  );
+  @override
+  late final GeneratedColumn<int> experiencedDay = GeneratedColumn<int>(
+    'experienced_day',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _recordedAtMillisMeta = const VerificationMeta(
+    'recordedAtMillis',
+  );
+  @override
+  late final GeneratedColumn<int> recordedAtMillis = GeneratedColumn<int>(
+    'recorded_at_millis',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _updatedAtMillisMeta = const VerificationMeta(
+    'updatedAtMillis',
+  );
+  @override
+  late final GeneratedColumn<int> updatedAtMillis = GeneratedColumn<int>(
+    'updated_at_millis',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _originalProvenanceMeta =
+      const VerificationMeta('originalProvenance');
+  @override
+  late final GeneratedColumn<String> originalProvenance =
+      GeneratedColumn<String>(
+        'original_provenance',
+        aliasedName,
+        false,
+        type: DriftSqlType.string,
+        requiredDuringInsert: true,
+      );
+  static const VerificationMeta _provenanceMeta = const VerificationMeta(
+    'provenance',
+  );
+  @override
+  late final GeneratedColumn<String> provenance = GeneratedColumn<String>(
+    'provenance',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _originalWriteZoneIdMeta =
+      const VerificationMeta('originalWriteZoneId');
+  @override
+  late final GeneratedColumn<String> originalWriteZoneId =
+      GeneratedColumn<String>(
+        'original_write_zone_id',
+        aliasedName,
+        true,
+        type: DriftSqlType.string,
+        requiredDuringInsert: false,
+      );
+  static const VerificationMeta _writeZoneIdMeta = const VerificationMeta(
+    'writeZoneId',
+  );
+  @override
+  late final GeneratedColumn<String> writeZoneId = GeneratedColumn<String>(
+    'write_zone_id',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _originalUtcOffsetMinutesMeta =
+      const VerificationMeta('originalUtcOffsetMinutes');
+  @override
+  late final GeneratedColumn<int> originalUtcOffsetMinutes =
+      GeneratedColumn<int>(
+        'original_utc_offset_minutes',
+        aliasedName,
+        true,
+        type: DriftSqlType.int,
+        requiredDuringInsert: false,
+      );
+  static const VerificationMeta _utcOffsetMinutesMeta = const VerificationMeta(
+    'utcOffsetMinutes',
+  );
+  @override
+  late final GeneratedColumn<int> utcOffsetMinutes = GeneratedColumn<int>(
+    'utc_offset_minutes',
+    aliasedName,
+    true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _vocabularyVersionMeta = const VerificationMeta(
+    'vocabularyVersion',
+  );
+  @override
+  late final GeneratedColumn<int> vocabularyVersion = GeneratedColumn<int>(
+    'vocabulary_version',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(1),
+  );
+  static const VerificationMeta _episodeIdMeta = const VerificationMeta(
+    'episodeId',
+  );
+  @override
+  late final GeneratedColumn<String> episodeId = GeneratedColumn<String>(
+    'episode_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _effectiveDayMeta = const VerificationMeta(
+    'effectiveDay',
+  );
+  @override
+  late final GeneratedColumn<int> effectiveDay = GeneratedColumn<int>(
+    'effective_day',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _versionNumberMeta = const VerificationMeta(
+    'versionNumber',
+  );
+  @override
+  late final GeneratedColumn<int> versionNumber = GeneratedColumn<int>(
+    'version_number',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _exactNameMeta = const VerificationMeta(
+    'exactName',
+  );
+  @override
+  late final GeneratedColumn<String> exactName = GeneratedColumn<String>(
+    'exact_name',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _medicationTypeMeta = const VerificationMeta(
+    'medicationType',
+  );
+  @override
+  late final GeneratedColumn<String> medicationType = GeneratedColumn<String>(
+    'medication_type',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _supplementTypeMeta = const VerificationMeta(
+    'supplementType',
+  );
+  @override
+  late final GeneratedColumn<String> supplementType = GeneratedColumn<String>(
+    'supplement_type',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _birthControlMethodMeta =
+      const VerificationMeta('birthControlMethod');
+  @override
+  late final GeneratedColumn<String> birthControlMethod =
+      GeneratedColumn<String>(
+        'birth_control_method',
+        aliasedName,
+        true,
+        type: DriftSqlType.string,
+        requiredDuringInsert: false,
+      );
+  static const VerificationMeta _doseMeta = const VerificationMeta('dose');
+  @override
+  late final GeneratedColumn<String> dose = GeneratedColumn<String>(
+    'dose',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _unitMeta = const VerificationMeta('unit');
+  @override
+  late final GeneratedColumn<String> unit = GeneratedColumn<String>(
+    'unit',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _customUnitMeta = const VerificationMeta(
+    'customUnit',
+  );
+  @override
+  late final GeneratedColumn<String> customUnit = GeneratedColumn<String>(
+    'custom_unit',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _routeMeta = const VerificationMeta('route');
+  @override
+  late final GeneratedColumn<String> route = GeneratedColumn<String>(
+    'route',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _customRouteMeta = const VerificationMeta(
+    'customRoute',
+  );
+  @override
+  late final GeneratedColumn<String> customRoute = GeneratedColumn<String>(
+    'custom_route',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _targetMeta = const VerificationMeta('target');
+  @override
+  late final GeneratedColumn<String> target = GeneratedColumn<String>(
+    'target',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    id,
+    experiencedDay,
+    recordedAtMillis,
+    updatedAtMillis,
+    originalProvenance,
+    provenance,
+    originalWriteZoneId,
+    writeZoneId,
+    originalUtcOffsetMinutes,
+    utcOffsetMinutes,
+    vocabularyVersion,
+    episodeId,
+    effectiveDay,
+    versionNumber,
+    exactName,
+    medicationType,
+    supplementType,
+    birthControlMethod,
+    dose,
+    unit,
+    customUnit,
+    route,
+    customRoute,
+    target,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'record_product_version_rows';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<RecordProductVersionRow> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    } else if (isInserting) {
+      context.missing(_idMeta);
+    }
+    if (data.containsKey('experienced_day')) {
+      context.handle(
+        _experiencedDayMeta,
+        experiencedDay.isAcceptableOrUnknown(
+          data['experienced_day']!,
+          _experiencedDayMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_experiencedDayMeta);
+    }
+    if (data.containsKey('recorded_at_millis')) {
+      context.handle(
+        _recordedAtMillisMeta,
+        recordedAtMillis.isAcceptableOrUnknown(
+          data['recorded_at_millis']!,
+          _recordedAtMillisMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_recordedAtMillisMeta);
+    }
+    if (data.containsKey('updated_at_millis')) {
+      context.handle(
+        _updatedAtMillisMeta,
+        updatedAtMillis.isAcceptableOrUnknown(
+          data['updated_at_millis']!,
+          _updatedAtMillisMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_updatedAtMillisMeta);
+    }
+    if (data.containsKey('original_provenance')) {
+      context.handle(
+        _originalProvenanceMeta,
+        originalProvenance.isAcceptableOrUnknown(
+          data['original_provenance']!,
+          _originalProvenanceMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_originalProvenanceMeta);
+    }
+    if (data.containsKey('provenance')) {
+      context.handle(
+        _provenanceMeta,
+        provenance.isAcceptableOrUnknown(data['provenance']!, _provenanceMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_provenanceMeta);
+    }
+    if (data.containsKey('original_write_zone_id')) {
+      context.handle(
+        _originalWriteZoneIdMeta,
+        originalWriteZoneId.isAcceptableOrUnknown(
+          data['original_write_zone_id']!,
+          _originalWriteZoneIdMeta,
+        ),
+      );
+    }
+    if (data.containsKey('write_zone_id')) {
+      context.handle(
+        _writeZoneIdMeta,
+        writeZoneId.isAcceptableOrUnknown(
+          data['write_zone_id']!,
+          _writeZoneIdMeta,
+        ),
+      );
+    }
+    if (data.containsKey('original_utc_offset_minutes')) {
+      context.handle(
+        _originalUtcOffsetMinutesMeta,
+        originalUtcOffsetMinutes.isAcceptableOrUnknown(
+          data['original_utc_offset_minutes']!,
+          _originalUtcOffsetMinutesMeta,
+        ),
+      );
+    }
+    if (data.containsKey('utc_offset_minutes')) {
+      context.handle(
+        _utcOffsetMinutesMeta,
+        utcOffsetMinutes.isAcceptableOrUnknown(
+          data['utc_offset_minutes']!,
+          _utcOffsetMinutesMeta,
+        ),
+      );
+    }
+    if (data.containsKey('vocabulary_version')) {
+      context.handle(
+        _vocabularyVersionMeta,
+        vocabularyVersion.isAcceptableOrUnknown(
+          data['vocabulary_version']!,
+          _vocabularyVersionMeta,
+        ),
+      );
+    }
+    if (data.containsKey('episode_id')) {
+      context.handle(
+        _episodeIdMeta,
+        episodeId.isAcceptableOrUnknown(data['episode_id']!, _episodeIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_episodeIdMeta);
+    }
+    if (data.containsKey('effective_day')) {
+      context.handle(
+        _effectiveDayMeta,
+        effectiveDay.isAcceptableOrUnknown(
+          data['effective_day']!,
+          _effectiveDayMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_effectiveDayMeta);
+    }
+    if (data.containsKey('version_number')) {
+      context.handle(
+        _versionNumberMeta,
+        versionNumber.isAcceptableOrUnknown(
+          data['version_number']!,
+          _versionNumberMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_versionNumberMeta);
+    }
+    if (data.containsKey('exact_name')) {
+      context.handle(
+        _exactNameMeta,
+        exactName.isAcceptableOrUnknown(data['exact_name']!, _exactNameMeta),
+      );
+    }
+    if (data.containsKey('medication_type')) {
+      context.handle(
+        _medicationTypeMeta,
+        medicationType.isAcceptableOrUnknown(
+          data['medication_type']!,
+          _medicationTypeMeta,
+        ),
+      );
+    }
+    if (data.containsKey('supplement_type')) {
+      context.handle(
+        _supplementTypeMeta,
+        supplementType.isAcceptableOrUnknown(
+          data['supplement_type']!,
+          _supplementTypeMeta,
+        ),
+      );
+    }
+    if (data.containsKey('birth_control_method')) {
+      context.handle(
+        _birthControlMethodMeta,
+        birthControlMethod.isAcceptableOrUnknown(
+          data['birth_control_method']!,
+          _birthControlMethodMeta,
+        ),
+      );
+    }
+    if (data.containsKey('dose')) {
+      context.handle(
+        _doseMeta,
+        dose.isAcceptableOrUnknown(data['dose']!, _doseMeta),
+      );
+    }
+    if (data.containsKey('unit')) {
+      context.handle(
+        _unitMeta,
+        unit.isAcceptableOrUnknown(data['unit']!, _unitMeta),
+      );
+    }
+    if (data.containsKey('custom_unit')) {
+      context.handle(
+        _customUnitMeta,
+        customUnit.isAcceptableOrUnknown(data['custom_unit']!, _customUnitMeta),
+      );
+    }
+    if (data.containsKey('route')) {
+      context.handle(
+        _routeMeta,
+        route.isAcceptableOrUnknown(data['route']!, _routeMeta),
+      );
+    }
+    if (data.containsKey('custom_route')) {
+      context.handle(
+        _customRouteMeta,
+        customRoute.isAcceptableOrUnknown(
+          data['custom_route']!,
+          _customRouteMeta,
+        ),
+      );
+    }
+    if (data.containsKey('target')) {
+      context.handle(
+        _targetMeta,
+        target.isAcceptableOrUnknown(data['target']!, _targetMeta),
+      );
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  List<Set<GeneratedColumn>> get uniqueKeys => [
+    {episodeId, versionNumber},
+  ];
+  @override
+  RecordProductVersionRow map(
+    Map<String, dynamic> data, {
+    String? tablePrefix,
+  }) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return RecordProductVersionRow(
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}id'],
+      )!,
+      experiencedDay: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}experienced_day'],
+      )!,
+      recordedAtMillis: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}recorded_at_millis'],
+      )!,
+      updatedAtMillis: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}updated_at_millis'],
+      )!,
+      originalProvenance: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}original_provenance'],
+      )!,
+      provenance: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}provenance'],
+      )!,
+      originalWriteZoneId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}original_write_zone_id'],
+      ),
+      writeZoneId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}write_zone_id'],
+      ),
+      originalUtcOffsetMinutes: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}original_utc_offset_minutes'],
+      ),
+      utcOffsetMinutes: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}utc_offset_minutes'],
+      ),
+      vocabularyVersion: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}vocabulary_version'],
+      )!,
+      episodeId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}episode_id'],
+      )!,
+      effectiveDay: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}effective_day'],
+      )!,
+      versionNumber: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}version_number'],
+      )!,
+      exactName: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}exact_name'],
+      ),
+      medicationType: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}medication_type'],
+      ),
+      supplementType: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}supplement_type'],
+      ),
+      birthControlMethod: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}birth_control_method'],
+      ),
+      dose: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}dose'],
+      ),
+      unit: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}unit'],
+      ),
+      customUnit: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}custom_unit'],
+      ),
+      route: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}route'],
+      ),
+      customRoute: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}custom_route'],
+      ),
+      target: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}target'],
+      ),
+    );
+  }
+
+  @override
+  $RecordProductVersionRowsTable createAlias(String alias) {
+    return $RecordProductVersionRowsTable(attachedDatabase, alias);
+  }
+}
+
+class RecordProductVersionRow extends DataClass
+    implements Insertable<RecordProductVersionRow> {
+  final String id;
+  final int experiencedDay;
+  final int recordedAtMillis;
+  final int updatedAtMillis;
+  final String originalProvenance;
+  final String provenance;
+  final String? originalWriteZoneId;
+  final String? writeZoneId;
+  final int? originalUtcOffsetMinutes;
+  final int? utcOffsetMinutes;
+  final int vocabularyVersion;
+  final String episodeId;
+  final int effectiveDay;
+  final int versionNumber;
+  final String? exactName;
+  final String? medicationType;
+  final String? supplementType;
+  final String? birthControlMethod;
+  final String? dose;
+  final String? unit;
+  final String? customUnit;
+  final String? route;
+  final String? customRoute;
+  final String? target;
+  const RecordProductVersionRow({
+    required this.id,
+    required this.experiencedDay,
+    required this.recordedAtMillis,
+    required this.updatedAtMillis,
+    required this.originalProvenance,
+    required this.provenance,
+    this.originalWriteZoneId,
+    this.writeZoneId,
+    this.originalUtcOffsetMinutes,
+    this.utcOffsetMinutes,
+    required this.vocabularyVersion,
+    required this.episodeId,
+    required this.effectiveDay,
+    required this.versionNumber,
+    this.exactName,
+    this.medicationType,
+    this.supplementType,
+    this.birthControlMethod,
+    this.dose,
+    this.unit,
+    this.customUnit,
+    this.route,
+    this.customRoute,
+    this.target,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<String>(id);
+    map['experienced_day'] = Variable<int>(experiencedDay);
+    map['recorded_at_millis'] = Variable<int>(recordedAtMillis);
+    map['updated_at_millis'] = Variable<int>(updatedAtMillis);
+    map['original_provenance'] = Variable<String>(originalProvenance);
+    map['provenance'] = Variable<String>(provenance);
+    if (!nullToAbsent || originalWriteZoneId != null) {
+      map['original_write_zone_id'] = Variable<String>(originalWriteZoneId);
+    }
+    if (!nullToAbsent || writeZoneId != null) {
+      map['write_zone_id'] = Variable<String>(writeZoneId);
+    }
+    if (!nullToAbsent || originalUtcOffsetMinutes != null) {
+      map['original_utc_offset_minutes'] = Variable<int>(
+        originalUtcOffsetMinutes,
+      );
+    }
+    if (!nullToAbsent || utcOffsetMinutes != null) {
+      map['utc_offset_minutes'] = Variable<int>(utcOffsetMinutes);
+    }
+    map['vocabulary_version'] = Variable<int>(vocabularyVersion);
+    map['episode_id'] = Variable<String>(episodeId);
+    map['effective_day'] = Variable<int>(effectiveDay);
+    map['version_number'] = Variable<int>(versionNumber);
+    if (!nullToAbsent || exactName != null) {
+      map['exact_name'] = Variable<String>(exactName);
+    }
+    if (!nullToAbsent || medicationType != null) {
+      map['medication_type'] = Variable<String>(medicationType);
+    }
+    if (!nullToAbsent || supplementType != null) {
+      map['supplement_type'] = Variable<String>(supplementType);
+    }
+    if (!nullToAbsent || birthControlMethod != null) {
+      map['birth_control_method'] = Variable<String>(birthControlMethod);
+    }
+    if (!nullToAbsent || dose != null) {
+      map['dose'] = Variable<String>(dose);
+    }
+    if (!nullToAbsent || unit != null) {
+      map['unit'] = Variable<String>(unit);
+    }
+    if (!nullToAbsent || customUnit != null) {
+      map['custom_unit'] = Variable<String>(customUnit);
+    }
+    if (!nullToAbsent || route != null) {
+      map['route'] = Variable<String>(route);
+    }
+    if (!nullToAbsent || customRoute != null) {
+      map['custom_route'] = Variable<String>(customRoute);
+    }
+    if (!nullToAbsent || target != null) {
+      map['target'] = Variable<String>(target);
+    }
+    return map;
+  }
+
+  RecordProductVersionRowsCompanion toCompanion(bool nullToAbsent) {
+    return RecordProductVersionRowsCompanion(
+      id: Value(id),
+      experiencedDay: Value(experiencedDay),
+      recordedAtMillis: Value(recordedAtMillis),
+      updatedAtMillis: Value(updatedAtMillis),
+      originalProvenance: Value(originalProvenance),
+      provenance: Value(provenance),
+      originalWriteZoneId: originalWriteZoneId == null && nullToAbsent
+          ? const Value.absent()
+          : Value(originalWriteZoneId),
+      writeZoneId: writeZoneId == null && nullToAbsent
+          ? const Value.absent()
+          : Value(writeZoneId),
+      originalUtcOffsetMinutes: originalUtcOffsetMinutes == null && nullToAbsent
+          ? const Value.absent()
+          : Value(originalUtcOffsetMinutes),
+      utcOffsetMinutes: utcOffsetMinutes == null && nullToAbsent
+          ? const Value.absent()
+          : Value(utcOffsetMinutes),
+      vocabularyVersion: Value(vocabularyVersion),
+      episodeId: Value(episodeId),
+      effectiveDay: Value(effectiveDay),
+      versionNumber: Value(versionNumber),
+      exactName: exactName == null && nullToAbsent
+          ? const Value.absent()
+          : Value(exactName),
+      medicationType: medicationType == null && nullToAbsent
+          ? const Value.absent()
+          : Value(medicationType),
+      supplementType: supplementType == null && nullToAbsent
+          ? const Value.absent()
+          : Value(supplementType),
+      birthControlMethod: birthControlMethod == null && nullToAbsent
+          ? const Value.absent()
+          : Value(birthControlMethod),
+      dose: dose == null && nullToAbsent ? const Value.absent() : Value(dose),
+      unit: unit == null && nullToAbsent ? const Value.absent() : Value(unit),
+      customUnit: customUnit == null && nullToAbsent
+          ? const Value.absent()
+          : Value(customUnit),
+      route: route == null && nullToAbsent
+          ? const Value.absent()
+          : Value(route),
+      customRoute: customRoute == null && nullToAbsent
+          ? const Value.absent()
+          : Value(customRoute),
+      target: target == null && nullToAbsent
+          ? const Value.absent()
+          : Value(target),
+    );
+  }
+
+  factory RecordProductVersionRow.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return RecordProductVersionRow(
+      id: serializer.fromJson<String>(json['id']),
+      experiencedDay: serializer.fromJson<int>(json['experiencedDay']),
+      recordedAtMillis: serializer.fromJson<int>(json['recordedAtMillis']),
+      updatedAtMillis: serializer.fromJson<int>(json['updatedAtMillis']),
+      originalProvenance: serializer.fromJson<String>(
+        json['originalProvenance'],
+      ),
+      provenance: serializer.fromJson<String>(json['provenance']),
+      originalWriteZoneId: serializer.fromJson<String?>(
+        json['originalWriteZoneId'],
+      ),
+      writeZoneId: serializer.fromJson<String?>(json['writeZoneId']),
+      originalUtcOffsetMinutes: serializer.fromJson<int?>(
+        json['originalUtcOffsetMinutes'],
+      ),
+      utcOffsetMinutes: serializer.fromJson<int?>(json['utcOffsetMinutes']),
+      vocabularyVersion: serializer.fromJson<int>(json['vocabularyVersion']),
+      episodeId: serializer.fromJson<String>(json['episodeId']),
+      effectiveDay: serializer.fromJson<int>(json['effectiveDay']),
+      versionNumber: serializer.fromJson<int>(json['versionNumber']),
+      exactName: serializer.fromJson<String?>(json['exactName']),
+      medicationType: serializer.fromJson<String?>(json['medicationType']),
+      supplementType: serializer.fromJson<String?>(json['supplementType']),
+      birthControlMethod: serializer.fromJson<String?>(
+        json['birthControlMethod'],
+      ),
+      dose: serializer.fromJson<String?>(json['dose']),
+      unit: serializer.fromJson<String?>(json['unit']),
+      customUnit: serializer.fromJson<String?>(json['customUnit']),
+      route: serializer.fromJson<String?>(json['route']),
+      customRoute: serializer.fromJson<String?>(json['customRoute']),
+      target: serializer.fromJson<String?>(json['target']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<String>(id),
+      'experiencedDay': serializer.toJson<int>(experiencedDay),
+      'recordedAtMillis': serializer.toJson<int>(recordedAtMillis),
+      'updatedAtMillis': serializer.toJson<int>(updatedAtMillis),
+      'originalProvenance': serializer.toJson<String>(originalProvenance),
+      'provenance': serializer.toJson<String>(provenance),
+      'originalWriteZoneId': serializer.toJson<String?>(originalWriteZoneId),
+      'writeZoneId': serializer.toJson<String?>(writeZoneId),
+      'originalUtcOffsetMinutes': serializer.toJson<int?>(
+        originalUtcOffsetMinutes,
+      ),
+      'utcOffsetMinutes': serializer.toJson<int?>(utcOffsetMinutes),
+      'vocabularyVersion': serializer.toJson<int>(vocabularyVersion),
+      'episodeId': serializer.toJson<String>(episodeId),
+      'effectiveDay': serializer.toJson<int>(effectiveDay),
+      'versionNumber': serializer.toJson<int>(versionNumber),
+      'exactName': serializer.toJson<String?>(exactName),
+      'medicationType': serializer.toJson<String?>(medicationType),
+      'supplementType': serializer.toJson<String?>(supplementType),
+      'birthControlMethod': serializer.toJson<String?>(birthControlMethod),
+      'dose': serializer.toJson<String?>(dose),
+      'unit': serializer.toJson<String?>(unit),
+      'customUnit': serializer.toJson<String?>(customUnit),
+      'route': serializer.toJson<String?>(route),
+      'customRoute': serializer.toJson<String?>(customRoute),
+      'target': serializer.toJson<String?>(target),
+    };
+  }
+
+  RecordProductVersionRow copyWith({
+    String? id,
+    int? experiencedDay,
+    int? recordedAtMillis,
+    int? updatedAtMillis,
+    String? originalProvenance,
+    String? provenance,
+    Value<String?> originalWriteZoneId = const Value.absent(),
+    Value<String?> writeZoneId = const Value.absent(),
+    Value<int?> originalUtcOffsetMinutes = const Value.absent(),
+    Value<int?> utcOffsetMinutes = const Value.absent(),
+    int? vocabularyVersion,
+    String? episodeId,
+    int? effectiveDay,
+    int? versionNumber,
+    Value<String?> exactName = const Value.absent(),
+    Value<String?> medicationType = const Value.absent(),
+    Value<String?> supplementType = const Value.absent(),
+    Value<String?> birthControlMethod = const Value.absent(),
+    Value<String?> dose = const Value.absent(),
+    Value<String?> unit = const Value.absent(),
+    Value<String?> customUnit = const Value.absent(),
+    Value<String?> route = const Value.absent(),
+    Value<String?> customRoute = const Value.absent(),
+    Value<String?> target = const Value.absent(),
+  }) => RecordProductVersionRow(
+    id: id ?? this.id,
+    experiencedDay: experiencedDay ?? this.experiencedDay,
+    recordedAtMillis: recordedAtMillis ?? this.recordedAtMillis,
+    updatedAtMillis: updatedAtMillis ?? this.updatedAtMillis,
+    originalProvenance: originalProvenance ?? this.originalProvenance,
+    provenance: provenance ?? this.provenance,
+    originalWriteZoneId: originalWriteZoneId.present
+        ? originalWriteZoneId.value
+        : this.originalWriteZoneId,
+    writeZoneId: writeZoneId.present ? writeZoneId.value : this.writeZoneId,
+    originalUtcOffsetMinutes: originalUtcOffsetMinutes.present
+        ? originalUtcOffsetMinutes.value
+        : this.originalUtcOffsetMinutes,
+    utcOffsetMinutes: utcOffsetMinutes.present
+        ? utcOffsetMinutes.value
+        : this.utcOffsetMinutes,
+    vocabularyVersion: vocabularyVersion ?? this.vocabularyVersion,
+    episodeId: episodeId ?? this.episodeId,
+    effectiveDay: effectiveDay ?? this.effectiveDay,
+    versionNumber: versionNumber ?? this.versionNumber,
+    exactName: exactName.present ? exactName.value : this.exactName,
+    medicationType: medicationType.present
+        ? medicationType.value
+        : this.medicationType,
+    supplementType: supplementType.present
+        ? supplementType.value
+        : this.supplementType,
+    birthControlMethod: birthControlMethod.present
+        ? birthControlMethod.value
+        : this.birthControlMethod,
+    dose: dose.present ? dose.value : this.dose,
+    unit: unit.present ? unit.value : this.unit,
+    customUnit: customUnit.present ? customUnit.value : this.customUnit,
+    route: route.present ? route.value : this.route,
+    customRoute: customRoute.present ? customRoute.value : this.customRoute,
+    target: target.present ? target.value : this.target,
+  );
+  RecordProductVersionRow copyWithCompanion(
+    RecordProductVersionRowsCompanion data,
+  ) {
+    return RecordProductVersionRow(
+      id: data.id.present ? data.id.value : this.id,
+      experiencedDay: data.experiencedDay.present
+          ? data.experiencedDay.value
+          : this.experiencedDay,
+      recordedAtMillis: data.recordedAtMillis.present
+          ? data.recordedAtMillis.value
+          : this.recordedAtMillis,
+      updatedAtMillis: data.updatedAtMillis.present
+          ? data.updatedAtMillis.value
+          : this.updatedAtMillis,
+      originalProvenance: data.originalProvenance.present
+          ? data.originalProvenance.value
+          : this.originalProvenance,
+      provenance: data.provenance.present
+          ? data.provenance.value
+          : this.provenance,
+      originalWriteZoneId: data.originalWriteZoneId.present
+          ? data.originalWriteZoneId.value
+          : this.originalWriteZoneId,
+      writeZoneId: data.writeZoneId.present
+          ? data.writeZoneId.value
+          : this.writeZoneId,
+      originalUtcOffsetMinutes: data.originalUtcOffsetMinutes.present
+          ? data.originalUtcOffsetMinutes.value
+          : this.originalUtcOffsetMinutes,
+      utcOffsetMinutes: data.utcOffsetMinutes.present
+          ? data.utcOffsetMinutes.value
+          : this.utcOffsetMinutes,
+      vocabularyVersion: data.vocabularyVersion.present
+          ? data.vocabularyVersion.value
+          : this.vocabularyVersion,
+      episodeId: data.episodeId.present ? data.episodeId.value : this.episodeId,
+      effectiveDay: data.effectiveDay.present
+          ? data.effectiveDay.value
+          : this.effectiveDay,
+      versionNumber: data.versionNumber.present
+          ? data.versionNumber.value
+          : this.versionNumber,
+      exactName: data.exactName.present ? data.exactName.value : this.exactName,
+      medicationType: data.medicationType.present
+          ? data.medicationType.value
+          : this.medicationType,
+      supplementType: data.supplementType.present
+          ? data.supplementType.value
+          : this.supplementType,
+      birthControlMethod: data.birthControlMethod.present
+          ? data.birthControlMethod.value
+          : this.birthControlMethod,
+      dose: data.dose.present ? data.dose.value : this.dose,
+      unit: data.unit.present ? data.unit.value : this.unit,
+      customUnit: data.customUnit.present
+          ? data.customUnit.value
+          : this.customUnit,
+      route: data.route.present ? data.route.value : this.route,
+      customRoute: data.customRoute.present
+          ? data.customRoute.value
+          : this.customRoute,
+      target: data.target.present ? data.target.value : this.target,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('RecordProductVersionRow(')
+          ..write('id: $id, ')
+          ..write('experiencedDay: $experiencedDay, ')
+          ..write('recordedAtMillis: $recordedAtMillis, ')
+          ..write('updatedAtMillis: $updatedAtMillis, ')
+          ..write('originalProvenance: $originalProvenance, ')
+          ..write('provenance: $provenance, ')
+          ..write('originalWriteZoneId: $originalWriteZoneId, ')
+          ..write('writeZoneId: $writeZoneId, ')
+          ..write('originalUtcOffsetMinutes: $originalUtcOffsetMinutes, ')
+          ..write('utcOffsetMinutes: $utcOffsetMinutes, ')
+          ..write('vocabularyVersion: $vocabularyVersion, ')
+          ..write('episodeId: $episodeId, ')
+          ..write('effectiveDay: $effectiveDay, ')
+          ..write('versionNumber: $versionNumber, ')
+          ..write('exactName: $exactName, ')
+          ..write('medicationType: $medicationType, ')
+          ..write('supplementType: $supplementType, ')
+          ..write('birthControlMethod: $birthControlMethod, ')
+          ..write('dose: $dose, ')
+          ..write('unit: $unit, ')
+          ..write('customUnit: $customUnit, ')
+          ..write('route: $route, ')
+          ..write('customRoute: $customRoute, ')
+          ..write('target: $target')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hashAll([
+    id,
+    experiencedDay,
+    recordedAtMillis,
+    updatedAtMillis,
+    originalProvenance,
+    provenance,
+    originalWriteZoneId,
+    writeZoneId,
+    originalUtcOffsetMinutes,
+    utcOffsetMinutes,
+    vocabularyVersion,
+    episodeId,
+    effectiveDay,
+    versionNumber,
+    exactName,
+    medicationType,
+    supplementType,
+    birthControlMethod,
+    dose,
+    unit,
+    customUnit,
+    route,
+    customRoute,
+    target,
+  ]);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is RecordProductVersionRow &&
+          other.id == this.id &&
+          other.experiencedDay == this.experiencedDay &&
+          other.recordedAtMillis == this.recordedAtMillis &&
+          other.updatedAtMillis == this.updatedAtMillis &&
+          other.originalProvenance == this.originalProvenance &&
+          other.provenance == this.provenance &&
+          other.originalWriteZoneId == this.originalWriteZoneId &&
+          other.writeZoneId == this.writeZoneId &&
+          other.originalUtcOffsetMinutes == this.originalUtcOffsetMinutes &&
+          other.utcOffsetMinutes == this.utcOffsetMinutes &&
+          other.vocabularyVersion == this.vocabularyVersion &&
+          other.episodeId == this.episodeId &&
+          other.effectiveDay == this.effectiveDay &&
+          other.versionNumber == this.versionNumber &&
+          other.exactName == this.exactName &&
+          other.medicationType == this.medicationType &&
+          other.supplementType == this.supplementType &&
+          other.birthControlMethod == this.birthControlMethod &&
+          other.dose == this.dose &&
+          other.unit == this.unit &&
+          other.customUnit == this.customUnit &&
+          other.route == this.route &&
+          other.customRoute == this.customRoute &&
+          other.target == this.target);
+}
+
+class RecordProductVersionRowsCompanion
+    extends UpdateCompanion<RecordProductVersionRow> {
+  final Value<String> id;
+  final Value<int> experiencedDay;
+  final Value<int> recordedAtMillis;
+  final Value<int> updatedAtMillis;
+  final Value<String> originalProvenance;
+  final Value<String> provenance;
+  final Value<String?> originalWriteZoneId;
+  final Value<String?> writeZoneId;
+  final Value<int?> originalUtcOffsetMinutes;
+  final Value<int?> utcOffsetMinutes;
+  final Value<int> vocabularyVersion;
+  final Value<String> episodeId;
+  final Value<int> effectiveDay;
+  final Value<int> versionNumber;
+  final Value<String?> exactName;
+  final Value<String?> medicationType;
+  final Value<String?> supplementType;
+  final Value<String?> birthControlMethod;
+  final Value<String?> dose;
+  final Value<String?> unit;
+  final Value<String?> customUnit;
+  final Value<String?> route;
+  final Value<String?> customRoute;
+  final Value<String?> target;
+  final Value<int> rowid;
+  const RecordProductVersionRowsCompanion({
+    this.id = const Value.absent(),
+    this.experiencedDay = const Value.absent(),
+    this.recordedAtMillis = const Value.absent(),
+    this.updatedAtMillis = const Value.absent(),
+    this.originalProvenance = const Value.absent(),
+    this.provenance = const Value.absent(),
+    this.originalWriteZoneId = const Value.absent(),
+    this.writeZoneId = const Value.absent(),
+    this.originalUtcOffsetMinutes = const Value.absent(),
+    this.utcOffsetMinutes = const Value.absent(),
+    this.vocabularyVersion = const Value.absent(),
+    this.episodeId = const Value.absent(),
+    this.effectiveDay = const Value.absent(),
+    this.versionNumber = const Value.absent(),
+    this.exactName = const Value.absent(),
+    this.medicationType = const Value.absent(),
+    this.supplementType = const Value.absent(),
+    this.birthControlMethod = const Value.absent(),
+    this.dose = const Value.absent(),
+    this.unit = const Value.absent(),
+    this.customUnit = const Value.absent(),
+    this.route = const Value.absent(),
+    this.customRoute = const Value.absent(),
+    this.target = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  RecordProductVersionRowsCompanion.insert({
+    required String id,
+    required int experiencedDay,
+    required int recordedAtMillis,
+    required int updatedAtMillis,
+    required String originalProvenance,
+    required String provenance,
+    this.originalWriteZoneId = const Value.absent(),
+    this.writeZoneId = const Value.absent(),
+    this.originalUtcOffsetMinutes = const Value.absent(),
+    this.utcOffsetMinutes = const Value.absent(),
+    this.vocabularyVersion = const Value.absent(),
+    required String episodeId,
+    required int effectiveDay,
+    required int versionNumber,
+    this.exactName = const Value.absent(),
+    this.medicationType = const Value.absent(),
+    this.supplementType = const Value.absent(),
+    this.birthControlMethod = const Value.absent(),
+    this.dose = const Value.absent(),
+    this.unit = const Value.absent(),
+    this.customUnit = const Value.absent(),
+    this.route = const Value.absent(),
+    this.customRoute = const Value.absent(),
+    this.target = const Value.absent(),
+    this.rowid = const Value.absent(),
+  }) : id = Value(id),
+       experiencedDay = Value(experiencedDay),
+       recordedAtMillis = Value(recordedAtMillis),
+       updatedAtMillis = Value(updatedAtMillis),
+       originalProvenance = Value(originalProvenance),
+       provenance = Value(provenance),
+       episodeId = Value(episodeId),
+       effectiveDay = Value(effectiveDay),
+       versionNumber = Value(versionNumber);
+  static Insertable<RecordProductVersionRow> custom({
+    Expression<String>? id,
+    Expression<int>? experiencedDay,
+    Expression<int>? recordedAtMillis,
+    Expression<int>? updatedAtMillis,
+    Expression<String>? originalProvenance,
+    Expression<String>? provenance,
+    Expression<String>? originalWriteZoneId,
+    Expression<String>? writeZoneId,
+    Expression<int>? originalUtcOffsetMinutes,
+    Expression<int>? utcOffsetMinutes,
+    Expression<int>? vocabularyVersion,
+    Expression<String>? episodeId,
+    Expression<int>? effectiveDay,
+    Expression<int>? versionNumber,
+    Expression<String>? exactName,
+    Expression<String>? medicationType,
+    Expression<String>? supplementType,
+    Expression<String>? birthControlMethod,
+    Expression<String>? dose,
+    Expression<String>? unit,
+    Expression<String>? customUnit,
+    Expression<String>? route,
+    Expression<String>? customRoute,
+    Expression<String>? target,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (experiencedDay != null) 'experienced_day': experiencedDay,
+      if (recordedAtMillis != null) 'recorded_at_millis': recordedAtMillis,
+      if (updatedAtMillis != null) 'updated_at_millis': updatedAtMillis,
+      if (originalProvenance != null) 'original_provenance': originalProvenance,
+      if (provenance != null) 'provenance': provenance,
+      if (originalWriteZoneId != null)
+        'original_write_zone_id': originalWriteZoneId,
+      if (writeZoneId != null) 'write_zone_id': writeZoneId,
+      if (originalUtcOffsetMinutes != null)
+        'original_utc_offset_minutes': originalUtcOffsetMinutes,
+      if (utcOffsetMinutes != null) 'utc_offset_minutes': utcOffsetMinutes,
+      if (vocabularyVersion != null) 'vocabulary_version': vocabularyVersion,
+      if (episodeId != null) 'episode_id': episodeId,
+      if (effectiveDay != null) 'effective_day': effectiveDay,
+      if (versionNumber != null) 'version_number': versionNumber,
+      if (exactName != null) 'exact_name': exactName,
+      if (medicationType != null) 'medication_type': medicationType,
+      if (supplementType != null) 'supplement_type': supplementType,
+      if (birthControlMethod != null)
+        'birth_control_method': birthControlMethod,
+      if (dose != null) 'dose': dose,
+      if (unit != null) 'unit': unit,
+      if (customUnit != null) 'custom_unit': customUnit,
+      if (route != null) 'route': route,
+      if (customRoute != null) 'custom_route': customRoute,
+      if (target != null) 'target': target,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  RecordProductVersionRowsCompanion copyWith({
+    Value<String>? id,
+    Value<int>? experiencedDay,
+    Value<int>? recordedAtMillis,
+    Value<int>? updatedAtMillis,
+    Value<String>? originalProvenance,
+    Value<String>? provenance,
+    Value<String?>? originalWriteZoneId,
+    Value<String?>? writeZoneId,
+    Value<int?>? originalUtcOffsetMinutes,
+    Value<int?>? utcOffsetMinutes,
+    Value<int>? vocabularyVersion,
+    Value<String>? episodeId,
+    Value<int>? effectiveDay,
+    Value<int>? versionNumber,
+    Value<String?>? exactName,
+    Value<String?>? medicationType,
+    Value<String?>? supplementType,
+    Value<String?>? birthControlMethod,
+    Value<String?>? dose,
+    Value<String?>? unit,
+    Value<String?>? customUnit,
+    Value<String?>? route,
+    Value<String?>? customRoute,
+    Value<String?>? target,
+    Value<int>? rowid,
+  }) {
+    return RecordProductVersionRowsCompanion(
+      id: id ?? this.id,
+      experiencedDay: experiencedDay ?? this.experiencedDay,
+      recordedAtMillis: recordedAtMillis ?? this.recordedAtMillis,
+      updatedAtMillis: updatedAtMillis ?? this.updatedAtMillis,
+      originalProvenance: originalProvenance ?? this.originalProvenance,
+      provenance: provenance ?? this.provenance,
+      originalWriteZoneId: originalWriteZoneId ?? this.originalWriteZoneId,
+      writeZoneId: writeZoneId ?? this.writeZoneId,
+      originalUtcOffsetMinutes:
+          originalUtcOffsetMinutes ?? this.originalUtcOffsetMinutes,
+      utcOffsetMinutes: utcOffsetMinutes ?? this.utcOffsetMinutes,
+      vocabularyVersion: vocabularyVersion ?? this.vocabularyVersion,
+      episodeId: episodeId ?? this.episodeId,
+      effectiveDay: effectiveDay ?? this.effectiveDay,
+      versionNumber: versionNumber ?? this.versionNumber,
+      exactName: exactName ?? this.exactName,
+      medicationType: medicationType ?? this.medicationType,
+      supplementType: supplementType ?? this.supplementType,
+      birthControlMethod: birthControlMethod ?? this.birthControlMethod,
+      dose: dose ?? this.dose,
+      unit: unit ?? this.unit,
+      customUnit: customUnit ?? this.customUnit,
+      route: route ?? this.route,
+      customRoute: customRoute ?? this.customRoute,
+      target: target ?? this.target,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<String>(id.value);
+    }
+    if (experiencedDay.present) {
+      map['experienced_day'] = Variable<int>(experiencedDay.value);
+    }
+    if (recordedAtMillis.present) {
+      map['recorded_at_millis'] = Variable<int>(recordedAtMillis.value);
+    }
+    if (updatedAtMillis.present) {
+      map['updated_at_millis'] = Variable<int>(updatedAtMillis.value);
+    }
+    if (originalProvenance.present) {
+      map['original_provenance'] = Variable<String>(originalProvenance.value);
+    }
+    if (provenance.present) {
+      map['provenance'] = Variable<String>(provenance.value);
+    }
+    if (originalWriteZoneId.present) {
+      map['original_write_zone_id'] = Variable<String>(
+        originalWriteZoneId.value,
+      );
+    }
+    if (writeZoneId.present) {
+      map['write_zone_id'] = Variable<String>(writeZoneId.value);
+    }
+    if (originalUtcOffsetMinutes.present) {
+      map['original_utc_offset_minutes'] = Variable<int>(
+        originalUtcOffsetMinutes.value,
+      );
+    }
+    if (utcOffsetMinutes.present) {
+      map['utc_offset_minutes'] = Variable<int>(utcOffsetMinutes.value);
+    }
+    if (vocabularyVersion.present) {
+      map['vocabulary_version'] = Variable<int>(vocabularyVersion.value);
+    }
+    if (episodeId.present) {
+      map['episode_id'] = Variable<String>(episodeId.value);
+    }
+    if (effectiveDay.present) {
+      map['effective_day'] = Variable<int>(effectiveDay.value);
+    }
+    if (versionNumber.present) {
+      map['version_number'] = Variable<int>(versionNumber.value);
+    }
+    if (exactName.present) {
+      map['exact_name'] = Variable<String>(exactName.value);
+    }
+    if (medicationType.present) {
+      map['medication_type'] = Variable<String>(medicationType.value);
+    }
+    if (supplementType.present) {
+      map['supplement_type'] = Variable<String>(supplementType.value);
+    }
+    if (birthControlMethod.present) {
+      map['birth_control_method'] = Variable<String>(birthControlMethod.value);
+    }
+    if (dose.present) {
+      map['dose'] = Variable<String>(dose.value);
+    }
+    if (unit.present) {
+      map['unit'] = Variable<String>(unit.value);
+    }
+    if (customUnit.present) {
+      map['custom_unit'] = Variable<String>(customUnit.value);
+    }
+    if (route.present) {
+      map['route'] = Variable<String>(route.value);
+    }
+    if (customRoute.present) {
+      map['custom_route'] = Variable<String>(customRoute.value);
+    }
+    if (target.present) {
+      map['target'] = Variable<String>(target.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('RecordProductVersionRowsCompanion(')
+          ..write('id: $id, ')
+          ..write('experiencedDay: $experiencedDay, ')
+          ..write('recordedAtMillis: $recordedAtMillis, ')
+          ..write('updatedAtMillis: $updatedAtMillis, ')
+          ..write('originalProvenance: $originalProvenance, ')
+          ..write('provenance: $provenance, ')
+          ..write('originalWriteZoneId: $originalWriteZoneId, ')
+          ..write('writeZoneId: $writeZoneId, ')
+          ..write('originalUtcOffsetMinutes: $originalUtcOffsetMinutes, ')
+          ..write('utcOffsetMinutes: $utcOffsetMinutes, ')
+          ..write('vocabularyVersion: $vocabularyVersion, ')
+          ..write('episodeId: $episodeId, ')
+          ..write('effectiveDay: $effectiveDay, ')
+          ..write('versionNumber: $versionNumber, ')
+          ..write('exactName: $exactName, ')
+          ..write('medicationType: $medicationType, ')
+          ..write('supplementType: $supplementType, ')
+          ..write('birthControlMethod: $birthControlMethod, ')
+          ..write('dose: $dose, ')
+          ..write('unit: $unit, ')
+          ..write('customUnit: $customUnit, ')
+          ..write('route: $route, ')
+          ..write('customRoute: $customRoute, ')
+          ..write('target: $target, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
+class $RecordProductUseRowsTable extends RecordProductUseRows
+    with TableInfo<$RecordProductUseRowsTable, RecordProductUseRow> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $RecordProductUseRowsTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<String> id = GeneratedColumn<String>(
+    'id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _experiencedDayMeta = const VerificationMeta(
+    'experiencedDay',
+  );
+  @override
+  late final GeneratedColumn<int> experiencedDay = GeneratedColumn<int>(
+    'experienced_day',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _recordedAtMillisMeta = const VerificationMeta(
+    'recordedAtMillis',
+  );
+  @override
+  late final GeneratedColumn<int> recordedAtMillis = GeneratedColumn<int>(
+    'recorded_at_millis',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _updatedAtMillisMeta = const VerificationMeta(
+    'updatedAtMillis',
+  );
+  @override
+  late final GeneratedColumn<int> updatedAtMillis = GeneratedColumn<int>(
+    'updated_at_millis',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _originalProvenanceMeta =
+      const VerificationMeta('originalProvenance');
+  @override
+  late final GeneratedColumn<String> originalProvenance =
+      GeneratedColumn<String>(
+        'original_provenance',
+        aliasedName,
+        false,
+        type: DriftSqlType.string,
+        requiredDuringInsert: true,
+      );
+  static const VerificationMeta _provenanceMeta = const VerificationMeta(
+    'provenance',
+  );
+  @override
+  late final GeneratedColumn<String> provenance = GeneratedColumn<String>(
+    'provenance',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _originalWriteZoneIdMeta =
+      const VerificationMeta('originalWriteZoneId');
+  @override
+  late final GeneratedColumn<String> originalWriteZoneId =
+      GeneratedColumn<String>(
+        'original_write_zone_id',
+        aliasedName,
+        true,
+        type: DriftSqlType.string,
+        requiredDuringInsert: false,
+      );
+  static const VerificationMeta _writeZoneIdMeta = const VerificationMeta(
+    'writeZoneId',
+  );
+  @override
+  late final GeneratedColumn<String> writeZoneId = GeneratedColumn<String>(
+    'write_zone_id',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _originalUtcOffsetMinutesMeta =
+      const VerificationMeta('originalUtcOffsetMinutes');
+  @override
+  late final GeneratedColumn<int> originalUtcOffsetMinutes =
+      GeneratedColumn<int>(
+        'original_utc_offset_minutes',
+        aliasedName,
+        true,
+        type: DriftSqlType.int,
+        requiredDuringInsert: false,
+      );
+  static const VerificationMeta _utcOffsetMinutesMeta = const VerificationMeta(
+    'utcOffsetMinutes',
+  );
+  @override
+  late final GeneratedColumn<int> utcOffsetMinutes = GeneratedColumn<int>(
+    'utc_offset_minutes',
+    aliasedName,
+    true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _vocabularyVersionMeta = const VerificationMeta(
+    'vocabularyVersion',
+  );
+  @override
+  late final GeneratedColumn<int> vocabularyVersion = GeneratedColumn<int>(
+    'vocabulary_version',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(1),
+  );
+  static const VerificationMeta _episodeIdMeta = const VerificationMeta(
+    'episodeId',
+  );
+  @override
+  late final GeneratedColumn<String> episodeId = GeneratedColumn<String>(
+    'episode_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _versionIdMeta = const VerificationMeta(
+    'versionId',
+  );
+  @override
+  late final GeneratedColumn<String> versionId = GeneratedColumn<String>(
+    'version_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _statusMeta = const VerificationMeta('status');
+  @override
+  late final GeneratedColumn<String> status = GeneratedColumn<String>(
+    'status',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _dailyKeyMeta = const VerificationMeta(
+    'dailyKey',
+  );
+  @override
+  late final GeneratedColumn<String> dailyKey = GeneratedColumn<String>(
+    'daily_key',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    id,
+    experiencedDay,
+    recordedAtMillis,
+    updatedAtMillis,
+    originalProvenance,
+    provenance,
+    originalWriteZoneId,
+    writeZoneId,
+    originalUtcOffsetMinutes,
+    utcOffsetMinutes,
+    vocabularyVersion,
+    episodeId,
+    versionId,
+    status,
+    dailyKey,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'record_product_use_rows';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<RecordProductUseRow> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    } else if (isInserting) {
+      context.missing(_idMeta);
+    }
+    if (data.containsKey('experienced_day')) {
+      context.handle(
+        _experiencedDayMeta,
+        experiencedDay.isAcceptableOrUnknown(
+          data['experienced_day']!,
+          _experiencedDayMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_experiencedDayMeta);
+    }
+    if (data.containsKey('recorded_at_millis')) {
+      context.handle(
+        _recordedAtMillisMeta,
+        recordedAtMillis.isAcceptableOrUnknown(
+          data['recorded_at_millis']!,
+          _recordedAtMillisMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_recordedAtMillisMeta);
+    }
+    if (data.containsKey('updated_at_millis')) {
+      context.handle(
+        _updatedAtMillisMeta,
+        updatedAtMillis.isAcceptableOrUnknown(
+          data['updated_at_millis']!,
+          _updatedAtMillisMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_updatedAtMillisMeta);
+    }
+    if (data.containsKey('original_provenance')) {
+      context.handle(
+        _originalProvenanceMeta,
+        originalProvenance.isAcceptableOrUnknown(
+          data['original_provenance']!,
+          _originalProvenanceMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_originalProvenanceMeta);
+    }
+    if (data.containsKey('provenance')) {
+      context.handle(
+        _provenanceMeta,
+        provenance.isAcceptableOrUnknown(data['provenance']!, _provenanceMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_provenanceMeta);
+    }
+    if (data.containsKey('original_write_zone_id')) {
+      context.handle(
+        _originalWriteZoneIdMeta,
+        originalWriteZoneId.isAcceptableOrUnknown(
+          data['original_write_zone_id']!,
+          _originalWriteZoneIdMeta,
+        ),
+      );
+    }
+    if (data.containsKey('write_zone_id')) {
+      context.handle(
+        _writeZoneIdMeta,
+        writeZoneId.isAcceptableOrUnknown(
+          data['write_zone_id']!,
+          _writeZoneIdMeta,
+        ),
+      );
+    }
+    if (data.containsKey('original_utc_offset_minutes')) {
+      context.handle(
+        _originalUtcOffsetMinutesMeta,
+        originalUtcOffsetMinutes.isAcceptableOrUnknown(
+          data['original_utc_offset_minutes']!,
+          _originalUtcOffsetMinutesMeta,
+        ),
+      );
+    }
+    if (data.containsKey('utc_offset_minutes')) {
+      context.handle(
+        _utcOffsetMinutesMeta,
+        utcOffsetMinutes.isAcceptableOrUnknown(
+          data['utc_offset_minutes']!,
+          _utcOffsetMinutesMeta,
+        ),
+      );
+    }
+    if (data.containsKey('vocabulary_version')) {
+      context.handle(
+        _vocabularyVersionMeta,
+        vocabularyVersion.isAcceptableOrUnknown(
+          data['vocabulary_version']!,
+          _vocabularyVersionMeta,
+        ),
+      );
+    }
+    if (data.containsKey('episode_id')) {
+      context.handle(
+        _episodeIdMeta,
+        episodeId.isAcceptableOrUnknown(data['episode_id']!, _episodeIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_episodeIdMeta);
+    }
+    if (data.containsKey('version_id')) {
+      context.handle(
+        _versionIdMeta,
+        versionId.isAcceptableOrUnknown(data['version_id']!, _versionIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_versionIdMeta);
+    }
+    if (data.containsKey('status')) {
+      context.handle(
+        _statusMeta,
+        status.isAcceptableOrUnknown(data['status']!, _statusMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_statusMeta);
+    }
+    if (data.containsKey('daily_key')) {
+      context.handle(
+        _dailyKeyMeta,
+        dailyKey.isAcceptableOrUnknown(data['daily_key']!, _dailyKeyMeta),
+      );
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  List<Set<GeneratedColumn>> get uniqueKeys => [
+    {dailyKey},
+  ];
+  @override
+  RecordProductUseRow map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return RecordProductUseRow(
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}id'],
+      )!,
+      experiencedDay: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}experienced_day'],
+      )!,
+      recordedAtMillis: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}recorded_at_millis'],
+      )!,
+      updatedAtMillis: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}updated_at_millis'],
+      )!,
+      originalProvenance: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}original_provenance'],
+      )!,
+      provenance: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}provenance'],
+      )!,
+      originalWriteZoneId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}original_write_zone_id'],
+      ),
+      writeZoneId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}write_zone_id'],
+      ),
+      originalUtcOffsetMinutes: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}original_utc_offset_minutes'],
+      ),
+      utcOffsetMinutes: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}utc_offset_minutes'],
+      ),
+      vocabularyVersion: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}vocabulary_version'],
+      )!,
+      episodeId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}episode_id'],
+      )!,
+      versionId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}version_id'],
+      )!,
+      status: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}status'],
+      )!,
+      dailyKey: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}daily_key'],
+      ),
+    );
+  }
+
+  @override
+  $RecordProductUseRowsTable createAlias(String alias) {
+    return $RecordProductUseRowsTable(attachedDatabase, alias);
+  }
+}
+
+class RecordProductUseRow extends DataClass
+    implements Insertable<RecordProductUseRow> {
+  final String id;
+  final int experiencedDay;
+  final int recordedAtMillis;
+  final int updatedAtMillis;
+  final String originalProvenance;
+  final String provenance;
+  final String? originalWriteZoneId;
+  final String? writeZoneId;
+  final int? originalUtcOffsetMinutes;
+  final int? utcOffsetMinutes;
+  final int vocabularyVersion;
+  final String episodeId;
+  final String versionId;
+  final String status;
+  final String? dailyKey;
+  const RecordProductUseRow({
+    required this.id,
+    required this.experiencedDay,
+    required this.recordedAtMillis,
+    required this.updatedAtMillis,
+    required this.originalProvenance,
+    required this.provenance,
+    this.originalWriteZoneId,
+    this.writeZoneId,
+    this.originalUtcOffsetMinutes,
+    this.utcOffsetMinutes,
+    required this.vocabularyVersion,
+    required this.episodeId,
+    required this.versionId,
+    required this.status,
+    this.dailyKey,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<String>(id);
+    map['experienced_day'] = Variable<int>(experiencedDay);
+    map['recorded_at_millis'] = Variable<int>(recordedAtMillis);
+    map['updated_at_millis'] = Variable<int>(updatedAtMillis);
+    map['original_provenance'] = Variable<String>(originalProvenance);
+    map['provenance'] = Variable<String>(provenance);
+    if (!nullToAbsent || originalWriteZoneId != null) {
+      map['original_write_zone_id'] = Variable<String>(originalWriteZoneId);
+    }
+    if (!nullToAbsent || writeZoneId != null) {
+      map['write_zone_id'] = Variable<String>(writeZoneId);
+    }
+    if (!nullToAbsent || originalUtcOffsetMinutes != null) {
+      map['original_utc_offset_minutes'] = Variable<int>(
+        originalUtcOffsetMinutes,
+      );
+    }
+    if (!nullToAbsent || utcOffsetMinutes != null) {
+      map['utc_offset_minutes'] = Variable<int>(utcOffsetMinutes);
+    }
+    map['vocabulary_version'] = Variable<int>(vocabularyVersion);
+    map['episode_id'] = Variable<String>(episodeId);
+    map['version_id'] = Variable<String>(versionId);
+    map['status'] = Variable<String>(status);
+    if (!nullToAbsent || dailyKey != null) {
+      map['daily_key'] = Variable<String>(dailyKey);
+    }
+    return map;
+  }
+
+  RecordProductUseRowsCompanion toCompanion(bool nullToAbsent) {
+    return RecordProductUseRowsCompanion(
+      id: Value(id),
+      experiencedDay: Value(experiencedDay),
+      recordedAtMillis: Value(recordedAtMillis),
+      updatedAtMillis: Value(updatedAtMillis),
+      originalProvenance: Value(originalProvenance),
+      provenance: Value(provenance),
+      originalWriteZoneId: originalWriteZoneId == null && nullToAbsent
+          ? const Value.absent()
+          : Value(originalWriteZoneId),
+      writeZoneId: writeZoneId == null && nullToAbsent
+          ? const Value.absent()
+          : Value(writeZoneId),
+      originalUtcOffsetMinutes: originalUtcOffsetMinutes == null && nullToAbsent
+          ? const Value.absent()
+          : Value(originalUtcOffsetMinutes),
+      utcOffsetMinutes: utcOffsetMinutes == null && nullToAbsent
+          ? const Value.absent()
+          : Value(utcOffsetMinutes),
+      vocabularyVersion: Value(vocabularyVersion),
+      episodeId: Value(episodeId),
+      versionId: Value(versionId),
+      status: Value(status),
+      dailyKey: dailyKey == null && nullToAbsent
+          ? const Value.absent()
+          : Value(dailyKey),
+    );
+  }
+
+  factory RecordProductUseRow.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return RecordProductUseRow(
+      id: serializer.fromJson<String>(json['id']),
+      experiencedDay: serializer.fromJson<int>(json['experiencedDay']),
+      recordedAtMillis: serializer.fromJson<int>(json['recordedAtMillis']),
+      updatedAtMillis: serializer.fromJson<int>(json['updatedAtMillis']),
+      originalProvenance: serializer.fromJson<String>(
+        json['originalProvenance'],
+      ),
+      provenance: serializer.fromJson<String>(json['provenance']),
+      originalWriteZoneId: serializer.fromJson<String?>(
+        json['originalWriteZoneId'],
+      ),
+      writeZoneId: serializer.fromJson<String?>(json['writeZoneId']),
+      originalUtcOffsetMinutes: serializer.fromJson<int?>(
+        json['originalUtcOffsetMinutes'],
+      ),
+      utcOffsetMinutes: serializer.fromJson<int?>(json['utcOffsetMinutes']),
+      vocabularyVersion: serializer.fromJson<int>(json['vocabularyVersion']),
+      episodeId: serializer.fromJson<String>(json['episodeId']),
+      versionId: serializer.fromJson<String>(json['versionId']),
+      status: serializer.fromJson<String>(json['status']),
+      dailyKey: serializer.fromJson<String?>(json['dailyKey']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<String>(id),
+      'experiencedDay': serializer.toJson<int>(experiencedDay),
+      'recordedAtMillis': serializer.toJson<int>(recordedAtMillis),
+      'updatedAtMillis': serializer.toJson<int>(updatedAtMillis),
+      'originalProvenance': serializer.toJson<String>(originalProvenance),
+      'provenance': serializer.toJson<String>(provenance),
+      'originalWriteZoneId': serializer.toJson<String?>(originalWriteZoneId),
+      'writeZoneId': serializer.toJson<String?>(writeZoneId),
+      'originalUtcOffsetMinutes': serializer.toJson<int?>(
+        originalUtcOffsetMinutes,
+      ),
+      'utcOffsetMinutes': serializer.toJson<int?>(utcOffsetMinutes),
+      'vocabularyVersion': serializer.toJson<int>(vocabularyVersion),
+      'episodeId': serializer.toJson<String>(episodeId),
+      'versionId': serializer.toJson<String>(versionId),
+      'status': serializer.toJson<String>(status),
+      'dailyKey': serializer.toJson<String?>(dailyKey),
+    };
+  }
+
+  RecordProductUseRow copyWith({
+    String? id,
+    int? experiencedDay,
+    int? recordedAtMillis,
+    int? updatedAtMillis,
+    String? originalProvenance,
+    String? provenance,
+    Value<String?> originalWriteZoneId = const Value.absent(),
+    Value<String?> writeZoneId = const Value.absent(),
+    Value<int?> originalUtcOffsetMinutes = const Value.absent(),
+    Value<int?> utcOffsetMinutes = const Value.absent(),
+    int? vocabularyVersion,
+    String? episodeId,
+    String? versionId,
+    String? status,
+    Value<String?> dailyKey = const Value.absent(),
+  }) => RecordProductUseRow(
+    id: id ?? this.id,
+    experiencedDay: experiencedDay ?? this.experiencedDay,
+    recordedAtMillis: recordedAtMillis ?? this.recordedAtMillis,
+    updatedAtMillis: updatedAtMillis ?? this.updatedAtMillis,
+    originalProvenance: originalProvenance ?? this.originalProvenance,
+    provenance: provenance ?? this.provenance,
+    originalWriteZoneId: originalWriteZoneId.present
+        ? originalWriteZoneId.value
+        : this.originalWriteZoneId,
+    writeZoneId: writeZoneId.present ? writeZoneId.value : this.writeZoneId,
+    originalUtcOffsetMinutes: originalUtcOffsetMinutes.present
+        ? originalUtcOffsetMinutes.value
+        : this.originalUtcOffsetMinutes,
+    utcOffsetMinutes: utcOffsetMinutes.present
+        ? utcOffsetMinutes.value
+        : this.utcOffsetMinutes,
+    vocabularyVersion: vocabularyVersion ?? this.vocabularyVersion,
+    episodeId: episodeId ?? this.episodeId,
+    versionId: versionId ?? this.versionId,
+    status: status ?? this.status,
+    dailyKey: dailyKey.present ? dailyKey.value : this.dailyKey,
+  );
+  RecordProductUseRow copyWithCompanion(RecordProductUseRowsCompanion data) {
+    return RecordProductUseRow(
+      id: data.id.present ? data.id.value : this.id,
+      experiencedDay: data.experiencedDay.present
+          ? data.experiencedDay.value
+          : this.experiencedDay,
+      recordedAtMillis: data.recordedAtMillis.present
+          ? data.recordedAtMillis.value
+          : this.recordedAtMillis,
+      updatedAtMillis: data.updatedAtMillis.present
+          ? data.updatedAtMillis.value
+          : this.updatedAtMillis,
+      originalProvenance: data.originalProvenance.present
+          ? data.originalProvenance.value
+          : this.originalProvenance,
+      provenance: data.provenance.present
+          ? data.provenance.value
+          : this.provenance,
+      originalWriteZoneId: data.originalWriteZoneId.present
+          ? data.originalWriteZoneId.value
+          : this.originalWriteZoneId,
+      writeZoneId: data.writeZoneId.present
+          ? data.writeZoneId.value
+          : this.writeZoneId,
+      originalUtcOffsetMinutes: data.originalUtcOffsetMinutes.present
+          ? data.originalUtcOffsetMinutes.value
+          : this.originalUtcOffsetMinutes,
+      utcOffsetMinutes: data.utcOffsetMinutes.present
+          ? data.utcOffsetMinutes.value
+          : this.utcOffsetMinutes,
+      vocabularyVersion: data.vocabularyVersion.present
+          ? data.vocabularyVersion.value
+          : this.vocabularyVersion,
+      episodeId: data.episodeId.present ? data.episodeId.value : this.episodeId,
+      versionId: data.versionId.present ? data.versionId.value : this.versionId,
+      status: data.status.present ? data.status.value : this.status,
+      dailyKey: data.dailyKey.present ? data.dailyKey.value : this.dailyKey,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('RecordProductUseRow(')
+          ..write('id: $id, ')
+          ..write('experiencedDay: $experiencedDay, ')
+          ..write('recordedAtMillis: $recordedAtMillis, ')
+          ..write('updatedAtMillis: $updatedAtMillis, ')
+          ..write('originalProvenance: $originalProvenance, ')
+          ..write('provenance: $provenance, ')
+          ..write('originalWriteZoneId: $originalWriteZoneId, ')
+          ..write('writeZoneId: $writeZoneId, ')
+          ..write('originalUtcOffsetMinutes: $originalUtcOffsetMinutes, ')
+          ..write('utcOffsetMinutes: $utcOffsetMinutes, ')
+          ..write('vocabularyVersion: $vocabularyVersion, ')
+          ..write('episodeId: $episodeId, ')
+          ..write('versionId: $versionId, ')
+          ..write('status: $status, ')
+          ..write('dailyKey: $dailyKey')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(
+    id,
+    experiencedDay,
+    recordedAtMillis,
+    updatedAtMillis,
+    originalProvenance,
+    provenance,
+    originalWriteZoneId,
+    writeZoneId,
+    originalUtcOffsetMinutes,
+    utcOffsetMinutes,
+    vocabularyVersion,
+    episodeId,
+    versionId,
+    status,
+    dailyKey,
+  );
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is RecordProductUseRow &&
+          other.id == this.id &&
+          other.experiencedDay == this.experiencedDay &&
+          other.recordedAtMillis == this.recordedAtMillis &&
+          other.updatedAtMillis == this.updatedAtMillis &&
+          other.originalProvenance == this.originalProvenance &&
+          other.provenance == this.provenance &&
+          other.originalWriteZoneId == this.originalWriteZoneId &&
+          other.writeZoneId == this.writeZoneId &&
+          other.originalUtcOffsetMinutes == this.originalUtcOffsetMinutes &&
+          other.utcOffsetMinutes == this.utcOffsetMinutes &&
+          other.vocabularyVersion == this.vocabularyVersion &&
+          other.episodeId == this.episodeId &&
+          other.versionId == this.versionId &&
+          other.status == this.status &&
+          other.dailyKey == this.dailyKey);
+}
+
+class RecordProductUseRowsCompanion
+    extends UpdateCompanion<RecordProductUseRow> {
+  final Value<String> id;
+  final Value<int> experiencedDay;
+  final Value<int> recordedAtMillis;
+  final Value<int> updatedAtMillis;
+  final Value<String> originalProvenance;
+  final Value<String> provenance;
+  final Value<String?> originalWriteZoneId;
+  final Value<String?> writeZoneId;
+  final Value<int?> originalUtcOffsetMinutes;
+  final Value<int?> utcOffsetMinutes;
+  final Value<int> vocabularyVersion;
+  final Value<String> episodeId;
+  final Value<String> versionId;
+  final Value<String> status;
+  final Value<String?> dailyKey;
+  final Value<int> rowid;
+  const RecordProductUseRowsCompanion({
+    this.id = const Value.absent(),
+    this.experiencedDay = const Value.absent(),
+    this.recordedAtMillis = const Value.absent(),
+    this.updatedAtMillis = const Value.absent(),
+    this.originalProvenance = const Value.absent(),
+    this.provenance = const Value.absent(),
+    this.originalWriteZoneId = const Value.absent(),
+    this.writeZoneId = const Value.absent(),
+    this.originalUtcOffsetMinutes = const Value.absent(),
+    this.utcOffsetMinutes = const Value.absent(),
+    this.vocabularyVersion = const Value.absent(),
+    this.episodeId = const Value.absent(),
+    this.versionId = const Value.absent(),
+    this.status = const Value.absent(),
+    this.dailyKey = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  RecordProductUseRowsCompanion.insert({
+    required String id,
+    required int experiencedDay,
+    required int recordedAtMillis,
+    required int updatedAtMillis,
+    required String originalProvenance,
+    required String provenance,
+    this.originalWriteZoneId = const Value.absent(),
+    this.writeZoneId = const Value.absent(),
+    this.originalUtcOffsetMinutes = const Value.absent(),
+    this.utcOffsetMinutes = const Value.absent(),
+    this.vocabularyVersion = const Value.absent(),
+    required String episodeId,
+    required String versionId,
+    required String status,
+    this.dailyKey = const Value.absent(),
+    this.rowid = const Value.absent(),
+  }) : id = Value(id),
+       experiencedDay = Value(experiencedDay),
+       recordedAtMillis = Value(recordedAtMillis),
+       updatedAtMillis = Value(updatedAtMillis),
+       originalProvenance = Value(originalProvenance),
+       provenance = Value(provenance),
+       episodeId = Value(episodeId),
+       versionId = Value(versionId),
+       status = Value(status);
+  static Insertable<RecordProductUseRow> custom({
+    Expression<String>? id,
+    Expression<int>? experiencedDay,
+    Expression<int>? recordedAtMillis,
+    Expression<int>? updatedAtMillis,
+    Expression<String>? originalProvenance,
+    Expression<String>? provenance,
+    Expression<String>? originalWriteZoneId,
+    Expression<String>? writeZoneId,
+    Expression<int>? originalUtcOffsetMinutes,
+    Expression<int>? utcOffsetMinutes,
+    Expression<int>? vocabularyVersion,
+    Expression<String>? episodeId,
+    Expression<String>? versionId,
+    Expression<String>? status,
+    Expression<String>? dailyKey,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (experiencedDay != null) 'experienced_day': experiencedDay,
+      if (recordedAtMillis != null) 'recorded_at_millis': recordedAtMillis,
+      if (updatedAtMillis != null) 'updated_at_millis': updatedAtMillis,
+      if (originalProvenance != null) 'original_provenance': originalProvenance,
+      if (provenance != null) 'provenance': provenance,
+      if (originalWriteZoneId != null)
+        'original_write_zone_id': originalWriteZoneId,
+      if (writeZoneId != null) 'write_zone_id': writeZoneId,
+      if (originalUtcOffsetMinutes != null)
+        'original_utc_offset_minutes': originalUtcOffsetMinutes,
+      if (utcOffsetMinutes != null) 'utc_offset_minutes': utcOffsetMinutes,
+      if (vocabularyVersion != null) 'vocabulary_version': vocabularyVersion,
+      if (episodeId != null) 'episode_id': episodeId,
+      if (versionId != null) 'version_id': versionId,
+      if (status != null) 'status': status,
+      if (dailyKey != null) 'daily_key': dailyKey,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  RecordProductUseRowsCompanion copyWith({
+    Value<String>? id,
+    Value<int>? experiencedDay,
+    Value<int>? recordedAtMillis,
+    Value<int>? updatedAtMillis,
+    Value<String>? originalProvenance,
+    Value<String>? provenance,
+    Value<String?>? originalWriteZoneId,
+    Value<String?>? writeZoneId,
+    Value<int?>? originalUtcOffsetMinutes,
+    Value<int?>? utcOffsetMinutes,
+    Value<int>? vocabularyVersion,
+    Value<String>? episodeId,
+    Value<String>? versionId,
+    Value<String>? status,
+    Value<String?>? dailyKey,
+    Value<int>? rowid,
+  }) {
+    return RecordProductUseRowsCompanion(
+      id: id ?? this.id,
+      experiencedDay: experiencedDay ?? this.experiencedDay,
+      recordedAtMillis: recordedAtMillis ?? this.recordedAtMillis,
+      updatedAtMillis: updatedAtMillis ?? this.updatedAtMillis,
+      originalProvenance: originalProvenance ?? this.originalProvenance,
+      provenance: provenance ?? this.provenance,
+      originalWriteZoneId: originalWriteZoneId ?? this.originalWriteZoneId,
+      writeZoneId: writeZoneId ?? this.writeZoneId,
+      originalUtcOffsetMinutes:
+          originalUtcOffsetMinutes ?? this.originalUtcOffsetMinutes,
+      utcOffsetMinutes: utcOffsetMinutes ?? this.utcOffsetMinutes,
+      vocabularyVersion: vocabularyVersion ?? this.vocabularyVersion,
+      episodeId: episodeId ?? this.episodeId,
+      versionId: versionId ?? this.versionId,
+      status: status ?? this.status,
+      dailyKey: dailyKey ?? this.dailyKey,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<String>(id.value);
+    }
+    if (experiencedDay.present) {
+      map['experienced_day'] = Variable<int>(experiencedDay.value);
+    }
+    if (recordedAtMillis.present) {
+      map['recorded_at_millis'] = Variable<int>(recordedAtMillis.value);
+    }
+    if (updatedAtMillis.present) {
+      map['updated_at_millis'] = Variable<int>(updatedAtMillis.value);
+    }
+    if (originalProvenance.present) {
+      map['original_provenance'] = Variable<String>(originalProvenance.value);
+    }
+    if (provenance.present) {
+      map['provenance'] = Variable<String>(provenance.value);
+    }
+    if (originalWriteZoneId.present) {
+      map['original_write_zone_id'] = Variable<String>(
+        originalWriteZoneId.value,
+      );
+    }
+    if (writeZoneId.present) {
+      map['write_zone_id'] = Variable<String>(writeZoneId.value);
+    }
+    if (originalUtcOffsetMinutes.present) {
+      map['original_utc_offset_minutes'] = Variable<int>(
+        originalUtcOffsetMinutes.value,
+      );
+    }
+    if (utcOffsetMinutes.present) {
+      map['utc_offset_minutes'] = Variable<int>(utcOffsetMinutes.value);
+    }
+    if (vocabularyVersion.present) {
+      map['vocabulary_version'] = Variable<int>(vocabularyVersion.value);
+    }
+    if (episodeId.present) {
+      map['episode_id'] = Variable<String>(episodeId.value);
+    }
+    if (versionId.present) {
+      map['version_id'] = Variable<String>(versionId.value);
+    }
+    if (status.present) {
+      map['status'] = Variable<String>(status.value);
+    }
+    if (dailyKey.present) {
+      map['daily_key'] = Variable<String>(dailyKey.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('RecordProductUseRowsCompanion(')
+          ..write('id: $id, ')
+          ..write('experiencedDay: $experiencedDay, ')
+          ..write('recordedAtMillis: $recordedAtMillis, ')
+          ..write('updatedAtMillis: $updatedAtMillis, ')
+          ..write('originalProvenance: $originalProvenance, ')
+          ..write('provenance: $provenance, ')
+          ..write('originalWriteZoneId: $originalWriteZoneId, ')
+          ..write('writeZoneId: $writeZoneId, ')
+          ..write('originalUtcOffsetMinutes: $originalUtcOffsetMinutes, ')
+          ..write('utcOffsetMinutes: $utcOffsetMinutes, ')
+          ..write('vocabularyVersion: $vocabularyVersion, ')
+          ..write('episodeId: $episodeId, ')
+          ..write('versionId: $versionId, ')
+          ..write('status: $status, ')
+          ..write('dailyKey: $dailyKey, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
+class $RecordTriedActionRowsTable extends RecordTriedActionRows
+    with TableInfo<$RecordTriedActionRowsTable, RecordTriedActionRow> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $RecordTriedActionRowsTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<String> id = GeneratedColumn<String>(
+    'id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _experiencedDayMeta = const VerificationMeta(
+    'experiencedDay',
+  );
+  @override
+  late final GeneratedColumn<int> experiencedDay = GeneratedColumn<int>(
+    'experienced_day',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _recordedAtMillisMeta = const VerificationMeta(
+    'recordedAtMillis',
+  );
+  @override
+  late final GeneratedColumn<int> recordedAtMillis = GeneratedColumn<int>(
+    'recorded_at_millis',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _updatedAtMillisMeta = const VerificationMeta(
+    'updatedAtMillis',
+  );
+  @override
+  late final GeneratedColumn<int> updatedAtMillis = GeneratedColumn<int>(
+    'updated_at_millis',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _originalProvenanceMeta =
+      const VerificationMeta('originalProvenance');
+  @override
+  late final GeneratedColumn<String> originalProvenance =
+      GeneratedColumn<String>(
+        'original_provenance',
+        aliasedName,
+        false,
+        type: DriftSqlType.string,
+        requiredDuringInsert: true,
+      );
+  static const VerificationMeta _provenanceMeta = const VerificationMeta(
+    'provenance',
+  );
+  @override
+  late final GeneratedColumn<String> provenance = GeneratedColumn<String>(
+    'provenance',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _originalWriteZoneIdMeta =
+      const VerificationMeta('originalWriteZoneId');
+  @override
+  late final GeneratedColumn<String> originalWriteZoneId =
+      GeneratedColumn<String>(
+        'original_write_zone_id',
+        aliasedName,
+        true,
+        type: DriftSqlType.string,
+        requiredDuringInsert: false,
+      );
+  static const VerificationMeta _writeZoneIdMeta = const VerificationMeta(
+    'writeZoneId',
+  );
+  @override
+  late final GeneratedColumn<String> writeZoneId = GeneratedColumn<String>(
+    'write_zone_id',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _originalUtcOffsetMinutesMeta =
+      const VerificationMeta('originalUtcOffsetMinutes');
+  @override
+  late final GeneratedColumn<int> originalUtcOffsetMinutes =
+      GeneratedColumn<int>(
+        'original_utc_offset_minutes',
+        aliasedName,
+        true,
+        type: DriftSqlType.int,
+        requiredDuringInsert: false,
+      );
+  static const VerificationMeta _utcOffsetMinutesMeta = const VerificationMeta(
+    'utcOffsetMinutes',
+  );
+  @override
+  late final GeneratedColumn<int> utcOffsetMinutes = GeneratedColumn<int>(
+    'utc_offset_minutes',
+    aliasedName,
+    true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _vocabularyVersionMeta = const VerificationMeta(
+    'vocabularyVersion',
+  );
+  @override
+  late final GeneratedColumn<int> vocabularyVersion = GeneratedColumn<int>(
+    'vocabulary_version',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(1),
+  );
+  static const VerificationMeta _durationBucketMeta = const VerificationMeta(
+    'durationBucket',
+  );
+  @override
+  late final GeneratedColumn<String> durationBucket = GeneratedColumn<String>(
+    'duration_bucket',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _durationLabelMeta = const VerificationMeta(
+    'durationLabel',
+  );
+  @override
+  late final GeneratedColumn<String> durationLabel = GeneratedColumn<String>(
+    'duration_label',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _durationCatalogVersionMeta =
+      const VerificationMeta('durationCatalogVersion');
+  @override
+  late final GeneratedColumn<int> durationCatalogVersion = GeneratedColumn<int>(
+    'duration_catalog_version',
+    aliasedName,
+    true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _exactMinutesMeta = const VerificationMeta(
+    'exactMinutes',
+  );
+  @override
+  late final GeneratedColumn<int> exactMinutes = GeneratedColumn<int>(
+    'exact_minutes',
+    aliasedName,
+    true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _bundleMeta = const VerificationMeta('bundle');
+  @override
+  late final GeneratedColumn<bool> bundle = GeneratedColumn<bool>(
+    'bundle',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: true,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("bundle" IN (0, 1))',
+    ),
+  );
+  static const VerificationMeta _statusMeta = const VerificationMeta('status');
+  @override
+  late final GeneratedColumn<String> status = GeneratedColumn<String>(
+    'status',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _targetMeta = const VerificationMeta('target');
+  @override
+  late final GeneratedColumn<String> target = GeneratedColumn<String>(
+    'target',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _sourceMeta = const VerificationMeta('source');
+  @override
+  late final GeneratedColumn<String> source = GeneratedColumn<String>(
+    'source',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _completionTokenMeta = const VerificationMeta(
+    'completionToken',
+  );
+  @override
+  late final GeneratedColumn<String> completionToken = GeneratedColumn<String>(
+    'completion_token',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _careSourceIdMeta = const VerificationMeta(
+    'careSourceId',
+  );
+  @override
+  late final GeneratedColumn<String> careSourceId = GeneratedColumn<String>(
+    'care_source_id',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _completionOccurredAtMillisMeta =
+      const VerificationMeta('completionOccurredAtMillis');
+  @override
+  late final GeneratedColumn<int> completionOccurredAtMillis =
+      GeneratedColumn<int>(
+        'completion_occurred_at_millis',
+        aliasedName,
+        true,
+        type: DriftSqlType.int,
+        requiredDuringInsert: false,
+      );
+  static const VerificationMeta _completionUtcOffsetMinutesMeta =
+      const VerificationMeta('completionUtcOffsetMinutes');
+  @override
+  late final GeneratedColumn<int> completionUtcOffsetMinutes =
+      GeneratedColumn<int>(
+        'completion_utc_offset_minutes',
+        aliasedName,
+        true,
+        type: DriftSqlType.int,
+        requiredDuringInsert: false,
+      );
+  @override
+  List<GeneratedColumn> get $columns => [
+    id,
+    experiencedDay,
+    recordedAtMillis,
+    updatedAtMillis,
+    originalProvenance,
+    provenance,
+    originalWriteZoneId,
+    writeZoneId,
+    originalUtcOffsetMinutes,
+    utcOffsetMinutes,
+    vocabularyVersion,
+    durationBucket,
+    durationLabel,
+    durationCatalogVersion,
+    exactMinutes,
+    bundle,
+    status,
+    target,
+    source,
+    completionToken,
+    careSourceId,
+    completionOccurredAtMillis,
+    completionUtcOffsetMinutes,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'record_tried_action_rows';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<RecordTriedActionRow> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    } else if (isInserting) {
+      context.missing(_idMeta);
+    }
+    if (data.containsKey('experienced_day')) {
+      context.handle(
+        _experiencedDayMeta,
+        experiencedDay.isAcceptableOrUnknown(
+          data['experienced_day']!,
+          _experiencedDayMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_experiencedDayMeta);
+    }
+    if (data.containsKey('recorded_at_millis')) {
+      context.handle(
+        _recordedAtMillisMeta,
+        recordedAtMillis.isAcceptableOrUnknown(
+          data['recorded_at_millis']!,
+          _recordedAtMillisMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_recordedAtMillisMeta);
+    }
+    if (data.containsKey('updated_at_millis')) {
+      context.handle(
+        _updatedAtMillisMeta,
+        updatedAtMillis.isAcceptableOrUnknown(
+          data['updated_at_millis']!,
+          _updatedAtMillisMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_updatedAtMillisMeta);
+    }
+    if (data.containsKey('original_provenance')) {
+      context.handle(
+        _originalProvenanceMeta,
+        originalProvenance.isAcceptableOrUnknown(
+          data['original_provenance']!,
+          _originalProvenanceMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_originalProvenanceMeta);
+    }
+    if (data.containsKey('provenance')) {
+      context.handle(
+        _provenanceMeta,
+        provenance.isAcceptableOrUnknown(data['provenance']!, _provenanceMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_provenanceMeta);
+    }
+    if (data.containsKey('original_write_zone_id')) {
+      context.handle(
+        _originalWriteZoneIdMeta,
+        originalWriteZoneId.isAcceptableOrUnknown(
+          data['original_write_zone_id']!,
+          _originalWriteZoneIdMeta,
+        ),
+      );
+    }
+    if (data.containsKey('write_zone_id')) {
+      context.handle(
+        _writeZoneIdMeta,
+        writeZoneId.isAcceptableOrUnknown(
+          data['write_zone_id']!,
+          _writeZoneIdMeta,
+        ),
+      );
+    }
+    if (data.containsKey('original_utc_offset_minutes')) {
+      context.handle(
+        _originalUtcOffsetMinutesMeta,
+        originalUtcOffsetMinutes.isAcceptableOrUnknown(
+          data['original_utc_offset_minutes']!,
+          _originalUtcOffsetMinutesMeta,
+        ),
+      );
+    }
+    if (data.containsKey('utc_offset_minutes')) {
+      context.handle(
+        _utcOffsetMinutesMeta,
+        utcOffsetMinutes.isAcceptableOrUnknown(
+          data['utc_offset_minutes']!,
+          _utcOffsetMinutesMeta,
+        ),
+      );
+    }
+    if (data.containsKey('vocabulary_version')) {
+      context.handle(
+        _vocabularyVersionMeta,
+        vocabularyVersion.isAcceptableOrUnknown(
+          data['vocabulary_version']!,
+          _vocabularyVersionMeta,
+        ),
+      );
+    }
+    if (data.containsKey('duration_bucket')) {
+      context.handle(
+        _durationBucketMeta,
+        durationBucket.isAcceptableOrUnknown(
+          data['duration_bucket']!,
+          _durationBucketMeta,
+        ),
+      );
+    }
+    if (data.containsKey('duration_label')) {
+      context.handle(
+        _durationLabelMeta,
+        durationLabel.isAcceptableOrUnknown(
+          data['duration_label']!,
+          _durationLabelMeta,
+        ),
+      );
+    }
+    if (data.containsKey('duration_catalog_version')) {
+      context.handle(
+        _durationCatalogVersionMeta,
+        durationCatalogVersion.isAcceptableOrUnknown(
+          data['duration_catalog_version']!,
+          _durationCatalogVersionMeta,
+        ),
+      );
+    }
+    if (data.containsKey('exact_minutes')) {
+      context.handle(
+        _exactMinutesMeta,
+        exactMinutes.isAcceptableOrUnknown(
+          data['exact_minutes']!,
+          _exactMinutesMeta,
+        ),
+      );
+    }
+    if (data.containsKey('bundle')) {
+      context.handle(
+        _bundleMeta,
+        bundle.isAcceptableOrUnknown(data['bundle']!, _bundleMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_bundleMeta);
+    }
+    if (data.containsKey('status')) {
+      context.handle(
+        _statusMeta,
+        status.isAcceptableOrUnknown(data['status']!, _statusMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_statusMeta);
+    }
+    if (data.containsKey('target')) {
+      context.handle(
+        _targetMeta,
+        target.isAcceptableOrUnknown(data['target']!, _targetMeta),
+      );
+    }
+    if (data.containsKey('source')) {
+      context.handle(
+        _sourceMeta,
+        source.isAcceptableOrUnknown(data['source']!, _sourceMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_sourceMeta);
+    }
+    if (data.containsKey('completion_token')) {
+      context.handle(
+        _completionTokenMeta,
+        completionToken.isAcceptableOrUnknown(
+          data['completion_token']!,
+          _completionTokenMeta,
+        ),
+      );
+    }
+    if (data.containsKey('care_source_id')) {
+      context.handle(
+        _careSourceIdMeta,
+        careSourceId.isAcceptableOrUnknown(
+          data['care_source_id']!,
+          _careSourceIdMeta,
+        ),
+      );
+    }
+    if (data.containsKey('completion_occurred_at_millis')) {
+      context.handle(
+        _completionOccurredAtMillisMeta,
+        completionOccurredAtMillis.isAcceptableOrUnknown(
+          data['completion_occurred_at_millis']!,
+          _completionOccurredAtMillisMeta,
+        ),
+      );
+    }
+    if (data.containsKey('completion_utc_offset_minutes')) {
+      context.handle(
+        _completionUtcOffsetMinutesMeta,
+        completionUtcOffsetMinutes.isAcceptableOrUnknown(
+          data['completion_utc_offset_minutes']!,
+          _completionUtcOffsetMinutesMeta,
+        ),
+      );
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  List<Set<GeneratedColumn>> get uniqueKeys => [
+    {completionToken},
+  ];
+  @override
+  RecordTriedActionRow map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return RecordTriedActionRow(
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}id'],
+      )!,
+      experiencedDay: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}experienced_day'],
+      )!,
+      recordedAtMillis: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}recorded_at_millis'],
+      )!,
+      updatedAtMillis: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}updated_at_millis'],
+      )!,
+      originalProvenance: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}original_provenance'],
+      )!,
+      provenance: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}provenance'],
+      )!,
+      originalWriteZoneId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}original_write_zone_id'],
+      ),
+      writeZoneId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}write_zone_id'],
+      ),
+      originalUtcOffsetMinutes: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}original_utc_offset_minutes'],
+      ),
+      utcOffsetMinutes: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}utc_offset_minutes'],
+      ),
+      vocabularyVersion: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}vocabulary_version'],
+      )!,
+      durationBucket: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}duration_bucket'],
+      ),
+      durationLabel: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}duration_label'],
+      ),
+      durationCatalogVersion: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}duration_catalog_version'],
+      ),
+      exactMinutes: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}exact_minutes'],
+      ),
+      bundle: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}bundle'],
+      )!,
+      status: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}status'],
+      )!,
+      target: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}target'],
+      ),
+      source: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}source'],
+      )!,
+      completionToken: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}completion_token'],
+      ),
+      careSourceId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}care_source_id'],
+      ),
+      completionOccurredAtMillis: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}completion_occurred_at_millis'],
+      ),
+      completionUtcOffsetMinutes: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}completion_utc_offset_minutes'],
+      ),
+    );
+  }
+
+  @override
+  $RecordTriedActionRowsTable createAlias(String alias) {
+    return $RecordTriedActionRowsTable(attachedDatabase, alias);
+  }
+}
+
+class RecordTriedActionRow extends DataClass
+    implements Insertable<RecordTriedActionRow> {
+  final String id;
+  final int experiencedDay;
+  final int recordedAtMillis;
+  final int updatedAtMillis;
+  final String originalProvenance;
+  final String provenance;
+  final String? originalWriteZoneId;
+  final String? writeZoneId;
+  final int? originalUtcOffsetMinutes;
+  final int? utcOffsetMinutes;
+  final int vocabularyVersion;
+  final String? durationBucket;
+  final String? durationLabel;
+  final int? durationCatalogVersion;
+  final int? exactMinutes;
+  final bool bundle;
+  final String status;
+  final String? target;
+  final String source;
+  final String? completionToken;
+  final String? careSourceId;
+  final int? completionOccurredAtMillis;
+  final int? completionUtcOffsetMinutes;
+  const RecordTriedActionRow({
+    required this.id,
+    required this.experiencedDay,
+    required this.recordedAtMillis,
+    required this.updatedAtMillis,
+    required this.originalProvenance,
+    required this.provenance,
+    this.originalWriteZoneId,
+    this.writeZoneId,
+    this.originalUtcOffsetMinutes,
+    this.utcOffsetMinutes,
+    required this.vocabularyVersion,
+    this.durationBucket,
+    this.durationLabel,
+    this.durationCatalogVersion,
+    this.exactMinutes,
+    required this.bundle,
+    required this.status,
+    this.target,
+    required this.source,
+    this.completionToken,
+    this.careSourceId,
+    this.completionOccurredAtMillis,
+    this.completionUtcOffsetMinutes,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<String>(id);
+    map['experienced_day'] = Variable<int>(experiencedDay);
+    map['recorded_at_millis'] = Variable<int>(recordedAtMillis);
+    map['updated_at_millis'] = Variable<int>(updatedAtMillis);
+    map['original_provenance'] = Variable<String>(originalProvenance);
+    map['provenance'] = Variable<String>(provenance);
+    if (!nullToAbsent || originalWriteZoneId != null) {
+      map['original_write_zone_id'] = Variable<String>(originalWriteZoneId);
+    }
+    if (!nullToAbsent || writeZoneId != null) {
+      map['write_zone_id'] = Variable<String>(writeZoneId);
+    }
+    if (!nullToAbsent || originalUtcOffsetMinutes != null) {
+      map['original_utc_offset_minutes'] = Variable<int>(
+        originalUtcOffsetMinutes,
+      );
+    }
+    if (!nullToAbsent || utcOffsetMinutes != null) {
+      map['utc_offset_minutes'] = Variable<int>(utcOffsetMinutes);
+    }
+    map['vocabulary_version'] = Variable<int>(vocabularyVersion);
+    if (!nullToAbsent || durationBucket != null) {
+      map['duration_bucket'] = Variable<String>(durationBucket);
+    }
+    if (!nullToAbsent || durationLabel != null) {
+      map['duration_label'] = Variable<String>(durationLabel);
+    }
+    if (!nullToAbsent || durationCatalogVersion != null) {
+      map['duration_catalog_version'] = Variable<int>(durationCatalogVersion);
+    }
+    if (!nullToAbsent || exactMinutes != null) {
+      map['exact_minutes'] = Variable<int>(exactMinutes);
+    }
+    map['bundle'] = Variable<bool>(bundle);
+    map['status'] = Variable<String>(status);
+    if (!nullToAbsent || target != null) {
+      map['target'] = Variable<String>(target);
+    }
+    map['source'] = Variable<String>(source);
+    if (!nullToAbsent || completionToken != null) {
+      map['completion_token'] = Variable<String>(completionToken);
+    }
+    if (!nullToAbsent || careSourceId != null) {
+      map['care_source_id'] = Variable<String>(careSourceId);
+    }
+    if (!nullToAbsent || completionOccurredAtMillis != null) {
+      map['completion_occurred_at_millis'] = Variable<int>(
+        completionOccurredAtMillis,
+      );
+    }
+    if (!nullToAbsent || completionUtcOffsetMinutes != null) {
+      map['completion_utc_offset_minutes'] = Variable<int>(
+        completionUtcOffsetMinutes,
+      );
+    }
+    return map;
+  }
+
+  RecordTriedActionRowsCompanion toCompanion(bool nullToAbsent) {
+    return RecordTriedActionRowsCompanion(
+      id: Value(id),
+      experiencedDay: Value(experiencedDay),
+      recordedAtMillis: Value(recordedAtMillis),
+      updatedAtMillis: Value(updatedAtMillis),
+      originalProvenance: Value(originalProvenance),
+      provenance: Value(provenance),
+      originalWriteZoneId: originalWriteZoneId == null && nullToAbsent
+          ? const Value.absent()
+          : Value(originalWriteZoneId),
+      writeZoneId: writeZoneId == null && nullToAbsent
+          ? const Value.absent()
+          : Value(writeZoneId),
+      originalUtcOffsetMinutes: originalUtcOffsetMinutes == null && nullToAbsent
+          ? const Value.absent()
+          : Value(originalUtcOffsetMinutes),
+      utcOffsetMinutes: utcOffsetMinutes == null && nullToAbsent
+          ? const Value.absent()
+          : Value(utcOffsetMinutes),
+      vocabularyVersion: Value(vocabularyVersion),
+      durationBucket: durationBucket == null && nullToAbsent
+          ? const Value.absent()
+          : Value(durationBucket),
+      durationLabel: durationLabel == null && nullToAbsent
+          ? const Value.absent()
+          : Value(durationLabel),
+      durationCatalogVersion: durationCatalogVersion == null && nullToAbsent
+          ? const Value.absent()
+          : Value(durationCatalogVersion),
+      exactMinutes: exactMinutes == null && nullToAbsent
+          ? const Value.absent()
+          : Value(exactMinutes),
+      bundle: Value(bundle),
+      status: Value(status),
+      target: target == null && nullToAbsent
+          ? const Value.absent()
+          : Value(target),
+      source: Value(source),
+      completionToken: completionToken == null && nullToAbsent
+          ? const Value.absent()
+          : Value(completionToken),
+      careSourceId: careSourceId == null && nullToAbsent
+          ? const Value.absent()
+          : Value(careSourceId),
+      completionOccurredAtMillis:
+          completionOccurredAtMillis == null && nullToAbsent
+          ? const Value.absent()
+          : Value(completionOccurredAtMillis),
+      completionUtcOffsetMinutes:
+          completionUtcOffsetMinutes == null && nullToAbsent
+          ? const Value.absent()
+          : Value(completionUtcOffsetMinutes),
+    );
+  }
+
+  factory RecordTriedActionRow.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return RecordTriedActionRow(
+      id: serializer.fromJson<String>(json['id']),
+      experiencedDay: serializer.fromJson<int>(json['experiencedDay']),
+      recordedAtMillis: serializer.fromJson<int>(json['recordedAtMillis']),
+      updatedAtMillis: serializer.fromJson<int>(json['updatedAtMillis']),
+      originalProvenance: serializer.fromJson<String>(
+        json['originalProvenance'],
+      ),
+      provenance: serializer.fromJson<String>(json['provenance']),
+      originalWriteZoneId: serializer.fromJson<String?>(
+        json['originalWriteZoneId'],
+      ),
+      writeZoneId: serializer.fromJson<String?>(json['writeZoneId']),
+      originalUtcOffsetMinutes: serializer.fromJson<int?>(
+        json['originalUtcOffsetMinutes'],
+      ),
+      utcOffsetMinutes: serializer.fromJson<int?>(json['utcOffsetMinutes']),
+      vocabularyVersion: serializer.fromJson<int>(json['vocabularyVersion']),
+      durationBucket: serializer.fromJson<String?>(json['durationBucket']),
+      durationLabel: serializer.fromJson<String?>(json['durationLabel']),
+      durationCatalogVersion: serializer.fromJson<int?>(
+        json['durationCatalogVersion'],
+      ),
+      exactMinutes: serializer.fromJson<int?>(json['exactMinutes']),
+      bundle: serializer.fromJson<bool>(json['bundle']),
+      status: serializer.fromJson<String>(json['status']),
+      target: serializer.fromJson<String?>(json['target']),
+      source: serializer.fromJson<String>(json['source']),
+      completionToken: serializer.fromJson<String?>(json['completionToken']),
+      careSourceId: serializer.fromJson<String?>(json['careSourceId']),
+      completionOccurredAtMillis: serializer.fromJson<int?>(
+        json['completionOccurredAtMillis'],
+      ),
+      completionUtcOffsetMinutes: serializer.fromJson<int?>(
+        json['completionUtcOffsetMinutes'],
+      ),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<String>(id),
+      'experiencedDay': serializer.toJson<int>(experiencedDay),
+      'recordedAtMillis': serializer.toJson<int>(recordedAtMillis),
+      'updatedAtMillis': serializer.toJson<int>(updatedAtMillis),
+      'originalProvenance': serializer.toJson<String>(originalProvenance),
+      'provenance': serializer.toJson<String>(provenance),
+      'originalWriteZoneId': serializer.toJson<String?>(originalWriteZoneId),
+      'writeZoneId': serializer.toJson<String?>(writeZoneId),
+      'originalUtcOffsetMinutes': serializer.toJson<int?>(
+        originalUtcOffsetMinutes,
+      ),
+      'utcOffsetMinutes': serializer.toJson<int?>(utcOffsetMinutes),
+      'vocabularyVersion': serializer.toJson<int>(vocabularyVersion),
+      'durationBucket': serializer.toJson<String?>(durationBucket),
+      'durationLabel': serializer.toJson<String?>(durationLabel),
+      'durationCatalogVersion': serializer.toJson<int?>(durationCatalogVersion),
+      'exactMinutes': serializer.toJson<int?>(exactMinutes),
+      'bundle': serializer.toJson<bool>(bundle),
+      'status': serializer.toJson<String>(status),
+      'target': serializer.toJson<String?>(target),
+      'source': serializer.toJson<String>(source),
+      'completionToken': serializer.toJson<String?>(completionToken),
+      'careSourceId': serializer.toJson<String?>(careSourceId),
+      'completionOccurredAtMillis': serializer.toJson<int?>(
+        completionOccurredAtMillis,
+      ),
+      'completionUtcOffsetMinutes': serializer.toJson<int?>(
+        completionUtcOffsetMinutes,
+      ),
+    };
+  }
+
+  RecordTriedActionRow copyWith({
+    String? id,
+    int? experiencedDay,
+    int? recordedAtMillis,
+    int? updatedAtMillis,
+    String? originalProvenance,
+    String? provenance,
+    Value<String?> originalWriteZoneId = const Value.absent(),
+    Value<String?> writeZoneId = const Value.absent(),
+    Value<int?> originalUtcOffsetMinutes = const Value.absent(),
+    Value<int?> utcOffsetMinutes = const Value.absent(),
+    int? vocabularyVersion,
+    Value<String?> durationBucket = const Value.absent(),
+    Value<String?> durationLabel = const Value.absent(),
+    Value<int?> durationCatalogVersion = const Value.absent(),
+    Value<int?> exactMinutes = const Value.absent(),
+    bool? bundle,
+    String? status,
+    Value<String?> target = const Value.absent(),
+    String? source,
+    Value<String?> completionToken = const Value.absent(),
+    Value<String?> careSourceId = const Value.absent(),
+    Value<int?> completionOccurredAtMillis = const Value.absent(),
+    Value<int?> completionUtcOffsetMinutes = const Value.absent(),
+  }) => RecordTriedActionRow(
+    id: id ?? this.id,
+    experiencedDay: experiencedDay ?? this.experiencedDay,
+    recordedAtMillis: recordedAtMillis ?? this.recordedAtMillis,
+    updatedAtMillis: updatedAtMillis ?? this.updatedAtMillis,
+    originalProvenance: originalProvenance ?? this.originalProvenance,
+    provenance: provenance ?? this.provenance,
+    originalWriteZoneId: originalWriteZoneId.present
+        ? originalWriteZoneId.value
+        : this.originalWriteZoneId,
+    writeZoneId: writeZoneId.present ? writeZoneId.value : this.writeZoneId,
+    originalUtcOffsetMinutes: originalUtcOffsetMinutes.present
+        ? originalUtcOffsetMinutes.value
+        : this.originalUtcOffsetMinutes,
+    utcOffsetMinutes: utcOffsetMinutes.present
+        ? utcOffsetMinutes.value
+        : this.utcOffsetMinutes,
+    vocabularyVersion: vocabularyVersion ?? this.vocabularyVersion,
+    durationBucket: durationBucket.present
+        ? durationBucket.value
+        : this.durationBucket,
+    durationLabel: durationLabel.present
+        ? durationLabel.value
+        : this.durationLabel,
+    durationCatalogVersion: durationCatalogVersion.present
+        ? durationCatalogVersion.value
+        : this.durationCatalogVersion,
+    exactMinutes: exactMinutes.present ? exactMinutes.value : this.exactMinutes,
+    bundle: bundle ?? this.bundle,
+    status: status ?? this.status,
+    target: target.present ? target.value : this.target,
+    source: source ?? this.source,
+    completionToken: completionToken.present
+        ? completionToken.value
+        : this.completionToken,
+    careSourceId: careSourceId.present ? careSourceId.value : this.careSourceId,
+    completionOccurredAtMillis: completionOccurredAtMillis.present
+        ? completionOccurredAtMillis.value
+        : this.completionOccurredAtMillis,
+    completionUtcOffsetMinutes: completionUtcOffsetMinutes.present
+        ? completionUtcOffsetMinutes.value
+        : this.completionUtcOffsetMinutes,
+  );
+  RecordTriedActionRow copyWithCompanion(RecordTriedActionRowsCompanion data) {
+    return RecordTriedActionRow(
+      id: data.id.present ? data.id.value : this.id,
+      experiencedDay: data.experiencedDay.present
+          ? data.experiencedDay.value
+          : this.experiencedDay,
+      recordedAtMillis: data.recordedAtMillis.present
+          ? data.recordedAtMillis.value
+          : this.recordedAtMillis,
+      updatedAtMillis: data.updatedAtMillis.present
+          ? data.updatedAtMillis.value
+          : this.updatedAtMillis,
+      originalProvenance: data.originalProvenance.present
+          ? data.originalProvenance.value
+          : this.originalProvenance,
+      provenance: data.provenance.present
+          ? data.provenance.value
+          : this.provenance,
+      originalWriteZoneId: data.originalWriteZoneId.present
+          ? data.originalWriteZoneId.value
+          : this.originalWriteZoneId,
+      writeZoneId: data.writeZoneId.present
+          ? data.writeZoneId.value
+          : this.writeZoneId,
+      originalUtcOffsetMinutes: data.originalUtcOffsetMinutes.present
+          ? data.originalUtcOffsetMinutes.value
+          : this.originalUtcOffsetMinutes,
+      utcOffsetMinutes: data.utcOffsetMinutes.present
+          ? data.utcOffsetMinutes.value
+          : this.utcOffsetMinutes,
+      vocabularyVersion: data.vocabularyVersion.present
+          ? data.vocabularyVersion.value
+          : this.vocabularyVersion,
+      durationBucket: data.durationBucket.present
+          ? data.durationBucket.value
+          : this.durationBucket,
+      durationLabel: data.durationLabel.present
+          ? data.durationLabel.value
+          : this.durationLabel,
+      durationCatalogVersion: data.durationCatalogVersion.present
+          ? data.durationCatalogVersion.value
+          : this.durationCatalogVersion,
+      exactMinutes: data.exactMinutes.present
+          ? data.exactMinutes.value
+          : this.exactMinutes,
+      bundle: data.bundle.present ? data.bundle.value : this.bundle,
+      status: data.status.present ? data.status.value : this.status,
+      target: data.target.present ? data.target.value : this.target,
+      source: data.source.present ? data.source.value : this.source,
+      completionToken: data.completionToken.present
+          ? data.completionToken.value
+          : this.completionToken,
+      careSourceId: data.careSourceId.present
+          ? data.careSourceId.value
+          : this.careSourceId,
+      completionOccurredAtMillis: data.completionOccurredAtMillis.present
+          ? data.completionOccurredAtMillis.value
+          : this.completionOccurredAtMillis,
+      completionUtcOffsetMinutes: data.completionUtcOffsetMinutes.present
+          ? data.completionUtcOffsetMinutes.value
+          : this.completionUtcOffsetMinutes,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('RecordTriedActionRow(')
+          ..write('id: $id, ')
+          ..write('experiencedDay: $experiencedDay, ')
+          ..write('recordedAtMillis: $recordedAtMillis, ')
+          ..write('updatedAtMillis: $updatedAtMillis, ')
+          ..write('originalProvenance: $originalProvenance, ')
+          ..write('provenance: $provenance, ')
+          ..write('originalWriteZoneId: $originalWriteZoneId, ')
+          ..write('writeZoneId: $writeZoneId, ')
+          ..write('originalUtcOffsetMinutes: $originalUtcOffsetMinutes, ')
+          ..write('utcOffsetMinutes: $utcOffsetMinutes, ')
+          ..write('vocabularyVersion: $vocabularyVersion, ')
+          ..write('durationBucket: $durationBucket, ')
+          ..write('durationLabel: $durationLabel, ')
+          ..write('durationCatalogVersion: $durationCatalogVersion, ')
+          ..write('exactMinutes: $exactMinutes, ')
+          ..write('bundle: $bundle, ')
+          ..write('status: $status, ')
+          ..write('target: $target, ')
+          ..write('source: $source, ')
+          ..write('completionToken: $completionToken, ')
+          ..write('careSourceId: $careSourceId, ')
+          ..write('completionOccurredAtMillis: $completionOccurredAtMillis, ')
+          ..write('completionUtcOffsetMinutes: $completionUtcOffsetMinutes')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hashAll([
+    id,
+    experiencedDay,
+    recordedAtMillis,
+    updatedAtMillis,
+    originalProvenance,
+    provenance,
+    originalWriteZoneId,
+    writeZoneId,
+    originalUtcOffsetMinutes,
+    utcOffsetMinutes,
+    vocabularyVersion,
+    durationBucket,
+    durationLabel,
+    durationCatalogVersion,
+    exactMinutes,
+    bundle,
+    status,
+    target,
+    source,
+    completionToken,
+    careSourceId,
+    completionOccurredAtMillis,
+    completionUtcOffsetMinutes,
+  ]);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is RecordTriedActionRow &&
+          other.id == this.id &&
+          other.experiencedDay == this.experiencedDay &&
+          other.recordedAtMillis == this.recordedAtMillis &&
+          other.updatedAtMillis == this.updatedAtMillis &&
+          other.originalProvenance == this.originalProvenance &&
+          other.provenance == this.provenance &&
+          other.originalWriteZoneId == this.originalWriteZoneId &&
+          other.writeZoneId == this.writeZoneId &&
+          other.originalUtcOffsetMinutes == this.originalUtcOffsetMinutes &&
+          other.utcOffsetMinutes == this.utcOffsetMinutes &&
+          other.vocabularyVersion == this.vocabularyVersion &&
+          other.durationBucket == this.durationBucket &&
+          other.durationLabel == this.durationLabel &&
+          other.durationCatalogVersion == this.durationCatalogVersion &&
+          other.exactMinutes == this.exactMinutes &&
+          other.bundle == this.bundle &&
+          other.status == this.status &&
+          other.target == this.target &&
+          other.source == this.source &&
+          other.completionToken == this.completionToken &&
+          other.careSourceId == this.careSourceId &&
+          other.completionOccurredAtMillis == this.completionOccurredAtMillis &&
+          other.completionUtcOffsetMinutes == this.completionUtcOffsetMinutes);
+}
+
+class RecordTriedActionRowsCompanion
+    extends UpdateCompanion<RecordTriedActionRow> {
+  final Value<String> id;
+  final Value<int> experiencedDay;
+  final Value<int> recordedAtMillis;
+  final Value<int> updatedAtMillis;
+  final Value<String> originalProvenance;
+  final Value<String> provenance;
+  final Value<String?> originalWriteZoneId;
+  final Value<String?> writeZoneId;
+  final Value<int?> originalUtcOffsetMinutes;
+  final Value<int?> utcOffsetMinutes;
+  final Value<int> vocabularyVersion;
+  final Value<String?> durationBucket;
+  final Value<String?> durationLabel;
+  final Value<int?> durationCatalogVersion;
+  final Value<int?> exactMinutes;
+  final Value<bool> bundle;
+  final Value<String> status;
+  final Value<String?> target;
+  final Value<String> source;
+  final Value<String?> completionToken;
+  final Value<String?> careSourceId;
+  final Value<int?> completionOccurredAtMillis;
+  final Value<int?> completionUtcOffsetMinutes;
+  final Value<int> rowid;
+  const RecordTriedActionRowsCompanion({
+    this.id = const Value.absent(),
+    this.experiencedDay = const Value.absent(),
+    this.recordedAtMillis = const Value.absent(),
+    this.updatedAtMillis = const Value.absent(),
+    this.originalProvenance = const Value.absent(),
+    this.provenance = const Value.absent(),
+    this.originalWriteZoneId = const Value.absent(),
+    this.writeZoneId = const Value.absent(),
+    this.originalUtcOffsetMinutes = const Value.absent(),
+    this.utcOffsetMinutes = const Value.absent(),
+    this.vocabularyVersion = const Value.absent(),
+    this.durationBucket = const Value.absent(),
+    this.durationLabel = const Value.absent(),
+    this.durationCatalogVersion = const Value.absent(),
+    this.exactMinutes = const Value.absent(),
+    this.bundle = const Value.absent(),
+    this.status = const Value.absent(),
+    this.target = const Value.absent(),
+    this.source = const Value.absent(),
+    this.completionToken = const Value.absent(),
+    this.careSourceId = const Value.absent(),
+    this.completionOccurredAtMillis = const Value.absent(),
+    this.completionUtcOffsetMinutes = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  RecordTriedActionRowsCompanion.insert({
+    required String id,
+    required int experiencedDay,
+    required int recordedAtMillis,
+    required int updatedAtMillis,
+    required String originalProvenance,
+    required String provenance,
+    this.originalWriteZoneId = const Value.absent(),
+    this.writeZoneId = const Value.absent(),
+    this.originalUtcOffsetMinutes = const Value.absent(),
+    this.utcOffsetMinutes = const Value.absent(),
+    this.vocabularyVersion = const Value.absent(),
+    this.durationBucket = const Value.absent(),
+    this.durationLabel = const Value.absent(),
+    this.durationCatalogVersion = const Value.absent(),
+    this.exactMinutes = const Value.absent(),
+    required bool bundle,
+    required String status,
+    this.target = const Value.absent(),
+    required String source,
+    this.completionToken = const Value.absent(),
+    this.careSourceId = const Value.absent(),
+    this.completionOccurredAtMillis = const Value.absent(),
+    this.completionUtcOffsetMinutes = const Value.absent(),
+    this.rowid = const Value.absent(),
+  }) : id = Value(id),
+       experiencedDay = Value(experiencedDay),
+       recordedAtMillis = Value(recordedAtMillis),
+       updatedAtMillis = Value(updatedAtMillis),
+       originalProvenance = Value(originalProvenance),
+       provenance = Value(provenance),
+       bundle = Value(bundle),
+       status = Value(status),
+       source = Value(source);
+  static Insertable<RecordTriedActionRow> custom({
+    Expression<String>? id,
+    Expression<int>? experiencedDay,
+    Expression<int>? recordedAtMillis,
+    Expression<int>? updatedAtMillis,
+    Expression<String>? originalProvenance,
+    Expression<String>? provenance,
+    Expression<String>? originalWriteZoneId,
+    Expression<String>? writeZoneId,
+    Expression<int>? originalUtcOffsetMinutes,
+    Expression<int>? utcOffsetMinutes,
+    Expression<int>? vocabularyVersion,
+    Expression<String>? durationBucket,
+    Expression<String>? durationLabel,
+    Expression<int>? durationCatalogVersion,
+    Expression<int>? exactMinutes,
+    Expression<bool>? bundle,
+    Expression<String>? status,
+    Expression<String>? target,
+    Expression<String>? source,
+    Expression<String>? completionToken,
+    Expression<String>? careSourceId,
+    Expression<int>? completionOccurredAtMillis,
+    Expression<int>? completionUtcOffsetMinutes,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (experiencedDay != null) 'experienced_day': experiencedDay,
+      if (recordedAtMillis != null) 'recorded_at_millis': recordedAtMillis,
+      if (updatedAtMillis != null) 'updated_at_millis': updatedAtMillis,
+      if (originalProvenance != null) 'original_provenance': originalProvenance,
+      if (provenance != null) 'provenance': provenance,
+      if (originalWriteZoneId != null)
+        'original_write_zone_id': originalWriteZoneId,
+      if (writeZoneId != null) 'write_zone_id': writeZoneId,
+      if (originalUtcOffsetMinutes != null)
+        'original_utc_offset_minutes': originalUtcOffsetMinutes,
+      if (utcOffsetMinutes != null) 'utc_offset_minutes': utcOffsetMinutes,
+      if (vocabularyVersion != null) 'vocabulary_version': vocabularyVersion,
+      if (durationBucket != null) 'duration_bucket': durationBucket,
+      if (durationLabel != null) 'duration_label': durationLabel,
+      if (durationCatalogVersion != null)
+        'duration_catalog_version': durationCatalogVersion,
+      if (exactMinutes != null) 'exact_minutes': exactMinutes,
+      if (bundle != null) 'bundle': bundle,
+      if (status != null) 'status': status,
+      if (target != null) 'target': target,
+      if (source != null) 'source': source,
+      if (completionToken != null) 'completion_token': completionToken,
+      if (careSourceId != null) 'care_source_id': careSourceId,
+      if (completionOccurredAtMillis != null)
+        'completion_occurred_at_millis': completionOccurredAtMillis,
+      if (completionUtcOffsetMinutes != null)
+        'completion_utc_offset_minutes': completionUtcOffsetMinutes,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  RecordTriedActionRowsCompanion copyWith({
+    Value<String>? id,
+    Value<int>? experiencedDay,
+    Value<int>? recordedAtMillis,
+    Value<int>? updatedAtMillis,
+    Value<String>? originalProvenance,
+    Value<String>? provenance,
+    Value<String?>? originalWriteZoneId,
+    Value<String?>? writeZoneId,
+    Value<int?>? originalUtcOffsetMinutes,
+    Value<int?>? utcOffsetMinutes,
+    Value<int>? vocabularyVersion,
+    Value<String?>? durationBucket,
+    Value<String?>? durationLabel,
+    Value<int?>? durationCatalogVersion,
+    Value<int?>? exactMinutes,
+    Value<bool>? bundle,
+    Value<String>? status,
+    Value<String?>? target,
+    Value<String>? source,
+    Value<String?>? completionToken,
+    Value<String?>? careSourceId,
+    Value<int?>? completionOccurredAtMillis,
+    Value<int?>? completionUtcOffsetMinutes,
+    Value<int>? rowid,
+  }) {
+    return RecordTriedActionRowsCompanion(
+      id: id ?? this.id,
+      experiencedDay: experiencedDay ?? this.experiencedDay,
+      recordedAtMillis: recordedAtMillis ?? this.recordedAtMillis,
+      updatedAtMillis: updatedAtMillis ?? this.updatedAtMillis,
+      originalProvenance: originalProvenance ?? this.originalProvenance,
+      provenance: provenance ?? this.provenance,
+      originalWriteZoneId: originalWriteZoneId ?? this.originalWriteZoneId,
+      writeZoneId: writeZoneId ?? this.writeZoneId,
+      originalUtcOffsetMinutes:
+          originalUtcOffsetMinutes ?? this.originalUtcOffsetMinutes,
+      utcOffsetMinutes: utcOffsetMinutes ?? this.utcOffsetMinutes,
+      vocabularyVersion: vocabularyVersion ?? this.vocabularyVersion,
+      durationBucket: durationBucket ?? this.durationBucket,
+      durationLabel: durationLabel ?? this.durationLabel,
+      durationCatalogVersion:
+          durationCatalogVersion ?? this.durationCatalogVersion,
+      exactMinutes: exactMinutes ?? this.exactMinutes,
+      bundle: bundle ?? this.bundle,
+      status: status ?? this.status,
+      target: target ?? this.target,
+      source: source ?? this.source,
+      completionToken: completionToken ?? this.completionToken,
+      careSourceId: careSourceId ?? this.careSourceId,
+      completionOccurredAtMillis:
+          completionOccurredAtMillis ?? this.completionOccurredAtMillis,
+      completionUtcOffsetMinutes:
+          completionUtcOffsetMinutes ?? this.completionUtcOffsetMinutes,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<String>(id.value);
+    }
+    if (experiencedDay.present) {
+      map['experienced_day'] = Variable<int>(experiencedDay.value);
+    }
+    if (recordedAtMillis.present) {
+      map['recorded_at_millis'] = Variable<int>(recordedAtMillis.value);
+    }
+    if (updatedAtMillis.present) {
+      map['updated_at_millis'] = Variable<int>(updatedAtMillis.value);
+    }
+    if (originalProvenance.present) {
+      map['original_provenance'] = Variable<String>(originalProvenance.value);
+    }
+    if (provenance.present) {
+      map['provenance'] = Variable<String>(provenance.value);
+    }
+    if (originalWriteZoneId.present) {
+      map['original_write_zone_id'] = Variable<String>(
+        originalWriteZoneId.value,
+      );
+    }
+    if (writeZoneId.present) {
+      map['write_zone_id'] = Variable<String>(writeZoneId.value);
+    }
+    if (originalUtcOffsetMinutes.present) {
+      map['original_utc_offset_minutes'] = Variable<int>(
+        originalUtcOffsetMinutes.value,
+      );
+    }
+    if (utcOffsetMinutes.present) {
+      map['utc_offset_minutes'] = Variable<int>(utcOffsetMinutes.value);
+    }
+    if (vocabularyVersion.present) {
+      map['vocabulary_version'] = Variable<int>(vocabularyVersion.value);
+    }
+    if (durationBucket.present) {
+      map['duration_bucket'] = Variable<String>(durationBucket.value);
+    }
+    if (durationLabel.present) {
+      map['duration_label'] = Variable<String>(durationLabel.value);
+    }
+    if (durationCatalogVersion.present) {
+      map['duration_catalog_version'] = Variable<int>(
+        durationCatalogVersion.value,
+      );
+    }
+    if (exactMinutes.present) {
+      map['exact_minutes'] = Variable<int>(exactMinutes.value);
+    }
+    if (bundle.present) {
+      map['bundle'] = Variable<bool>(bundle.value);
+    }
+    if (status.present) {
+      map['status'] = Variable<String>(status.value);
+    }
+    if (target.present) {
+      map['target'] = Variable<String>(target.value);
+    }
+    if (source.present) {
+      map['source'] = Variable<String>(source.value);
+    }
+    if (completionToken.present) {
+      map['completion_token'] = Variable<String>(completionToken.value);
+    }
+    if (careSourceId.present) {
+      map['care_source_id'] = Variable<String>(careSourceId.value);
+    }
+    if (completionOccurredAtMillis.present) {
+      map['completion_occurred_at_millis'] = Variable<int>(
+        completionOccurredAtMillis.value,
+      );
+    }
+    if (completionUtcOffsetMinutes.present) {
+      map['completion_utc_offset_minutes'] = Variable<int>(
+        completionUtcOffsetMinutes.value,
+      );
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('RecordTriedActionRowsCompanion(')
+          ..write('id: $id, ')
+          ..write('experiencedDay: $experiencedDay, ')
+          ..write('recordedAtMillis: $recordedAtMillis, ')
+          ..write('updatedAtMillis: $updatedAtMillis, ')
+          ..write('originalProvenance: $originalProvenance, ')
+          ..write('provenance: $provenance, ')
+          ..write('originalWriteZoneId: $originalWriteZoneId, ')
+          ..write('writeZoneId: $writeZoneId, ')
+          ..write('originalUtcOffsetMinutes: $originalUtcOffsetMinutes, ')
+          ..write('utcOffsetMinutes: $utcOffsetMinutes, ')
+          ..write('vocabularyVersion: $vocabularyVersion, ')
+          ..write('durationBucket: $durationBucket, ')
+          ..write('durationLabel: $durationLabel, ')
+          ..write('durationCatalogVersion: $durationCatalogVersion, ')
+          ..write('exactMinutes: $exactMinutes, ')
+          ..write('bundle: $bundle, ')
+          ..write('status: $status, ')
+          ..write('target: $target, ')
+          ..write('source: $source, ')
+          ..write('completionToken: $completionToken, ')
+          ..write('careSourceId: $careSourceId, ')
+          ..write('completionOccurredAtMillis: $completionOccurredAtMillis, ')
+          ..write('completionUtcOffsetMinutes: $completionUtcOffsetMinutes, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
+class $RecordTriedActionItemRowsTable extends RecordTriedActionItemRows
+    with TableInfo<$RecordTriedActionItemRowsTable, RecordTriedActionItemRow> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $RecordTriedActionItemRowsTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _actionIdMeta = const VerificationMeta(
+    'actionId',
+  );
+  @override
+  late final GeneratedColumn<String> actionId = GeneratedColumn<String>(
+    'action_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _positionMeta = const VerificationMeta(
+    'position',
+  );
+  @override
+  late final GeneratedColumn<int> position = GeneratedColumn<int>(
+    'position',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _kindMeta = const VerificationMeta('kind');
+  @override
+  late final GeneratedColumn<String> kind = GeneratedColumn<String>(
+    'kind',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _customNameMeta = const VerificationMeta(
+    'customName',
+  );
+  @override
+  late final GeneratedColumn<String> customName = GeneratedColumn<String>(
+    'custom_name',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [actionId, position, kind, customName];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'record_tried_action_item_rows';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<RecordTriedActionItemRow> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('action_id')) {
+      context.handle(
+        _actionIdMeta,
+        actionId.isAcceptableOrUnknown(data['action_id']!, _actionIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_actionIdMeta);
+    }
+    if (data.containsKey('position')) {
+      context.handle(
+        _positionMeta,
+        position.isAcceptableOrUnknown(data['position']!, _positionMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_positionMeta);
+    }
+    if (data.containsKey('kind')) {
+      context.handle(
+        _kindMeta,
+        kind.isAcceptableOrUnknown(data['kind']!, _kindMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_kindMeta);
+    }
+    if (data.containsKey('custom_name')) {
+      context.handle(
+        _customNameMeta,
+        customName.isAcceptableOrUnknown(data['custom_name']!, _customNameMeta),
+      );
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {actionId, position};
+  @override
+  RecordTriedActionItemRow map(
+    Map<String, dynamic> data, {
+    String? tablePrefix,
+  }) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return RecordTriedActionItemRow(
+      actionId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}action_id'],
+      )!,
+      position: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}position'],
+      )!,
+      kind: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}kind'],
+      )!,
+      customName: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}custom_name'],
+      ),
+    );
+  }
+
+  @override
+  $RecordTriedActionItemRowsTable createAlias(String alias) {
+    return $RecordTriedActionItemRowsTable(attachedDatabase, alias);
+  }
+}
+
+class RecordTriedActionItemRow extends DataClass
+    implements Insertable<RecordTriedActionItemRow> {
+  final String actionId;
+  final int position;
+  final String kind;
+  final String? customName;
+  const RecordTriedActionItemRow({
+    required this.actionId,
+    required this.position,
+    required this.kind,
+    this.customName,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['action_id'] = Variable<String>(actionId);
+    map['position'] = Variable<int>(position);
+    map['kind'] = Variable<String>(kind);
+    if (!nullToAbsent || customName != null) {
+      map['custom_name'] = Variable<String>(customName);
+    }
+    return map;
+  }
+
+  RecordTriedActionItemRowsCompanion toCompanion(bool nullToAbsent) {
+    return RecordTriedActionItemRowsCompanion(
+      actionId: Value(actionId),
+      position: Value(position),
+      kind: Value(kind),
+      customName: customName == null && nullToAbsent
+          ? const Value.absent()
+          : Value(customName),
+    );
+  }
+
+  factory RecordTriedActionItemRow.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return RecordTriedActionItemRow(
+      actionId: serializer.fromJson<String>(json['actionId']),
+      position: serializer.fromJson<int>(json['position']),
+      kind: serializer.fromJson<String>(json['kind']),
+      customName: serializer.fromJson<String?>(json['customName']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'actionId': serializer.toJson<String>(actionId),
+      'position': serializer.toJson<int>(position),
+      'kind': serializer.toJson<String>(kind),
+      'customName': serializer.toJson<String?>(customName),
+    };
+  }
+
+  RecordTriedActionItemRow copyWith({
+    String? actionId,
+    int? position,
+    String? kind,
+    Value<String?> customName = const Value.absent(),
+  }) => RecordTriedActionItemRow(
+    actionId: actionId ?? this.actionId,
+    position: position ?? this.position,
+    kind: kind ?? this.kind,
+    customName: customName.present ? customName.value : this.customName,
+  );
+  RecordTriedActionItemRow copyWithCompanion(
+    RecordTriedActionItemRowsCompanion data,
+  ) {
+    return RecordTriedActionItemRow(
+      actionId: data.actionId.present ? data.actionId.value : this.actionId,
+      position: data.position.present ? data.position.value : this.position,
+      kind: data.kind.present ? data.kind.value : this.kind,
+      customName: data.customName.present
+          ? data.customName.value
+          : this.customName,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('RecordTriedActionItemRow(')
+          ..write('actionId: $actionId, ')
+          ..write('position: $position, ')
+          ..write('kind: $kind, ')
+          ..write('customName: $customName')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(actionId, position, kind, customName);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is RecordTriedActionItemRow &&
+          other.actionId == this.actionId &&
+          other.position == this.position &&
+          other.kind == this.kind &&
+          other.customName == this.customName);
+}
+
+class RecordTriedActionItemRowsCompanion
+    extends UpdateCompanion<RecordTriedActionItemRow> {
+  final Value<String> actionId;
+  final Value<int> position;
+  final Value<String> kind;
+  final Value<String?> customName;
+  final Value<int> rowid;
+  const RecordTriedActionItemRowsCompanion({
+    this.actionId = const Value.absent(),
+    this.position = const Value.absent(),
+    this.kind = const Value.absent(),
+    this.customName = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  RecordTriedActionItemRowsCompanion.insert({
+    required String actionId,
+    required int position,
+    required String kind,
+    this.customName = const Value.absent(),
+    this.rowid = const Value.absent(),
+  }) : actionId = Value(actionId),
+       position = Value(position),
+       kind = Value(kind);
+  static Insertable<RecordTriedActionItemRow> custom({
+    Expression<String>? actionId,
+    Expression<int>? position,
+    Expression<String>? kind,
+    Expression<String>? customName,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (actionId != null) 'action_id': actionId,
+      if (position != null) 'position': position,
+      if (kind != null) 'kind': kind,
+      if (customName != null) 'custom_name': customName,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  RecordTriedActionItemRowsCompanion copyWith({
+    Value<String>? actionId,
+    Value<int>? position,
+    Value<String>? kind,
+    Value<String?>? customName,
+    Value<int>? rowid,
+  }) {
+    return RecordTriedActionItemRowsCompanion(
+      actionId: actionId ?? this.actionId,
+      position: position ?? this.position,
+      kind: kind ?? this.kind,
+      customName: customName ?? this.customName,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (actionId.present) {
+      map['action_id'] = Variable<String>(actionId.value);
+    }
+    if (position.present) {
+      map['position'] = Variable<int>(position.value);
+    }
+    if (kind.present) {
+      map['kind'] = Variable<String>(kind.value);
+    }
+    if (customName.present) {
+      map['custom_name'] = Variable<String>(customName.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('RecordTriedActionItemRowsCompanion(')
+          ..write('actionId: $actionId, ')
+          ..write('position: $position, ')
+          ..write('kind: $kind, ')
+          ..write('customName: $customName, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
+class $RecordActionCheckbackRowsTable extends RecordActionCheckbackRows
+    with TableInfo<$RecordActionCheckbackRowsTable, RecordActionCheckbackRow> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $RecordActionCheckbackRowsTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<String> id = GeneratedColumn<String>(
+    'id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _experiencedDayMeta = const VerificationMeta(
+    'experiencedDay',
+  );
+  @override
+  late final GeneratedColumn<int> experiencedDay = GeneratedColumn<int>(
+    'experienced_day',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _recordedAtMillisMeta = const VerificationMeta(
+    'recordedAtMillis',
+  );
+  @override
+  late final GeneratedColumn<int> recordedAtMillis = GeneratedColumn<int>(
+    'recorded_at_millis',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _updatedAtMillisMeta = const VerificationMeta(
+    'updatedAtMillis',
+  );
+  @override
+  late final GeneratedColumn<int> updatedAtMillis = GeneratedColumn<int>(
+    'updated_at_millis',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _originalProvenanceMeta =
+      const VerificationMeta('originalProvenance');
+  @override
+  late final GeneratedColumn<String> originalProvenance =
+      GeneratedColumn<String>(
+        'original_provenance',
+        aliasedName,
+        false,
+        type: DriftSqlType.string,
+        requiredDuringInsert: true,
+      );
+  static const VerificationMeta _provenanceMeta = const VerificationMeta(
+    'provenance',
+  );
+  @override
+  late final GeneratedColumn<String> provenance = GeneratedColumn<String>(
+    'provenance',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _originalWriteZoneIdMeta =
+      const VerificationMeta('originalWriteZoneId');
+  @override
+  late final GeneratedColumn<String> originalWriteZoneId =
+      GeneratedColumn<String>(
+        'original_write_zone_id',
+        aliasedName,
+        true,
+        type: DriftSqlType.string,
+        requiredDuringInsert: false,
+      );
+  static const VerificationMeta _writeZoneIdMeta = const VerificationMeta(
+    'writeZoneId',
+  );
+  @override
+  late final GeneratedColumn<String> writeZoneId = GeneratedColumn<String>(
+    'write_zone_id',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _originalUtcOffsetMinutesMeta =
+      const VerificationMeta('originalUtcOffsetMinutes');
+  @override
+  late final GeneratedColumn<int> originalUtcOffsetMinutes =
+      GeneratedColumn<int>(
+        'original_utc_offset_minutes',
+        aliasedName,
+        true,
+        type: DriftSqlType.int,
+        requiredDuringInsert: false,
+      );
+  static const VerificationMeta _utcOffsetMinutesMeta = const VerificationMeta(
+    'utcOffsetMinutes',
+  );
+  @override
+  late final GeneratedColumn<int> utcOffsetMinutes = GeneratedColumn<int>(
+    'utc_offset_minutes',
+    aliasedName,
+    true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _vocabularyVersionMeta = const VerificationMeta(
+    'vocabularyVersion',
+  );
+  @override
+  late final GeneratedColumn<int> vocabularyVersion = GeneratedColumn<int>(
+    'vocabulary_version',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(1),
+  );
+  static const VerificationMeta _actionIdMeta = const VerificationMeta(
+    'actionId',
+  );
+  @override
+  late final GeneratedColumn<String> actionId = GeneratedColumn<String>(
+    'action_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _outcomeMeta = const VerificationMeta(
+    'outcome',
+  );
+  @override
+  late final GeneratedColumn<String> outcome = GeneratedColumn<String>(
+    'outcome',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _targetDegreeMeta = const VerificationMeta(
+    'targetDegree',
+  );
+  @override
+  late final GeneratedColumn<int> targetDegree = GeneratedColumn<int>(
+    'target_degree',
+    aliasedName,
+    true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _unexpectedMeta = const VerificationMeta(
+    'unexpected',
+  );
+  @override
+  late final GeneratedColumn<String> unexpected = GeneratedColumn<String>(
+    'unexpected',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _reflectionMeta = const VerificationMeta(
+    'reflection',
+  );
+  @override
+  late final GeneratedColumn<String> reflection = GeneratedColumn<String>(
+    'reflection',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    id,
+    experiencedDay,
+    recordedAtMillis,
+    updatedAtMillis,
+    originalProvenance,
+    provenance,
+    originalWriteZoneId,
+    writeZoneId,
+    originalUtcOffsetMinutes,
+    utcOffsetMinutes,
+    vocabularyVersion,
+    actionId,
+    outcome,
+    targetDegree,
+    unexpected,
+    reflection,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'record_action_checkback_rows';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<RecordActionCheckbackRow> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    } else if (isInserting) {
+      context.missing(_idMeta);
+    }
+    if (data.containsKey('experienced_day')) {
+      context.handle(
+        _experiencedDayMeta,
+        experiencedDay.isAcceptableOrUnknown(
+          data['experienced_day']!,
+          _experiencedDayMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_experiencedDayMeta);
+    }
+    if (data.containsKey('recorded_at_millis')) {
+      context.handle(
+        _recordedAtMillisMeta,
+        recordedAtMillis.isAcceptableOrUnknown(
+          data['recorded_at_millis']!,
+          _recordedAtMillisMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_recordedAtMillisMeta);
+    }
+    if (data.containsKey('updated_at_millis')) {
+      context.handle(
+        _updatedAtMillisMeta,
+        updatedAtMillis.isAcceptableOrUnknown(
+          data['updated_at_millis']!,
+          _updatedAtMillisMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_updatedAtMillisMeta);
+    }
+    if (data.containsKey('original_provenance')) {
+      context.handle(
+        _originalProvenanceMeta,
+        originalProvenance.isAcceptableOrUnknown(
+          data['original_provenance']!,
+          _originalProvenanceMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_originalProvenanceMeta);
+    }
+    if (data.containsKey('provenance')) {
+      context.handle(
+        _provenanceMeta,
+        provenance.isAcceptableOrUnknown(data['provenance']!, _provenanceMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_provenanceMeta);
+    }
+    if (data.containsKey('original_write_zone_id')) {
+      context.handle(
+        _originalWriteZoneIdMeta,
+        originalWriteZoneId.isAcceptableOrUnknown(
+          data['original_write_zone_id']!,
+          _originalWriteZoneIdMeta,
+        ),
+      );
+    }
+    if (data.containsKey('write_zone_id')) {
+      context.handle(
+        _writeZoneIdMeta,
+        writeZoneId.isAcceptableOrUnknown(
+          data['write_zone_id']!,
+          _writeZoneIdMeta,
+        ),
+      );
+    }
+    if (data.containsKey('original_utc_offset_minutes')) {
+      context.handle(
+        _originalUtcOffsetMinutesMeta,
+        originalUtcOffsetMinutes.isAcceptableOrUnknown(
+          data['original_utc_offset_minutes']!,
+          _originalUtcOffsetMinutesMeta,
+        ),
+      );
+    }
+    if (data.containsKey('utc_offset_minutes')) {
+      context.handle(
+        _utcOffsetMinutesMeta,
+        utcOffsetMinutes.isAcceptableOrUnknown(
+          data['utc_offset_minutes']!,
+          _utcOffsetMinutesMeta,
+        ),
+      );
+    }
+    if (data.containsKey('vocabulary_version')) {
+      context.handle(
+        _vocabularyVersionMeta,
+        vocabularyVersion.isAcceptableOrUnknown(
+          data['vocabulary_version']!,
+          _vocabularyVersionMeta,
+        ),
+      );
+    }
+    if (data.containsKey('action_id')) {
+      context.handle(
+        _actionIdMeta,
+        actionId.isAcceptableOrUnknown(data['action_id']!, _actionIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_actionIdMeta);
+    }
+    if (data.containsKey('outcome')) {
+      context.handle(
+        _outcomeMeta,
+        outcome.isAcceptableOrUnknown(data['outcome']!, _outcomeMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_outcomeMeta);
+    }
+    if (data.containsKey('target_degree')) {
+      context.handle(
+        _targetDegreeMeta,
+        targetDegree.isAcceptableOrUnknown(
+          data['target_degree']!,
+          _targetDegreeMeta,
+        ),
+      );
+    }
+    if (data.containsKey('unexpected')) {
+      context.handle(
+        _unexpectedMeta,
+        unexpected.isAcceptableOrUnknown(data['unexpected']!, _unexpectedMeta),
+      );
+    }
+    if (data.containsKey('reflection')) {
+      context.handle(
+        _reflectionMeta,
+        reflection.isAcceptableOrUnknown(data['reflection']!, _reflectionMeta),
+      );
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  List<Set<GeneratedColumn>> get uniqueKeys => [
+    {actionId},
+  ];
+  @override
+  RecordActionCheckbackRow map(
+    Map<String, dynamic> data, {
+    String? tablePrefix,
+  }) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return RecordActionCheckbackRow(
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}id'],
+      )!,
+      experiencedDay: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}experienced_day'],
+      )!,
+      recordedAtMillis: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}recorded_at_millis'],
+      )!,
+      updatedAtMillis: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}updated_at_millis'],
+      )!,
+      originalProvenance: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}original_provenance'],
+      )!,
+      provenance: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}provenance'],
+      )!,
+      originalWriteZoneId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}original_write_zone_id'],
+      ),
+      writeZoneId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}write_zone_id'],
+      ),
+      originalUtcOffsetMinutes: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}original_utc_offset_minutes'],
+      ),
+      utcOffsetMinutes: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}utc_offset_minutes'],
+      ),
+      vocabularyVersion: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}vocabulary_version'],
+      )!,
+      actionId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}action_id'],
+      )!,
+      outcome: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}outcome'],
+      )!,
+      targetDegree: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}target_degree'],
+      ),
+      unexpected: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}unexpected'],
+      ),
+      reflection: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}reflection'],
+      ),
+    );
+  }
+
+  @override
+  $RecordActionCheckbackRowsTable createAlias(String alias) {
+    return $RecordActionCheckbackRowsTable(attachedDatabase, alias);
+  }
+}
+
+class RecordActionCheckbackRow extends DataClass
+    implements Insertable<RecordActionCheckbackRow> {
+  final String id;
+  final int experiencedDay;
+  final int recordedAtMillis;
+  final int updatedAtMillis;
+  final String originalProvenance;
+  final String provenance;
+  final String? originalWriteZoneId;
+  final String? writeZoneId;
+  final int? originalUtcOffsetMinutes;
+  final int? utcOffsetMinutes;
+  final int vocabularyVersion;
+  final String actionId;
+  final String outcome;
+  final int? targetDegree;
+  final String? unexpected;
+  final String? reflection;
+  const RecordActionCheckbackRow({
+    required this.id,
+    required this.experiencedDay,
+    required this.recordedAtMillis,
+    required this.updatedAtMillis,
+    required this.originalProvenance,
+    required this.provenance,
+    this.originalWriteZoneId,
+    this.writeZoneId,
+    this.originalUtcOffsetMinutes,
+    this.utcOffsetMinutes,
+    required this.vocabularyVersion,
+    required this.actionId,
+    required this.outcome,
+    this.targetDegree,
+    this.unexpected,
+    this.reflection,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<String>(id);
+    map['experienced_day'] = Variable<int>(experiencedDay);
+    map['recorded_at_millis'] = Variable<int>(recordedAtMillis);
+    map['updated_at_millis'] = Variable<int>(updatedAtMillis);
+    map['original_provenance'] = Variable<String>(originalProvenance);
+    map['provenance'] = Variable<String>(provenance);
+    if (!nullToAbsent || originalWriteZoneId != null) {
+      map['original_write_zone_id'] = Variable<String>(originalWriteZoneId);
+    }
+    if (!nullToAbsent || writeZoneId != null) {
+      map['write_zone_id'] = Variable<String>(writeZoneId);
+    }
+    if (!nullToAbsent || originalUtcOffsetMinutes != null) {
+      map['original_utc_offset_minutes'] = Variable<int>(
+        originalUtcOffsetMinutes,
+      );
+    }
+    if (!nullToAbsent || utcOffsetMinutes != null) {
+      map['utc_offset_minutes'] = Variable<int>(utcOffsetMinutes);
+    }
+    map['vocabulary_version'] = Variable<int>(vocabularyVersion);
+    map['action_id'] = Variable<String>(actionId);
+    map['outcome'] = Variable<String>(outcome);
+    if (!nullToAbsent || targetDegree != null) {
+      map['target_degree'] = Variable<int>(targetDegree);
+    }
+    if (!nullToAbsent || unexpected != null) {
+      map['unexpected'] = Variable<String>(unexpected);
+    }
+    if (!nullToAbsent || reflection != null) {
+      map['reflection'] = Variable<String>(reflection);
+    }
+    return map;
+  }
+
+  RecordActionCheckbackRowsCompanion toCompanion(bool nullToAbsent) {
+    return RecordActionCheckbackRowsCompanion(
+      id: Value(id),
+      experiencedDay: Value(experiencedDay),
+      recordedAtMillis: Value(recordedAtMillis),
+      updatedAtMillis: Value(updatedAtMillis),
+      originalProvenance: Value(originalProvenance),
+      provenance: Value(provenance),
+      originalWriteZoneId: originalWriteZoneId == null && nullToAbsent
+          ? const Value.absent()
+          : Value(originalWriteZoneId),
+      writeZoneId: writeZoneId == null && nullToAbsent
+          ? const Value.absent()
+          : Value(writeZoneId),
+      originalUtcOffsetMinutes: originalUtcOffsetMinutes == null && nullToAbsent
+          ? const Value.absent()
+          : Value(originalUtcOffsetMinutes),
+      utcOffsetMinutes: utcOffsetMinutes == null && nullToAbsent
+          ? const Value.absent()
+          : Value(utcOffsetMinutes),
+      vocabularyVersion: Value(vocabularyVersion),
+      actionId: Value(actionId),
+      outcome: Value(outcome),
+      targetDegree: targetDegree == null && nullToAbsent
+          ? const Value.absent()
+          : Value(targetDegree),
+      unexpected: unexpected == null && nullToAbsent
+          ? const Value.absent()
+          : Value(unexpected),
+      reflection: reflection == null && nullToAbsent
+          ? const Value.absent()
+          : Value(reflection),
+    );
+  }
+
+  factory RecordActionCheckbackRow.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return RecordActionCheckbackRow(
+      id: serializer.fromJson<String>(json['id']),
+      experiencedDay: serializer.fromJson<int>(json['experiencedDay']),
+      recordedAtMillis: serializer.fromJson<int>(json['recordedAtMillis']),
+      updatedAtMillis: serializer.fromJson<int>(json['updatedAtMillis']),
+      originalProvenance: serializer.fromJson<String>(
+        json['originalProvenance'],
+      ),
+      provenance: serializer.fromJson<String>(json['provenance']),
+      originalWriteZoneId: serializer.fromJson<String?>(
+        json['originalWriteZoneId'],
+      ),
+      writeZoneId: serializer.fromJson<String?>(json['writeZoneId']),
+      originalUtcOffsetMinutes: serializer.fromJson<int?>(
+        json['originalUtcOffsetMinutes'],
+      ),
+      utcOffsetMinutes: serializer.fromJson<int?>(json['utcOffsetMinutes']),
+      vocabularyVersion: serializer.fromJson<int>(json['vocabularyVersion']),
+      actionId: serializer.fromJson<String>(json['actionId']),
+      outcome: serializer.fromJson<String>(json['outcome']),
+      targetDegree: serializer.fromJson<int?>(json['targetDegree']),
+      unexpected: serializer.fromJson<String?>(json['unexpected']),
+      reflection: serializer.fromJson<String?>(json['reflection']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<String>(id),
+      'experiencedDay': serializer.toJson<int>(experiencedDay),
+      'recordedAtMillis': serializer.toJson<int>(recordedAtMillis),
+      'updatedAtMillis': serializer.toJson<int>(updatedAtMillis),
+      'originalProvenance': serializer.toJson<String>(originalProvenance),
+      'provenance': serializer.toJson<String>(provenance),
+      'originalWriteZoneId': serializer.toJson<String?>(originalWriteZoneId),
+      'writeZoneId': serializer.toJson<String?>(writeZoneId),
+      'originalUtcOffsetMinutes': serializer.toJson<int?>(
+        originalUtcOffsetMinutes,
+      ),
+      'utcOffsetMinutes': serializer.toJson<int?>(utcOffsetMinutes),
+      'vocabularyVersion': serializer.toJson<int>(vocabularyVersion),
+      'actionId': serializer.toJson<String>(actionId),
+      'outcome': serializer.toJson<String>(outcome),
+      'targetDegree': serializer.toJson<int?>(targetDegree),
+      'unexpected': serializer.toJson<String?>(unexpected),
+      'reflection': serializer.toJson<String?>(reflection),
+    };
+  }
+
+  RecordActionCheckbackRow copyWith({
+    String? id,
+    int? experiencedDay,
+    int? recordedAtMillis,
+    int? updatedAtMillis,
+    String? originalProvenance,
+    String? provenance,
+    Value<String?> originalWriteZoneId = const Value.absent(),
+    Value<String?> writeZoneId = const Value.absent(),
+    Value<int?> originalUtcOffsetMinutes = const Value.absent(),
+    Value<int?> utcOffsetMinutes = const Value.absent(),
+    int? vocabularyVersion,
+    String? actionId,
+    String? outcome,
+    Value<int?> targetDegree = const Value.absent(),
+    Value<String?> unexpected = const Value.absent(),
+    Value<String?> reflection = const Value.absent(),
+  }) => RecordActionCheckbackRow(
+    id: id ?? this.id,
+    experiencedDay: experiencedDay ?? this.experiencedDay,
+    recordedAtMillis: recordedAtMillis ?? this.recordedAtMillis,
+    updatedAtMillis: updatedAtMillis ?? this.updatedAtMillis,
+    originalProvenance: originalProvenance ?? this.originalProvenance,
+    provenance: provenance ?? this.provenance,
+    originalWriteZoneId: originalWriteZoneId.present
+        ? originalWriteZoneId.value
+        : this.originalWriteZoneId,
+    writeZoneId: writeZoneId.present ? writeZoneId.value : this.writeZoneId,
+    originalUtcOffsetMinutes: originalUtcOffsetMinutes.present
+        ? originalUtcOffsetMinutes.value
+        : this.originalUtcOffsetMinutes,
+    utcOffsetMinutes: utcOffsetMinutes.present
+        ? utcOffsetMinutes.value
+        : this.utcOffsetMinutes,
+    vocabularyVersion: vocabularyVersion ?? this.vocabularyVersion,
+    actionId: actionId ?? this.actionId,
+    outcome: outcome ?? this.outcome,
+    targetDegree: targetDegree.present ? targetDegree.value : this.targetDegree,
+    unexpected: unexpected.present ? unexpected.value : this.unexpected,
+    reflection: reflection.present ? reflection.value : this.reflection,
+  );
+  RecordActionCheckbackRow copyWithCompanion(
+    RecordActionCheckbackRowsCompanion data,
+  ) {
+    return RecordActionCheckbackRow(
+      id: data.id.present ? data.id.value : this.id,
+      experiencedDay: data.experiencedDay.present
+          ? data.experiencedDay.value
+          : this.experiencedDay,
+      recordedAtMillis: data.recordedAtMillis.present
+          ? data.recordedAtMillis.value
+          : this.recordedAtMillis,
+      updatedAtMillis: data.updatedAtMillis.present
+          ? data.updatedAtMillis.value
+          : this.updatedAtMillis,
+      originalProvenance: data.originalProvenance.present
+          ? data.originalProvenance.value
+          : this.originalProvenance,
+      provenance: data.provenance.present
+          ? data.provenance.value
+          : this.provenance,
+      originalWriteZoneId: data.originalWriteZoneId.present
+          ? data.originalWriteZoneId.value
+          : this.originalWriteZoneId,
+      writeZoneId: data.writeZoneId.present
+          ? data.writeZoneId.value
+          : this.writeZoneId,
+      originalUtcOffsetMinutes: data.originalUtcOffsetMinutes.present
+          ? data.originalUtcOffsetMinutes.value
+          : this.originalUtcOffsetMinutes,
+      utcOffsetMinutes: data.utcOffsetMinutes.present
+          ? data.utcOffsetMinutes.value
+          : this.utcOffsetMinutes,
+      vocabularyVersion: data.vocabularyVersion.present
+          ? data.vocabularyVersion.value
+          : this.vocabularyVersion,
+      actionId: data.actionId.present ? data.actionId.value : this.actionId,
+      outcome: data.outcome.present ? data.outcome.value : this.outcome,
+      targetDegree: data.targetDegree.present
+          ? data.targetDegree.value
+          : this.targetDegree,
+      unexpected: data.unexpected.present
+          ? data.unexpected.value
+          : this.unexpected,
+      reflection: data.reflection.present
+          ? data.reflection.value
+          : this.reflection,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('RecordActionCheckbackRow(')
+          ..write('id: $id, ')
+          ..write('experiencedDay: $experiencedDay, ')
+          ..write('recordedAtMillis: $recordedAtMillis, ')
+          ..write('updatedAtMillis: $updatedAtMillis, ')
+          ..write('originalProvenance: $originalProvenance, ')
+          ..write('provenance: $provenance, ')
+          ..write('originalWriteZoneId: $originalWriteZoneId, ')
+          ..write('writeZoneId: $writeZoneId, ')
+          ..write('originalUtcOffsetMinutes: $originalUtcOffsetMinutes, ')
+          ..write('utcOffsetMinutes: $utcOffsetMinutes, ')
+          ..write('vocabularyVersion: $vocabularyVersion, ')
+          ..write('actionId: $actionId, ')
+          ..write('outcome: $outcome, ')
+          ..write('targetDegree: $targetDegree, ')
+          ..write('unexpected: $unexpected, ')
+          ..write('reflection: $reflection')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(
+    id,
+    experiencedDay,
+    recordedAtMillis,
+    updatedAtMillis,
+    originalProvenance,
+    provenance,
+    originalWriteZoneId,
+    writeZoneId,
+    originalUtcOffsetMinutes,
+    utcOffsetMinutes,
+    vocabularyVersion,
+    actionId,
+    outcome,
+    targetDegree,
+    unexpected,
+    reflection,
+  );
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is RecordActionCheckbackRow &&
+          other.id == this.id &&
+          other.experiencedDay == this.experiencedDay &&
+          other.recordedAtMillis == this.recordedAtMillis &&
+          other.updatedAtMillis == this.updatedAtMillis &&
+          other.originalProvenance == this.originalProvenance &&
+          other.provenance == this.provenance &&
+          other.originalWriteZoneId == this.originalWriteZoneId &&
+          other.writeZoneId == this.writeZoneId &&
+          other.originalUtcOffsetMinutes == this.originalUtcOffsetMinutes &&
+          other.utcOffsetMinutes == this.utcOffsetMinutes &&
+          other.vocabularyVersion == this.vocabularyVersion &&
+          other.actionId == this.actionId &&
+          other.outcome == this.outcome &&
+          other.targetDegree == this.targetDegree &&
+          other.unexpected == this.unexpected &&
+          other.reflection == this.reflection);
+}
+
+class RecordActionCheckbackRowsCompanion
+    extends UpdateCompanion<RecordActionCheckbackRow> {
+  final Value<String> id;
+  final Value<int> experiencedDay;
+  final Value<int> recordedAtMillis;
+  final Value<int> updatedAtMillis;
+  final Value<String> originalProvenance;
+  final Value<String> provenance;
+  final Value<String?> originalWriteZoneId;
+  final Value<String?> writeZoneId;
+  final Value<int?> originalUtcOffsetMinutes;
+  final Value<int?> utcOffsetMinutes;
+  final Value<int> vocabularyVersion;
+  final Value<String> actionId;
+  final Value<String> outcome;
+  final Value<int?> targetDegree;
+  final Value<String?> unexpected;
+  final Value<String?> reflection;
+  final Value<int> rowid;
+  const RecordActionCheckbackRowsCompanion({
+    this.id = const Value.absent(),
+    this.experiencedDay = const Value.absent(),
+    this.recordedAtMillis = const Value.absent(),
+    this.updatedAtMillis = const Value.absent(),
+    this.originalProvenance = const Value.absent(),
+    this.provenance = const Value.absent(),
+    this.originalWriteZoneId = const Value.absent(),
+    this.writeZoneId = const Value.absent(),
+    this.originalUtcOffsetMinutes = const Value.absent(),
+    this.utcOffsetMinutes = const Value.absent(),
+    this.vocabularyVersion = const Value.absent(),
+    this.actionId = const Value.absent(),
+    this.outcome = const Value.absent(),
+    this.targetDegree = const Value.absent(),
+    this.unexpected = const Value.absent(),
+    this.reflection = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  RecordActionCheckbackRowsCompanion.insert({
+    required String id,
+    required int experiencedDay,
+    required int recordedAtMillis,
+    required int updatedAtMillis,
+    required String originalProvenance,
+    required String provenance,
+    this.originalWriteZoneId = const Value.absent(),
+    this.writeZoneId = const Value.absent(),
+    this.originalUtcOffsetMinutes = const Value.absent(),
+    this.utcOffsetMinutes = const Value.absent(),
+    this.vocabularyVersion = const Value.absent(),
+    required String actionId,
+    required String outcome,
+    this.targetDegree = const Value.absent(),
+    this.unexpected = const Value.absent(),
+    this.reflection = const Value.absent(),
+    this.rowid = const Value.absent(),
+  }) : id = Value(id),
+       experiencedDay = Value(experiencedDay),
+       recordedAtMillis = Value(recordedAtMillis),
+       updatedAtMillis = Value(updatedAtMillis),
+       originalProvenance = Value(originalProvenance),
+       provenance = Value(provenance),
+       actionId = Value(actionId),
+       outcome = Value(outcome);
+  static Insertable<RecordActionCheckbackRow> custom({
+    Expression<String>? id,
+    Expression<int>? experiencedDay,
+    Expression<int>? recordedAtMillis,
+    Expression<int>? updatedAtMillis,
+    Expression<String>? originalProvenance,
+    Expression<String>? provenance,
+    Expression<String>? originalWriteZoneId,
+    Expression<String>? writeZoneId,
+    Expression<int>? originalUtcOffsetMinutes,
+    Expression<int>? utcOffsetMinutes,
+    Expression<int>? vocabularyVersion,
+    Expression<String>? actionId,
+    Expression<String>? outcome,
+    Expression<int>? targetDegree,
+    Expression<String>? unexpected,
+    Expression<String>? reflection,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (experiencedDay != null) 'experienced_day': experiencedDay,
+      if (recordedAtMillis != null) 'recorded_at_millis': recordedAtMillis,
+      if (updatedAtMillis != null) 'updated_at_millis': updatedAtMillis,
+      if (originalProvenance != null) 'original_provenance': originalProvenance,
+      if (provenance != null) 'provenance': provenance,
+      if (originalWriteZoneId != null)
+        'original_write_zone_id': originalWriteZoneId,
+      if (writeZoneId != null) 'write_zone_id': writeZoneId,
+      if (originalUtcOffsetMinutes != null)
+        'original_utc_offset_minutes': originalUtcOffsetMinutes,
+      if (utcOffsetMinutes != null) 'utc_offset_minutes': utcOffsetMinutes,
+      if (vocabularyVersion != null) 'vocabulary_version': vocabularyVersion,
+      if (actionId != null) 'action_id': actionId,
+      if (outcome != null) 'outcome': outcome,
+      if (targetDegree != null) 'target_degree': targetDegree,
+      if (unexpected != null) 'unexpected': unexpected,
+      if (reflection != null) 'reflection': reflection,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  RecordActionCheckbackRowsCompanion copyWith({
+    Value<String>? id,
+    Value<int>? experiencedDay,
+    Value<int>? recordedAtMillis,
+    Value<int>? updatedAtMillis,
+    Value<String>? originalProvenance,
+    Value<String>? provenance,
+    Value<String?>? originalWriteZoneId,
+    Value<String?>? writeZoneId,
+    Value<int?>? originalUtcOffsetMinutes,
+    Value<int?>? utcOffsetMinutes,
+    Value<int>? vocabularyVersion,
+    Value<String>? actionId,
+    Value<String>? outcome,
+    Value<int?>? targetDegree,
+    Value<String?>? unexpected,
+    Value<String?>? reflection,
+    Value<int>? rowid,
+  }) {
+    return RecordActionCheckbackRowsCompanion(
+      id: id ?? this.id,
+      experiencedDay: experiencedDay ?? this.experiencedDay,
+      recordedAtMillis: recordedAtMillis ?? this.recordedAtMillis,
+      updatedAtMillis: updatedAtMillis ?? this.updatedAtMillis,
+      originalProvenance: originalProvenance ?? this.originalProvenance,
+      provenance: provenance ?? this.provenance,
+      originalWriteZoneId: originalWriteZoneId ?? this.originalWriteZoneId,
+      writeZoneId: writeZoneId ?? this.writeZoneId,
+      originalUtcOffsetMinutes:
+          originalUtcOffsetMinutes ?? this.originalUtcOffsetMinutes,
+      utcOffsetMinutes: utcOffsetMinutes ?? this.utcOffsetMinutes,
+      vocabularyVersion: vocabularyVersion ?? this.vocabularyVersion,
+      actionId: actionId ?? this.actionId,
+      outcome: outcome ?? this.outcome,
+      targetDegree: targetDegree ?? this.targetDegree,
+      unexpected: unexpected ?? this.unexpected,
+      reflection: reflection ?? this.reflection,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<String>(id.value);
+    }
+    if (experiencedDay.present) {
+      map['experienced_day'] = Variable<int>(experiencedDay.value);
+    }
+    if (recordedAtMillis.present) {
+      map['recorded_at_millis'] = Variable<int>(recordedAtMillis.value);
+    }
+    if (updatedAtMillis.present) {
+      map['updated_at_millis'] = Variable<int>(updatedAtMillis.value);
+    }
+    if (originalProvenance.present) {
+      map['original_provenance'] = Variable<String>(originalProvenance.value);
+    }
+    if (provenance.present) {
+      map['provenance'] = Variable<String>(provenance.value);
+    }
+    if (originalWriteZoneId.present) {
+      map['original_write_zone_id'] = Variable<String>(
+        originalWriteZoneId.value,
+      );
+    }
+    if (writeZoneId.present) {
+      map['write_zone_id'] = Variable<String>(writeZoneId.value);
+    }
+    if (originalUtcOffsetMinutes.present) {
+      map['original_utc_offset_minutes'] = Variable<int>(
+        originalUtcOffsetMinutes.value,
+      );
+    }
+    if (utcOffsetMinutes.present) {
+      map['utc_offset_minutes'] = Variable<int>(utcOffsetMinutes.value);
+    }
+    if (vocabularyVersion.present) {
+      map['vocabulary_version'] = Variable<int>(vocabularyVersion.value);
+    }
+    if (actionId.present) {
+      map['action_id'] = Variable<String>(actionId.value);
+    }
+    if (outcome.present) {
+      map['outcome'] = Variable<String>(outcome.value);
+    }
+    if (targetDegree.present) {
+      map['target_degree'] = Variable<int>(targetDegree.value);
+    }
+    if (unexpected.present) {
+      map['unexpected'] = Variable<String>(unexpected.value);
+    }
+    if (reflection.present) {
+      map['reflection'] = Variable<String>(reflection.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('RecordActionCheckbackRowsCompanion(')
+          ..write('id: $id, ')
+          ..write('experiencedDay: $experiencedDay, ')
+          ..write('recordedAtMillis: $recordedAtMillis, ')
+          ..write('updatedAtMillis: $updatedAtMillis, ')
+          ..write('originalProvenance: $originalProvenance, ')
+          ..write('provenance: $provenance, ')
+          ..write('originalWriteZoneId: $originalWriteZoneId, ')
+          ..write('writeZoneId: $writeZoneId, ')
+          ..write('originalUtcOffsetMinutes: $originalUtcOffsetMinutes, ')
+          ..write('utcOffsetMinutes: $utcOffsetMinutes, ')
+          ..write('vocabularyVersion: $vocabularyVersion, ')
+          ..write('actionId: $actionId, ')
+          ..write('outcome: $outcome, ')
+          ..write('targetDegree: $targetDegree, ')
+          ..write('unexpected: $unexpected, ')
+          ..write('reflection: $reflection, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
+class $RecordProgrammeRowsTable extends RecordProgrammeRows
+    with TableInfo<$RecordProgrammeRowsTable, RecordProgrammeRow> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $RecordProgrammeRowsTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<String> id = GeneratedColumn<String>(
+    'id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _startDayMeta = const VerificationMeta(
+    'startDay',
+  );
+  @override
+  late final GeneratedColumn<int> startDay = GeneratedColumn<int>(
+    'start_day',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _endDayMeta = const VerificationMeta('endDay');
+  @override
+  late final GeneratedColumn<int> endDay = GeneratedColumn<int>(
+    'end_day',
+    aliasedName,
+    true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _currentSlotMeta = const VerificationMeta(
+    'currentSlot',
+  );
+  @override
+  late final GeneratedColumn<int> currentSlot = GeneratedColumn<int>(
+    'current_slot',
+    aliasedName,
+    true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _createdAtMillisMeta = const VerificationMeta(
+    'createdAtMillis',
+  );
+  @override
+  late final GeneratedColumn<int> createdAtMillis = GeneratedColumn<int>(
+    'created_at_millis',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _updatedAtMillisMeta = const VerificationMeta(
+    'updatedAtMillis',
+  );
+  @override
+  late final GeneratedColumn<int> updatedAtMillis = GeneratedColumn<int>(
+    'updated_at_millis',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    id,
+    startDay,
+    endDay,
+    currentSlot,
+    createdAtMillis,
+    updatedAtMillis,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'record_programme_rows';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<RecordProgrammeRow> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    } else if (isInserting) {
+      context.missing(_idMeta);
+    }
+    if (data.containsKey('start_day')) {
+      context.handle(
+        _startDayMeta,
+        startDay.isAcceptableOrUnknown(data['start_day']!, _startDayMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_startDayMeta);
+    }
+    if (data.containsKey('end_day')) {
+      context.handle(
+        _endDayMeta,
+        endDay.isAcceptableOrUnknown(data['end_day']!, _endDayMeta),
+      );
+    }
+    if (data.containsKey('current_slot')) {
+      context.handle(
+        _currentSlotMeta,
+        currentSlot.isAcceptableOrUnknown(
+          data['current_slot']!,
+          _currentSlotMeta,
+        ),
+      );
+    }
+    if (data.containsKey('created_at_millis')) {
+      context.handle(
+        _createdAtMillisMeta,
+        createdAtMillis.isAcceptableOrUnknown(
+          data['created_at_millis']!,
+          _createdAtMillisMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_createdAtMillisMeta);
+    }
+    if (data.containsKey('updated_at_millis')) {
+      context.handle(
+        _updatedAtMillisMeta,
+        updatedAtMillis.isAcceptableOrUnknown(
+          data['updated_at_millis']!,
+          _updatedAtMillisMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_updatedAtMillisMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  List<Set<GeneratedColumn>> get uniqueKeys => [
+    {currentSlot},
+  ];
+  @override
+  RecordProgrammeRow map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return RecordProgrammeRow(
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}id'],
+      )!,
+      startDay: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}start_day'],
+      )!,
+      endDay: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}end_day'],
+      ),
+      currentSlot: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}current_slot'],
+      ),
+      createdAtMillis: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}created_at_millis'],
+      )!,
+      updatedAtMillis: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}updated_at_millis'],
+      )!,
+    );
+  }
+
+  @override
+  $RecordProgrammeRowsTable createAlias(String alias) {
+    return $RecordProgrammeRowsTable(attachedDatabase, alias);
+  }
+}
+
+class RecordProgrammeRow extends DataClass
+    implements Insertable<RecordProgrammeRow> {
+  final String id;
+  final int startDay;
+  final int? endDay;
+
+  /// One current programme, including a paused one. Historical rows use null.
+  final int? currentSlot;
+  final int createdAtMillis;
+  final int updatedAtMillis;
+  const RecordProgrammeRow({
+    required this.id,
+    required this.startDay,
+    this.endDay,
+    this.currentSlot,
+    required this.createdAtMillis,
+    required this.updatedAtMillis,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<String>(id);
+    map['start_day'] = Variable<int>(startDay);
+    if (!nullToAbsent || endDay != null) {
+      map['end_day'] = Variable<int>(endDay);
+    }
+    if (!nullToAbsent || currentSlot != null) {
+      map['current_slot'] = Variable<int>(currentSlot);
+    }
+    map['created_at_millis'] = Variable<int>(createdAtMillis);
+    map['updated_at_millis'] = Variable<int>(updatedAtMillis);
+    return map;
+  }
+
+  RecordProgrammeRowsCompanion toCompanion(bool nullToAbsent) {
+    return RecordProgrammeRowsCompanion(
+      id: Value(id),
+      startDay: Value(startDay),
+      endDay: endDay == null && nullToAbsent
+          ? const Value.absent()
+          : Value(endDay),
+      currentSlot: currentSlot == null && nullToAbsent
+          ? const Value.absent()
+          : Value(currentSlot),
+      createdAtMillis: Value(createdAtMillis),
+      updatedAtMillis: Value(updatedAtMillis),
+    );
+  }
+
+  factory RecordProgrammeRow.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return RecordProgrammeRow(
+      id: serializer.fromJson<String>(json['id']),
+      startDay: serializer.fromJson<int>(json['startDay']),
+      endDay: serializer.fromJson<int?>(json['endDay']),
+      currentSlot: serializer.fromJson<int?>(json['currentSlot']),
+      createdAtMillis: serializer.fromJson<int>(json['createdAtMillis']),
+      updatedAtMillis: serializer.fromJson<int>(json['updatedAtMillis']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<String>(id),
+      'startDay': serializer.toJson<int>(startDay),
+      'endDay': serializer.toJson<int?>(endDay),
+      'currentSlot': serializer.toJson<int?>(currentSlot),
+      'createdAtMillis': serializer.toJson<int>(createdAtMillis),
+      'updatedAtMillis': serializer.toJson<int>(updatedAtMillis),
+    };
+  }
+
+  RecordProgrammeRow copyWith({
+    String? id,
+    int? startDay,
+    Value<int?> endDay = const Value.absent(),
+    Value<int?> currentSlot = const Value.absent(),
+    int? createdAtMillis,
+    int? updatedAtMillis,
+  }) => RecordProgrammeRow(
+    id: id ?? this.id,
+    startDay: startDay ?? this.startDay,
+    endDay: endDay.present ? endDay.value : this.endDay,
+    currentSlot: currentSlot.present ? currentSlot.value : this.currentSlot,
+    createdAtMillis: createdAtMillis ?? this.createdAtMillis,
+    updatedAtMillis: updatedAtMillis ?? this.updatedAtMillis,
+  );
+  RecordProgrammeRow copyWithCompanion(RecordProgrammeRowsCompanion data) {
+    return RecordProgrammeRow(
+      id: data.id.present ? data.id.value : this.id,
+      startDay: data.startDay.present ? data.startDay.value : this.startDay,
+      endDay: data.endDay.present ? data.endDay.value : this.endDay,
+      currentSlot: data.currentSlot.present
+          ? data.currentSlot.value
+          : this.currentSlot,
+      createdAtMillis: data.createdAtMillis.present
+          ? data.createdAtMillis.value
+          : this.createdAtMillis,
+      updatedAtMillis: data.updatedAtMillis.present
+          ? data.updatedAtMillis.value
+          : this.updatedAtMillis,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('RecordProgrammeRow(')
+          ..write('id: $id, ')
+          ..write('startDay: $startDay, ')
+          ..write('endDay: $endDay, ')
+          ..write('currentSlot: $currentSlot, ')
+          ..write('createdAtMillis: $createdAtMillis, ')
+          ..write('updatedAtMillis: $updatedAtMillis')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(
+    id,
+    startDay,
+    endDay,
+    currentSlot,
+    createdAtMillis,
+    updatedAtMillis,
+  );
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is RecordProgrammeRow &&
+          other.id == this.id &&
+          other.startDay == this.startDay &&
+          other.endDay == this.endDay &&
+          other.currentSlot == this.currentSlot &&
+          other.createdAtMillis == this.createdAtMillis &&
+          other.updatedAtMillis == this.updatedAtMillis);
+}
+
+class RecordProgrammeRowsCompanion extends UpdateCompanion<RecordProgrammeRow> {
+  final Value<String> id;
+  final Value<int> startDay;
+  final Value<int?> endDay;
+  final Value<int?> currentSlot;
+  final Value<int> createdAtMillis;
+  final Value<int> updatedAtMillis;
+  final Value<int> rowid;
+  const RecordProgrammeRowsCompanion({
+    this.id = const Value.absent(),
+    this.startDay = const Value.absent(),
+    this.endDay = const Value.absent(),
+    this.currentSlot = const Value.absent(),
+    this.createdAtMillis = const Value.absent(),
+    this.updatedAtMillis = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  RecordProgrammeRowsCompanion.insert({
+    required String id,
+    required int startDay,
+    this.endDay = const Value.absent(),
+    this.currentSlot = const Value.absent(),
+    required int createdAtMillis,
+    required int updatedAtMillis,
+    this.rowid = const Value.absent(),
+  }) : id = Value(id),
+       startDay = Value(startDay),
+       createdAtMillis = Value(createdAtMillis),
+       updatedAtMillis = Value(updatedAtMillis);
+  static Insertable<RecordProgrammeRow> custom({
+    Expression<String>? id,
+    Expression<int>? startDay,
+    Expression<int>? endDay,
+    Expression<int>? currentSlot,
+    Expression<int>? createdAtMillis,
+    Expression<int>? updatedAtMillis,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (startDay != null) 'start_day': startDay,
+      if (endDay != null) 'end_day': endDay,
+      if (currentSlot != null) 'current_slot': currentSlot,
+      if (createdAtMillis != null) 'created_at_millis': createdAtMillis,
+      if (updatedAtMillis != null) 'updated_at_millis': updatedAtMillis,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  RecordProgrammeRowsCompanion copyWith({
+    Value<String>? id,
+    Value<int>? startDay,
+    Value<int?>? endDay,
+    Value<int?>? currentSlot,
+    Value<int>? createdAtMillis,
+    Value<int>? updatedAtMillis,
+    Value<int>? rowid,
+  }) {
+    return RecordProgrammeRowsCompanion(
+      id: id ?? this.id,
+      startDay: startDay ?? this.startDay,
+      endDay: endDay ?? this.endDay,
+      currentSlot: currentSlot ?? this.currentSlot,
+      createdAtMillis: createdAtMillis ?? this.createdAtMillis,
+      updatedAtMillis: updatedAtMillis ?? this.updatedAtMillis,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<String>(id.value);
+    }
+    if (startDay.present) {
+      map['start_day'] = Variable<int>(startDay.value);
+    }
+    if (endDay.present) {
+      map['end_day'] = Variable<int>(endDay.value);
+    }
+    if (currentSlot.present) {
+      map['current_slot'] = Variable<int>(currentSlot.value);
+    }
+    if (createdAtMillis.present) {
+      map['created_at_millis'] = Variable<int>(createdAtMillis.value);
+    }
+    if (updatedAtMillis.present) {
+      map['updated_at_millis'] = Variable<int>(updatedAtMillis.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('RecordProgrammeRowsCompanion(')
+          ..write('id: $id, ')
+          ..write('startDay: $startDay, ')
+          ..write('endDay: $endDay, ')
+          ..write('currentSlot: $currentSlot, ')
+          ..write('createdAtMillis: $createdAtMillis, ')
+          ..write('updatedAtMillis: $updatedAtMillis, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
+class $RecordProgrammeConfigRowsTable extends RecordProgrammeConfigRows
+    with TableInfo<$RecordProgrammeConfigRowsTable, RecordProgrammeConfigRow> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $RecordProgrammeConfigRowsTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<String> id = GeneratedColumn<String>(
+    'id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _programmeIdMeta = const VerificationMeta(
+    'programmeId',
+  );
+  @override
+  late final GeneratedColumn<String> programmeId = GeneratedColumn<String>(
+    'programme_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'REFERENCES record_programme_rows (id)',
+    ),
+  );
+  static const VerificationMeta _versionNumberMeta = const VerificationMeta(
+    'versionNumber',
+  );
+  @override
+  late final GeneratedColumn<int> versionNumber = GeneratedColumn<int>(
+    'version_number',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _effectiveDayMeta = const VerificationMeta(
+    'effectiveDay',
+  );
+  @override
+  late final GeneratedColumn<int> effectiveDay = GeneratedColumn<int>(
+    'effective_day',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _symptomIdsMeta = const VerificationMeta(
+    'symptomIds',
+  );
+  @override
+  late final GeneratedColumn<String> symptomIds = GeneratedColumn<String>(
+    'symptom_ids',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _vocabularyVersionMeta = const VerificationMeta(
+    'vocabularyVersion',
+  );
+  @override
+  late final GeneratedColumn<int> vocabularyVersion = GeneratedColumn<int>(
+    'vocabulary_version',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    id,
+    programmeId,
+    versionNumber,
+    effectiveDay,
+    symptomIds,
+    vocabularyVersion,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'record_programme_config_rows';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<RecordProgrammeConfigRow> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    } else if (isInserting) {
+      context.missing(_idMeta);
+    }
+    if (data.containsKey('programme_id')) {
+      context.handle(
+        _programmeIdMeta,
+        programmeId.isAcceptableOrUnknown(
+          data['programme_id']!,
+          _programmeIdMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_programmeIdMeta);
+    }
+    if (data.containsKey('version_number')) {
+      context.handle(
+        _versionNumberMeta,
+        versionNumber.isAcceptableOrUnknown(
+          data['version_number']!,
+          _versionNumberMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_versionNumberMeta);
+    }
+    if (data.containsKey('effective_day')) {
+      context.handle(
+        _effectiveDayMeta,
+        effectiveDay.isAcceptableOrUnknown(
+          data['effective_day']!,
+          _effectiveDayMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_effectiveDayMeta);
+    }
+    if (data.containsKey('symptom_ids')) {
+      context.handle(
+        _symptomIdsMeta,
+        symptomIds.isAcceptableOrUnknown(data['symptom_ids']!, _symptomIdsMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_symptomIdsMeta);
+    }
+    if (data.containsKey('vocabulary_version')) {
+      context.handle(
+        _vocabularyVersionMeta,
+        vocabularyVersion.isAcceptableOrUnknown(
+          data['vocabulary_version']!,
+          _vocabularyVersionMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_vocabularyVersionMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  List<Set<GeneratedColumn>> get uniqueKeys => [
+    {programmeId, versionNumber},
+  ];
+  @override
+  RecordProgrammeConfigRow map(
+    Map<String, dynamic> data, {
+    String? tablePrefix,
+  }) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return RecordProgrammeConfigRow(
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}id'],
+      )!,
+      programmeId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}programme_id'],
+      )!,
+      versionNumber: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}version_number'],
+      )!,
+      effectiveDay: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}effective_day'],
+      )!,
+      symptomIds: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}symptom_ids'],
+      )!,
+      vocabularyVersion: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}vocabulary_version'],
+      )!,
+    );
+  }
+
+  @override
+  $RecordProgrammeConfigRowsTable createAlias(String alias) {
+    return $RecordProgrammeConfigRowsTable(attachedDatabase, alias);
+  }
+}
+
+class RecordProgrammeConfigRow extends DataClass
+    implements Insertable<RecordProgrammeConfigRow> {
+  final String id;
+  final String programmeId;
+  final int versionNumber;
+  final int effectiveDay;
+
+  /// Ordered canonical vocabulary IDs only, never ratings or display labels.
+  final String symptomIds;
+  final int vocabularyVersion;
+  const RecordProgrammeConfigRow({
+    required this.id,
+    required this.programmeId,
+    required this.versionNumber,
+    required this.effectiveDay,
+    required this.symptomIds,
+    required this.vocabularyVersion,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<String>(id);
+    map['programme_id'] = Variable<String>(programmeId);
+    map['version_number'] = Variable<int>(versionNumber);
+    map['effective_day'] = Variable<int>(effectiveDay);
+    map['symptom_ids'] = Variable<String>(symptomIds);
+    map['vocabulary_version'] = Variable<int>(vocabularyVersion);
+    return map;
+  }
+
+  RecordProgrammeConfigRowsCompanion toCompanion(bool nullToAbsent) {
+    return RecordProgrammeConfigRowsCompanion(
+      id: Value(id),
+      programmeId: Value(programmeId),
+      versionNumber: Value(versionNumber),
+      effectiveDay: Value(effectiveDay),
+      symptomIds: Value(symptomIds),
+      vocabularyVersion: Value(vocabularyVersion),
+    );
+  }
+
+  factory RecordProgrammeConfigRow.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return RecordProgrammeConfigRow(
+      id: serializer.fromJson<String>(json['id']),
+      programmeId: serializer.fromJson<String>(json['programmeId']),
+      versionNumber: serializer.fromJson<int>(json['versionNumber']),
+      effectiveDay: serializer.fromJson<int>(json['effectiveDay']),
+      symptomIds: serializer.fromJson<String>(json['symptomIds']),
+      vocabularyVersion: serializer.fromJson<int>(json['vocabularyVersion']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<String>(id),
+      'programmeId': serializer.toJson<String>(programmeId),
+      'versionNumber': serializer.toJson<int>(versionNumber),
+      'effectiveDay': serializer.toJson<int>(effectiveDay),
+      'symptomIds': serializer.toJson<String>(symptomIds),
+      'vocabularyVersion': serializer.toJson<int>(vocabularyVersion),
+    };
+  }
+
+  RecordProgrammeConfigRow copyWith({
+    String? id,
+    String? programmeId,
+    int? versionNumber,
+    int? effectiveDay,
+    String? symptomIds,
+    int? vocabularyVersion,
+  }) => RecordProgrammeConfigRow(
+    id: id ?? this.id,
+    programmeId: programmeId ?? this.programmeId,
+    versionNumber: versionNumber ?? this.versionNumber,
+    effectiveDay: effectiveDay ?? this.effectiveDay,
+    symptomIds: symptomIds ?? this.symptomIds,
+    vocabularyVersion: vocabularyVersion ?? this.vocabularyVersion,
+  );
+  RecordProgrammeConfigRow copyWithCompanion(
+    RecordProgrammeConfigRowsCompanion data,
+  ) {
+    return RecordProgrammeConfigRow(
+      id: data.id.present ? data.id.value : this.id,
+      programmeId: data.programmeId.present
+          ? data.programmeId.value
+          : this.programmeId,
+      versionNumber: data.versionNumber.present
+          ? data.versionNumber.value
+          : this.versionNumber,
+      effectiveDay: data.effectiveDay.present
+          ? data.effectiveDay.value
+          : this.effectiveDay,
+      symptomIds: data.symptomIds.present
+          ? data.symptomIds.value
+          : this.symptomIds,
+      vocabularyVersion: data.vocabularyVersion.present
+          ? data.vocabularyVersion.value
+          : this.vocabularyVersion,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('RecordProgrammeConfigRow(')
+          ..write('id: $id, ')
+          ..write('programmeId: $programmeId, ')
+          ..write('versionNumber: $versionNumber, ')
+          ..write('effectiveDay: $effectiveDay, ')
+          ..write('symptomIds: $symptomIds, ')
+          ..write('vocabularyVersion: $vocabularyVersion')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(
+    id,
+    programmeId,
+    versionNumber,
+    effectiveDay,
+    symptomIds,
+    vocabularyVersion,
+  );
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is RecordProgrammeConfigRow &&
+          other.id == this.id &&
+          other.programmeId == this.programmeId &&
+          other.versionNumber == this.versionNumber &&
+          other.effectiveDay == this.effectiveDay &&
+          other.symptomIds == this.symptomIds &&
+          other.vocabularyVersion == this.vocabularyVersion);
+}
+
+class RecordProgrammeConfigRowsCompanion
+    extends UpdateCompanion<RecordProgrammeConfigRow> {
+  final Value<String> id;
+  final Value<String> programmeId;
+  final Value<int> versionNumber;
+  final Value<int> effectiveDay;
+  final Value<String> symptomIds;
+  final Value<int> vocabularyVersion;
+  final Value<int> rowid;
+  const RecordProgrammeConfigRowsCompanion({
+    this.id = const Value.absent(),
+    this.programmeId = const Value.absent(),
+    this.versionNumber = const Value.absent(),
+    this.effectiveDay = const Value.absent(),
+    this.symptomIds = const Value.absent(),
+    this.vocabularyVersion = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  RecordProgrammeConfigRowsCompanion.insert({
+    required String id,
+    required String programmeId,
+    required int versionNumber,
+    required int effectiveDay,
+    required String symptomIds,
+    required int vocabularyVersion,
+    this.rowid = const Value.absent(),
+  }) : id = Value(id),
+       programmeId = Value(programmeId),
+       versionNumber = Value(versionNumber),
+       effectiveDay = Value(effectiveDay),
+       symptomIds = Value(symptomIds),
+       vocabularyVersion = Value(vocabularyVersion);
+  static Insertable<RecordProgrammeConfigRow> custom({
+    Expression<String>? id,
+    Expression<String>? programmeId,
+    Expression<int>? versionNumber,
+    Expression<int>? effectiveDay,
+    Expression<String>? symptomIds,
+    Expression<int>? vocabularyVersion,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (programmeId != null) 'programme_id': programmeId,
+      if (versionNumber != null) 'version_number': versionNumber,
+      if (effectiveDay != null) 'effective_day': effectiveDay,
+      if (symptomIds != null) 'symptom_ids': symptomIds,
+      if (vocabularyVersion != null) 'vocabulary_version': vocabularyVersion,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  RecordProgrammeConfigRowsCompanion copyWith({
+    Value<String>? id,
+    Value<String>? programmeId,
+    Value<int>? versionNumber,
+    Value<int>? effectiveDay,
+    Value<String>? symptomIds,
+    Value<int>? vocabularyVersion,
+    Value<int>? rowid,
+  }) {
+    return RecordProgrammeConfigRowsCompanion(
+      id: id ?? this.id,
+      programmeId: programmeId ?? this.programmeId,
+      versionNumber: versionNumber ?? this.versionNumber,
+      effectiveDay: effectiveDay ?? this.effectiveDay,
+      symptomIds: symptomIds ?? this.symptomIds,
+      vocabularyVersion: vocabularyVersion ?? this.vocabularyVersion,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<String>(id.value);
+    }
+    if (programmeId.present) {
+      map['programme_id'] = Variable<String>(programmeId.value);
+    }
+    if (versionNumber.present) {
+      map['version_number'] = Variable<int>(versionNumber.value);
+    }
+    if (effectiveDay.present) {
+      map['effective_day'] = Variable<int>(effectiveDay.value);
+    }
+    if (symptomIds.present) {
+      map['symptom_ids'] = Variable<String>(symptomIds.value);
+    }
+    if (vocabularyVersion.present) {
+      map['vocabulary_version'] = Variable<int>(vocabularyVersion.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('RecordProgrammeConfigRowsCompanion(')
+          ..write('id: $id, ')
+          ..write('programmeId: $programmeId, ')
+          ..write('versionNumber: $versionNumber, ')
+          ..write('effectiveDay: $effectiveDay, ')
+          ..write('symptomIds: $symptomIds, ')
+          ..write('vocabularyVersion: $vocabularyVersion, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
+class $RecordProgrammePauseRowsTable extends RecordProgrammePauseRows
+    with TableInfo<$RecordProgrammePauseRowsTable, RecordProgrammePauseRow> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $RecordProgrammePauseRowsTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<String> id = GeneratedColumn<String>(
+    'id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _programmeIdMeta = const VerificationMeta(
+    'programmeId',
+  );
+  @override
+  late final GeneratedColumn<String> programmeId = GeneratedColumn<String>(
+    'programme_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'REFERENCES record_programme_rows (id)',
+    ),
+  );
+  static const VerificationMeta _sequenceNumberMeta = const VerificationMeta(
+    'sequenceNumber',
+  );
+  @override
+  late final GeneratedColumn<int> sequenceNumber = GeneratedColumn<int>(
+    'sequence_number',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _startDayMeta = const VerificationMeta(
+    'startDay',
+  );
+  @override
+  late final GeneratedColumn<int> startDay = GeneratedColumn<int>(
+    'start_day',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _resumeDayMeta = const VerificationMeta(
+    'resumeDay',
+  );
+  @override
+  late final GeneratedColumn<int> resumeDay = GeneratedColumn<int>(
+    'resume_day',
+    aliasedName,
+    true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    id,
+    programmeId,
+    sequenceNumber,
+    startDay,
+    resumeDay,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'record_programme_pause_rows';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<RecordProgrammePauseRow> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    } else if (isInserting) {
+      context.missing(_idMeta);
+    }
+    if (data.containsKey('programme_id')) {
+      context.handle(
+        _programmeIdMeta,
+        programmeId.isAcceptableOrUnknown(
+          data['programme_id']!,
+          _programmeIdMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_programmeIdMeta);
+    }
+    if (data.containsKey('sequence_number')) {
+      context.handle(
+        _sequenceNumberMeta,
+        sequenceNumber.isAcceptableOrUnknown(
+          data['sequence_number']!,
+          _sequenceNumberMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_sequenceNumberMeta);
+    }
+    if (data.containsKey('start_day')) {
+      context.handle(
+        _startDayMeta,
+        startDay.isAcceptableOrUnknown(data['start_day']!, _startDayMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_startDayMeta);
+    }
+    if (data.containsKey('resume_day')) {
+      context.handle(
+        _resumeDayMeta,
+        resumeDay.isAcceptableOrUnknown(data['resume_day']!, _resumeDayMeta),
+      );
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  List<Set<GeneratedColumn>> get uniqueKeys => [
+    {programmeId, sequenceNumber},
+  ];
+  @override
+  RecordProgrammePauseRow map(
+    Map<String, dynamic> data, {
+    String? tablePrefix,
+  }) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return RecordProgrammePauseRow(
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}id'],
+      )!,
+      programmeId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}programme_id'],
+      )!,
+      sequenceNumber: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}sequence_number'],
+      )!,
+      startDay: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}start_day'],
+      )!,
+      resumeDay: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}resume_day'],
+      ),
+    );
+  }
+
+  @override
+  $RecordProgrammePauseRowsTable createAlias(String alias) {
+    return $RecordProgrammePauseRowsTable(attachedDatabase, alias);
+  }
+}
+
+class RecordProgrammePauseRow extends DataClass
+    implements Insertable<RecordProgrammePauseRow> {
+  final String id;
+  final String programmeId;
+  final int sequenceNumber;
+  final int startDay;
+
+  /// Exclusive. Null remains an open pause bounded by programme end, if any.
+  final int? resumeDay;
+  const RecordProgrammePauseRow({
+    required this.id,
+    required this.programmeId,
+    required this.sequenceNumber,
+    required this.startDay,
+    this.resumeDay,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<String>(id);
+    map['programme_id'] = Variable<String>(programmeId);
+    map['sequence_number'] = Variable<int>(sequenceNumber);
+    map['start_day'] = Variable<int>(startDay);
+    if (!nullToAbsent || resumeDay != null) {
+      map['resume_day'] = Variable<int>(resumeDay);
+    }
+    return map;
+  }
+
+  RecordProgrammePauseRowsCompanion toCompanion(bool nullToAbsent) {
+    return RecordProgrammePauseRowsCompanion(
+      id: Value(id),
+      programmeId: Value(programmeId),
+      sequenceNumber: Value(sequenceNumber),
+      startDay: Value(startDay),
+      resumeDay: resumeDay == null && nullToAbsent
+          ? const Value.absent()
+          : Value(resumeDay),
+    );
+  }
+
+  factory RecordProgrammePauseRow.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return RecordProgrammePauseRow(
+      id: serializer.fromJson<String>(json['id']),
+      programmeId: serializer.fromJson<String>(json['programmeId']),
+      sequenceNumber: serializer.fromJson<int>(json['sequenceNumber']),
+      startDay: serializer.fromJson<int>(json['startDay']),
+      resumeDay: serializer.fromJson<int?>(json['resumeDay']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<String>(id),
+      'programmeId': serializer.toJson<String>(programmeId),
+      'sequenceNumber': serializer.toJson<int>(sequenceNumber),
+      'startDay': serializer.toJson<int>(startDay),
+      'resumeDay': serializer.toJson<int?>(resumeDay),
+    };
+  }
+
+  RecordProgrammePauseRow copyWith({
+    String? id,
+    String? programmeId,
+    int? sequenceNumber,
+    int? startDay,
+    Value<int?> resumeDay = const Value.absent(),
+  }) => RecordProgrammePauseRow(
+    id: id ?? this.id,
+    programmeId: programmeId ?? this.programmeId,
+    sequenceNumber: sequenceNumber ?? this.sequenceNumber,
+    startDay: startDay ?? this.startDay,
+    resumeDay: resumeDay.present ? resumeDay.value : this.resumeDay,
+  );
+  RecordProgrammePauseRow copyWithCompanion(
+    RecordProgrammePauseRowsCompanion data,
+  ) {
+    return RecordProgrammePauseRow(
+      id: data.id.present ? data.id.value : this.id,
+      programmeId: data.programmeId.present
+          ? data.programmeId.value
+          : this.programmeId,
+      sequenceNumber: data.sequenceNumber.present
+          ? data.sequenceNumber.value
+          : this.sequenceNumber,
+      startDay: data.startDay.present ? data.startDay.value : this.startDay,
+      resumeDay: data.resumeDay.present ? data.resumeDay.value : this.resumeDay,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('RecordProgrammePauseRow(')
+          ..write('id: $id, ')
+          ..write('programmeId: $programmeId, ')
+          ..write('sequenceNumber: $sequenceNumber, ')
+          ..write('startDay: $startDay, ')
+          ..write('resumeDay: $resumeDay')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode =>
+      Object.hash(id, programmeId, sequenceNumber, startDay, resumeDay);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is RecordProgrammePauseRow &&
+          other.id == this.id &&
+          other.programmeId == this.programmeId &&
+          other.sequenceNumber == this.sequenceNumber &&
+          other.startDay == this.startDay &&
+          other.resumeDay == this.resumeDay);
+}
+
+class RecordProgrammePauseRowsCompanion
+    extends UpdateCompanion<RecordProgrammePauseRow> {
+  final Value<String> id;
+  final Value<String> programmeId;
+  final Value<int> sequenceNumber;
+  final Value<int> startDay;
+  final Value<int?> resumeDay;
+  final Value<int> rowid;
+  const RecordProgrammePauseRowsCompanion({
+    this.id = const Value.absent(),
+    this.programmeId = const Value.absent(),
+    this.sequenceNumber = const Value.absent(),
+    this.startDay = const Value.absent(),
+    this.resumeDay = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  RecordProgrammePauseRowsCompanion.insert({
+    required String id,
+    required String programmeId,
+    required int sequenceNumber,
+    required int startDay,
+    this.resumeDay = const Value.absent(),
+    this.rowid = const Value.absent(),
+  }) : id = Value(id),
+       programmeId = Value(programmeId),
+       sequenceNumber = Value(sequenceNumber),
+       startDay = Value(startDay);
+  static Insertable<RecordProgrammePauseRow> custom({
+    Expression<String>? id,
+    Expression<String>? programmeId,
+    Expression<int>? sequenceNumber,
+    Expression<int>? startDay,
+    Expression<int>? resumeDay,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (programmeId != null) 'programme_id': programmeId,
+      if (sequenceNumber != null) 'sequence_number': sequenceNumber,
+      if (startDay != null) 'start_day': startDay,
+      if (resumeDay != null) 'resume_day': resumeDay,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  RecordProgrammePauseRowsCompanion copyWith({
+    Value<String>? id,
+    Value<String>? programmeId,
+    Value<int>? sequenceNumber,
+    Value<int>? startDay,
+    Value<int?>? resumeDay,
+    Value<int>? rowid,
+  }) {
+    return RecordProgrammePauseRowsCompanion(
+      id: id ?? this.id,
+      programmeId: programmeId ?? this.programmeId,
+      sequenceNumber: sequenceNumber ?? this.sequenceNumber,
+      startDay: startDay ?? this.startDay,
+      resumeDay: resumeDay ?? this.resumeDay,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<String>(id.value);
+    }
+    if (programmeId.present) {
+      map['programme_id'] = Variable<String>(programmeId.value);
+    }
+    if (sequenceNumber.present) {
+      map['sequence_number'] = Variable<int>(sequenceNumber.value);
+    }
+    if (startDay.present) {
+      map['start_day'] = Variable<int>(startDay.value);
+    }
+    if (resumeDay.present) {
+      map['resume_day'] = Variable<int>(resumeDay.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('RecordProgrammePauseRowsCompanion(')
+          ..write('id: $id, ')
+          ..write('programmeId: $programmeId, ')
+          ..write('sequenceNumber: $sequenceNumber, ')
+          ..write('startDay: $startDay, ')
+          ..write('resumeDay: $resumeDay, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
 abstract class _$LetterHealthDatabase extends GeneratedDatabase {
   _$LetterHealthDatabase(QueryExecutor e) : super(e);
   $LetterHealthDatabaseManager get managers =>
@@ -5955,6 +21887,41 @@ abstract class _$LetterHealthDatabase extends GeneratedDatabase {
       $ComfortKitOverrideRowsTable(this);
   late final $ComfortReminderPreferenceRowsTable comfortReminderPreferenceRows =
       $ComfortReminderPreferenceRowsTable(this);
+  late final $RecordHubImpactRowsTable recordHubImpactRows =
+      $RecordHubImpactRowsTable(this);
+  late final $RecordHubBleedingRowsTable recordHubBleedingRows =
+      $RecordHubBleedingRowsTable(this);
+  late final $RecordHubSleepRowsTable recordHubSleepRows =
+      $RecordHubSleepRowsTable(this);
+  late final $RecordHubAppetiteRowsTable recordHubAppetiteRows =
+      $RecordHubAppetiteRowsTable(this);
+  late final $RecordHubActivityRowsTable recordHubActivityRows =
+      $RecordHubActivityRowsTable(this);
+  late final $RecordHubEventRowsTable recordHubEventRows =
+      $RecordHubEventRowsTable(this);
+  late final $RecordHubTemperatureRowsTable recordHubTemperatureRows =
+      $RecordHubTemperatureRowsTable(this);
+  late final $RecordHubPinRowsTable recordHubPinRows = $RecordHubPinRowsTable(
+    this,
+  );
+  late final $RecordProductEpisodeRowsTable recordProductEpisodeRows =
+      $RecordProductEpisodeRowsTable(this);
+  late final $RecordProductVersionRowsTable recordProductVersionRows =
+      $RecordProductVersionRowsTable(this);
+  late final $RecordProductUseRowsTable recordProductUseRows =
+      $RecordProductUseRowsTable(this);
+  late final $RecordTriedActionRowsTable recordTriedActionRows =
+      $RecordTriedActionRowsTable(this);
+  late final $RecordTriedActionItemRowsTable recordTriedActionItemRows =
+      $RecordTriedActionItemRowsTable(this);
+  late final $RecordActionCheckbackRowsTable recordActionCheckbackRows =
+      $RecordActionCheckbackRowsTable(this);
+  late final $RecordProgrammeRowsTable recordProgrammeRows =
+      $RecordProgrammeRowsTable(this);
+  late final $RecordProgrammeConfigRowsTable recordProgrammeConfigRows =
+      $RecordProgrammeConfigRowsTable(this);
+  late final $RecordProgrammePauseRowsTable recordProgrammePauseRows =
+      $RecordProgrammePauseRowsTable(this);
   @override
   Iterable<TableInfo<Table, Object?>> get allTables =>
       allSchemaEntities.whereType<TableInfo<Table, Object?>>();
@@ -5972,6 +21939,23 @@ abstract class _$LetterHealthDatabase extends GeneratedDatabase {
     preparationDismissalRows,
     comfortKitOverrideRows,
     comfortReminderPreferenceRows,
+    recordHubImpactRows,
+    recordHubBleedingRows,
+    recordHubSleepRows,
+    recordHubAppetiteRows,
+    recordHubActivityRows,
+    recordHubEventRows,
+    recordHubTemperatureRows,
+    recordHubPinRows,
+    recordProductEpisodeRows,
+    recordProductVersionRows,
+    recordProductUseRows,
+    recordTriedActionRows,
+    recordTriedActionItemRows,
+    recordActionCheckbackRows,
+    recordProgrammeRows,
+    recordProgrammeConfigRows,
+    recordProgrammePauseRows,
   ];
   @override
   StreamQueryUpdateRules get streamUpdateRules => const StreamQueryUpdateRules([
@@ -8032,6 +24016,11 @@ typedef $$HealthRecordRowsTableCreateCompanionBuilder =
       required int recordedAtMillis,
       required int updatedAtMillis,
       required String provenance,
+      Value<String?> originalProvenance,
+      Value<int?> writeZoneOffsetMinutes,
+      Value<String?> writeZoneName,
+      Value<int?> updatedZoneOffsetMinutes,
+      Value<String?> updatedZoneName,
       required bool userConfirmed,
       required int vocabularyVersion,
       Value<int> rowid,
@@ -8046,6 +24035,11 @@ typedef $$HealthRecordRowsTableUpdateCompanionBuilder =
       Value<int> recordedAtMillis,
       Value<int> updatedAtMillis,
       Value<String> provenance,
+      Value<String?> originalProvenance,
+      Value<int?> writeZoneOffsetMinutes,
+      Value<String?> writeZoneName,
+      Value<int?> updatedZoneOffsetMinutes,
+      Value<String?> updatedZoneName,
       Value<bool> userConfirmed,
       Value<int> vocabularyVersion,
       Value<int> rowid,
@@ -8097,6 +24091,31 @@ class $$HealthRecordRowsTableFilterComposer
 
   ColumnFilters<String> get provenance => $composableBuilder(
     column: $table.provenance,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get originalProvenance => $composableBuilder(
+    column: $table.originalProvenance,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get writeZoneOffsetMinutes => $composableBuilder(
+    column: $table.writeZoneOffsetMinutes,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get writeZoneName => $composableBuilder(
+    column: $table.writeZoneName,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get updatedZoneOffsetMinutes => $composableBuilder(
+    column: $table.updatedZoneOffsetMinutes,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get updatedZoneName => $composableBuilder(
+    column: $table.updatedZoneName,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -8160,6 +24179,31 @@ class $$HealthRecordRowsTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<String> get originalProvenance => $composableBuilder(
+    column: $table.originalProvenance,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get writeZoneOffsetMinutes => $composableBuilder(
+    column: $table.writeZoneOffsetMinutes,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get writeZoneName => $composableBuilder(
+    column: $table.writeZoneName,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get updatedZoneOffsetMinutes => $composableBuilder(
+    column: $table.updatedZoneOffsetMinutes,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get updatedZoneName => $composableBuilder(
+    column: $table.updatedZoneName,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<bool> get userConfirmed => $composableBuilder(
     column: $table.userConfirmed,
     builder: (column) => ColumnOrderings(column),
@@ -8211,6 +24255,31 @@ class $$HealthRecordRowsTableAnnotationComposer
 
   GeneratedColumn<String> get provenance => $composableBuilder(
     column: $table.provenance,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get originalProvenance => $composableBuilder(
+    column: $table.originalProvenance,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get writeZoneOffsetMinutes => $composableBuilder(
+    column: $table.writeZoneOffsetMinutes,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get writeZoneName => $composableBuilder(
+    column: $table.writeZoneName,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get updatedZoneOffsetMinutes => $composableBuilder(
+    column: $table.updatedZoneOffsetMinutes,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get updatedZoneName => $composableBuilder(
+    column: $table.updatedZoneName,
     builder: (column) => column,
   );
 
@@ -8270,6 +24339,11 @@ class $$HealthRecordRowsTableTableManager
                 Value<int> recordedAtMillis = const Value.absent(),
                 Value<int> updatedAtMillis = const Value.absent(),
                 Value<String> provenance = const Value.absent(),
+                Value<String?> originalProvenance = const Value.absent(),
+                Value<int?> writeZoneOffsetMinutes = const Value.absent(),
+                Value<String?> writeZoneName = const Value.absent(),
+                Value<int?> updatedZoneOffsetMinutes = const Value.absent(),
+                Value<String?> updatedZoneName = const Value.absent(),
                 Value<bool> userConfirmed = const Value.absent(),
                 Value<int> vocabularyVersion = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
@@ -8282,6 +24356,11 @@ class $$HealthRecordRowsTableTableManager
                 recordedAtMillis: recordedAtMillis,
                 updatedAtMillis: updatedAtMillis,
                 provenance: provenance,
+                originalProvenance: originalProvenance,
+                writeZoneOffsetMinutes: writeZoneOffsetMinutes,
+                writeZoneName: writeZoneName,
+                updatedZoneOffsetMinutes: updatedZoneOffsetMinutes,
+                updatedZoneName: updatedZoneName,
                 userConfirmed: userConfirmed,
                 vocabularyVersion: vocabularyVersion,
                 rowid: rowid,
@@ -8296,6 +24375,11 @@ class $$HealthRecordRowsTableTableManager
                 required int recordedAtMillis,
                 required int updatedAtMillis,
                 required String provenance,
+                Value<String?> originalProvenance = const Value.absent(),
+                Value<int?> writeZoneOffsetMinutes = const Value.absent(),
+                Value<String?> writeZoneName = const Value.absent(),
+                Value<int?> updatedZoneOffsetMinutes = const Value.absent(),
+                Value<String?> updatedZoneName = const Value.absent(),
                 required bool userConfirmed,
                 required int vocabularyVersion,
                 Value<int> rowid = const Value.absent(),
@@ -8308,6 +24392,11 @@ class $$HealthRecordRowsTableTableManager
                 recordedAtMillis: recordedAtMillis,
                 updatedAtMillis: updatedAtMillis,
                 provenance: provenance,
+                originalProvenance: originalProvenance,
+                writeZoneOffsetMinutes: writeZoneOffsetMinutes,
+                writeZoneName: writeZoneName,
+                updatedZoneOffsetMinutes: updatedZoneOffsetMinutes,
+                updatedZoneName: updatedZoneName,
                 userConfirmed: userConfirmed,
                 vocabularyVersion: vocabularyVersion,
                 rowid: rowid,
@@ -8349,6 +24438,11 @@ typedef $$CaptureNoteRowsTableCreateCompanionBuilder =
       required int createdAtMillis,
       Value<int> updatedAtMillis,
       Value<bool> keepInComfortKit,
+      Value<int?> experiencedDay,
+      Value<String?> provenance,
+      Value<String?> originalProvenance,
+      Value<int?> writeZoneOffsetMinutes,
+      Value<String?> writeZoneName,
       Value<int> rowid,
     });
 typedef $$CaptureNoteRowsTableUpdateCompanionBuilder =
@@ -8359,6 +24453,11 @@ typedef $$CaptureNoteRowsTableUpdateCompanionBuilder =
       Value<int> createdAtMillis,
       Value<int> updatedAtMillis,
       Value<bool> keepInComfortKit,
+      Value<int?> experiencedDay,
+      Value<String?> provenance,
+      Value<String?> originalProvenance,
+      Value<int?> writeZoneOffsetMinutes,
+      Value<String?> writeZoneName,
       Value<int> rowid,
     });
 
@@ -8398,6 +24497,31 @@ class $$CaptureNoteRowsTableFilterComposer
 
   ColumnFilters<bool> get keepInComfortKit => $composableBuilder(
     column: $table.keepInComfortKit,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get experiencedDay => $composableBuilder(
+    column: $table.experiencedDay,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get provenance => $composableBuilder(
+    column: $table.provenance,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get originalProvenance => $composableBuilder(
+    column: $table.originalProvenance,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get writeZoneOffsetMinutes => $composableBuilder(
+    column: $table.writeZoneOffsetMinutes,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get writeZoneName => $composableBuilder(
+    column: $table.writeZoneName,
     builder: (column) => ColumnFilters(column),
   );
 }
@@ -8440,6 +24564,31 @@ class $$CaptureNoteRowsTableOrderingComposer
     column: $table.keepInComfortKit,
     builder: (column) => ColumnOrderings(column),
   );
+
+  ColumnOrderings<int> get experiencedDay => $composableBuilder(
+    column: $table.experiencedDay,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get provenance => $composableBuilder(
+    column: $table.provenance,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get originalProvenance => $composableBuilder(
+    column: $table.originalProvenance,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get writeZoneOffsetMinutes => $composableBuilder(
+    column: $table.writeZoneOffsetMinutes,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get writeZoneName => $composableBuilder(
+    column: $table.writeZoneName,
+    builder: (column) => ColumnOrderings(column),
+  );
 }
 
 class $$CaptureNoteRowsTableAnnotationComposer
@@ -8472,6 +24621,31 @@ class $$CaptureNoteRowsTableAnnotationComposer
 
   GeneratedColumn<bool> get keepInComfortKit => $composableBuilder(
     column: $table.keepInComfortKit,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get experiencedDay => $composableBuilder(
+    column: $table.experiencedDay,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get provenance => $composableBuilder(
+    column: $table.provenance,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get originalProvenance => $composableBuilder(
+    column: $table.originalProvenance,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get writeZoneOffsetMinutes => $composableBuilder(
+    column: $table.writeZoneOffsetMinutes,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get writeZoneName => $composableBuilder(
+    column: $table.writeZoneName,
     builder: (column) => column,
   );
 }
@@ -8519,6 +24693,11 @@ class $$CaptureNoteRowsTableTableManager
                 Value<int> createdAtMillis = const Value.absent(),
                 Value<int> updatedAtMillis = const Value.absent(),
                 Value<bool> keepInComfortKit = const Value.absent(),
+                Value<int?> experiencedDay = const Value.absent(),
+                Value<String?> provenance = const Value.absent(),
+                Value<String?> originalProvenance = const Value.absent(),
+                Value<int?> writeZoneOffsetMinutes = const Value.absent(),
+                Value<String?> writeZoneName = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => CaptureNoteRowsCompanion(
                 id: id,
@@ -8527,6 +24706,11 @@ class $$CaptureNoteRowsTableTableManager
                 createdAtMillis: createdAtMillis,
                 updatedAtMillis: updatedAtMillis,
                 keepInComfortKit: keepInComfortKit,
+                experiencedDay: experiencedDay,
+                provenance: provenance,
+                originalProvenance: originalProvenance,
+                writeZoneOffsetMinutes: writeZoneOffsetMinutes,
+                writeZoneName: writeZoneName,
                 rowid: rowid,
               ),
           createCompanionCallback:
@@ -8537,6 +24721,11 @@ class $$CaptureNoteRowsTableTableManager
                 required int createdAtMillis,
                 Value<int> updatedAtMillis = const Value.absent(),
                 Value<bool> keepInComfortKit = const Value.absent(),
+                Value<int?> experiencedDay = const Value.absent(),
+                Value<String?> provenance = const Value.absent(),
+                Value<String?> originalProvenance = const Value.absent(),
+                Value<int?> writeZoneOffsetMinutes = const Value.absent(),
+                Value<String?> writeZoneName = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => CaptureNoteRowsCompanion.insert(
                 id: id,
@@ -8545,6 +24734,11 @@ class $$CaptureNoteRowsTableTableManager
                 createdAtMillis: createdAtMillis,
                 updatedAtMillis: updatedAtMillis,
                 keepInComfortKit: keepInComfortKit,
+                experiencedDay: experiencedDay,
+                provenance: provenance,
+                originalProvenance: originalProvenance,
+                writeZoneOffsetMinutes: writeZoneOffsetMinutes,
+                writeZoneName: writeZoneName,
                 rowid: rowid,
               ),
           withReferenceMapper: (p0) => p0
@@ -8582,6 +24776,14 @@ typedef $$MomentCheckInRowsTableCreateCompanionBuilder =
       required String state,
       required int occurredAtMillis,
       required int createdAtMillis,
+      Value<int?> experiencedDay,
+      Value<String?> provenance,
+      Value<int?> writeZoneOffsetMinutes,
+      Value<String?> writeZoneName,
+      Value<int?> updatedAtMillis,
+      Value<String?> originalProvenance,
+      Value<int?> updatedZoneOffsetMinutes,
+      Value<String?> updatedZoneName,
       Value<int> rowid,
     });
 typedef $$MomentCheckInRowsTableUpdateCompanionBuilder =
@@ -8590,6 +24792,14 @@ typedef $$MomentCheckInRowsTableUpdateCompanionBuilder =
       Value<String> state,
       Value<int> occurredAtMillis,
       Value<int> createdAtMillis,
+      Value<int?> experiencedDay,
+      Value<String?> provenance,
+      Value<int?> writeZoneOffsetMinutes,
+      Value<String?> writeZoneName,
+      Value<int?> updatedAtMillis,
+      Value<String?> originalProvenance,
+      Value<int?> updatedZoneOffsetMinutes,
+      Value<String?> updatedZoneName,
       Value<int> rowid,
     });
 
@@ -8619,6 +24829,46 @@ class $$MomentCheckInRowsTableFilterComposer
 
   ColumnFilters<int> get createdAtMillis => $composableBuilder(
     column: $table.createdAtMillis,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get experiencedDay => $composableBuilder(
+    column: $table.experiencedDay,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get provenance => $composableBuilder(
+    column: $table.provenance,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get writeZoneOffsetMinutes => $composableBuilder(
+    column: $table.writeZoneOffsetMinutes,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get writeZoneName => $composableBuilder(
+    column: $table.writeZoneName,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get updatedAtMillis => $composableBuilder(
+    column: $table.updatedAtMillis,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get originalProvenance => $composableBuilder(
+    column: $table.originalProvenance,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get updatedZoneOffsetMinutes => $composableBuilder(
+    column: $table.updatedZoneOffsetMinutes,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get updatedZoneName => $composableBuilder(
+    column: $table.updatedZoneName,
     builder: (column) => ColumnFilters(column),
   );
 }
@@ -8651,6 +24901,46 @@ class $$MomentCheckInRowsTableOrderingComposer
     column: $table.createdAtMillis,
     builder: (column) => ColumnOrderings(column),
   );
+
+  ColumnOrderings<int> get experiencedDay => $composableBuilder(
+    column: $table.experiencedDay,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get provenance => $composableBuilder(
+    column: $table.provenance,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get writeZoneOffsetMinutes => $composableBuilder(
+    column: $table.writeZoneOffsetMinutes,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get writeZoneName => $composableBuilder(
+    column: $table.writeZoneName,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get updatedAtMillis => $composableBuilder(
+    column: $table.updatedAtMillis,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get originalProvenance => $composableBuilder(
+    column: $table.originalProvenance,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get updatedZoneOffsetMinutes => $composableBuilder(
+    column: $table.updatedZoneOffsetMinutes,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get updatedZoneName => $composableBuilder(
+    column: $table.updatedZoneName,
+    builder: (column) => ColumnOrderings(column),
+  );
 }
 
 class $$MomentCheckInRowsTableAnnotationComposer
@@ -8675,6 +24965,46 @@ class $$MomentCheckInRowsTableAnnotationComposer
 
   GeneratedColumn<int> get createdAtMillis => $composableBuilder(
     column: $table.createdAtMillis,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get experiencedDay => $composableBuilder(
+    column: $table.experiencedDay,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get provenance => $composableBuilder(
+    column: $table.provenance,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get writeZoneOffsetMinutes => $composableBuilder(
+    column: $table.writeZoneOffsetMinutes,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get writeZoneName => $composableBuilder(
+    column: $table.writeZoneName,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get updatedAtMillis => $composableBuilder(
+    column: $table.updatedAtMillis,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get originalProvenance => $composableBuilder(
+    column: $table.originalProvenance,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get updatedZoneOffsetMinutes => $composableBuilder(
+    column: $table.updatedZoneOffsetMinutes,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get updatedZoneName => $composableBuilder(
+    column: $table.updatedZoneName,
     builder: (column) => column,
   );
 }
@@ -8723,12 +25053,28 @@ class $$MomentCheckInRowsTableTableManager
                 Value<String> state = const Value.absent(),
                 Value<int> occurredAtMillis = const Value.absent(),
                 Value<int> createdAtMillis = const Value.absent(),
+                Value<int?> experiencedDay = const Value.absent(),
+                Value<String?> provenance = const Value.absent(),
+                Value<int?> writeZoneOffsetMinutes = const Value.absent(),
+                Value<String?> writeZoneName = const Value.absent(),
+                Value<int?> updatedAtMillis = const Value.absent(),
+                Value<String?> originalProvenance = const Value.absent(),
+                Value<int?> updatedZoneOffsetMinutes = const Value.absent(),
+                Value<String?> updatedZoneName = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => MomentCheckInRowsCompanion(
                 id: id,
                 state: state,
                 occurredAtMillis: occurredAtMillis,
                 createdAtMillis: createdAtMillis,
+                experiencedDay: experiencedDay,
+                provenance: provenance,
+                writeZoneOffsetMinutes: writeZoneOffsetMinutes,
+                writeZoneName: writeZoneName,
+                updatedAtMillis: updatedAtMillis,
+                originalProvenance: originalProvenance,
+                updatedZoneOffsetMinutes: updatedZoneOffsetMinutes,
+                updatedZoneName: updatedZoneName,
                 rowid: rowid,
               ),
           createCompanionCallback:
@@ -8737,12 +25083,28 @@ class $$MomentCheckInRowsTableTableManager
                 required String state,
                 required int occurredAtMillis,
                 required int createdAtMillis,
+                Value<int?> experiencedDay = const Value.absent(),
+                Value<String?> provenance = const Value.absent(),
+                Value<int?> writeZoneOffsetMinutes = const Value.absent(),
+                Value<String?> writeZoneName = const Value.absent(),
+                Value<int?> updatedAtMillis = const Value.absent(),
+                Value<String?> originalProvenance = const Value.absent(),
+                Value<int?> updatedZoneOffsetMinutes = const Value.absent(),
+                Value<String?> updatedZoneName = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => MomentCheckInRowsCompanion.insert(
                 id: id,
                 state: state,
                 occurredAtMillis: occurredAtMillis,
                 createdAtMillis: createdAtMillis,
+                experiencedDay: experiencedDay,
+                provenance: provenance,
+                writeZoneOffsetMinutes: writeZoneOffsetMinutes,
+                writeZoneName: writeZoneName,
+                updatedAtMillis: updatedAtMillis,
+                originalProvenance: originalProvenance,
+                updatedZoneOffsetMinutes: updatedZoneOffsetMinutes,
+                updatedZoneName: updatedZoneName,
                 rowid: rowid,
               ),
           withReferenceMapper: (p0) => p0
@@ -9834,6 +26196,7422 @@ typedef $$ComfortReminderPreferenceRowsTableProcessedTableManager =
       ComfortReminderPreferenceRow,
       PrefetchHooks Function()
     >;
+typedef $$RecordHubImpactRowsTableCreateCompanionBuilder =
+    RecordHubImpactRowsCompanion Function({
+      required String id,
+      required int experiencedDay,
+      required int recordedAtMillis,
+      required int updatedAtMillis,
+      required String originalProvenance,
+      required String provenance,
+      Value<String?> originalWriteZoneId,
+      Value<String?> writeZoneId,
+      Value<int?> originalUtcOffsetMinutes,
+      Value<int?> utcOffsetMinutes,
+      Value<int> vocabularyVersion,
+      required int overall,
+      Value<bool> workOrSchool,
+      Value<bool> homeResponsibilities,
+      Value<bool> relationships,
+      Value<bool> socialActivity,
+      Value<bool> sleep,
+      Value<bool> hobbiesOrInterests,
+      Value<int> rowid,
+    });
+typedef $$RecordHubImpactRowsTableUpdateCompanionBuilder =
+    RecordHubImpactRowsCompanion Function({
+      Value<String> id,
+      Value<int> experiencedDay,
+      Value<int> recordedAtMillis,
+      Value<int> updatedAtMillis,
+      Value<String> originalProvenance,
+      Value<String> provenance,
+      Value<String?> originalWriteZoneId,
+      Value<String?> writeZoneId,
+      Value<int?> originalUtcOffsetMinutes,
+      Value<int?> utcOffsetMinutes,
+      Value<int> vocabularyVersion,
+      Value<int> overall,
+      Value<bool> workOrSchool,
+      Value<bool> homeResponsibilities,
+      Value<bool> relationships,
+      Value<bool> socialActivity,
+      Value<bool> sleep,
+      Value<bool> hobbiesOrInterests,
+      Value<int> rowid,
+    });
+
+class $$RecordHubImpactRowsTableFilterComposer
+    extends Composer<_$LetterHealthDatabase, $RecordHubImpactRowsTable> {
+  $$RecordHubImpactRowsTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get experiencedDay => $composableBuilder(
+    column: $table.experiencedDay,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get recordedAtMillis => $composableBuilder(
+    column: $table.recordedAtMillis,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get updatedAtMillis => $composableBuilder(
+    column: $table.updatedAtMillis,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get originalProvenance => $composableBuilder(
+    column: $table.originalProvenance,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get provenance => $composableBuilder(
+    column: $table.provenance,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get originalWriteZoneId => $composableBuilder(
+    column: $table.originalWriteZoneId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get writeZoneId => $composableBuilder(
+    column: $table.writeZoneId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get originalUtcOffsetMinutes => $composableBuilder(
+    column: $table.originalUtcOffsetMinutes,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get utcOffsetMinutes => $composableBuilder(
+    column: $table.utcOffsetMinutes,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get vocabularyVersion => $composableBuilder(
+    column: $table.vocabularyVersion,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get overall => $composableBuilder(
+    column: $table.overall,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get workOrSchool => $composableBuilder(
+    column: $table.workOrSchool,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get homeResponsibilities => $composableBuilder(
+    column: $table.homeResponsibilities,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get relationships => $composableBuilder(
+    column: $table.relationships,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get socialActivity => $composableBuilder(
+    column: $table.socialActivity,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get sleep => $composableBuilder(
+    column: $table.sleep,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get hobbiesOrInterests => $composableBuilder(
+    column: $table.hobbiesOrInterests,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$RecordHubImpactRowsTableOrderingComposer
+    extends Composer<_$LetterHealthDatabase, $RecordHubImpactRowsTable> {
+  $$RecordHubImpactRowsTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get experiencedDay => $composableBuilder(
+    column: $table.experiencedDay,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get recordedAtMillis => $composableBuilder(
+    column: $table.recordedAtMillis,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get updatedAtMillis => $composableBuilder(
+    column: $table.updatedAtMillis,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get originalProvenance => $composableBuilder(
+    column: $table.originalProvenance,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get provenance => $composableBuilder(
+    column: $table.provenance,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get originalWriteZoneId => $composableBuilder(
+    column: $table.originalWriteZoneId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get writeZoneId => $composableBuilder(
+    column: $table.writeZoneId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get originalUtcOffsetMinutes => $composableBuilder(
+    column: $table.originalUtcOffsetMinutes,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get utcOffsetMinutes => $composableBuilder(
+    column: $table.utcOffsetMinutes,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get vocabularyVersion => $composableBuilder(
+    column: $table.vocabularyVersion,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get overall => $composableBuilder(
+    column: $table.overall,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<bool> get workOrSchool => $composableBuilder(
+    column: $table.workOrSchool,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<bool> get homeResponsibilities => $composableBuilder(
+    column: $table.homeResponsibilities,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<bool> get relationships => $composableBuilder(
+    column: $table.relationships,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<bool> get socialActivity => $composableBuilder(
+    column: $table.socialActivity,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<bool> get sleep => $composableBuilder(
+    column: $table.sleep,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<bool> get hobbiesOrInterests => $composableBuilder(
+    column: $table.hobbiesOrInterests,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$RecordHubImpactRowsTableAnnotationComposer
+    extends Composer<_$LetterHealthDatabase, $RecordHubImpactRowsTable> {
+  $$RecordHubImpactRowsTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<int> get experiencedDay => $composableBuilder(
+    column: $table.experiencedDay,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get recordedAtMillis => $composableBuilder(
+    column: $table.recordedAtMillis,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get updatedAtMillis => $composableBuilder(
+    column: $table.updatedAtMillis,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get originalProvenance => $composableBuilder(
+    column: $table.originalProvenance,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get provenance => $composableBuilder(
+    column: $table.provenance,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get originalWriteZoneId => $composableBuilder(
+    column: $table.originalWriteZoneId,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get writeZoneId => $composableBuilder(
+    column: $table.writeZoneId,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get originalUtcOffsetMinutes => $composableBuilder(
+    column: $table.originalUtcOffsetMinutes,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get utcOffsetMinutes => $composableBuilder(
+    column: $table.utcOffsetMinutes,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get vocabularyVersion => $composableBuilder(
+    column: $table.vocabularyVersion,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get overall =>
+      $composableBuilder(column: $table.overall, builder: (column) => column);
+
+  GeneratedColumn<bool> get workOrSchool => $composableBuilder(
+    column: $table.workOrSchool,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<bool> get homeResponsibilities => $composableBuilder(
+    column: $table.homeResponsibilities,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<bool> get relationships => $composableBuilder(
+    column: $table.relationships,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<bool> get socialActivity => $composableBuilder(
+    column: $table.socialActivity,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<bool> get sleep =>
+      $composableBuilder(column: $table.sleep, builder: (column) => column);
+
+  GeneratedColumn<bool> get hobbiesOrInterests => $composableBuilder(
+    column: $table.hobbiesOrInterests,
+    builder: (column) => column,
+  );
+}
+
+class $$RecordHubImpactRowsTableTableManager
+    extends
+        RootTableManager<
+          _$LetterHealthDatabase,
+          $RecordHubImpactRowsTable,
+          RecordHubImpactRow,
+          $$RecordHubImpactRowsTableFilterComposer,
+          $$RecordHubImpactRowsTableOrderingComposer,
+          $$RecordHubImpactRowsTableAnnotationComposer,
+          $$RecordHubImpactRowsTableCreateCompanionBuilder,
+          $$RecordHubImpactRowsTableUpdateCompanionBuilder,
+          (
+            RecordHubImpactRow,
+            BaseReferences<
+              _$LetterHealthDatabase,
+              $RecordHubImpactRowsTable,
+              RecordHubImpactRow
+            >,
+          ),
+          RecordHubImpactRow,
+          PrefetchHooks Function()
+        > {
+  $$RecordHubImpactRowsTableTableManager(
+    _$LetterHealthDatabase db,
+    $RecordHubImpactRowsTable table,
+  ) : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$RecordHubImpactRowsTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$RecordHubImpactRowsTableOrderingComposer(
+                $db: db,
+                $table: table,
+              ),
+          createComputedFieldComposer: () =>
+              $$RecordHubImpactRowsTableAnnotationComposer(
+                $db: db,
+                $table: table,
+              ),
+          updateCompanionCallback:
+              ({
+                Value<String> id = const Value.absent(),
+                Value<int> experiencedDay = const Value.absent(),
+                Value<int> recordedAtMillis = const Value.absent(),
+                Value<int> updatedAtMillis = const Value.absent(),
+                Value<String> originalProvenance = const Value.absent(),
+                Value<String> provenance = const Value.absent(),
+                Value<String?> originalWriteZoneId = const Value.absent(),
+                Value<String?> writeZoneId = const Value.absent(),
+                Value<int?> originalUtcOffsetMinutes = const Value.absent(),
+                Value<int?> utcOffsetMinutes = const Value.absent(),
+                Value<int> vocabularyVersion = const Value.absent(),
+                Value<int> overall = const Value.absent(),
+                Value<bool> workOrSchool = const Value.absent(),
+                Value<bool> homeResponsibilities = const Value.absent(),
+                Value<bool> relationships = const Value.absent(),
+                Value<bool> socialActivity = const Value.absent(),
+                Value<bool> sleep = const Value.absent(),
+                Value<bool> hobbiesOrInterests = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => RecordHubImpactRowsCompanion(
+                id: id,
+                experiencedDay: experiencedDay,
+                recordedAtMillis: recordedAtMillis,
+                updatedAtMillis: updatedAtMillis,
+                originalProvenance: originalProvenance,
+                provenance: provenance,
+                originalWriteZoneId: originalWriteZoneId,
+                writeZoneId: writeZoneId,
+                originalUtcOffsetMinutes: originalUtcOffsetMinutes,
+                utcOffsetMinutes: utcOffsetMinutes,
+                vocabularyVersion: vocabularyVersion,
+                overall: overall,
+                workOrSchool: workOrSchool,
+                homeResponsibilities: homeResponsibilities,
+                relationships: relationships,
+                socialActivity: socialActivity,
+                sleep: sleep,
+                hobbiesOrInterests: hobbiesOrInterests,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required String id,
+                required int experiencedDay,
+                required int recordedAtMillis,
+                required int updatedAtMillis,
+                required String originalProvenance,
+                required String provenance,
+                Value<String?> originalWriteZoneId = const Value.absent(),
+                Value<String?> writeZoneId = const Value.absent(),
+                Value<int?> originalUtcOffsetMinutes = const Value.absent(),
+                Value<int?> utcOffsetMinutes = const Value.absent(),
+                Value<int> vocabularyVersion = const Value.absent(),
+                required int overall,
+                Value<bool> workOrSchool = const Value.absent(),
+                Value<bool> homeResponsibilities = const Value.absent(),
+                Value<bool> relationships = const Value.absent(),
+                Value<bool> socialActivity = const Value.absent(),
+                Value<bool> sleep = const Value.absent(),
+                Value<bool> hobbiesOrInterests = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => RecordHubImpactRowsCompanion.insert(
+                id: id,
+                experiencedDay: experiencedDay,
+                recordedAtMillis: recordedAtMillis,
+                updatedAtMillis: updatedAtMillis,
+                originalProvenance: originalProvenance,
+                provenance: provenance,
+                originalWriteZoneId: originalWriteZoneId,
+                writeZoneId: writeZoneId,
+                originalUtcOffsetMinutes: originalUtcOffsetMinutes,
+                utcOffsetMinutes: utcOffsetMinutes,
+                vocabularyVersion: vocabularyVersion,
+                overall: overall,
+                workOrSchool: workOrSchool,
+                homeResponsibilities: homeResponsibilities,
+                relationships: relationships,
+                socialActivity: socialActivity,
+                sleep: sleep,
+                hobbiesOrInterests: hobbiesOrInterests,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$RecordHubImpactRowsTableProcessedTableManager =
+    ProcessedTableManager<
+      _$LetterHealthDatabase,
+      $RecordHubImpactRowsTable,
+      RecordHubImpactRow,
+      $$RecordHubImpactRowsTableFilterComposer,
+      $$RecordHubImpactRowsTableOrderingComposer,
+      $$RecordHubImpactRowsTableAnnotationComposer,
+      $$RecordHubImpactRowsTableCreateCompanionBuilder,
+      $$RecordHubImpactRowsTableUpdateCompanionBuilder,
+      (
+        RecordHubImpactRow,
+        BaseReferences<
+          _$LetterHealthDatabase,
+          $RecordHubImpactRowsTable,
+          RecordHubImpactRow
+        >,
+      ),
+      RecordHubImpactRow,
+      PrefetchHooks Function()
+    >;
+typedef $$RecordHubBleedingRowsTableCreateCompanionBuilder =
+    RecordHubBleedingRowsCompanion Function({
+      required String id,
+      required int experiencedDay,
+      required int recordedAtMillis,
+      required int updatedAtMillis,
+      required String originalProvenance,
+      required String provenance,
+      Value<String?> originalWriteZoneId,
+      Value<String?> writeZoneId,
+      Value<int?> originalUtcOffsetMinutes,
+      Value<int?> utcOffsetMinutes,
+      Value<int> vocabularyVersion,
+      Value<String?> flow,
+      Value<String?> periodId,
+      Value<String?> color,
+      Value<String?> clots,
+      Value<int> rowid,
+    });
+typedef $$RecordHubBleedingRowsTableUpdateCompanionBuilder =
+    RecordHubBleedingRowsCompanion Function({
+      Value<String> id,
+      Value<int> experiencedDay,
+      Value<int> recordedAtMillis,
+      Value<int> updatedAtMillis,
+      Value<String> originalProvenance,
+      Value<String> provenance,
+      Value<String?> originalWriteZoneId,
+      Value<String?> writeZoneId,
+      Value<int?> originalUtcOffsetMinutes,
+      Value<int?> utcOffsetMinutes,
+      Value<int> vocabularyVersion,
+      Value<String?> flow,
+      Value<String?> periodId,
+      Value<String?> color,
+      Value<String?> clots,
+      Value<int> rowid,
+    });
+
+class $$RecordHubBleedingRowsTableFilterComposer
+    extends Composer<_$LetterHealthDatabase, $RecordHubBleedingRowsTable> {
+  $$RecordHubBleedingRowsTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get experiencedDay => $composableBuilder(
+    column: $table.experiencedDay,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get recordedAtMillis => $composableBuilder(
+    column: $table.recordedAtMillis,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get updatedAtMillis => $composableBuilder(
+    column: $table.updatedAtMillis,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get originalProvenance => $composableBuilder(
+    column: $table.originalProvenance,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get provenance => $composableBuilder(
+    column: $table.provenance,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get originalWriteZoneId => $composableBuilder(
+    column: $table.originalWriteZoneId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get writeZoneId => $composableBuilder(
+    column: $table.writeZoneId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get originalUtcOffsetMinutes => $composableBuilder(
+    column: $table.originalUtcOffsetMinutes,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get utcOffsetMinutes => $composableBuilder(
+    column: $table.utcOffsetMinutes,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get vocabularyVersion => $composableBuilder(
+    column: $table.vocabularyVersion,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get flow => $composableBuilder(
+    column: $table.flow,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get periodId => $composableBuilder(
+    column: $table.periodId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get color => $composableBuilder(
+    column: $table.color,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get clots => $composableBuilder(
+    column: $table.clots,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$RecordHubBleedingRowsTableOrderingComposer
+    extends Composer<_$LetterHealthDatabase, $RecordHubBleedingRowsTable> {
+  $$RecordHubBleedingRowsTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get experiencedDay => $composableBuilder(
+    column: $table.experiencedDay,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get recordedAtMillis => $composableBuilder(
+    column: $table.recordedAtMillis,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get updatedAtMillis => $composableBuilder(
+    column: $table.updatedAtMillis,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get originalProvenance => $composableBuilder(
+    column: $table.originalProvenance,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get provenance => $composableBuilder(
+    column: $table.provenance,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get originalWriteZoneId => $composableBuilder(
+    column: $table.originalWriteZoneId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get writeZoneId => $composableBuilder(
+    column: $table.writeZoneId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get originalUtcOffsetMinutes => $composableBuilder(
+    column: $table.originalUtcOffsetMinutes,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get utcOffsetMinutes => $composableBuilder(
+    column: $table.utcOffsetMinutes,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get vocabularyVersion => $composableBuilder(
+    column: $table.vocabularyVersion,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get flow => $composableBuilder(
+    column: $table.flow,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get periodId => $composableBuilder(
+    column: $table.periodId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get color => $composableBuilder(
+    column: $table.color,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get clots => $composableBuilder(
+    column: $table.clots,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$RecordHubBleedingRowsTableAnnotationComposer
+    extends Composer<_$LetterHealthDatabase, $RecordHubBleedingRowsTable> {
+  $$RecordHubBleedingRowsTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<int> get experiencedDay => $composableBuilder(
+    column: $table.experiencedDay,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get recordedAtMillis => $composableBuilder(
+    column: $table.recordedAtMillis,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get updatedAtMillis => $composableBuilder(
+    column: $table.updatedAtMillis,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get originalProvenance => $composableBuilder(
+    column: $table.originalProvenance,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get provenance => $composableBuilder(
+    column: $table.provenance,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get originalWriteZoneId => $composableBuilder(
+    column: $table.originalWriteZoneId,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get writeZoneId => $composableBuilder(
+    column: $table.writeZoneId,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get originalUtcOffsetMinutes => $composableBuilder(
+    column: $table.originalUtcOffsetMinutes,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get utcOffsetMinutes => $composableBuilder(
+    column: $table.utcOffsetMinutes,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get vocabularyVersion => $composableBuilder(
+    column: $table.vocabularyVersion,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get flow =>
+      $composableBuilder(column: $table.flow, builder: (column) => column);
+
+  GeneratedColumn<String> get periodId =>
+      $composableBuilder(column: $table.periodId, builder: (column) => column);
+
+  GeneratedColumn<String> get color =>
+      $composableBuilder(column: $table.color, builder: (column) => column);
+
+  GeneratedColumn<String> get clots =>
+      $composableBuilder(column: $table.clots, builder: (column) => column);
+}
+
+class $$RecordHubBleedingRowsTableTableManager
+    extends
+        RootTableManager<
+          _$LetterHealthDatabase,
+          $RecordHubBleedingRowsTable,
+          RecordHubBleedingRow,
+          $$RecordHubBleedingRowsTableFilterComposer,
+          $$RecordHubBleedingRowsTableOrderingComposer,
+          $$RecordHubBleedingRowsTableAnnotationComposer,
+          $$RecordHubBleedingRowsTableCreateCompanionBuilder,
+          $$RecordHubBleedingRowsTableUpdateCompanionBuilder,
+          (
+            RecordHubBleedingRow,
+            BaseReferences<
+              _$LetterHealthDatabase,
+              $RecordHubBleedingRowsTable,
+              RecordHubBleedingRow
+            >,
+          ),
+          RecordHubBleedingRow,
+          PrefetchHooks Function()
+        > {
+  $$RecordHubBleedingRowsTableTableManager(
+    _$LetterHealthDatabase db,
+    $RecordHubBleedingRowsTable table,
+  ) : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$RecordHubBleedingRowsTableFilterComposer(
+                $db: db,
+                $table: table,
+              ),
+          createOrderingComposer: () =>
+              $$RecordHubBleedingRowsTableOrderingComposer(
+                $db: db,
+                $table: table,
+              ),
+          createComputedFieldComposer: () =>
+              $$RecordHubBleedingRowsTableAnnotationComposer(
+                $db: db,
+                $table: table,
+              ),
+          updateCompanionCallback:
+              ({
+                Value<String> id = const Value.absent(),
+                Value<int> experiencedDay = const Value.absent(),
+                Value<int> recordedAtMillis = const Value.absent(),
+                Value<int> updatedAtMillis = const Value.absent(),
+                Value<String> originalProvenance = const Value.absent(),
+                Value<String> provenance = const Value.absent(),
+                Value<String?> originalWriteZoneId = const Value.absent(),
+                Value<String?> writeZoneId = const Value.absent(),
+                Value<int?> originalUtcOffsetMinutes = const Value.absent(),
+                Value<int?> utcOffsetMinutes = const Value.absent(),
+                Value<int> vocabularyVersion = const Value.absent(),
+                Value<String?> flow = const Value.absent(),
+                Value<String?> periodId = const Value.absent(),
+                Value<String?> color = const Value.absent(),
+                Value<String?> clots = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => RecordHubBleedingRowsCompanion(
+                id: id,
+                experiencedDay: experiencedDay,
+                recordedAtMillis: recordedAtMillis,
+                updatedAtMillis: updatedAtMillis,
+                originalProvenance: originalProvenance,
+                provenance: provenance,
+                originalWriteZoneId: originalWriteZoneId,
+                writeZoneId: writeZoneId,
+                originalUtcOffsetMinutes: originalUtcOffsetMinutes,
+                utcOffsetMinutes: utcOffsetMinutes,
+                vocabularyVersion: vocabularyVersion,
+                flow: flow,
+                periodId: periodId,
+                color: color,
+                clots: clots,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required String id,
+                required int experiencedDay,
+                required int recordedAtMillis,
+                required int updatedAtMillis,
+                required String originalProvenance,
+                required String provenance,
+                Value<String?> originalWriteZoneId = const Value.absent(),
+                Value<String?> writeZoneId = const Value.absent(),
+                Value<int?> originalUtcOffsetMinutes = const Value.absent(),
+                Value<int?> utcOffsetMinutes = const Value.absent(),
+                Value<int> vocabularyVersion = const Value.absent(),
+                Value<String?> flow = const Value.absent(),
+                Value<String?> periodId = const Value.absent(),
+                Value<String?> color = const Value.absent(),
+                Value<String?> clots = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => RecordHubBleedingRowsCompanion.insert(
+                id: id,
+                experiencedDay: experiencedDay,
+                recordedAtMillis: recordedAtMillis,
+                updatedAtMillis: updatedAtMillis,
+                originalProvenance: originalProvenance,
+                provenance: provenance,
+                originalWriteZoneId: originalWriteZoneId,
+                writeZoneId: writeZoneId,
+                originalUtcOffsetMinutes: originalUtcOffsetMinutes,
+                utcOffsetMinutes: utcOffsetMinutes,
+                vocabularyVersion: vocabularyVersion,
+                flow: flow,
+                periodId: periodId,
+                color: color,
+                clots: clots,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$RecordHubBleedingRowsTableProcessedTableManager =
+    ProcessedTableManager<
+      _$LetterHealthDatabase,
+      $RecordHubBleedingRowsTable,
+      RecordHubBleedingRow,
+      $$RecordHubBleedingRowsTableFilterComposer,
+      $$RecordHubBleedingRowsTableOrderingComposer,
+      $$RecordHubBleedingRowsTableAnnotationComposer,
+      $$RecordHubBleedingRowsTableCreateCompanionBuilder,
+      $$RecordHubBleedingRowsTableUpdateCompanionBuilder,
+      (
+        RecordHubBleedingRow,
+        BaseReferences<
+          _$LetterHealthDatabase,
+          $RecordHubBleedingRowsTable,
+          RecordHubBleedingRow
+        >,
+      ),
+      RecordHubBleedingRow,
+      PrefetchHooks Function()
+    >;
+typedef $$RecordHubSleepRowsTableCreateCompanionBuilder =
+    RecordHubSleepRowsCompanion Function({
+      required String id,
+      required int experiencedDay,
+      required int recordedAtMillis,
+      required int updatedAtMillis,
+      required String originalProvenance,
+      required String provenance,
+      Value<String?> originalWriteZoneId,
+      Value<String?> writeZoneId,
+      Value<int?> originalUtcOffsetMinutes,
+      Value<int?> utcOffsetMinutes,
+      Value<int> vocabularyVersion,
+      Value<String?> durationBucket,
+      Value<String?> durationLabel,
+      Value<int?> durationCatalogVersion,
+      Value<int?> exactMinutes,
+      Value<int?> quality,
+      Value<bool> troubleFallingAsleep,
+      Value<bool> wakingDuringNight,
+      Value<bool> muchMoreThanUsual,
+      Value<bool> muchLessThanUsual,
+      Value<int> rowid,
+    });
+typedef $$RecordHubSleepRowsTableUpdateCompanionBuilder =
+    RecordHubSleepRowsCompanion Function({
+      Value<String> id,
+      Value<int> experiencedDay,
+      Value<int> recordedAtMillis,
+      Value<int> updatedAtMillis,
+      Value<String> originalProvenance,
+      Value<String> provenance,
+      Value<String?> originalWriteZoneId,
+      Value<String?> writeZoneId,
+      Value<int?> originalUtcOffsetMinutes,
+      Value<int?> utcOffsetMinutes,
+      Value<int> vocabularyVersion,
+      Value<String?> durationBucket,
+      Value<String?> durationLabel,
+      Value<int?> durationCatalogVersion,
+      Value<int?> exactMinutes,
+      Value<int?> quality,
+      Value<bool> troubleFallingAsleep,
+      Value<bool> wakingDuringNight,
+      Value<bool> muchMoreThanUsual,
+      Value<bool> muchLessThanUsual,
+      Value<int> rowid,
+    });
+
+class $$RecordHubSleepRowsTableFilterComposer
+    extends Composer<_$LetterHealthDatabase, $RecordHubSleepRowsTable> {
+  $$RecordHubSleepRowsTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get experiencedDay => $composableBuilder(
+    column: $table.experiencedDay,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get recordedAtMillis => $composableBuilder(
+    column: $table.recordedAtMillis,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get updatedAtMillis => $composableBuilder(
+    column: $table.updatedAtMillis,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get originalProvenance => $composableBuilder(
+    column: $table.originalProvenance,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get provenance => $composableBuilder(
+    column: $table.provenance,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get originalWriteZoneId => $composableBuilder(
+    column: $table.originalWriteZoneId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get writeZoneId => $composableBuilder(
+    column: $table.writeZoneId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get originalUtcOffsetMinutes => $composableBuilder(
+    column: $table.originalUtcOffsetMinutes,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get utcOffsetMinutes => $composableBuilder(
+    column: $table.utcOffsetMinutes,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get vocabularyVersion => $composableBuilder(
+    column: $table.vocabularyVersion,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get durationBucket => $composableBuilder(
+    column: $table.durationBucket,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get durationLabel => $composableBuilder(
+    column: $table.durationLabel,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get durationCatalogVersion => $composableBuilder(
+    column: $table.durationCatalogVersion,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get exactMinutes => $composableBuilder(
+    column: $table.exactMinutes,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get quality => $composableBuilder(
+    column: $table.quality,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get troubleFallingAsleep => $composableBuilder(
+    column: $table.troubleFallingAsleep,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get wakingDuringNight => $composableBuilder(
+    column: $table.wakingDuringNight,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get muchMoreThanUsual => $composableBuilder(
+    column: $table.muchMoreThanUsual,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get muchLessThanUsual => $composableBuilder(
+    column: $table.muchLessThanUsual,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$RecordHubSleepRowsTableOrderingComposer
+    extends Composer<_$LetterHealthDatabase, $RecordHubSleepRowsTable> {
+  $$RecordHubSleepRowsTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get experiencedDay => $composableBuilder(
+    column: $table.experiencedDay,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get recordedAtMillis => $composableBuilder(
+    column: $table.recordedAtMillis,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get updatedAtMillis => $composableBuilder(
+    column: $table.updatedAtMillis,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get originalProvenance => $composableBuilder(
+    column: $table.originalProvenance,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get provenance => $composableBuilder(
+    column: $table.provenance,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get originalWriteZoneId => $composableBuilder(
+    column: $table.originalWriteZoneId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get writeZoneId => $composableBuilder(
+    column: $table.writeZoneId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get originalUtcOffsetMinutes => $composableBuilder(
+    column: $table.originalUtcOffsetMinutes,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get utcOffsetMinutes => $composableBuilder(
+    column: $table.utcOffsetMinutes,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get vocabularyVersion => $composableBuilder(
+    column: $table.vocabularyVersion,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get durationBucket => $composableBuilder(
+    column: $table.durationBucket,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get durationLabel => $composableBuilder(
+    column: $table.durationLabel,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get durationCatalogVersion => $composableBuilder(
+    column: $table.durationCatalogVersion,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get exactMinutes => $composableBuilder(
+    column: $table.exactMinutes,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get quality => $composableBuilder(
+    column: $table.quality,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<bool> get troubleFallingAsleep => $composableBuilder(
+    column: $table.troubleFallingAsleep,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<bool> get wakingDuringNight => $composableBuilder(
+    column: $table.wakingDuringNight,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<bool> get muchMoreThanUsual => $composableBuilder(
+    column: $table.muchMoreThanUsual,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<bool> get muchLessThanUsual => $composableBuilder(
+    column: $table.muchLessThanUsual,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$RecordHubSleepRowsTableAnnotationComposer
+    extends Composer<_$LetterHealthDatabase, $RecordHubSleepRowsTable> {
+  $$RecordHubSleepRowsTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<int> get experiencedDay => $composableBuilder(
+    column: $table.experiencedDay,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get recordedAtMillis => $composableBuilder(
+    column: $table.recordedAtMillis,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get updatedAtMillis => $composableBuilder(
+    column: $table.updatedAtMillis,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get originalProvenance => $composableBuilder(
+    column: $table.originalProvenance,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get provenance => $composableBuilder(
+    column: $table.provenance,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get originalWriteZoneId => $composableBuilder(
+    column: $table.originalWriteZoneId,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get writeZoneId => $composableBuilder(
+    column: $table.writeZoneId,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get originalUtcOffsetMinutes => $composableBuilder(
+    column: $table.originalUtcOffsetMinutes,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get utcOffsetMinutes => $composableBuilder(
+    column: $table.utcOffsetMinutes,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get vocabularyVersion => $composableBuilder(
+    column: $table.vocabularyVersion,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get durationBucket => $composableBuilder(
+    column: $table.durationBucket,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get durationLabel => $composableBuilder(
+    column: $table.durationLabel,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get durationCatalogVersion => $composableBuilder(
+    column: $table.durationCatalogVersion,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get exactMinutes => $composableBuilder(
+    column: $table.exactMinutes,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get quality =>
+      $composableBuilder(column: $table.quality, builder: (column) => column);
+
+  GeneratedColumn<bool> get troubleFallingAsleep => $composableBuilder(
+    column: $table.troubleFallingAsleep,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<bool> get wakingDuringNight => $composableBuilder(
+    column: $table.wakingDuringNight,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<bool> get muchMoreThanUsual => $composableBuilder(
+    column: $table.muchMoreThanUsual,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<bool> get muchLessThanUsual => $composableBuilder(
+    column: $table.muchLessThanUsual,
+    builder: (column) => column,
+  );
+}
+
+class $$RecordHubSleepRowsTableTableManager
+    extends
+        RootTableManager<
+          _$LetterHealthDatabase,
+          $RecordHubSleepRowsTable,
+          RecordHubSleepRow,
+          $$RecordHubSleepRowsTableFilterComposer,
+          $$RecordHubSleepRowsTableOrderingComposer,
+          $$RecordHubSleepRowsTableAnnotationComposer,
+          $$RecordHubSleepRowsTableCreateCompanionBuilder,
+          $$RecordHubSleepRowsTableUpdateCompanionBuilder,
+          (
+            RecordHubSleepRow,
+            BaseReferences<
+              _$LetterHealthDatabase,
+              $RecordHubSleepRowsTable,
+              RecordHubSleepRow
+            >,
+          ),
+          RecordHubSleepRow,
+          PrefetchHooks Function()
+        > {
+  $$RecordHubSleepRowsTableTableManager(
+    _$LetterHealthDatabase db,
+    $RecordHubSleepRowsTable table,
+  ) : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$RecordHubSleepRowsTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$RecordHubSleepRowsTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$RecordHubSleepRowsTableAnnotationComposer(
+                $db: db,
+                $table: table,
+              ),
+          updateCompanionCallback:
+              ({
+                Value<String> id = const Value.absent(),
+                Value<int> experiencedDay = const Value.absent(),
+                Value<int> recordedAtMillis = const Value.absent(),
+                Value<int> updatedAtMillis = const Value.absent(),
+                Value<String> originalProvenance = const Value.absent(),
+                Value<String> provenance = const Value.absent(),
+                Value<String?> originalWriteZoneId = const Value.absent(),
+                Value<String?> writeZoneId = const Value.absent(),
+                Value<int?> originalUtcOffsetMinutes = const Value.absent(),
+                Value<int?> utcOffsetMinutes = const Value.absent(),
+                Value<int> vocabularyVersion = const Value.absent(),
+                Value<String?> durationBucket = const Value.absent(),
+                Value<String?> durationLabel = const Value.absent(),
+                Value<int?> durationCatalogVersion = const Value.absent(),
+                Value<int?> exactMinutes = const Value.absent(),
+                Value<int?> quality = const Value.absent(),
+                Value<bool> troubleFallingAsleep = const Value.absent(),
+                Value<bool> wakingDuringNight = const Value.absent(),
+                Value<bool> muchMoreThanUsual = const Value.absent(),
+                Value<bool> muchLessThanUsual = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => RecordHubSleepRowsCompanion(
+                id: id,
+                experiencedDay: experiencedDay,
+                recordedAtMillis: recordedAtMillis,
+                updatedAtMillis: updatedAtMillis,
+                originalProvenance: originalProvenance,
+                provenance: provenance,
+                originalWriteZoneId: originalWriteZoneId,
+                writeZoneId: writeZoneId,
+                originalUtcOffsetMinutes: originalUtcOffsetMinutes,
+                utcOffsetMinutes: utcOffsetMinutes,
+                vocabularyVersion: vocabularyVersion,
+                durationBucket: durationBucket,
+                durationLabel: durationLabel,
+                durationCatalogVersion: durationCatalogVersion,
+                exactMinutes: exactMinutes,
+                quality: quality,
+                troubleFallingAsleep: troubleFallingAsleep,
+                wakingDuringNight: wakingDuringNight,
+                muchMoreThanUsual: muchMoreThanUsual,
+                muchLessThanUsual: muchLessThanUsual,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required String id,
+                required int experiencedDay,
+                required int recordedAtMillis,
+                required int updatedAtMillis,
+                required String originalProvenance,
+                required String provenance,
+                Value<String?> originalWriteZoneId = const Value.absent(),
+                Value<String?> writeZoneId = const Value.absent(),
+                Value<int?> originalUtcOffsetMinutes = const Value.absent(),
+                Value<int?> utcOffsetMinutes = const Value.absent(),
+                Value<int> vocabularyVersion = const Value.absent(),
+                Value<String?> durationBucket = const Value.absent(),
+                Value<String?> durationLabel = const Value.absent(),
+                Value<int?> durationCatalogVersion = const Value.absent(),
+                Value<int?> exactMinutes = const Value.absent(),
+                Value<int?> quality = const Value.absent(),
+                Value<bool> troubleFallingAsleep = const Value.absent(),
+                Value<bool> wakingDuringNight = const Value.absent(),
+                Value<bool> muchMoreThanUsual = const Value.absent(),
+                Value<bool> muchLessThanUsual = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => RecordHubSleepRowsCompanion.insert(
+                id: id,
+                experiencedDay: experiencedDay,
+                recordedAtMillis: recordedAtMillis,
+                updatedAtMillis: updatedAtMillis,
+                originalProvenance: originalProvenance,
+                provenance: provenance,
+                originalWriteZoneId: originalWriteZoneId,
+                writeZoneId: writeZoneId,
+                originalUtcOffsetMinutes: originalUtcOffsetMinutes,
+                utcOffsetMinutes: utcOffsetMinutes,
+                vocabularyVersion: vocabularyVersion,
+                durationBucket: durationBucket,
+                durationLabel: durationLabel,
+                durationCatalogVersion: durationCatalogVersion,
+                exactMinutes: exactMinutes,
+                quality: quality,
+                troubleFallingAsleep: troubleFallingAsleep,
+                wakingDuringNight: wakingDuringNight,
+                muchMoreThanUsual: muchMoreThanUsual,
+                muchLessThanUsual: muchLessThanUsual,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$RecordHubSleepRowsTableProcessedTableManager =
+    ProcessedTableManager<
+      _$LetterHealthDatabase,
+      $RecordHubSleepRowsTable,
+      RecordHubSleepRow,
+      $$RecordHubSleepRowsTableFilterComposer,
+      $$RecordHubSleepRowsTableOrderingComposer,
+      $$RecordHubSleepRowsTableAnnotationComposer,
+      $$RecordHubSleepRowsTableCreateCompanionBuilder,
+      $$RecordHubSleepRowsTableUpdateCompanionBuilder,
+      (
+        RecordHubSleepRow,
+        BaseReferences<
+          _$LetterHealthDatabase,
+          $RecordHubSleepRowsTable,
+          RecordHubSleepRow
+        >,
+      ),
+      RecordHubSleepRow,
+      PrefetchHooks Function()
+    >;
+typedef $$RecordHubAppetiteRowsTableCreateCompanionBuilder =
+    RecordHubAppetiteRowsCompanion Function({
+      required String id,
+      required int experiencedDay,
+      required int recordedAtMillis,
+      required int updatedAtMillis,
+      required String originalProvenance,
+      required String provenance,
+      Value<String?> originalWriteZoneId,
+      Value<String?> writeZoneId,
+      Value<int?> originalUtcOffsetMinutes,
+      Value<int?> utcOffsetMinutes,
+      Value<int> vocabularyVersion,
+      Value<String?> appetite,
+      Value<int?> cravingScore,
+      Value<String?> cravingType,
+      Value<String?> customCraving,
+      Value<int> rowid,
+    });
+typedef $$RecordHubAppetiteRowsTableUpdateCompanionBuilder =
+    RecordHubAppetiteRowsCompanion Function({
+      Value<String> id,
+      Value<int> experiencedDay,
+      Value<int> recordedAtMillis,
+      Value<int> updatedAtMillis,
+      Value<String> originalProvenance,
+      Value<String> provenance,
+      Value<String?> originalWriteZoneId,
+      Value<String?> writeZoneId,
+      Value<int?> originalUtcOffsetMinutes,
+      Value<int?> utcOffsetMinutes,
+      Value<int> vocabularyVersion,
+      Value<String?> appetite,
+      Value<int?> cravingScore,
+      Value<String?> cravingType,
+      Value<String?> customCraving,
+      Value<int> rowid,
+    });
+
+class $$RecordHubAppetiteRowsTableFilterComposer
+    extends Composer<_$LetterHealthDatabase, $RecordHubAppetiteRowsTable> {
+  $$RecordHubAppetiteRowsTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get experiencedDay => $composableBuilder(
+    column: $table.experiencedDay,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get recordedAtMillis => $composableBuilder(
+    column: $table.recordedAtMillis,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get updatedAtMillis => $composableBuilder(
+    column: $table.updatedAtMillis,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get originalProvenance => $composableBuilder(
+    column: $table.originalProvenance,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get provenance => $composableBuilder(
+    column: $table.provenance,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get originalWriteZoneId => $composableBuilder(
+    column: $table.originalWriteZoneId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get writeZoneId => $composableBuilder(
+    column: $table.writeZoneId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get originalUtcOffsetMinutes => $composableBuilder(
+    column: $table.originalUtcOffsetMinutes,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get utcOffsetMinutes => $composableBuilder(
+    column: $table.utcOffsetMinutes,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get vocabularyVersion => $composableBuilder(
+    column: $table.vocabularyVersion,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get appetite => $composableBuilder(
+    column: $table.appetite,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get cravingScore => $composableBuilder(
+    column: $table.cravingScore,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get cravingType => $composableBuilder(
+    column: $table.cravingType,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get customCraving => $composableBuilder(
+    column: $table.customCraving,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$RecordHubAppetiteRowsTableOrderingComposer
+    extends Composer<_$LetterHealthDatabase, $RecordHubAppetiteRowsTable> {
+  $$RecordHubAppetiteRowsTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get experiencedDay => $composableBuilder(
+    column: $table.experiencedDay,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get recordedAtMillis => $composableBuilder(
+    column: $table.recordedAtMillis,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get updatedAtMillis => $composableBuilder(
+    column: $table.updatedAtMillis,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get originalProvenance => $composableBuilder(
+    column: $table.originalProvenance,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get provenance => $composableBuilder(
+    column: $table.provenance,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get originalWriteZoneId => $composableBuilder(
+    column: $table.originalWriteZoneId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get writeZoneId => $composableBuilder(
+    column: $table.writeZoneId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get originalUtcOffsetMinutes => $composableBuilder(
+    column: $table.originalUtcOffsetMinutes,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get utcOffsetMinutes => $composableBuilder(
+    column: $table.utcOffsetMinutes,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get vocabularyVersion => $composableBuilder(
+    column: $table.vocabularyVersion,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get appetite => $composableBuilder(
+    column: $table.appetite,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get cravingScore => $composableBuilder(
+    column: $table.cravingScore,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get cravingType => $composableBuilder(
+    column: $table.cravingType,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get customCraving => $composableBuilder(
+    column: $table.customCraving,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$RecordHubAppetiteRowsTableAnnotationComposer
+    extends Composer<_$LetterHealthDatabase, $RecordHubAppetiteRowsTable> {
+  $$RecordHubAppetiteRowsTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<int> get experiencedDay => $composableBuilder(
+    column: $table.experiencedDay,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get recordedAtMillis => $composableBuilder(
+    column: $table.recordedAtMillis,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get updatedAtMillis => $composableBuilder(
+    column: $table.updatedAtMillis,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get originalProvenance => $composableBuilder(
+    column: $table.originalProvenance,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get provenance => $composableBuilder(
+    column: $table.provenance,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get originalWriteZoneId => $composableBuilder(
+    column: $table.originalWriteZoneId,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get writeZoneId => $composableBuilder(
+    column: $table.writeZoneId,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get originalUtcOffsetMinutes => $composableBuilder(
+    column: $table.originalUtcOffsetMinutes,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get utcOffsetMinutes => $composableBuilder(
+    column: $table.utcOffsetMinutes,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get vocabularyVersion => $composableBuilder(
+    column: $table.vocabularyVersion,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get appetite =>
+      $composableBuilder(column: $table.appetite, builder: (column) => column);
+
+  GeneratedColumn<int> get cravingScore => $composableBuilder(
+    column: $table.cravingScore,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get cravingType => $composableBuilder(
+    column: $table.cravingType,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get customCraving => $composableBuilder(
+    column: $table.customCraving,
+    builder: (column) => column,
+  );
+}
+
+class $$RecordHubAppetiteRowsTableTableManager
+    extends
+        RootTableManager<
+          _$LetterHealthDatabase,
+          $RecordHubAppetiteRowsTable,
+          RecordHubAppetiteRow,
+          $$RecordHubAppetiteRowsTableFilterComposer,
+          $$RecordHubAppetiteRowsTableOrderingComposer,
+          $$RecordHubAppetiteRowsTableAnnotationComposer,
+          $$RecordHubAppetiteRowsTableCreateCompanionBuilder,
+          $$RecordHubAppetiteRowsTableUpdateCompanionBuilder,
+          (
+            RecordHubAppetiteRow,
+            BaseReferences<
+              _$LetterHealthDatabase,
+              $RecordHubAppetiteRowsTable,
+              RecordHubAppetiteRow
+            >,
+          ),
+          RecordHubAppetiteRow,
+          PrefetchHooks Function()
+        > {
+  $$RecordHubAppetiteRowsTableTableManager(
+    _$LetterHealthDatabase db,
+    $RecordHubAppetiteRowsTable table,
+  ) : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$RecordHubAppetiteRowsTableFilterComposer(
+                $db: db,
+                $table: table,
+              ),
+          createOrderingComposer: () =>
+              $$RecordHubAppetiteRowsTableOrderingComposer(
+                $db: db,
+                $table: table,
+              ),
+          createComputedFieldComposer: () =>
+              $$RecordHubAppetiteRowsTableAnnotationComposer(
+                $db: db,
+                $table: table,
+              ),
+          updateCompanionCallback:
+              ({
+                Value<String> id = const Value.absent(),
+                Value<int> experiencedDay = const Value.absent(),
+                Value<int> recordedAtMillis = const Value.absent(),
+                Value<int> updatedAtMillis = const Value.absent(),
+                Value<String> originalProvenance = const Value.absent(),
+                Value<String> provenance = const Value.absent(),
+                Value<String?> originalWriteZoneId = const Value.absent(),
+                Value<String?> writeZoneId = const Value.absent(),
+                Value<int?> originalUtcOffsetMinutes = const Value.absent(),
+                Value<int?> utcOffsetMinutes = const Value.absent(),
+                Value<int> vocabularyVersion = const Value.absent(),
+                Value<String?> appetite = const Value.absent(),
+                Value<int?> cravingScore = const Value.absent(),
+                Value<String?> cravingType = const Value.absent(),
+                Value<String?> customCraving = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => RecordHubAppetiteRowsCompanion(
+                id: id,
+                experiencedDay: experiencedDay,
+                recordedAtMillis: recordedAtMillis,
+                updatedAtMillis: updatedAtMillis,
+                originalProvenance: originalProvenance,
+                provenance: provenance,
+                originalWriteZoneId: originalWriteZoneId,
+                writeZoneId: writeZoneId,
+                originalUtcOffsetMinutes: originalUtcOffsetMinutes,
+                utcOffsetMinutes: utcOffsetMinutes,
+                vocabularyVersion: vocabularyVersion,
+                appetite: appetite,
+                cravingScore: cravingScore,
+                cravingType: cravingType,
+                customCraving: customCraving,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required String id,
+                required int experiencedDay,
+                required int recordedAtMillis,
+                required int updatedAtMillis,
+                required String originalProvenance,
+                required String provenance,
+                Value<String?> originalWriteZoneId = const Value.absent(),
+                Value<String?> writeZoneId = const Value.absent(),
+                Value<int?> originalUtcOffsetMinutes = const Value.absent(),
+                Value<int?> utcOffsetMinutes = const Value.absent(),
+                Value<int> vocabularyVersion = const Value.absent(),
+                Value<String?> appetite = const Value.absent(),
+                Value<int?> cravingScore = const Value.absent(),
+                Value<String?> cravingType = const Value.absent(),
+                Value<String?> customCraving = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => RecordHubAppetiteRowsCompanion.insert(
+                id: id,
+                experiencedDay: experiencedDay,
+                recordedAtMillis: recordedAtMillis,
+                updatedAtMillis: updatedAtMillis,
+                originalProvenance: originalProvenance,
+                provenance: provenance,
+                originalWriteZoneId: originalWriteZoneId,
+                writeZoneId: writeZoneId,
+                originalUtcOffsetMinutes: originalUtcOffsetMinutes,
+                utcOffsetMinutes: utcOffsetMinutes,
+                vocabularyVersion: vocabularyVersion,
+                appetite: appetite,
+                cravingScore: cravingScore,
+                cravingType: cravingType,
+                customCraving: customCraving,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$RecordHubAppetiteRowsTableProcessedTableManager =
+    ProcessedTableManager<
+      _$LetterHealthDatabase,
+      $RecordHubAppetiteRowsTable,
+      RecordHubAppetiteRow,
+      $$RecordHubAppetiteRowsTableFilterComposer,
+      $$RecordHubAppetiteRowsTableOrderingComposer,
+      $$RecordHubAppetiteRowsTableAnnotationComposer,
+      $$RecordHubAppetiteRowsTableCreateCompanionBuilder,
+      $$RecordHubAppetiteRowsTableUpdateCompanionBuilder,
+      (
+        RecordHubAppetiteRow,
+        BaseReferences<
+          _$LetterHealthDatabase,
+          $RecordHubAppetiteRowsTable,
+          RecordHubAppetiteRow
+        >,
+      ),
+      RecordHubAppetiteRow,
+      PrefetchHooks Function()
+    >;
+typedef $$RecordHubActivityRowsTableCreateCompanionBuilder =
+    RecordHubActivityRowsCompanion Function({
+      required String id,
+      required int experiencedDay,
+      required int recordedAtMillis,
+      required int updatedAtMillis,
+      required String originalProvenance,
+      required String provenance,
+      Value<String?> originalWriteZoneId,
+      Value<String?> writeZoneId,
+      Value<int?> originalUtcOffsetMinutes,
+      Value<int?> utcOffsetMinutes,
+      Value<int> vocabularyVersion,
+      Value<String?> durationBucket,
+      Value<String?> durationLabel,
+      Value<int?> durationCatalogVersion,
+      Value<int?> exactMinutes,
+      required String type,
+      Value<String?> intensity,
+      Value<String?> customName,
+      Value<int> rowid,
+    });
+typedef $$RecordHubActivityRowsTableUpdateCompanionBuilder =
+    RecordHubActivityRowsCompanion Function({
+      Value<String> id,
+      Value<int> experiencedDay,
+      Value<int> recordedAtMillis,
+      Value<int> updatedAtMillis,
+      Value<String> originalProvenance,
+      Value<String> provenance,
+      Value<String?> originalWriteZoneId,
+      Value<String?> writeZoneId,
+      Value<int?> originalUtcOffsetMinutes,
+      Value<int?> utcOffsetMinutes,
+      Value<int> vocabularyVersion,
+      Value<String?> durationBucket,
+      Value<String?> durationLabel,
+      Value<int?> durationCatalogVersion,
+      Value<int?> exactMinutes,
+      Value<String> type,
+      Value<String?> intensity,
+      Value<String?> customName,
+      Value<int> rowid,
+    });
+
+class $$RecordHubActivityRowsTableFilterComposer
+    extends Composer<_$LetterHealthDatabase, $RecordHubActivityRowsTable> {
+  $$RecordHubActivityRowsTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get experiencedDay => $composableBuilder(
+    column: $table.experiencedDay,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get recordedAtMillis => $composableBuilder(
+    column: $table.recordedAtMillis,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get updatedAtMillis => $composableBuilder(
+    column: $table.updatedAtMillis,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get originalProvenance => $composableBuilder(
+    column: $table.originalProvenance,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get provenance => $composableBuilder(
+    column: $table.provenance,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get originalWriteZoneId => $composableBuilder(
+    column: $table.originalWriteZoneId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get writeZoneId => $composableBuilder(
+    column: $table.writeZoneId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get originalUtcOffsetMinutes => $composableBuilder(
+    column: $table.originalUtcOffsetMinutes,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get utcOffsetMinutes => $composableBuilder(
+    column: $table.utcOffsetMinutes,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get vocabularyVersion => $composableBuilder(
+    column: $table.vocabularyVersion,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get durationBucket => $composableBuilder(
+    column: $table.durationBucket,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get durationLabel => $composableBuilder(
+    column: $table.durationLabel,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get durationCatalogVersion => $composableBuilder(
+    column: $table.durationCatalogVersion,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get exactMinutes => $composableBuilder(
+    column: $table.exactMinutes,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get type => $composableBuilder(
+    column: $table.type,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get intensity => $composableBuilder(
+    column: $table.intensity,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get customName => $composableBuilder(
+    column: $table.customName,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$RecordHubActivityRowsTableOrderingComposer
+    extends Composer<_$LetterHealthDatabase, $RecordHubActivityRowsTable> {
+  $$RecordHubActivityRowsTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get experiencedDay => $composableBuilder(
+    column: $table.experiencedDay,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get recordedAtMillis => $composableBuilder(
+    column: $table.recordedAtMillis,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get updatedAtMillis => $composableBuilder(
+    column: $table.updatedAtMillis,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get originalProvenance => $composableBuilder(
+    column: $table.originalProvenance,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get provenance => $composableBuilder(
+    column: $table.provenance,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get originalWriteZoneId => $composableBuilder(
+    column: $table.originalWriteZoneId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get writeZoneId => $composableBuilder(
+    column: $table.writeZoneId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get originalUtcOffsetMinutes => $composableBuilder(
+    column: $table.originalUtcOffsetMinutes,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get utcOffsetMinutes => $composableBuilder(
+    column: $table.utcOffsetMinutes,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get vocabularyVersion => $composableBuilder(
+    column: $table.vocabularyVersion,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get durationBucket => $composableBuilder(
+    column: $table.durationBucket,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get durationLabel => $composableBuilder(
+    column: $table.durationLabel,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get durationCatalogVersion => $composableBuilder(
+    column: $table.durationCatalogVersion,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get exactMinutes => $composableBuilder(
+    column: $table.exactMinutes,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get type => $composableBuilder(
+    column: $table.type,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get intensity => $composableBuilder(
+    column: $table.intensity,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get customName => $composableBuilder(
+    column: $table.customName,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$RecordHubActivityRowsTableAnnotationComposer
+    extends Composer<_$LetterHealthDatabase, $RecordHubActivityRowsTable> {
+  $$RecordHubActivityRowsTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<int> get experiencedDay => $composableBuilder(
+    column: $table.experiencedDay,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get recordedAtMillis => $composableBuilder(
+    column: $table.recordedAtMillis,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get updatedAtMillis => $composableBuilder(
+    column: $table.updatedAtMillis,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get originalProvenance => $composableBuilder(
+    column: $table.originalProvenance,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get provenance => $composableBuilder(
+    column: $table.provenance,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get originalWriteZoneId => $composableBuilder(
+    column: $table.originalWriteZoneId,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get writeZoneId => $composableBuilder(
+    column: $table.writeZoneId,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get originalUtcOffsetMinutes => $composableBuilder(
+    column: $table.originalUtcOffsetMinutes,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get utcOffsetMinutes => $composableBuilder(
+    column: $table.utcOffsetMinutes,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get vocabularyVersion => $composableBuilder(
+    column: $table.vocabularyVersion,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get durationBucket => $composableBuilder(
+    column: $table.durationBucket,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get durationLabel => $composableBuilder(
+    column: $table.durationLabel,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get durationCatalogVersion => $composableBuilder(
+    column: $table.durationCatalogVersion,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get exactMinutes => $composableBuilder(
+    column: $table.exactMinutes,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get type =>
+      $composableBuilder(column: $table.type, builder: (column) => column);
+
+  GeneratedColumn<String> get intensity =>
+      $composableBuilder(column: $table.intensity, builder: (column) => column);
+
+  GeneratedColumn<String> get customName => $composableBuilder(
+    column: $table.customName,
+    builder: (column) => column,
+  );
+}
+
+class $$RecordHubActivityRowsTableTableManager
+    extends
+        RootTableManager<
+          _$LetterHealthDatabase,
+          $RecordHubActivityRowsTable,
+          RecordHubActivityRow,
+          $$RecordHubActivityRowsTableFilterComposer,
+          $$RecordHubActivityRowsTableOrderingComposer,
+          $$RecordHubActivityRowsTableAnnotationComposer,
+          $$RecordHubActivityRowsTableCreateCompanionBuilder,
+          $$RecordHubActivityRowsTableUpdateCompanionBuilder,
+          (
+            RecordHubActivityRow,
+            BaseReferences<
+              _$LetterHealthDatabase,
+              $RecordHubActivityRowsTable,
+              RecordHubActivityRow
+            >,
+          ),
+          RecordHubActivityRow,
+          PrefetchHooks Function()
+        > {
+  $$RecordHubActivityRowsTableTableManager(
+    _$LetterHealthDatabase db,
+    $RecordHubActivityRowsTable table,
+  ) : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$RecordHubActivityRowsTableFilterComposer(
+                $db: db,
+                $table: table,
+              ),
+          createOrderingComposer: () =>
+              $$RecordHubActivityRowsTableOrderingComposer(
+                $db: db,
+                $table: table,
+              ),
+          createComputedFieldComposer: () =>
+              $$RecordHubActivityRowsTableAnnotationComposer(
+                $db: db,
+                $table: table,
+              ),
+          updateCompanionCallback:
+              ({
+                Value<String> id = const Value.absent(),
+                Value<int> experiencedDay = const Value.absent(),
+                Value<int> recordedAtMillis = const Value.absent(),
+                Value<int> updatedAtMillis = const Value.absent(),
+                Value<String> originalProvenance = const Value.absent(),
+                Value<String> provenance = const Value.absent(),
+                Value<String?> originalWriteZoneId = const Value.absent(),
+                Value<String?> writeZoneId = const Value.absent(),
+                Value<int?> originalUtcOffsetMinutes = const Value.absent(),
+                Value<int?> utcOffsetMinutes = const Value.absent(),
+                Value<int> vocabularyVersion = const Value.absent(),
+                Value<String?> durationBucket = const Value.absent(),
+                Value<String?> durationLabel = const Value.absent(),
+                Value<int?> durationCatalogVersion = const Value.absent(),
+                Value<int?> exactMinutes = const Value.absent(),
+                Value<String> type = const Value.absent(),
+                Value<String?> intensity = const Value.absent(),
+                Value<String?> customName = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => RecordHubActivityRowsCompanion(
+                id: id,
+                experiencedDay: experiencedDay,
+                recordedAtMillis: recordedAtMillis,
+                updatedAtMillis: updatedAtMillis,
+                originalProvenance: originalProvenance,
+                provenance: provenance,
+                originalWriteZoneId: originalWriteZoneId,
+                writeZoneId: writeZoneId,
+                originalUtcOffsetMinutes: originalUtcOffsetMinutes,
+                utcOffsetMinutes: utcOffsetMinutes,
+                vocabularyVersion: vocabularyVersion,
+                durationBucket: durationBucket,
+                durationLabel: durationLabel,
+                durationCatalogVersion: durationCatalogVersion,
+                exactMinutes: exactMinutes,
+                type: type,
+                intensity: intensity,
+                customName: customName,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required String id,
+                required int experiencedDay,
+                required int recordedAtMillis,
+                required int updatedAtMillis,
+                required String originalProvenance,
+                required String provenance,
+                Value<String?> originalWriteZoneId = const Value.absent(),
+                Value<String?> writeZoneId = const Value.absent(),
+                Value<int?> originalUtcOffsetMinutes = const Value.absent(),
+                Value<int?> utcOffsetMinutes = const Value.absent(),
+                Value<int> vocabularyVersion = const Value.absent(),
+                Value<String?> durationBucket = const Value.absent(),
+                Value<String?> durationLabel = const Value.absent(),
+                Value<int?> durationCatalogVersion = const Value.absent(),
+                Value<int?> exactMinutes = const Value.absent(),
+                required String type,
+                Value<String?> intensity = const Value.absent(),
+                Value<String?> customName = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => RecordHubActivityRowsCompanion.insert(
+                id: id,
+                experiencedDay: experiencedDay,
+                recordedAtMillis: recordedAtMillis,
+                updatedAtMillis: updatedAtMillis,
+                originalProvenance: originalProvenance,
+                provenance: provenance,
+                originalWriteZoneId: originalWriteZoneId,
+                writeZoneId: writeZoneId,
+                originalUtcOffsetMinutes: originalUtcOffsetMinutes,
+                utcOffsetMinutes: utcOffsetMinutes,
+                vocabularyVersion: vocabularyVersion,
+                durationBucket: durationBucket,
+                durationLabel: durationLabel,
+                durationCatalogVersion: durationCatalogVersion,
+                exactMinutes: exactMinutes,
+                type: type,
+                intensity: intensity,
+                customName: customName,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$RecordHubActivityRowsTableProcessedTableManager =
+    ProcessedTableManager<
+      _$LetterHealthDatabase,
+      $RecordHubActivityRowsTable,
+      RecordHubActivityRow,
+      $$RecordHubActivityRowsTableFilterComposer,
+      $$RecordHubActivityRowsTableOrderingComposer,
+      $$RecordHubActivityRowsTableAnnotationComposer,
+      $$RecordHubActivityRowsTableCreateCompanionBuilder,
+      $$RecordHubActivityRowsTableUpdateCompanionBuilder,
+      (
+        RecordHubActivityRow,
+        BaseReferences<
+          _$LetterHealthDatabase,
+          $RecordHubActivityRowsTable,
+          RecordHubActivityRow
+        >,
+      ),
+      RecordHubActivityRow,
+      PrefetchHooks Function()
+    >;
+typedef $$RecordHubEventRowsTableCreateCompanionBuilder =
+    RecordHubEventRowsCompanion Function({
+      required String id,
+      required int experiencedDay,
+      required int recordedAtMillis,
+      required int updatedAtMillis,
+      required String originalProvenance,
+      required String provenance,
+      Value<String?> originalWriteZoneId,
+      Value<String?> writeZoneId,
+      Value<int?> originalUtcOffsetMinutes,
+      Value<int?> utcOffsetMinutes,
+      Value<int> vocabularyVersion,
+      required String type,
+      Value<String?> intensity,
+      Value<String?> customName,
+      Value<String?> note,
+      Value<int> rowid,
+    });
+typedef $$RecordHubEventRowsTableUpdateCompanionBuilder =
+    RecordHubEventRowsCompanion Function({
+      Value<String> id,
+      Value<int> experiencedDay,
+      Value<int> recordedAtMillis,
+      Value<int> updatedAtMillis,
+      Value<String> originalProvenance,
+      Value<String> provenance,
+      Value<String?> originalWriteZoneId,
+      Value<String?> writeZoneId,
+      Value<int?> originalUtcOffsetMinutes,
+      Value<int?> utcOffsetMinutes,
+      Value<int> vocabularyVersion,
+      Value<String> type,
+      Value<String?> intensity,
+      Value<String?> customName,
+      Value<String?> note,
+      Value<int> rowid,
+    });
+
+class $$RecordHubEventRowsTableFilterComposer
+    extends Composer<_$LetterHealthDatabase, $RecordHubEventRowsTable> {
+  $$RecordHubEventRowsTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get experiencedDay => $composableBuilder(
+    column: $table.experiencedDay,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get recordedAtMillis => $composableBuilder(
+    column: $table.recordedAtMillis,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get updatedAtMillis => $composableBuilder(
+    column: $table.updatedAtMillis,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get originalProvenance => $composableBuilder(
+    column: $table.originalProvenance,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get provenance => $composableBuilder(
+    column: $table.provenance,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get originalWriteZoneId => $composableBuilder(
+    column: $table.originalWriteZoneId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get writeZoneId => $composableBuilder(
+    column: $table.writeZoneId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get originalUtcOffsetMinutes => $composableBuilder(
+    column: $table.originalUtcOffsetMinutes,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get utcOffsetMinutes => $composableBuilder(
+    column: $table.utcOffsetMinutes,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get vocabularyVersion => $composableBuilder(
+    column: $table.vocabularyVersion,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get type => $composableBuilder(
+    column: $table.type,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get intensity => $composableBuilder(
+    column: $table.intensity,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get customName => $composableBuilder(
+    column: $table.customName,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get note => $composableBuilder(
+    column: $table.note,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$RecordHubEventRowsTableOrderingComposer
+    extends Composer<_$LetterHealthDatabase, $RecordHubEventRowsTable> {
+  $$RecordHubEventRowsTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get experiencedDay => $composableBuilder(
+    column: $table.experiencedDay,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get recordedAtMillis => $composableBuilder(
+    column: $table.recordedAtMillis,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get updatedAtMillis => $composableBuilder(
+    column: $table.updatedAtMillis,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get originalProvenance => $composableBuilder(
+    column: $table.originalProvenance,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get provenance => $composableBuilder(
+    column: $table.provenance,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get originalWriteZoneId => $composableBuilder(
+    column: $table.originalWriteZoneId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get writeZoneId => $composableBuilder(
+    column: $table.writeZoneId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get originalUtcOffsetMinutes => $composableBuilder(
+    column: $table.originalUtcOffsetMinutes,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get utcOffsetMinutes => $composableBuilder(
+    column: $table.utcOffsetMinutes,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get vocabularyVersion => $composableBuilder(
+    column: $table.vocabularyVersion,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get type => $composableBuilder(
+    column: $table.type,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get intensity => $composableBuilder(
+    column: $table.intensity,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get customName => $composableBuilder(
+    column: $table.customName,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get note => $composableBuilder(
+    column: $table.note,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$RecordHubEventRowsTableAnnotationComposer
+    extends Composer<_$LetterHealthDatabase, $RecordHubEventRowsTable> {
+  $$RecordHubEventRowsTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<int> get experiencedDay => $composableBuilder(
+    column: $table.experiencedDay,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get recordedAtMillis => $composableBuilder(
+    column: $table.recordedAtMillis,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get updatedAtMillis => $composableBuilder(
+    column: $table.updatedAtMillis,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get originalProvenance => $composableBuilder(
+    column: $table.originalProvenance,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get provenance => $composableBuilder(
+    column: $table.provenance,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get originalWriteZoneId => $composableBuilder(
+    column: $table.originalWriteZoneId,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get writeZoneId => $composableBuilder(
+    column: $table.writeZoneId,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get originalUtcOffsetMinutes => $composableBuilder(
+    column: $table.originalUtcOffsetMinutes,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get utcOffsetMinutes => $composableBuilder(
+    column: $table.utcOffsetMinutes,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get vocabularyVersion => $composableBuilder(
+    column: $table.vocabularyVersion,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get type =>
+      $composableBuilder(column: $table.type, builder: (column) => column);
+
+  GeneratedColumn<String> get intensity =>
+      $composableBuilder(column: $table.intensity, builder: (column) => column);
+
+  GeneratedColumn<String> get customName => $composableBuilder(
+    column: $table.customName,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get note =>
+      $composableBuilder(column: $table.note, builder: (column) => column);
+}
+
+class $$RecordHubEventRowsTableTableManager
+    extends
+        RootTableManager<
+          _$LetterHealthDatabase,
+          $RecordHubEventRowsTable,
+          RecordHubEventRow,
+          $$RecordHubEventRowsTableFilterComposer,
+          $$RecordHubEventRowsTableOrderingComposer,
+          $$RecordHubEventRowsTableAnnotationComposer,
+          $$RecordHubEventRowsTableCreateCompanionBuilder,
+          $$RecordHubEventRowsTableUpdateCompanionBuilder,
+          (
+            RecordHubEventRow,
+            BaseReferences<
+              _$LetterHealthDatabase,
+              $RecordHubEventRowsTable,
+              RecordHubEventRow
+            >,
+          ),
+          RecordHubEventRow,
+          PrefetchHooks Function()
+        > {
+  $$RecordHubEventRowsTableTableManager(
+    _$LetterHealthDatabase db,
+    $RecordHubEventRowsTable table,
+  ) : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$RecordHubEventRowsTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$RecordHubEventRowsTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$RecordHubEventRowsTableAnnotationComposer(
+                $db: db,
+                $table: table,
+              ),
+          updateCompanionCallback:
+              ({
+                Value<String> id = const Value.absent(),
+                Value<int> experiencedDay = const Value.absent(),
+                Value<int> recordedAtMillis = const Value.absent(),
+                Value<int> updatedAtMillis = const Value.absent(),
+                Value<String> originalProvenance = const Value.absent(),
+                Value<String> provenance = const Value.absent(),
+                Value<String?> originalWriteZoneId = const Value.absent(),
+                Value<String?> writeZoneId = const Value.absent(),
+                Value<int?> originalUtcOffsetMinutes = const Value.absent(),
+                Value<int?> utcOffsetMinutes = const Value.absent(),
+                Value<int> vocabularyVersion = const Value.absent(),
+                Value<String> type = const Value.absent(),
+                Value<String?> intensity = const Value.absent(),
+                Value<String?> customName = const Value.absent(),
+                Value<String?> note = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => RecordHubEventRowsCompanion(
+                id: id,
+                experiencedDay: experiencedDay,
+                recordedAtMillis: recordedAtMillis,
+                updatedAtMillis: updatedAtMillis,
+                originalProvenance: originalProvenance,
+                provenance: provenance,
+                originalWriteZoneId: originalWriteZoneId,
+                writeZoneId: writeZoneId,
+                originalUtcOffsetMinutes: originalUtcOffsetMinutes,
+                utcOffsetMinutes: utcOffsetMinutes,
+                vocabularyVersion: vocabularyVersion,
+                type: type,
+                intensity: intensity,
+                customName: customName,
+                note: note,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required String id,
+                required int experiencedDay,
+                required int recordedAtMillis,
+                required int updatedAtMillis,
+                required String originalProvenance,
+                required String provenance,
+                Value<String?> originalWriteZoneId = const Value.absent(),
+                Value<String?> writeZoneId = const Value.absent(),
+                Value<int?> originalUtcOffsetMinutes = const Value.absent(),
+                Value<int?> utcOffsetMinutes = const Value.absent(),
+                Value<int> vocabularyVersion = const Value.absent(),
+                required String type,
+                Value<String?> intensity = const Value.absent(),
+                Value<String?> customName = const Value.absent(),
+                Value<String?> note = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => RecordHubEventRowsCompanion.insert(
+                id: id,
+                experiencedDay: experiencedDay,
+                recordedAtMillis: recordedAtMillis,
+                updatedAtMillis: updatedAtMillis,
+                originalProvenance: originalProvenance,
+                provenance: provenance,
+                originalWriteZoneId: originalWriteZoneId,
+                writeZoneId: writeZoneId,
+                originalUtcOffsetMinutes: originalUtcOffsetMinutes,
+                utcOffsetMinutes: utcOffsetMinutes,
+                vocabularyVersion: vocabularyVersion,
+                type: type,
+                intensity: intensity,
+                customName: customName,
+                note: note,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$RecordHubEventRowsTableProcessedTableManager =
+    ProcessedTableManager<
+      _$LetterHealthDatabase,
+      $RecordHubEventRowsTable,
+      RecordHubEventRow,
+      $$RecordHubEventRowsTableFilterComposer,
+      $$RecordHubEventRowsTableOrderingComposer,
+      $$RecordHubEventRowsTableAnnotationComposer,
+      $$RecordHubEventRowsTableCreateCompanionBuilder,
+      $$RecordHubEventRowsTableUpdateCompanionBuilder,
+      (
+        RecordHubEventRow,
+        BaseReferences<
+          _$LetterHealthDatabase,
+          $RecordHubEventRowsTable,
+          RecordHubEventRow
+        >,
+      ),
+      RecordHubEventRow,
+      PrefetchHooks Function()
+    >;
+typedef $$RecordHubTemperatureRowsTableCreateCompanionBuilder =
+    RecordHubTemperatureRowsCompanion Function({
+      required String id,
+      required int experiencedDay,
+      required int recordedAtMillis,
+      required int updatedAtMillis,
+      required String originalProvenance,
+      required String provenance,
+      Value<String?> originalWriteZoneId,
+      Value<String?> writeZoneId,
+      Value<int?> originalUtcOffsetMinutes,
+      Value<int?> utcOffsetMinutes,
+      Value<int> vocabularyVersion,
+      required double enteredValue,
+      required String unit,
+      required String method,
+      Value<int?> measuredHour,
+      Value<int?> measuredMinute,
+      Value<bool> feverOrIllness,
+      Value<bool> poorSleep,
+      Value<bool> alcohol,
+      Value<bool> travelOrTimeZoneChange,
+      Value<int> rowid,
+    });
+typedef $$RecordHubTemperatureRowsTableUpdateCompanionBuilder =
+    RecordHubTemperatureRowsCompanion Function({
+      Value<String> id,
+      Value<int> experiencedDay,
+      Value<int> recordedAtMillis,
+      Value<int> updatedAtMillis,
+      Value<String> originalProvenance,
+      Value<String> provenance,
+      Value<String?> originalWriteZoneId,
+      Value<String?> writeZoneId,
+      Value<int?> originalUtcOffsetMinutes,
+      Value<int?> utcOffsetMinutes,
+      Value<int> vocabularyVersion,
+      Value<double> enteredValue,
+      Value<String> unit,
+      Value<String> method,
+      Value<int?> measuredHour,
+      Value<int?> measuredMinute,
+      Value<bool> feverOrIllness,
+      Value<bool> poorSleep,
+      Value<bool> alcohol,
+      Value<bool> travelOrTimeZoneChange,
+      Value<int> rowid,
+    });
+
+class $$RecordHubTemperatureRowsTableFilterComposer
+    extends Composer<_$LetterHealthDatabase, $RecordHubTemperatureRowsTable> {
+  $$RecordHubTemperatureRowsTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get experiencedDay => $composableBuilder(
+    column: $table.experiencedDay,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get recordedAtMillis => $composableBuilder(
+    column: $table.recordedAtMillis,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get updatedAtMillis => $composableBuilder(
+    column: $table.updatedAtMillis,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get originalProvenance => $composableBuilder(
+    column: $table.originalProvenance,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get provenance => $composableBuilder(
+    column: $table.provenance,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get originalWriteZoneId => $composableBuilder(
+    column: $table.originalWriteZoneId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get writeZoneId => $composableBuilder(
+    column: $table.writeZoneId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get originalUtcOffsetMinutes => $composableBuilder(
+    column: $table.originalUtcOffsetMinutes,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get utcOffsetMinutes => $composableBuilder(
+    column: $table.utcOffsetMinutes,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get vocabularyVersion => $composableBuilder(
+    column: $table.vocabularyVersion,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<double> get enteredValue => $composableBuilder(
+    column: $table.enteredValue,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get unit => $composableBuilder(
+    column: $table.unit,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get method => $composableBuilder(
+    column: $table.method,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get measuredHour => $composableBuilder(
+    column: $table.measuredHour,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get measuredMinute => $composableBuilder(
+    column: $table.measuredMinute,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get feverOrIllness => $composableBuilder(
+    column: $table.feverOrIllness,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get poorSleep => $composableBuilder(
+    column: $table.poorSleep,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get alcohol => $composableBuilder(
+    column: $table.alcohol,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get travelOrTimeZoneChange => $composableBuilder(
+    column: $table.travelOrTimeZoneChange,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$RecordHubTemperatureRowsTableOrderingComposer
+    extends Composer<_$LetterHealthDatabase, $RecordHubTemperatureRowsTable> {
+  $$RecordHubTemperatureRowsTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get experiencedDay => $composableBuilder(
+    column: $table.experiencedDay,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get recordedAtMillis => $composableBuilder(
+    column: $table.recordedAtMillis,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get updatedAtMillis => $composableBuilder(
+    column: $table.updatedAtMillis,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get originalProvenance => $composableBuilder(
+    column: $table.originalProvenance,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get provenance => $composableBuilder(
+    column: $table.provenance,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get originalWriteZoneId => $composableBuilder(
+    column: $table.originalWriteZoneId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get writeZoneId => $composableBuilder(
+    column: $table.writeZoneId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get originalUtcOffsetMinutes => $composableBuilder(
+    column: $table.originalUtcOffsetMinutes,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get utcOffsetMinutes => $composableBuilder(
+    column: $table.utcOffsetMinutes,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get vocabularyVersion => $composableBuilder(
+    column: $table.vocabularyVersion,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<double> get enteredValue => $composableBuilder(
+    column: $table.enteredValue,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get unit => $composableBuilder(
+    column: $table.unit,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get method => $composableBuilder(
+    column: $table.method,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get measuredHour => $composableBuilder(
+    column: $table.measuredHour,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get measuredMinute => $composableBuilder(
+    column: $table.measuredMinute,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<bool> get feverOrIllness => $composableBuilder(
+    column: $table.feverOrIllness,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<bool> get poorSleep => $composableBuilder(
+    column: $table.poorSleep,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<bool> get alcohol => $composableBuilder(
+    column: $table.alcohol,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<bool> get travelOrTimeZoneChange => $composableBuilder(
+    column: $table.travelOrTimeZoneChange,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$RecordHubTemperatureRowsTableAnnotationComposer
+    extends Composer<_$LetterHealthDatabase, $RecordHubTemperatureRowsTable> {
+  $$RecordHubTemperatureRowsTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<int> get experiencedDay => $composableBuilder(
+    column: $table.experiencedDay,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get recordedAtMillis => $composableBuilder(
+    column: $table.recordedAtMillis,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get updatedAtMillis => $composableBuilder(
+    column: $table.updatedAtMillis,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get originalProvenance => $composableBuilder(
+    column: $table.originalProvenance,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get provenance => $composableBuilder(
+    column: $table.provenance,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get originalWriteZoneId => $composableBuilder(
+    column: $table.originalWriteZoneId,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get writeZoneId => $composableBuilder(
+    column: $table.writeZoneId,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get originalUtcOffsetMinutes => $composableBuilder(
+    column: $table.originalUtcOffsetMinutes,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get utcOffsetMinutes => $composableBuilder(
+    column: $table.utcOffsetMinutes,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get vocabularyVersion => $composableBuilder(
+    column: $table.vocabularyVersion,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<double> get enteredValue => $composableBuilder(
+    column: $table.enteredValue,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get unit =>
+      $composableBuilder(column: $table.unit, builder: (column) => column);
+
+  GeneratedColumn<String> get method =>
+      $composableBuilder(column: $table.method, builder: (column) => column);
+
+  GeneratedColumn<int> get measuredHour => $composableBuilder(
+    column: $table.measuredHour,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get measuredMinute => $composableBuilder(
+    column: $table.measuredMinute,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<bool> get feverOrIllness => $composableBuilder(
+    column: $table.feverOrIllness,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<bool> get poorSleep =>
+      $composableBuilder(column: $table.poorSleep, builder: (column) => column);
+
+  GeneratedColumn<bool> get alcohol =>
+      $composableBuilder(column: $table.alcohol, builder: (column) => column);
+
+  GeneratedColumn<bool> get travelOrTimeZoneChange => $composableBuilder(
+    column: $table.travelOrTimeZoneChange,
+    builder: (column) => column,
+  );
+}
+
+class $$RecordHubTemperatureRowsTableTableManager
+    extends
+        RootTableManager<
+          _$LetterHealthDatabase,
+          $RecordHubTemperatureRowsTable,
+          RecordHubTemperatureRow,
+          $$RecordHubTemperatureRowsTableFilterComposer,
+          $$RecordHubTemperatureRowsTableOrderingComposer,
+          $$RecordHubTemperatureRowsTableAnnotationComposer,
+          $$RecordHubTemperatureRowsTableCreateCompanionBuilder,
+          $$RecordHubTemperatureRowsTableUpdateCompanionBuilder,
+          (
+            RecordHubTemperatureRow,
+            BaseReferences<
+              _$LetterHealthDatabase,
+              $RecordHubTemperatureRowsTable,
+              RecordHubTemperatureRow
+            >,
+          ),
+          RecordHubTemperatureRow,
+          PrefetchHooks Function()
+        > {
+  $$RecordHubTemperatureRowsTableTableManager(
+    _$LetterHealthDatabase db,
+    $RecordHubTemperatureRowsTable table,
+  ) : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$RecordHubTemperatureRowsTableFilterComposer(
+                $db: db,
+                $table: table,
+              ),
+          createOrderingComposer: () =>
+              $$RecordHubTemperatureRowsTableOrderingComposer(
+                $db: db,
+                $table: table,
+              ),
+          createComputedFieldComposer: () =>
+              $$RecordHubTemperatureRowsTableAnnotationComposer(
+                $db: db,
+                $table: table,
+              ),
+          updateCompanionCallback:
+              ({
+                Value<String> id = const Value.absent(),
+                Value<int> experiencedDay = const Value.absent(),
+                Value<int> recordedAtMillis = const Value.absent(),
+                Value<int> updatedAtMillis = const Value.absent(),
+                Value<String> originalProvenance = const Value.absent(),
+                Value<String> provenance = const Value.absent(),
+                Value<String?> originalWriteZoneId = const Value.absent(),
+                Value<String?> writeZoneId = const Value.absent(),
+                Value<int?> originalUtcOffsetMinutes = const Value.absent(),
+                Value<int?> utcOffsetMinutes = const Value.absent(),
+                Value<int> vocabularyVersion = const Value.absent(),
+                Value<double> enteredValue = const Value.absent(),
+                Value<String> unit = const Value.absent(),
+                Value<String> method = const Value.absent(),
+                Value<int?> measuredHour = const Value.absent(),
+                Value<int?> measuredMinute = const Value.absent(),
+                Value<bool> feverOrIllness = const Value.absent(),
+                Value<bool> poorSleep = const Value.absent(),
+                Value<bool> alcohol = const Value.absent(),
+                Value<bool> travelOrTimeZoneChange = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => RecordHubTemperatureRowsCompanion(
+                id: id,
+                experiencedDay: experiencedDay,
+                recordedAtMillis: recordedAtMillis,
+                updatedAtMillis: updatedAtMillis,
+                originalProvenance: originalProvenance,
+                provenance: provenance,
+                originalWriteZoneId: originalWriteZoneId,
+                writeZoneId: writeZoneId,
+                originalUtcOffsetMinutes: originalUtcOffsetMinutes,
+                utcOffsetMinutes: utcOffsetMinutes,
+                vocabularyVersion: vocabularyVersion,
+                enteredValue: enteredValue,
+                unit: unit,
+                method: method,
+                measuredHour: measuredHour,
+                measuredMinute: measuredMinute,
+                feverOrIllness: feverOrIllness,
+                poorSleep: poorSleep,
+                alcohol: alcohol,
+                travelOrTimeZoneChange: travelOrTimeZoneChange,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required String id,
+                required int experiencedDay,
+                required int recordedAtMillis,
+                required int updatedAtMillis,
+                required String originalProvenance,
+                required String provenance,
+                Value<String?> originalWriteZoneId = const Value.absent(),
+                Value<String?> writeZoneId = const Value.absent(),
+                Value<int?> originalUtcOffsetMinutes = const Value.absent(),
+                Value<int?> utcOffsetMinutes = const Value.absent(),
+                Value<int> vocabularyVersion = const Value.absent(),
+                required double enteredValue,
+                required String unit,
+                required String method,
+                Value<int?> measuredHour = const Value.absent(),
+                Value<int?> measuredMinute = const Value.absent(),
+                Value<bool> feverOrIllness = const Value.absent(),
+                Value<bool> poorSleep = const Value.absent(),
+                Value<bool> alcohol = const Value.absent(),
+                Value<bool> travelOrTimeZoneChange = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => RecordHubTemperatureRowsCompanion.insert(
+                id: id,
+                experiencedDay: experiencedDay,
+                recordedAtMillis: recordedAtMillis,
+                updatedAtMillis: updatedAtMillis,
+                originalProvenance: originalProvenance,
+                provenance: provenance,
+                originalWriteZoneId: originalWriteZoneId,
+                writeZoneId: writeZoneId,
+                originalUtcOffsetMinutes: originalUtcOffsetMinutes,
+                utcOffsetMinutes: utcOffsetMinutes,
+                vocabularyVersion: vocabularyVersion,
+                enteredValue: enteredValue,
+                unit: unit,
+                method: method,
+                measuredHour: measuredHour,
+                measuredMinute: measuredMinute,
+                feverOrIllness: feverOrIllness,
+                poorSleep: poorSleep,
+                alcohol: alcohol,
+                travelOrTimeZoneChange: travelOrTimeZoneChange,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$RecordHubTemperatureRowsTableProcessedTableManager =
+    ProcessedTableManager<
+      _$LetterHealthDatabase,
+      $RecordHubTemperatureRowsTable,
+      RecordHubTemperatureRow,
+      $$RecordHubTemperatureRowsTableFilterComposer,
+      $$RecordHubTemperatureRowsTableOrderingComposer,
+      $$RecordHubTemperatureRowsTableAnnotationComposer,
+      $$RecordHubTemperatureRowsTableCreateCompanionBuilder,
+      $$RecordHubTemperatureRowsTableUpdateCompanionBuilder,
+      (
+        RecordHubTemperatureRow,
+        BaseReferences<
+          _$LetterHealthDatabase,
+          $RecordHubTemperatureRowsTable,
+          RecordHubTemperatureRow
+        >,
+      ),
+      RecordHubTemperatureRow,
+      PrefetchHooks Function()
+    >;
+typedef $$RecordHubPinRowsTableCreateCompanionBuilder =
+    RecordHubPinRowsCompanion Function({
+      required String symptom,
+      required int position,
+      Value<int> rowid,
+    });
+typedef $$RecordHubPinRowsTableUpdateCompanionBuilder =
+    RecordHubPinRowsCompanion Function({
+      Value<String> symptom,
+      Value<int> position,
+      Value<int> rowid,
+    });
+
+class $$RecordHubPinRowsTableFilterComposer
+    extends Composer<_$LetterHealthDatabase, $RecordHubPinRowsTable> {
+  $$RecordHubPinRowsTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get symptom => $composableBuilder(
+    column: $table.symptom,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get position => $composableBuilder(
+    column: $table.position,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$RecordHubPinRowsTableOrderingComposer
+    extends Composer<_$LetterHealthDatabase, $RecordHubPinRowsTable> {
+  $$RecordHubPinRowsTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get symptom => $composableBuilder(
+    column: $table.symptom,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get position => $composableBuilder(
+    column: $table.position,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$RecordHubPinRowsTableAnnotationComposer
+    extends Composer<_$LetterHealthDatabase, $RecordHubPinRowsTable> {
+  $$RecordHubPinRowsTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get symptom =>
+      $composableBuilder(column: $table.symptom, builder: (column) => column);
+
+  GeneratedColumn<int> get position =>
+      $composableBuilder(column: $table.position, builder: (column) => column);
+}
+
+class $$RecordHubPinRowsTableTableManager
+    extends
+        RootTableManager<
+          _$LetterHealthDatabase,
+          $RecordHubPinRowsTable,
+          RecordHubPinRow,
+          $$RecordHubPinRowsTableFilterComposer,
+          $$RecordHubPinRowsTableOrderingComposer,
+          $$RecordHubPinRowsTableAnnotationComposer,
+          $$RecordHubPinRowsTableCreateCompanionBuilder,
+          $$RecordHubPinRowsTableUpdateCompanionBuilder,
+          (
+            RecordHubPinRow,
+            BaseReferences<
+              _$LetterHealthDatabase,
+              $RecordHubPinRowsTable,
+              RecordHubPinRow
+            >,
+          ),
+          RecordHubPinRow,
+          PrefetchHooks Function()
+        > {
+  $$RecordHubPinRowsTableTableManager(
+    _$LetterHealthDatabase db,
+    $RecordHubPinRowsTable table,
+  ) : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$RecordHubPinRowsTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$RecordHubPinRowsTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$RecordHubPinRowsTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<String> symptom = const Value.absent(),
+                Value<int> position = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => RecordHubPinRowsCompanion(
+                symptom: symptom,
+                position: position,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required String symptom,
+                required int position,
+                Value<int> rowid = const Value.absent(),
+              }) => RecordHubPinRowsCompanion.insert(
+                symptom: symptom,
+                position: position,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$RecordHubPinRowsTableProcessedTableManager =
+    ProcessedTableManager<
+      _$LetterHealthDatabase,
+      $RecordHubPinRowsTable,
+      RecordHubPinRow,
+      $$RecordHubPinRowsTableFilterComposer,
+      $$RecordHubPinRowsTableOrderingComposer,
+      $$RecordHubPinRowsTableAnnotationComposer,
+      $$RecordHubPinRowsTableCreateCompanionBuilder,
+      $$RecordHubPinRowsTableUpdateCompanionBuilder,
+      (
+        RecordHubPinRow,
+        BaseReferences<
+          _$LetterHealthDatabase,
+          $RecordHubPinRowsTable,
+          RecordHubPinRow
+        >,
+      ),
+      RecordHubPinRow,
+      PrefetchHooks Function()
+    >;
+typedef $$RecordProductEpisodeRowsTableCreateCompanionBuilder =
+    RecordProductEpisodeRowsCompanion Function({
+      required String id,
+      required int experiencedDay,
+      required int recordedAtMillis,
+      required int updatedAtMillis,
+      required String originalProvenance,
+      required String provenance,
+      Value<String?> originalWriteZoneId,
+      Value<String?> writeZoneId,
+      Value<int?> originalUtcOffsetMinutes,
+      Value<int?> utcOffsetMinutes,
+      Value<int> vocabularyVersion,
+      required String family,
+      required int startDay,
+      Value<int?> endDay,
+      Value<bool> archived,
+      Value<int> rowid,
+    });
+typedef $$RecordProductEpisodeRowsTableUpdateCompanionBuilder =
+    RecordProductEpisodeRowsCompanion Function({
+      Value<String> id,
+      Value<int> experiencedDay,
+      Value<int> recordedAtMillis,
+      Value<int> updatedAtMillis,
+      Value<String> originalProvenance,
+      Value<String> provenance,
+      Value<String?> originalWriteZoneId,
+      Value<String?> writeZoneId,
+      Value<int?> originalUtcOffsetMinutes,
+      Value<int?> utcOffsetMinutes,
+      Value<int> vocabularyVersion,
+      Value<String> family,
+      Value<int> startDay,
+      Value<int?> endDay,
+      Value<bool> archived,
+      Value<int> rowid,
+    });
+
+class $$RecordProductEpisodeRowsTableFilterComposer
+    extends Composer<_$LetterHealthDatabase, $RecordProductEpisodeRowsTable> {
+  $$RecordProductEpisodeRowsTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get experiencedDay => $composableBuilder(
+    column: $table.experiencedDay,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get recordedAtMillis => $composableBuilder(
+    column: $table.recordedAtMillis,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get updatedAtMillis => $composableBuilder(
+    column: $table.updatedAtMillis,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get originalProvenance => $composableBuilder(
+    column: $table.originalProvenance,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get provenance => $composableBuilder(
+    column: $table.provenance,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get originalWriteZoneId => $composableBuilder(
+    column: $table.originalWriteZoneId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get writeZoneId => $composableBuilder(
+    column: $table.writeZoneId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get originalUtcOffsetMinutes => $composableBuilder(
+    column: $table.originalUtcOffsetMinutes,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get utcOffsetMinutes => $composableBuilder(
+    column: $table.utcOffsetMinutes,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get vocabularyVersion => $composableBuilder(
+    column: $table.vocabularyVersion,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get family => $composableBuilder(
+    column: $table.family,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get startDay => $composableBuilder(
+    column: $table.startDay,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get endDay => $composableBuilder(
+    column: $table.endDay,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get archived => $composableBuilder(
+    column: $table.archived,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$RecordProductEpisodeRowsTableOrderingComposer
+    extends Composer<_$LetterHealthDatabase, $RecordProductEpisodeRowsTable> {
+  $$RecordProductEpisodeRowsTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get experiencedDay => $composableBuilder(
+    column: $table.experiencedDay,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get recordedAtMillis => $composableBuilder(
+    column: $table.recordedAtMillis,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get updatedAtMillis => $composableBuilder(
+    column: $table.updatedAtMillis,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get originalProvenance => $composableBuilder(
+    column: $table.originalProvenance,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get provenance => $composableBuilder(
+    column: $table.provenance,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get originalWriteZoneId => $composableBuilder(
+    column: $table.originalWriteZoneId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get writeZoneId => $composableBuilder(
+    column: $table.writeZoneId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get originalUtcOffsetMinutes => $composableBuilder(
+    column: $table.originalUtcOffsetMinutes,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get utcOffsetMinutes => $composableBuilder(
+    column: $table.utcOffsetMinutes,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get vocabularyVersion => $composableBuilder(
+    column: $table.vocabularyVersion,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get family => $composableBuilder(
+    column: $table.family,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get startDay => $composableBuilder(
+    column: $table.startDay,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get endDay => $composableBuilder(
+    column: $table.endDay,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<bool> get archived => $composableBuilder(
+    column: $table.archived,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$RecordProductEpisodeRowsTableAnnotationComposer
+    extends Composer<_$LetterHealthDatabase, $RecordProductEpisodeRowsTable> {
+  $$RecordProductEpisodeRowsTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<int> get experiencedDay => $composableBuilder(
+    column: $table.experiencedDay,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get recordedAtMillis => $composableBuilder(
+    column: $table.recordedAtMillis,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get updatedAtMillis => $composableBuilder(
+    column: $table.updatedAtMillis,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get originalProvenance => $composableBuilder(
+    column: $table.originalProvenance,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get provenance => $composableBuilder(
+    column: $table.provenance,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get originalWriteZoneId => $composableBuilder(
+    column: $table.originalWriteZoneId,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get writeZoneId => $composableBuilder(
+    column: $table.writeZoneId,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get originalUtcOffsetMinutes => $composableBuilder(
+    column: $table.originalUtcOffsetMinutes,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get utcOffsetMinutes => $composableBuilder(
+    column: $table.utcOffsetMinutes,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get vocabularyVersion => $composableBuilder(
+    column: $table.vocabularyVersion,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get family =>
+      $composableBuilder(column: $table.family, builder: (column) => column);
+
+  GeneratedColumn<int> get startDay =>
+      $composableBuilder(column: $table.startDay, builder: (column) => column);
+
+  GeneratedColumn<int> get endDay =>
+      $composableBuilder(column: $table.endDay, builder: (column) => column);
+
+  GeneratedColumn<bool> get archived =>
+      $composableBuilder(column: $table.archived, builder: (column) => column);
+}
+
+class $$RecordProductEpisodeRowsTableTableManager
+    extends
+        RootTableManager<
+          _$LetterHealthDatabase,
+          $RecordProductEpisodeRowsTable,
+          RecordProductEpisodeRow,
+          $$RecordProductEpisodeRowsTableFilterComposer,
+          $$RecordProductEpisodeRowsTableOrderingComposer,
+          $$RecordProductEpisodeRowsTableAnnotationComposer,
+          $$RecordProductEpisodeRowsTableCreateCompanionBuilder,
+          $$RecordProductEpisodeRowsTableUpdateCompanionBuilder,
+          (
+            RecordProductEpisodeRow,
+            BaseReferences<
+              _$LetterHealthDatabase,
+              $RecordProductEpisodeRowsTable,
+              RecordProductEpisodeRow
+            >,
+          ),
+          RecordProductEpisodeRow,
+          PrefetchHooks Function()
+        > {
+  $$RecordProductEpisodeRowsTableTableManager(
+    _$LetterHealthDatabase db,
+    $RecordProductEpisodeRowsTable table,
+  ) : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$RecordProductEpisodeRowsTableFilterComposer(
+                $db: db,
+                $table: table,
+              ),
+          createOrderingComposer: () =>
+              $$RecordProductEpisodeRowsTableOrderingComposer(
+                $db: db,
+                $table: table,
+              ),
+          createComputedFieldComposer: () =>
+              $$RecordProductEpisodeRowsTableAnnotationComposer(
+                $db: db,
+                $table: table,
+              ),
+          updateCompanionCallback:
+              ({
+                Value<String> id = const Value.absent(),
+                Value<int> experiencedDay = const Value.absent(),
+                Value<int> recordedAtMillis = const Value.absent(),
+                Value<int> updatedAtMillis = const Value.absent(),
+                Value<String> originalProvenance = const Value.absent(),
+                Value<String> provenance = const Value.absent(),
+                Value<String?> originalWriteZoneId = const Value.absent(),
+                Value<String?> writeZoneId = const Value.absent(),
+                Value<int?> originalUtcOffsetMinutes = const Value.absent(),
+                Value<int?> utcOffsetMinutes = const Value.absent(),
+                Value<int> vocabularyVersion = const Value.absent(),
+                Value<String> family = const Value.absent(),
+                Value<int> startDay = const Value.absent(),
+                Value<int?> endDay = const Value.absent(),
+                Value<bool> archived = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => RecordProductEpisodeRowsCompanion(
+                id: id,
+                experiencedDay: experiencedDay,
+                recordedAtMillis: recordedAtMillis,
+                updatedAtMillis: updatedAtMillis,
+                originalProvenance: originalProvenance,
+                provenance: provenance,
+                originalWriteZoneId: originalWriteZoneId,
+                writeZoneId: writeZoneId,
+                originalUtcOffsetMinutes: originalUtcOffsetMinutes,
+                utcOffsetMinutes: utcOffsetMinutes,
+                vocabularyVersion: vocabularyVersion,
+                family: family,
+                startDay: startDay,
+                endDay: endDay,
+                archived: archived,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required String id,
+                required int experiencedDay,
+                required int recordedAtMillis,
+                required int updatedAtMillis,
+                required String originalProvenance,
+                required String provenance,
+                Value<String?> originalWriteZoneId = const Value.absent(),
+                Value<String?> writeZoneId = const Value.absent(),
+                Value<int?> originalUtcOffsetMinutes = const Value.absent(),
+                Value<int?> utcOffsetMinutes = const Value.absent(),
+                Value<int> vocabularyVersion = const Value.absent(),
+                required String family,
+                required int startDay,
+                Value<int?> endDay = const Value.absent(),
+                Value<bool> archived = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => RecordProductEpisodeRowsCompanion.insert(
+                id: id,
+                experiencedDay: experiencedDay,
+                recordedAtMillis: recordedAtMillis,
+                updatedAtMillis: updatedAtMillis,
+                originalProvenance: originalProvenance,
+                provenance: provenance,
+                originalWriteZoneId: originalWriteZoneId,
+                writeZoneId: writeZoneId,
+                originalUtcOffsetMinutes: originalUtcOffsetMinutes,
+                utcOffsetMinutes: utcOffsetMinutes,
+                vocabularyVersion: vocabularyVersion,
+                family: family,
+                startDay: startDay,
+                endDay: endDay,
+                archived: archived,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$RecordProductEpisodeRowsTableProcessedTableManager =
+    ProcessedTableManager<
+      _$LetterHealthDatabase,
+      $RecordProductEpisodeRowsTable,
+      RecordProductEpisodeRow,
+      $$RecordProductEpisodeRowsTableFilterComposer,
+      $$RecordProductEpisodeRowsTableOrderingComposer,
+      $$RecordProductEpisodeRowsTableAnnotationComposer,
+      $$RecordProductEpisodeRowsTableCreateCompanionBuilder,
+      $$RecordProductEpisodeRowsTableUpdateCompanionBuilder,
+      (
+        RecordProductEpisodeRow,
+        BaseReferences<
+          _$LetterHealthDatabase,
+          $RecordProductEpisodeRowsTable,
+          RecordProductEpisodeRow
+        >,
+      ),
+      RecordProductEpisodeRow,
+      PrefetchHooks Function()
+    >;
+typedef $$RecordProductVersionRowsTableCreateCompanionBuilder =
+    RecordProductVersionRowsCompanion Function({
+      required String id,
+      required int experiencedDay,
+      required int recordedAtMillis,
+      required int updatedAtMillis,
+      required String originalProvenance,
+      required String provenance,
+      Value<String?> originalWriteZoneId,
+      Value<String?> writeZoneId,
+      Value<int?> originalUtcOffsetMinutes,
+      Value<int?> utcOffsetMinutes,
+      Value<int> vocabularyVersion,
+      required String episodeId,
+      required int effectiveDay,
+      required int versionNumber,
+      Value<String?> exactName,
+      Value<String?> medicationType,
+      Value<String?> supplementType,
+      Value<String?> birthControlMethod,
+      Value<String?> dose,
+      Value<String?> unit,
+      Value<String?> customUnit,
+      Value<String?> route,
+      Value<String?> customRoute,
+      Value<String?> target,
+      Value<int> rowid,
+    });
+typedef $$RecordProductVersionRowsTableUpdateCompanionBuilder =
+    RecordProductVersionRowsCompanion Function({
+      Value<String> id,
+      Value<int> experiencedDay,
+      Value<int> recordedAtMillis,
+      Value<int> updatedAtMillis,
+      Value<String> originalProvenance,
+      Value<String> provenance,
+      Value<String?> originalWriteZoneId,
+      Value<String?> writeZoneId,
+      Value<int?> originalUtcOffsetMinutes,
+      Value<int?> utcOffsetMinutes,
+      Value<int> vocabularyVersion,
+      Value<String> episodeId,
+      Value<int> effectiveDay,
+      Value<int> versionNumber,
+      Value<String?> exactName,
+      Value<String?> medicationType,
+      Value<String?> supplementType,
+      Value<String?> birthControlMethod,
+      Value<String?> dose,
+      Value<String?> unit,
+      Value<String?> customUnit,
+      Value<String?> route,
+      Value<String?> customRoute,
+      Value<String?> target,
+      Value<int> rowid,
+    });
+
+class $$RecordProductVersionRowsTableFilterComposer
+    extends Composer<_$LetterHealthDatabase, $RecordProductVersionRowsTable> {
+  $$RecordProductVersionRowsTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get experiencedDay => $composableBuilder(
+    column: $table.experiencedDay,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get recordedAtMillis => $composableBuilder(
+    column: $table.recordedAtMillis,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get updatedAtMillis => $composableBuilder(
+    column: $table.updatedAtMillis,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get originalProvenance => $composableBuilder(
+    column: $table.originalProvenance,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get provenance => $composableBuilder(
+    column: $table.provenance,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get originalWriteZoneId => $composableBuilder(
+    column: $table.originalWriteZoneId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get writeZoneId => $composableBuilder(
+    column: $table.writeZoneId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get originalUtcOffsetMinutes => $composableBuilder(
+    column: $table.originalUtcOffsetMinutes,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get utcOffsetMinutes => $composableBuilder(
+    column: $table.utcOffsetMinutes,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get vocabularyVersion => $composableBuilder(
+    column: $table.vocabularyVersion,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get episodeId => $composableBuilder(
+    column: $table.episodeId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get effectiveDay => $composableBuilder(
+    column: $table.effectiveDay,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get versionNumber => $composableBuilder(
+    column: $table.versionNumber,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get exactName => $composableBuilder(
+    column: $table.exactName,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get medicationType => $composableBuilder(
+    column: $table.medicationType,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get supplementType => $composableBuilder(
+    column: $table.supplementType,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get birthControlMethod => $composableBuilder(
+    column: $table.birthControlMethod,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get dose => $composableBuilder(
+    column: $table.dose,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get unit => $composableBuilder(
+    column: $table.unit,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get customUnit => $composableBuilder(
+    column: $table.customUnit,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get route => $composableBuilder(
+    column: $table.route,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get customRoute => $composableBuilder(
+    column: $table.customRoute,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get target => $composableBuilder(
+    column: $table.target,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$RecordProductVersionRowsTableOrderingComposer
+    extends Composer<_$LetterHealthDatabase, $RecordProductVersionRowsTable> {
+  $$RecordProductVersionRowsTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get experiencedDay => $composableBuilder(
+    column: $table.experiencedDay,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get recordedAtMillis => $composableBuilder(
+    column: $table.recordedAtMillis,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get updatedAtMillis => $composableBuilder(
+    column: $table.updatedAtMillis,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get originalProvenance => $composableBuilder(
+    column: $table.originalProvenance,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get provenance => $composableBuilder(
+    column: $table.provenance,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get originalWriteZoneId => $composableBuilder(
+    column: $table.originalWriteZoneId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get writeZoneId => $composableBuilder(
+    column: $table.writeZoneId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get originalUtcOffsetMinutes => $composableBuilder(
+    column: $table.originalUtcOffsetMinutes,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get utcOffsetMinutes => $composableBuilder(
+    column: $table.utcOffsetMinutes,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get vocabularyVersion => $composableBuilder(
+    column: $table.vocabularyVersion,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get episodeId => $composableBuilder(
+    column: $table.episodeId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get effectiveDay => $composableBuilder(
+    column: $table.effectiveDay,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get versionNumber => $composableBuilder(
+    column: $table.versionNumber,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get exactName => $composableBuilder(
+    column: $table.exactName,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get medicationType => $composableBuilder(
+    column: $table.medicationType,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get supplementType => $composableBuilder(
+    column: $table.supplementType,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get birthControlMethod => $composableBuilder(
+    column: $table.birthControlMethod,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get dose => $composableBuilder(
+    column: $table.dose,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get unit => $composableBuilder(
+    column: $table.unit,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get customUnit => $composableBuilder(
+    column: $table.customUnit,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get route => $composableBuilder(
+    column: $table.route,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get customRoute => $composableBuilder(
+    column: $table.customRoute,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get target => $composableBuilder(
+    column: $table.target,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$RecordProductVersionRowsTableAnnotationComposer
+    extends Composer<_$LetterHealthDatabase, $RecordProductVersionRowsTable> {
+  $$RecordProductVersionRowsTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<int> get experiencedDay => $composableBuilder(
+    column: $table.experiencedDay,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get recordedAtMillis => $composableBuilder(
+    column: $table.recordedAtMillis,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get updatedAtMillis => $composableBuilder(
+    column: $table.updatedAtMillis,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get originalProvenance => $composableBuilder(
+    column: $table.originalProvenance,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get provenance => $composableBuilder(
+    column: $table.provenance,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get originalWriteZoneId => $composableBuilder(
+    column: $table.originalWriteZoneId,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get writeZoneId => $composableBuilder(
+    column: $table.writeZoneId,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get originalUtcOffsetMinutes => $composableBuilder(
+    column: $table.originalUtcOffsetMinutes,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get utcOffsetMinutes => $composableBuilder(
+    column: $table.utcOffsetMinutes,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get vocabularyVersion => $composableBuilder(
+    column: $table.vocabularyVersion,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get episodeId =>
+      $composableBuilder(column: $table.episodeId, builder: (column) => column);
+
+  GeneratedColumn<int> get effectiveDay => $composableBuilder(
+    column: $table.effectiveDay,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get versionNumber => $composableBuilder(
+    column: $table.versionNumber,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get exactName =>
+      $composableBuilder(column: $table.exactName, builder: (column) => column);
+
+  GeneratedColumn<String> get medicationType => $composableBuilder(
+    column: $table.medicationType,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get supplementType => $composableBuilder(
+    column: $table.supplementType,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get birthControlMethod => $composableBuilder(
+    column: $table.birthControlMethod,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get dose =>
+      $composableBuilder(column: $table.dose, builder: (column) => column);
+
+  GeneratedColumn<String> get unit =>
+      $composableBuilder(column: $table.unit, builder: (column) => column);
+
+  GeneratedColumn<String> get customUnit => $composableBuilder(
+    column: $table.customUnit,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get route =>
+      $composableBuilder(column: $table.route, builder: (column) => column);
+
+  GeneratedColumn<String> get customRoute => $composableBuilder(
+    column: $table.customRoute,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get target =>
+      $composableBuilder(column: $table.target, builder: (column) => column);
+}
+
+class $$RecordProductVersionRowsTableTableManager
+    extends
+        RootTableManager<
+          _$LetterHealthDatabase,
+          $RecordProductVersionRowsTable,
+          RecordProductVersionRow,
+          $$RecordProductVersionRowsTableFilterComposer,
+          $$RecordProductVersionRowsTableOrderingComposer,
+          $$RecordProductVersionRowsTableAnnotationComposer,
+          $$RecordProductVersionRowsTableCreateCompanionBuilder,
+          $$RecordProductVersionRowsTableUpdateCompanionBuilder,
+          (
+            RecordProductVersionRow,
+            BaseReferences<
+              _$LetterHealthDatabase,
+              $RecordProductVersionRowsTable,
+              RecordProductVersionRow
+            >,
+          ),
+          RecordProductVersionRow,
+          PrefetchHooks Function()
+        > {
+  $$RecordProductVersionRowsTableTableManager(
+    _$LetterHealthDatabase db,
+    $RecordProductVersionRowsTable table,
+  ) : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$RecordProductVersionRowsTableFilterComposer(
+                $db: db,
+                $table: table,
+              ),
+          createOrderingComposer: () =>
+              $$RecordProductVersionRowsTableOrderingComposer(
+                $db: db,
+                $table: table,
+              ),
+          createComputedFieldComposer: () =>
+              $$RecordProductVersionRowsTableAnnotationComposer(
+                $db: db,
+                $table: table,
+              ),
+          updateCompanionCallback:
+              ({
+                Value<String> id = const Value.absent(),
+                Value<int> experiencedDay = const Value.absent(),
+                Value<int> recordedAtMillis = const Value.absent(),
+                Value<int> updatedAtMillis = const Value.absent(),
+                Value<String> originalProvenance = const Value.absent(),
+                Value<String> provenance = const Value.absent(),
+                Value<String?> originalWriteZoneId = const Value.absent(),
+                Value<String?> writeZoneId = const Value.absent(),
+                Value<int?> originalUtcOffsetMinutes = const Value.absent(),
+                Value<int?> utcOffsetMinutes = const Value.absent(),
+                Value<int> vocabularyVersion = const Value.absent(),
+                Value<String> episodeId = const Value.absent(),
+                Value<int> effectiveDay = const Value.absent(),
+                Value<int> versionNumber = const Value.absent(),
+                Value<String?> exactName = const Value.absent(),
+                Value<String?> medicationType = const Value.absent(),
+                Value<String?> supplementType = const Value.absent(),
+                Value<String?> birthControlMethod = const Value.absent(),
+                Value<String?> dose = const Value.absent(),
+                Value<String?> unit = const Value.absent(),
+                Value<String?> customUnit = const Value.absent(),
+                Value<String?> route = const Value.absent(),
+                Value<String?> customRoute = const Value.absent(),
+                Value<String?> target = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => RecordProductVersionRowsCompanion(
+                id: id,
+                experiencedDay: experiencedDay,
+                recordedAtMillis: recordedAtMillis,
+                updatedAtMillis: updatedAtMillis,
+                originalProvenance: originalProvenance,
+                provenance: provenance,
+                originalWriteZoneId: originalWriteZoneId,
+                writeZoneId: writeZoneId,
+                originalUtcOffsetMinutes: originalUtcOffsetMinutes,
+                utcOffsetMinutes: utcOffsetMinutes,
+                vocabularyVersion: vocabularyVersion,
+                episodeId: episodeId,
+                effectiveDay: effectiveDay,
+                versionNumber: versionNumber,
+                exactName: exactName,
+                medicationType: medicationType,
+                supplementType: supplementType,
+                birthControlMethod: birthControlMethod,
+                dose: dose,
+                unit: unit,
+                customUnit: customUnit,
+                route: route,
+                customRoute: customRoute,
+                target: target,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required String id,
+                required int experiencedDay,
+                required int recordedAtMillis,
+                required int updatedAtMillis,
+                required String originalProvenance,
+                required String provenance,
+                Value<String?> originalWriteZoneId = const Value.absent(),
+                Value<String?> writeZoneId = const Value.absent(),
+                Value<int?> originalUtcOffsetMinutes = const Value.absent(),
+                Value<int?> utcOffsetMinutes = const Value.absent(),
+                Value<int> vocabularyVersion = const Value.absent(),
+                required String episodeId,
+                required int effectiveDay,
+                required int versionNumber,
+                Value<String?> exactName = const Value.absent(),
+                Value<String?> medicationType = const Value.absent(),
+                Value<String?> supplementType = const Value.absent(),
+                Value<String?> birthControlMethod = const Value.absent(),
+                Value<String?> dose = const Value.absent(),
+                Value<String?> unit = const Value.absent(),
+                Value<String?> customUnit = const Value.absent(),
+                Value<String?> route = const Value.absent(),
+                Value<String?> customRoute = const Value.absent(),
+                Value<String?> target = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => RecordProductVersionRowsCompanion.insert(
+                id: id,
+                experiencedDay: experiencedDay,
+                recordedAtMillis: recordedAtMillis,
+                updatedAtMillis: updatedAtMillis,
+                originalProvenance: originalProvenance,
+                provenance: provenance,
+                originalWriteZoneId: originalWriteZoneId,
+                writeZoneId: writeZoneId,
+                originalUtcOffsetMinutes: originalUtcOffsetMinutes,
+                utcOffsetMinutes: utcOffsetMinutes,
+                vocabularyVersion: vocabularyVersion,
+                episodeId: episodeId,
+                effectiveDay: effectiveDay,
+                versionNumber: versionNumber,
+                exactName: exactName,
+                medicationType: medicationType,
+                supplementType: supplementType,
+                birthControlMethod: birthControlMethod,
+                dose: dose,
+                unit: unit,
+                customUnit: customUnit,
+                route: route,
+                customRoute: customRoute,
+                target: target,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$RecordProductVersionRowsTableProcessedTableManager =
+    ProcessedTableManager<
+      _$LetterHealthDatabase,
+      $RecordProductVersionRowsTable,
+      RecordProductVersionRow,
+      $$RecordProductVersionRowsTableFilterComposer,
+      $$RecordProductVersionRowsTableOrderingComposer,
+      $$RecordProductVersionRowsTableAnnotationComposer,
+      $$RecordProductVersionRowsTableCreateCompanionBuilder,
+      $$RecordProductVersionRowsTableUpdateCompanionBuilder,
+      (
+        RecordProductVersionRow,
+        BaseReferences<
+          _$LetterHealthDatabase,
+          $RecordProductVersionRowsTable,
+          RecordProductVersionRow
+        >,
+      ),
+      RecordProductVersionRow,
+      PrefetchHooks Function()
+    >;
+typedef $$RecordProductUseRowsTableCreateCompanionBuilder =
+    RecordProductUseRowsCompanion Function({
+      required String id,
+      required int experiencedDay,
+      required int recordedAtMillis,
+      required int updatedAtMillis,
+      required String originalProvenance,
+      required String provenance,
+      Value<String?> originalWriteZoneId,
+      Value<String?> writeZoneId,
+      Value<int?> originalUtcOffsetMinutes,
+      Value<int?> utcOffsetMinutes,
+      Value<int> vocabularyVersion,
+      required String episodeId,
+      required String versionId,
+      required String status,
+      Value<String?> dailyKey,
+      Value<int> rowid,
+    });
+typedef $$RecordProductUseRowsTableUpdateCompanionBuilder =
+    RecordProductUseRowsCompanion Function({
+      Value<String> id,
+      Value<int> experiencedDay,
+      Value<int> recordedAtMillis,
+      Value<int> updatedAtMillis,
+      Value<String> originalProvenance,
+      Value<String> provenance,
+      Value<String?> originalWriteZoneId,
+      Value<String?> writeZoneId,
+      Value<int?> originalUtcOffsetMinutes,
+      Value<int?> utcOffsetMinutes,
+      Value<int> vocabularyVersion,
+      Value<String> episodeId,
+      Value<String> versionId,
+      Value<String> status,
+      Value<String?> dailyKey,
+      Value<int> rowid,
+    });
+
+class $$RecordProductUseRowsTableFilterComposer
+    extends Composer<_$LetterHealthDatabase, $RecordProductUseRowsTable> {
+  $$RecordProductUseRowsTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get experiencedDay => $composableBuilder(
+    column: $table.experiencedDay,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get recordedAtMillis => $composableBuilder(
+    column: $table.recordedAtMillis,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get updatedAtMillis => $composableBuilder(
+    column: $table.updatedAtMillis,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get originalProvenance => $composableBuilder(
+    column: $table.originalProvenance,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get provenance => $composableBuilder(
+    column: $table.provenance,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get originalWriteZoneId => $composableBuilder(
+    column: $table.originalWriteZoneId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get writeZoneId => $composableBuilder(
+    column: $table.writeZoneId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get originalUtcOffsetMinutes => $composableBuilder(
+    column: $table.originalUtcOffsetMinutes,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get utcOffsetMinutes => $composableBuilder(
+    column: $table.utcOffsetMinutes,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get vocabularyVersion => $composableBuilder(
+    column: $table.vocabularyVersion,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get episodeId => $composableBuilder(
+    column: $table.episodeId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get versionId => $composableBuilder(
+    column: $table.versionId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get status => $composableBuilder(
+    column: $table.status,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get dailyKey => $composableBuilder(
+    column: $table.dailyKey,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$RecordProductUseRowsTableOrderingComposer
+    extends Composer<_$LetterHealthDatabase, $RecordProductUseRowsTable> {
+  $$RecordProductUseRowsTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get experiencedDay => $composableBuilder(
+    column: $table.experiencedDay,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get recordedAtMillis => $composableBuilder(
+    column: $table.recordedAtMillis,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get updatedAtMillis => $composableBuilder(
+    column: $table.updatedAtMillis,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get originalProvenance => $composableBuilder(
+    column: $table.originalProvenance,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get provenance => $composableBuilder(
+    column: $table.provenance,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get originalWriteZoneId => $composableBuilder(
+    column: $table.originalWriteZoneId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get writeZoneId => $composableBuilder(
+    column: $table.writeZoneId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get originalUtcOffsetMinutes => $composableBuilder(
+    column: $table.originalUtcOffsetMinutes,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get utcOffsetMinutes => $composableBuilder(
+    column: $table.utcOffsetMinutes,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get vocabularyVersion => $composableBuilder(
+    column: $table.vocabularyVersion,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get episodeId => $composableBuilder(
+    column: $table.episodeId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get versionId => $composableBuilder(
+    column: $table.versionId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get status => $composableBuilder(
+    column: $table.status,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get dailyKey => $composableBuilder(
+    column: $table.dailyKey,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$RecordProductUseRowsTableAnnotationComposer
+    extends Composer<_$LetterHealthDatabase, $RecordProductUseRowsTable> {
+  $$RecordProductUseRowsTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<int> get experiencedDay => $composableBuilder(
+    column: $table.experiencedDay,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get recordedAtMillis => $composableBuilder(
+    column: $table.recordedAtMillis,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get updatedAtMillis => $composableBuilder(
+    column: $table.updatedAtMillis,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get originalProvenance => $composableBuilder(
+    column: $table.originalProvenance,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get provenance => $composableBuilder(
+    column: $table.provenance,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get originalWriteZoneId => $composableBuilder(
+    column: $table.originalWriteZoneId,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get writeZoneId => $composableBuilder(
+    column: $table.writeZoneId,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get originalUtcOffsetMinutes => $composableBuilder(
+    column: $table.originalUtcOffsetMinutes,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get utcOffsetMinutes => $composableBuilder(
+    column: $table.utcOffsetMinutes,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get vocabularyVersion => $composableBuilder(
+    column: $table.vocabularyVersion,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get episodeId =>
+      $composableBuilder(column: $table.episodeId, builder: (column) => column);
+
+  GeneratedColumn<String> get versionId =>
+      $composableBuilder(column: $table.versionId, builder: (column) => column);
+
+  GeneratedColumn<String> get status =>
+      $composableBuilder(column: $table.status, builder: (column) => column);
+
+  GeneratedColumn<String> get dailyKey =>
+      $composableBuilder(column: $table.dailyKey, builder: (column) => column);
+}
+
+class $$RecordProductUseRowsTableTableManager
+    extends
+        RootTableManager<
+          _$LetterHealthDatabase,
+          $RecordProductUseRowsTable,
+          RecordProductUseRow,
+          $$RecordProductUseRowsTableFilterComposer,
+          $$RecordProductUseRowsTableOrderingComposer,
+          $$RecordProductUseRowsTableAnnotationComposer,
+          $$RecordProductUseRowsTableCreateCompanionBuilder,
+          $$RecordProductUseRowsTableUpdateCompanionBuilder,
+          (
+            RecordProductUseRow,
+            BaseReferences<
+              _$LetterHealthDatabase,
+              $RecordProductUseRowsTable,
+              RecordProductUseRow
+            >,
+          ),
+          RecordProductUseRow,
+          PrefetchHooks Function()
+        > {
+  $$RecordProductUseRowsTableTableManager(
+    _$LetterHealthDatabase db,
+    $RecordProductUseRowsTable table,
+  ) : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$RecordProductUseRowsTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$RecordProductUseRowsTableOrderingComposer(
+                $db: db,
+                $table: table,
+              ),
+          createComputedFieldComposer: () =>
+              $$RecordProductUseRowsTableAnnotationComposer(
+                $db: db,
+                $table: table,
+              ),
+          updateCompanionCallback:
+              ({
+                Value<String> id = const Value.absent(),
+                Value<int> experiencedDay = const Value.absent(),
+                Value<int> recordedAtMillis = const Value.absent(),
+                Value<int> updatedAtMillis = const Value.absent(),
+                Value<String> originalProvenance = const Value.absent(),
+                Value<String> provenance = const Value.absent(),
+                Value<String?> originalWriteZoneId = const Value.absent(),
+                Value<String?> writeZoneId = const Value.absent(),
+                Value<int?> originalUtcOffsetMinutes = const Value.absent(),
+                Value<int?> utcOffsetMinutes = const Value.absent(),
+                Value<int> vocabularyVersion = const Value.absent(),
+                Value<String> episodeId = const Value.absent(),
+                Value<String> versionId = const Value.absent(),
+                Value<String> status = const Value.absent(),
+                Value<String?> dailyKey = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => RecordProductUseRowsCompanion(
+                id: id,
+                experiencedDay: experiencedDay,
+                recordedAtMillis: recordedAtMillis,
+                updatedAtMillis: updatedAtMillis,
+                originalProvenance: originalProvenance,
+                provenance: provenance,
+                originalWriteZoneId: originalWriteZoneId,
+                writeZoneId: writeZoneId,
+                originalUtcOffsetMinutes: originalUtcOffsetMinutes,
+                utcOffsetMinutes: utcOffsetMinutes,
+                vocabularyVersion: vocabularyVersion,
+                episodeId: episodeId,
+                versionId: versionId,
+                status: status,
+                dailyKey: dailyKey,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required String id,
+                required int experiencedDay,
+                required int recordedAtMillis,
+                required int updatedAtMillis,
+                required String originalProvenance,
+                required String provenance,
+                Value<String?> originalWriteZoneId = const Value.absent(),
+                Value<String?> writeZoneId = const Value.absent(),
+                Value<int?> originalUtcOffsetMinutes = const Value.absent(),
+                Value<int?> utcOffsetMinutes = const Value.absent(),
+                Value<int> vocabularyVersion = const Value.absent(),
+                required String episodeId,
+                required String versionId,
+                required String status,
+                Value<String?> dailyKey = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => RecordProductUseRowsCompanion.insert(
+                id: id,
+                experiencedDay: experiencedDay,
+                recordedAtMillis: recordedAtMillis,
+                updatedAtMillis: updatedAtMillis,
+                originalProvenance: originalProvenance,
+                provenance: provenance,
+                originalWriteZoneId: originalWriteZoneId,
+                writeZoneId: writeZoneId,
+                originalUtcOffsetMinutes: originalUtcOffsetMinutes,
+                utcOffsetMinutes: utcOffsetMinutes,
+                vocabularyVersion: vocabularyVersion,
+                episodeId: episodeId,
+                versionId: versionId,
+                status: status,
+                dailyKey: dailyKey,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$RecordProductUseRowsTableProcessedTableManager =
+    ProcessedTableManager<
+      _$LetterHealthDatabase,
+      $RecordProductUseRowsTable,
+      RecordProductUseRow,
+      $$RecordProductUseRowsTableFilterComposer,
+      $$RecordProductUseRowsTableOrderingComposer,
+      $$RecordProductUseRowsTableAnnotationComposer,
+      $$RecordProductUseRowsTableCreateCompanionBuilder,
+      $$RecordProductUseRowsTableUpdateCompanionBuilder,
+      (
+        RecordProductUseRow,
+        BaseReferences<
+          _$LetterHealthDatabase,
+          $RecordProductUseRowsTable,
+          RecordProductUseRow
+        >,
+      ),
+      RecordProductUseRow,
+      PrefetchHooks Function()
+    >;
+typedef $$RecordTriedActionRowsTableCreateCompanionBuilder =
+    RecordTriedActionRowsCompanion Function({
+      required String id,
+      required int experiencedDay,
+      required int recordedAtMillis,
+      required int updatedAtMillis,
+      required String originalProvenance,
+      required String provenance,
+      Value<String?> originalWriteZoneId,
+      Value<String?> writeZoneId,
+      Value<int?> originalUtcOffsetMinutes,
+      Value<int?> utcOffsetMinutes,
+      Value<int> vocabularyVersion,
+      Value<String?> durationBucket,
+      Value<String?> durationLabel,
+      Value<int?> durationCatalogVersion,
+      Value<int?> exactMinutes,
+      required bool bundle,
+      required String status,
+      Value<String?> target,
+      required String source,
+      Value<String?> completionToken,
+      Value<String?> careSourceId,
+      Value<int?> completionOccurredAtMillis,
+      Value<int?> completionUtcOffsetMinutes,
+      Value<int> rowid,
+    });
+typedef $$RecordTriedActionRowsTableUpdateCompanionBuilder =
+    RecordTriedActionRowsCompanion Function({
+      Value<String> id,
+      Value<int> experiencedDay,
+      Value<int> recordedAtMillis,
+      Value<int> updatedAtMillis,
+      Value<String> originalProvenance,
+      Value<String> provenance,
+      Value<String?> originalWriteZoneId,
+      Value<String?> writeZoneId,
+      Value<int?> originalUtcOffsetMinutes,
+      Value<int?> utcOffsetMinutes,
+      Value<int> vocabularyVersion,
+      Value<String?> durationBucket,
+      Value<String?> durationLabel,
+      Value<int?> durationCatalogVersion,
+      Value<int?> exactMinutes,
+      Value<bool> bundle,
+      Value<String> status,
+      Value<String?> target,
+      Value<String> source,
+      Value<String?> completionToken,
+      Value<String?> careSourceId,
+      Value<int?> completionOccurredAtMillis,
+      Value<int?> completionUtcOffsetMinutes,
+      Value<int> rowid,
+    });
+
+class $$RecordTriedActionRowsTableFilterComposer
+    extends Composer<_$LetterHealthDatabase, $RecordTriedActionRowsTable> {
+  $$RecordTriedActionRowsTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get experiencedDay => $composableBuilder(
+    column: $table.experiencedDay,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get recordedAtMillis => $composableBuilder(
+    column: $table.recordedAtMillis,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get updatedAtMillis => $composableBuilder(
+    column: $table.updatedAtMillis,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get originalProvenance => $composableBuilder(
+    column: $table.originalProvenance,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get provenance => $composableBuilder(
+    column: $table.provenance,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get originalWriteZoneId => $composableBuilder(
+    column: $table.originalWriteZoneId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get writeZoneId => $composableBuilder(
+    column: $table.writeZoneId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get originalUtcOffsetMinutes => $composableBuilder(
+    column: $table.originalUtcOffsetMinutes,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get utcOffsetMinutes => $composableBuilder(
+    column: $table.utcOffsetMinutes,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get vocabularyVersion => $composableBuilder(
+    column: $table.vocabularyVersion,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get durationBucket => $composableBuilder(
+    column: $table.durationBucket,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get durationLabel => $composableBuilder(
+    column: $table.durationLabel,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get durationCatalogVersion => $composableBuilder(
+    column: $table.durationCatalogVersion,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get exactMinutes => $composableBuilder(
+    column: $table.exactMinutes,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get bundle => $composableBuilder(
+    column: $table.bundle,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get status => $composableBuilder(
+    column: $table.status,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get target => $composableBuilder(
+    column: $table.target,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get source => $composableBuilder(
+    column: $table.source,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get completionToken => $composableBuilder(
+    column: $table.completionToken,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get careSourceId => $composableBuilder(
+    column: $table.careSourceId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get completionOccurredAtMillis => $composableBuilder(
+    column: $table.completionOccurredAtMillis,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get completionUtcOffsetMinutes => $composableBuilder(
+    column: $table.completionUtcOffsetMinutes,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$RecordTriedActionRowsTableOrderingComposer
+    extends Composer<_$LetterHealthDatabase, $RecordTriedActionRowsTable> {
+  $$RecordTriedActionRowsTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get experiencedDay => $composableBuilder(
+    column: $table.experiencedDay,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get recordedAtMillis => $composableBuilder(
+    column: $table.recordedAtMillis,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get updatedAtMillis => $composableBuilder(
+    column: $table.updatedAtMillis,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get originalProvenance => $composableBuilder(
+    column: $table.originalProvenance,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get provenance => $composableBuilder(
+    column: $table.provenance,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get originalWriteZoneId => $composableBuilder(
+    column: $table.originalWriteZoneId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get writeZoneId => $composableBuilder(
+    column: $table.writeZoneId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get originalUtcOffsetMinutes => $composableBuilder(
+    column: $table.originalUtcOffsetMinutes,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get utcOffsetMinutes => $composableBuilder(
+    column: $table.utcOffsetMinutes,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get vocabularyVersion => $composableBuilder(
+    column: $table.vocabularyVersion,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get durationBucket => $composableBuilder(
+    column: $table.durationBucket,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get durationLabel => $composableBuilder(
+    column: $table.durationLabel,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get durationCatalogVersion => $composableBuilder(
+    column: $table.durationCatalogVersion,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get exactMinutes => $composableBuilder(
+    column: $table.exactMinutes,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<bool> get bundle => $composableBuilder(
+    column: $table.bundle,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get status => $composableBuilder(
+    column: $table.status,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get target => $composableBuilder(
+    column: $table.target,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get source => $composableBuilder(
+    column: $table.source,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get completionToken => $composableBuilder(
+    column: $table.completionToken,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get careSourceId => $composableBuilder(
+    column: $table.careSourceId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get completionOccurredAtMillis => $composableBuilder(
+    column: $table.completionOccurredAtMillis,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get completionUtcOffsetMinutes => $composableBuilder(
+    column: $table.completionUtcOffsetMinutes,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$RecordTriedActionRowsTableAnnotationComposer
+    extends Composer<_$LetterHealthDatabase, $RecordTriedActionRowsTable> {
+  $$RecordTriedActionRowsTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<int> get experiencedDay => $composableBuilder(
+    column: $table.experiencedDay,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get recordedAtMillis => $composableBuilder(
+    column: $table.recordedAtMillis,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get updatedAtMillis => $composableBuilder(
+    column: $table.updatedAtMillis,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get originalProvenance => $composableBuilder(
+    column: $table.originalProvenance,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get provenance => $composableBuilder(
+    column: $table.provenance,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get originalWriteZoneId => $composableBuilder(
+    column: $table.originalWriteZoneId,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get writeZoneId => $composableBuilder(
+    column: $table.writeZoneId,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get originalUtcOffsetMinutes => $composableBuilder(
+    column: $table.originalUtcOffsetMinutes,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get utcOffsetMinutes => $composableBuilder(
+    column: $table.utcOffsetMinutes,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get vocabularyVersion => $composableBuilder(
+    column: $table.vocabularyVersion,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get durationBucket => $composableBuilder(
+    column: $table.durationBucket,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get durationLabel => $composableBuilder(
+    column: $table.durationLabel,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get durationCatalogVersion => $composableBuilder(
+    column: $table.durationCatalogVersion,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get exactMinutes => $composableBuilder(
+    column: $table.exactMinutes,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<bool> get bundle =>
+      $composableBuilder(column: $table.bundle, builder: (column) => column);
+
+  GeneratedColumn<String> get status =>
+      $composableBuilder(column: $table.status, builder: (column) => column);
+
+  GeneratedColumn<String> get target =>
+      $composableBuilder(column: $table.target, builder: (column) => column);
+
+  GeneratedColumn<String> get source =>
+      $composableBuilder(column: $table.source, builder: (column) => column);
+
+  GeneratedColumn<String> get completionToken => $composableBuilder(
+    column: $table.completionToken,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get careSourceId => $composableBuilder(
+    column: $table.careSourceId,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get completionOccurredAtMillis => $composableBuilder(
+    column: $table.completionOccurredAtMillis,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get completionUtcOffsetMinutes => $composableBuilder(
+    column: $table.completionUtcOffsetMinutes,
+    builder: (column) => column,
+  );
+}
+
+class $$RecordTriedActionRowsTableTableManager
+    extends
+        RootTableManager<
+          _$LetterHealthDatabase,
+          $RecordTriedActionRowsTable,
+          RecordTriedActionRow,
+          $$RecordTriedActionRowsTableFilterComposer,
+          $$RecordTriedActionRowsTableOrderingComposer,
+          $$RecordTriedActionRowsTableAnnotationComposer,
+          $$RecordTriedActionRowsTableCreateCompanionBuilder,
+          $$RecordTriedActionRowsTableUpdateCompanionBuilder,
+          (
+            RecordTriedActionRow,
+            BaseReferences<
+              _$LetterHealthDatabase,
+              $RecordTriedActionRowsTable,
+              RecordTriedActionRow
+            >,
+          ),
+          RecordTriedActionRow,
+          PrefetchHooks Function()
+        > {
+  $$RecordTriedActionRowsTableTableManager(
+    _$LetterHealthDatabase db,
+    $RecordTriedActionRowsTable table,
+  ) : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$RecordTriedActionRowsTableFilterComposer(
+                $db: db,
+                $table: table,
+              ),
+          createOrderingComposer: () =>
+              $$RecordTriedActionRowsTableOrderingComposer(
+                $db: db,
+                $table: table,
+              ),
+          createComputedFieldComposer: () =>
+              $$RecordTriedActionRowsTableAnnotationComposer(
+                $db: db,
+                $table: table,
+              ),
+          updateCompanionCallback:
+              ({
+                Value<String> id = const Value.absent(),
+                Value<int> experiencedDay = const Value.absent(),
+                Value<int> recordedAtMillis = const Value.absent(),
+                Value<int> updatedAtMillis = const Value.absent(),
+                Value<String> originalProvenance = const Value.absent(),
+                Value<String> provenance = const Value.absent(),
+                Value<String?> originalWriteZoneId = const Value.absent(),
+                Value<String?> writeZoneId = const Value.absent(),
+                Value<int?> originalUtcOffsetMinutes = const Value.absent(),
+                Value<int?> utcOffsetMinutes = const Value.absent(),
+                Value<int> vocabularyVersion = const Value.absent(),
+                Value<String?> durationBucket = const Value.absent(),
+                Value<String?> durationLabel = const Value.absent(),
+                Value<int?> durationCatalogVersion = const Value.absent(),
+                Value<int?> exactMinutes = const Value.absent(),
+                Value<bool> bundle = const Value.absent(),
+                Value<String> status = const Value.absent(),
+                Value<String?> target = const Value.absent(),
+                Value<String> source = const Value.absent(),
+                Value<String?> completionToken = const Value.absent(),
+                Value<String?> careSourceId = const Value.absent(),
+                Value<int?> completionOccurredAtMillis = const Value.absent(),
+                Value<int?> completionUtcOffsetMinutes = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => RecordTriedActionRowsCompanion(
+                id: id,
+                experiencedDay: experiencedDay,
+                recordedAtMillis: recordedAtMillis,
+                updatedAtMillis: updatedAtMillis,
+                originalProvenance: originalProvenance,
+                provenance: provenance,
+                originalWriteZoneId: originalWriteZoneId,
+                writeZoneId: writeZoneId,
+                originalUtcOffsetMinutes: originalUtcOffsetMinutes,
+                utcOffsetMinutes: utcOffsetMinutes,
+                vocabularyVersion: vocabularyVersion,
+                durationBucket: durationBucket,
+                durationLabel: durationLabel,
+                durationCatalogVersion: durationCatalogVersion,
+                exactMinutes: exactMinutes,
+                bundle: bundle,
+                status: status,
+                target: target,
+                source: source,
+                completionToken: completionToken,
+                careSourceId: careSourceId,
+                completionOccurredAtMillis: completionOccurredAtMillis,
+                completionUtcOffsetMinutes: completionUtcOffsetMinutes,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required String id,
+                required int experiencedDay,
+                required int recordedAtMillis,
+                required int updatedAtMillis,
+                required String originalProvenance,
+                required String provenance,
+                Value<String?> originalWriteZoneId = const Value.absent(),
+                Value<String?> writeZoneId = const Value.absent(),
+                Value<int?> originalUtcOffsetMinutes = const Value.absent(),
+                Value<int?> utcOffsetMinutes = const Value.absent(),
+                Value<int> vocabularyVersion = const Value.absent(),
+                Value<String?> durationBucket = const Value.absent(),
+                Value<String?> durationLabel = const Value.absent(),
+                Value<int?> durationCatalogVersion = const Value.absent(),
+                Value<int?> exactMinutes = const Value.absent(),
+                required bool bundle,
+                required String status,
+                Value<String?> target = const Value.absent(),
+                required String source,
+                Value<String?> completionToken = const Value.absent(),
+                Value<String?> careSourceId = const Value.absent(),
+                Value<int?> completionOccurredAtMillis = const Value.absent(),
+                Value<int?> completionUtcOffsetMinutes = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => RecordTriedActionRowsCompanion.insert(
+                id: id,
+                experiencedDay: experiencedDay,
+                recordedAtMillis: recordedAtMillis,
+                updatedAtMillis: updatedAtMillis,
+                originalProvenance: originalProvenance,
+                provenance: provenance,
+                originalWriteZoneId: originalWriteZoneId,
+                writeZoneId: writeZoneId,
+                originalUtcOffsetMinutes: originalUtcOffsetMinutes,
+                utcOffsetMinutes: utcOffsetMinutes,
+                vocabularyVersion: vocabularyVersion,
+                durationBucket: durationBucket,
+                durationLabel: durationLabel,
+                durationCatalogVersion: durationCatalogVersion,
+                exactMinutes: exactMinutes,
+                bundle: bundle,
+                status: status,
+                target: target,
+                source: source,
+                completionToken: completionToken,
+                careSourceId: careSourceId,
+                completionOccurredAtMillis: completionOccurredAtMillis,
+                completionUtcOffsetMinutes: completionUtcOffsetMinutes,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$RecordTriedActionRowsTableProcessedTableManager =
+    ProcessedTableManager<
+      _$LetterHealthDatabase,
+      $RecordTriedActionRowsTable,
+      RecordTriedActionRow,
+      $$RecordTriedActionRowsTableFilterComposer,
+      $$RecordTriedActionRowsTableOrderingComposer,
+      $$RecordTriedActionRowsTableAnnotationComposer,
+      $$RecordTriedActionRowsTableCreateCompanionBuilder,
+      $$RecordTriedActionRowsTableUpdateCompanionBuilder,
+      (
+        RecordTriedActionRow,
+        BaseReferences<
+          _$LetterHealthDatabase,
+          $RecordTriedActionRowsTable,
+          RecordTriedActionRow
+        >,
+      ),
+      RecordTriedActionRow,
+      PrefetchHooks Function()
+    >;
+typedef $$RecordTriedActionItemRowsTableCreateCompanionBuilder =
+    RecordTriedActionItemRowsCompanion Function({
+      required String actionId,
+      required int position,
+      required String kind,
+      Value<String?> customName,
+      Value<int> rowid,
+    });
+typedef $$RecordTriedActionItemRowsTableUpdateCompanionBuilder =
+    RecordTriedActionItemRowsCompanion Function({
+      Value<String> actionId,
+      Value<int> position,
+      Value<String> kind,
+      Value<String?> customName,
+      Value<int> rowid,
+    });
+
+class $$RecordTriedActionItemRowsTableFilterComposer
+    extends Composer<_$LetterHealthDatabase, $RecordTriedActionItemRowsTable> {
+  $$RecordTriedActionItemRowsTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get actionId => $composableBuilder(
+    column: $table.actionId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get position => $composableBuilder(
+    column: $table.position,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get kind => $composableBuilder(
+    column: $table.kind,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get customName => $composableBuilder(
+    column: $table.customName,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$RecordTriedActionItemRowsTableOrderingComposer
+    extends Composer<_$LetterHealthDatabase, $RecordTriedActionItemRowsTable> {
+  $$RecordTriedActionItemRowsTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get actionId => $composableBuilder(
+    column: $table.actionId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get position => $composableBuilder(
+    column: $table.position,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get kind => $composableBuilder(
+    column: $table.kind,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get customName => $composableBuilder(
+    column: $table.customName,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$RecordTriedActionItemRowsTableAnnotationComposer
+    extends Composer<_$LetterHealthDatabase, $RecordTriedActionItemRowsTable> {
+  $$RecordTriedActionItemRowsTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get actionId =>
+      $composableBuilder(column: $table.actionId, builder: (column) => column);
+
+  GeneratedColumn<int> get position =>
+      $composableBuilder(column: $table.position, builder: (column) => column);
+
+  GeneratedColumn<String> get kind =>
+      $composableBuilder(column: $table.kind, builder: (column) => column);
+
+  GeneratedColumn<String> get customName => $composableBuilder(
+    column: $table.customName,
+    builder: (column) => column,
+  );
+}
+
+class $$RecordTriedActionItemRowsTableTableManager
+    extends
+        RootTableManager<
+          _$LetterHealthDatabase,
+          $RecordTriedActionItemRowsTable,
+          RecordTriedActionItemRow,
+          $$RecordTriedActionItemRowsTableFilterComposer,
+          $$RecordTriedActionItemRowsTableOrderingComposer,
+          $$RecordTriedActionItemRowsTableAnnotationComposer,
+          $$RecordTriedActionItemRowsTableCreateCompanionBuilder,
+          $$RecordTriedActionItemRowsTableUpdateCompanionBuilder,
+          (
+            RecordTriedActionItemRow,
+            BaseReferences<
+              _$LetterHealthDatabase,
+              $RecordTriedActionItemRowsTable,
+              RecordTriedActionItemRow
+            >,
+          ),
+          RecordTriedActionItemRow,
+          PrefetchHooks Function()
+        > {
+  $$RecordTriedActionItemRowsTableTableManager(
+    _$LetterHealthDatabase db,
+    $RecordTriedActionItemRowsTable table,
+  ) : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$RecordTriedActionItemRowsTableFilterComposer(
+                $db: db,
+                $table: table,
+              ),
+          createOrderingComposer: () =>
+              $$RecordTriedActionItemRowsTableOrderingComposer(
+                $db: db,
+                $table: table,
+              ),
+          createComputedFieldComposer: () =>
+              $$RecordTriedActionItemRowsTableAnnotationComposer(
+                $db: db,
+                $table: table,
+              ),
+          updateCompanionCallback:
+              ({
+                Value<String> actionId = const Value.absent(),
+                Value<int> position = const Value.absent(),
+                Value<String> kind = const Value.absent(),
+                Value<String?> customName = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => RecordTriedActionItemRowsCompanion(
+                actionId: actionId,
+                position: position,
+                kind: kind,
+                customName: customName,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required String actionId,
+                required int position,
+                required String kind,
+                Value<String?> customName = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => RecordTriedActionItemRowsCompanion.insert(
+                actionId: actionId,
+                position: position,
+                kind: kind,
+                customName: customName,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$RecordTriedActionItemRowsTableProcessedTableManager =
+    ProcessedTableManager<
+      _$LetterHealthDatabase,
+      $RecordTriedActionItemRowsTable,
+      RecordTriedActionItemRow,
+      $$RecordTriedActionItemRowsTableFilterComposer,
+      $$RecordTriedActionItemRowsTableOrderingComposer,
+      $$RecordTriedActionItemRowsTableAnnotationComposer,
+      $$RecordTriedActionItemRowsTableCreateCompanionBuilder,
+      $$RecordTriedActionItemRowsTableUpdateCompanionBuilder,
+      (
+        RecordTriedActionItemRow,
+        BaseReferences<
+          _$LetterHealthDatabase,
+          $RecordTriedActionItemRowsTable,
+          RecordTriedActionItemRow
+        >,
+      ),
+      RecordTriedActionItemRow,
+      PrefetchHooks Function()
+    >;
+typedef $$RecordActionCheckbackRowsTableCreateCompanionBuilder =
+    RecordActionCheckbackRowsCompanion Function({
+      required String id,
+      required int experiencedDay,
+      required int recordedAtMillis,
+      required int updatedAtMillis,
+      required String originalProvenance,
+      required String provenance,
+      Value<String?> originalWriteZoneId,
+      Value<String?> writeZoneId,
+      Value<int?> originalUtcOffsetMinutes,
+      Value<int?> utcOffsetMinutes,
+      Value<int> vocabularyVersion,
+      required String actionId,
+      required String outcome,
+      Value<int?> targetDegree,
+      Value<String?> unexpected,
+      Value<String?> reflection,
+      Value<int> rowid,
+    });
+typedef $$RecordActionCheckbackRowsTableUpdateCompanionBuilder =
+    RecordActionCheckbackRowsCompanion Function({
+      Value<String> id,
+      Value<int> experiencedDay,
+      Value<int> recordedAtMillis,
+      Value<int> updatedAtMillis,
+      Value<String> originalProvenance,
+      Value<String> provenance,
+      Value<String?> originalWriteZoneId,
+      Value<String?> writeZoneId,
+      Value<int?> originalUtcOffsetMinutes,
+      Value<int?> utcOffsetMinutes,
+      Value<int> vocabularyVersion,
+      Value<String> actionId,
+      Value<String> outcome,
+      Value<int?> targetDegree,
+      Value<String?> unexpected,
+      Value<String?> reflection,
+      Value<int> rowid,
+    });
+
+class $$RecordActionCheckbackRowsTableFilterComposer
+    extends Composer<_$LetterHealthDatabase, $RecordActionCheckbackRowsTable> {
+  $$RecordActionCheckbackRowsTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get experiencedDay => $composableBuilder(
+    column: $table.experiencedDay,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get recordedAtMillis => $composableBuilder(
+    column: $table.recordedAtMillis,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get updatedAtMillis => $composableBuilder(
+    column: $table.updatedAtMillis,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get originalProvenance => $composableBuilder(
+    column: $table.originalProvenance,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get provenance => $composableBuilder(
+    column: $table.provenance,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get originalWriteZoneId => $composableBuilder(
+    column: $table.originalWriteZoneId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get writeZoneId => $composableBuilder(
+    column: $table.writeZoneId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get originalUtcOffsetMinutes => $composableBuilder(
+    column: $table.originalUtcOffsetMinutes,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get utcOffsetMinutes => $composableBuilder(
+    column: $table.utcOffsetMinutes,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get vocabularyVersion => $composableBuilder(
+    column: $table.vocabularyVersion,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get actionId => $composableBuilder(
+    column: $table.actionId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get outcome => $composableBuilder(
+    column: $table.outcome,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get targetDegree => $composableBuilder(
+    column: $table.targetDegree,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get unexpected => $composableBuilder(
+    column: $table.unexpected,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get reflection => $composableBuilder(
+    column: $table.reflection,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$RecordActionCheckbackRowsTableOrderingComposer
+    extends Composer<_$LetterHealthDatabase, $RecordActionCheckbackRowsTable> {
+  $$RecordActionCheckbackRowsTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get experiencedDay => $composableBuilder(
+    column: $table.experiencedDay,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get recordedAtMillis => $composableBuilder(
+    column: $table.recordedAtMillis,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get updatedAtMillis => $composableBuilder(
+    column: $table.updatedAtMillis,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get originalProvenance => $composableBuilder(
+    column: $table.originalProvenance,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get provenance => $composableBuilder(
+    column: $table.provenance,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get originalWriteZoneId => $composableBuilder(
+    column: $table.originalWriteZoneId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get writeZoneId => $composableBuilder(
+    column: $table.writeZoneId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get originalUtcOffsetMinutes => $composableBuilder(
+    column: $table.originalUtcOffsetMinutes,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get utcOffsetMinutes => $composableBuilder(
+    column: $table.utcOffsetMinutes,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get vocabularyVersion => $composableBuilder(
+    column: $table.vocabularyVersion,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get actionId => $composableBuilder(
+    column: $table.actionId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get outcome => $composableBuilder(
+    column: $table.outcome,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get targetDegree => $composableBuilder(
+    column: $table.targetDegree,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get unexpected => $composableBuilder(
+    column: $table.unexpected,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get reflection => $composableBuilder(
+    column: $table.reflection,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$RecordActionCheckbackRowsTableAnnotationComposer
+    extends Composer<_$LetterHealthDatabase, $RecordActionCheckbackRowsTable> {
+  $$RecordActionCheckbackRowsTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<int> get experiencedDay => $composableBuilder(
+    column: $table.experiencedDay,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get recordedAtMillis => $composableBuilder(
+    column: $table.recordedAtMillis,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get updatedAtMillis => $composableBuilder(
+    column: $table.updatedAtMillis,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get originalProvenance => $composableBuilder(
+    column: $table.originalProvenance,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get provenance => $composableBuilder(
+    column: $table.provenance,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get originalWriteZoneId => $composableBuilder(
+    column: $table.originalWriteZoneId,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get writeZoneId => $composableBuilder(
+    column: $table.writeZoneId,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get originalUtcOffsetMinutes => $composableBuilder(
+    column: $table.originalUtcOffsetMinutes,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get utcOffsetMinutes => $composableBuilder(
+    column: $table.utcOffsetMinutes,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get vocabularyVersion => $composableBuilder(
+    column: $table.vocabularyVersion,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get actionId =>
+      $composableBuilder(column: $table.actionId, builder: (column) => column);
+
+  GeneratedColumn<String> get outcome =>
+      $composableBuilder(column: $table.outcome, builder: (column) => column);
+
+  GeneratedColumn<int> get targetDegree => $composableBuilder(
+    column: $table.targetDegree,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get unexpected => $composableBuilder(
+    column: $table.unexpected,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get reflection => $composableBuilder(
+    column: $table.reflection,
+    builder: (column) => column,
+  );
+}
+
+class $$RecordActionCheckbackRowsTableTableManager
+    extends
+        RootTableManager<
+          _$LetterHealthDatabase,
+          $RecordActionCheckbackRowsTable,
+          RecordActionCheckbackRow,
+          $$RecordActionCheckbackRowsTableFilterComposer,
+          $$RecordActionCheckbackRowsTableOrderingComposer,
+          $$RecordActionCheckbackRowsTableAnnotationComposer,
+          $$RecordActionCheckbackRowsTableCreateCompanionBuilder,
+          $$RecordActionCheckbackRowsTableUpdateCompanionBuilder,
+          (
+            RecordActionCheckbackRow,
+            BaseReferences<
+              _$LetterHealthDatabase,
+              $RecordActionCheckbackRowsTable,
+              RecordActionCheckbackRow
+            >,
+          ),
+          RecordActionCheckbackRow,
+          PrefetchHooks Function()
+        > {
+  $$RecordActionCheckbackRowsTableTableManager(
+    _$LetterHealthDatabase db,
+    $RecordActionCheckbackRowsTable table,
+  ) : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$RecordActionCheckbackRowsTableFilterComposer(
+                $db: db,
+                $table: table,
+              ),
+          createOrderingComposer: () =>
+              $$RecordActionCheckbackRowsTableOrderingComposer(
+                $db: db,
+                $table: table,
+              ),
+          createComputedFieldComposer: () =>
+              $$RecordActionCheckbackRowsTableAnnotationComposer(
+                $db: db,
+                $table: table,
+              ),
+          updateCompanionCallback:
+              ({
+                Value<String> id = const Value.absent(),
+                Value<int> experiencedDay = const Value.absent(),
+                Value<int> recordedAtMillis = const Value.absent(),
+                Value<int> updatedAtMillis = const Value.absent(),
+                Value<String> originalProvenance = const Value.absent(),
+                Value<String> provenance = const Value.absent(),
+                Value<String?> originalWriteZoneId = const Value.absent(),
+                Value<String?> writeZoneId = const Value.absent(),
+                Value<int?> originalUtcOffsetMinutes = const Value.absent(),
+                Value<int?> utcOffsetMinutes = const Value.absent(),
+                Value<int> vocabularyVersion = const Value.absent(),
+                Value<String> actionId = const Value.absent(),
+                Value<String> outcome = const Value.absent(),
+                Value<int?> targetDegree = const Value.absent(),
+                Value<String?> unexpected = const Value.absent(),
+                Value<String?> reflection = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => RecordActionCheckbackRowsCompanion(
+                id: id,
+                experiencedDay: experiencedDay,
+                recordedAtMillis: recordedAtMillis,
+                updatedAtMillis: updatedAtMillis,
+                originalProvenance: originalProvenance,
+                provenance: provenance,
+                originalWriteZoneId: originalWriteZoneId,
+                writeZoneId: writeZoneId,
+                originalUtcOffsetMinutes: originalUtcOffsetMinutes,
+                utcOffsetMinutes: utcOffsetMinutes,
+                vocabularyVersion: vocabularyVersion,
+                actionId: actionId,
+                outcome: outcome,
+                targetDegree: targetDegree,
+                unexpected: unexpected,
+                reflection: reflection,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required String id,
+                required int experiencedDay,
+                required int recordedAtMillis,
+                required int updatedAtMillis,
+                required String originalProvenance,
+                required String provenance,
+                Value<String?> originalWriteZoneId = const Value.absent(),
+                Value<String?> writeZoneId = const Value.absent(),
+                Value<int?> originalUtcOffsetMinutes = const Value.absent(),
+                Value<int?> utcOffsetMinutes = const Value.absent(),
+                Value<int> vocabularyVersion = const Value.absent(),
+                required String actionId,
+                required String outcome,
+                Value<int?> targetDegree = const Value.absent(),
+                Value<String?> unexpected = const Value.absent(),
+                Value<String?> reflection = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => RecordActionCheckbackRowsCompanion.insert(
+                id: id,
+                experiencedDay: experiencedDay,
+                recordedAtMillis: recordedAtMillis,
+                updatedAtMillis: updatedAtMillis,
+                originalProvenance: originalProvenance,
+                provenance: provenance,
+                originalWriteZoneId: originalWriteZoneId,
+                writeZoneId: writeZoneId,
+                originalUtcOffsetMinutes: originalUtcOffsetMinutes,
+                utcOffsetMinutes: utcOffsetMinutes,
+                vocabularyVersion: vocabularyVersion,
+                actionId: actionId,
+                outcome: outcome,
+                targetDegree: targetDegree,
+                unexpected: unexpected,
+                reflection: reflection,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$RecordActionCheckbackRowsTableProcessedTableManager =
+    ProcessedTableManager<
+      _$LetterHealthDatabase,
+      $RecordActionCheckbackRowsTable,
+      RecordActionCheckbackRow,
+      $$RecordActionCheckbackRowsTableFilterComposer,
+      $$RecordActionCheckbackRowsTableOrderingComposer,
+      $$RecordActionCheckbackRowsTableAnnotationComposer,
+      $$RecordActionCheckbackRowsTableCreateCompanionBuilder,
+      $$RecordActionCheckbackRowsTableUpdateCompanionBuilder,
+      (
+        RecordActionCheckbackRow,
+        BaseReferences<
+          _$LetterHealthDatabase,
+          $RecordActionCheckbackRowsTable,
+          RecordActionCheckbackRow
+        >,
+      ),
+      RecordActionCheckbackRow,
+      PrefetchHooks Function()
+    >;
+typedef $$RecordProgrammeRowsTableCreateCompanionBuilder =
+    RecordProgrammeRowsCompanion Function({
+      required String id,
+      required int startDay,
+      Value<int?> endDay,
+      Value<int?> currentSlot,
+      required int createdAtMillis,
+      required int updatedAtMillis,
+      Value<int> rowid,
+    });
+typedef $$RecordProgrammeRowsTableUpdateCompanionBuilder =
+    RecordProgrammeRowsCompanion Function({
+      Value<String> id,
+      Value<int> startDay,
+      Value<int?> endDay,
+      Value<int?> currentSlot,
+      Value<int> createdAtMillis,
+      Value<int> updatedAtMillis,
+      Value<int> rowid,
+    });
+
+final class $$RecordProgrammeRowsTableReferences
+    extends
+        BaseReferences<
+          _$LetterHealthDatabase,
+          $RecordProgrammeRowsTable,
+          RecordProgrammeRow
+        > {
+  $$RecordProgrammeRowsTableReferences(
+    super.$_db,
+    super.$_table,
+    super.$_typedResult,
+  );
+
+  static MultiTypedResultKey<
+    $RecordProgrammeConfigRowsTable,
+    List<RecordProgrammeConfigRow>
+  >
+  _recordProgrammeConfigRowsRefsTable(
+    _$LetterHealthDatabase db,
+  ) => MultiTypedResultKey.fromTable(
+    db.recordProgrammeConfigRows,
+    aliasName:
+        'record_programme_rows__id__record_programme_config_rows__programme_id',
+  );
+
+  $$RecordProgrammeConfigRowsTableProcessedTableManager
+  get recordProgrammeConfigRowsRefs {
+    final manager = $$RecordProgrammeConfigRowsTableTableManager(
+      $_db,
+      $_db.recordProgrammeConfigRows,
+    ).filter((f) => f.programmeId.id.sqlEquals($_itemColumn<String>('id')!));
+
+    final cache = $_typedResult.readTableOrNull(
+      _recordProgrammeConfigRowsRefsTable($_db),
+    );
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: cache),
+    );
+  }
+
+  static MultiTypedResultKey<
+    $RecordProgrammePauseRowsTable,
+    List<RecordProgrammePauseRow>
+  >
+  _recordProgrammePauseRowsRefsTable(
+    _$LetterHealthDatabase db,
+  ) => MultiTypedResultKey.fromTable(
+    db.recordProgrammePauseRows,
+    aliasName:
+        'record_programme_rows__id__record_programme_pause_rows__programme_id',
+  );
+
+  $$RecordProgrammePauseRowsTableProcessedTableManager
+  get recordProgrammePauseRowsRefs {
+    final manager = $$RecordProgrammePauseRowsTableTableManager(
+      $_db,
+      $_db.recordProgrammePauseRows,
+    ).filter((f) => f.programmeId.id.sqlEquals($_itemColumn<String>('id')!));
+
+    final cache = $_typedResult.readTableOrNull(
+      _recordProgrammePauseRowsRefsTable($_db),
+    );
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: cache),
+    );
+  }
+}
+
+class $$RecordProgrammeRowsTableFilterComposer
+    extends Composer<_$LetterHealthDatabase, $RecordProgrammeRowsTable> {
+  $$RecordProgrammeRowsTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get startDay => $composableBuilder(
+    column: $table.startDay,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get endDay => $composableBuilder(
+    column: $table.endDay,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get currentSlot => $composableBuilder(
+    column: $table.currentSlot,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get createdAtMillis => $composableBuilder(
+    column: $table.createdAtMillis,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get updatedAtMillis => $composableBuilder(
+    column: $table.updatedAtMillis,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  Expression<bool> recordProgrammeConfigRowsRefs(
+    Expression<bool> Function($$RecordProgrammeConfigRowsTableFilterComposer f)
+    f,
+  ) {
+    final $$RecordProgrammeConfigRowsTableFilterComposer composer =
+        $composerBuilder(
+          composer: this,
+          getCurrentColumn: (t) => t.id,
+          referencedTable: $db.recordProgrammeConfigRows,
+          getReferencedColumn: (t) => t.programmeId,
+          builder:
+              (
+                joinBuilder, {
+                $addJoinBuilderToRootComposer,
+                $removeJoinBuilderFromRootComposer,
+              }) => $$RecordProgrammeConfigRowsTableFilterComposer(
+                $db: $db,
+                $table: $db.recordProgrammeConfigRows,
+                $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+                joinBuilder: joinBuilder,
+                $removeJoinBuilderFromRootComposer:
+                    $removeJoinBuilderFromRootComposer,
+              ),
+        );
+    return f(composer);
+  }
+
+  Expression<bool> recordProgrammePauseRowsRefs(
+    Expression<bool> Function($$RecordProgrammePauseRowsTableFilterComposer f)
+    f,
+  ) {
+    final $$RecordProgrammePauseRowsTableFilterComposer composer =
+        $composerBuilder(
+          composer: this,
+          getCurrentColumn: (t) => t.id,
+          referencedTable: $db.recordProgrammePauseRows,
+          getReferencedColumn: (t) => t.programmeId,
+          builder:
+              (
+                joinBuilder, {
+                $addJoinBuilderToRootComposer,
+                $removeJoinBuilderFromRootComposer,
+              }) => $$RecordProgrammePauseRowsTableFilterComposer(
+                $db: $db,
+                $table: $db.recordProgrammePauseRows,
+                $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+                joinBuilder: joinBuilder,
+                $removeJoinBuilderFromRootComposer:
+                    $removeJoinBuilderFromRootComposer,
+              ),
+        );
+    return f(composer);
+  }
+}
+
+class $$RecordProgrammeRowsTableOrderingComposer
+    extends Composer<_$LetterHealthDatabase, $RecordProgrammeRowsTable> {
+  $$RecordProgrammeRowsTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get startDay => $composableBuilder(
+    column: $table.startDay,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get endDay => $composableBuilder(
+    column: $table.endDay,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get currentSlot => $composableBuilder(
+    column: $table.currentSlot,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get createdAtMillis => $composableBuilder(
+    column: $table.createdAtMillis,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get updatedAtMillis => $composableBuilder(
+    column: $table.updatedAtMillis,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$RecordProgrammeRowsTableAnnotationComposer
+    extends Composer<_$LetterHealthDatabase, $RecordProgrammeRowsTable> {
+  $$RecordProgrammeRowsTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<int> get startDay =>
+      $composableBuilder(column: $table.startDay, builder: (column) => column);
+
+  GeneratedColumn<int> get endDay =>
+      $composableBuilder(column: $table.endDay, builder: (column) => column);
+
+  GeneratedColumn<int> get currentSlot => $composableBuilder(
+    column: $table.currentSlot,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get createdAtMillis => $composableBuilder(
+    column: $table.createdAtMillis,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get updatedAtMillis => $composableBuilder(
+    column: $table.updatedAtMillis,
+    builder: (column) => column,
+  );
+
+  Expression<T> recordProgrammeConfigRowsRefs<T extends Object>(
+    Expression<T> Function($$RecordProgrammeConfigRowsTableAnnotationComposer a)
+    f,
+  ) {
+    final $$RecordProgrammeConfigRowsTableAnnotationComposer composer =
+        $composerBuilder(
+          composer: this,
+          getCurrentColumn: (t) => t.id,
+          referencedTable: $db.recordProgrammeConfigRows,
+          getReferencedColumn: (t) => t.programmeId,
+          builder:
+              (
+                joinBuilder, {
+                $addJoinBuilderToRootComposer,
+                $removeJoinBuilderFromRootComposer,
+              }) => $$RecordProgrammeConfigRowsTableAnnotationComposer(
+                $db: $db,
+                $table: $db.recordProgrammeConfigRows,
+                $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+                joinBuilder: joinBuilder,
+                $removeJoinBuilderFromRootComposer:
+                    $removeJoinBuilderFromRootComposer,
+              ),
+        );
+    return f(composer);
+  }
+
+  Expression<T> recordProgrammePauseRowsRefs<T extends Object>(
+    Expression<T> Function($$RecordProgrammePauseRowsTableAnnotationComposer a)
+    f,
+  ) {
+    final $$RecordProgrammePauseRowsTableAnnotationComposer composer =
+        $composerBuilder(
+          composer: this,
+          getCurrentColumn: (t) => t.id,
+          referencedTable: $db.recordProgrammePauseRows,
+          getReferencedColumn: (t) => t.programmeId,
+          builder:
+              (
+                joinBuilder, {
+                $addJoinBuilderToRootComposer,
+                $removeJoinBuilderFromRootComposer,
+              }) => $$RecordProgrammePauseRowsTableAnnotationComposer(
+                $db: $db,
+                $table: $db.recordProgrammePauseRows,
+                $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+                joinBuilder: joinBuilder,
+                $removeJoinBuilderFromRootComposer:
+                    $removeJoinBuilderFromRootComposer,
+              ),
+        );
+    return f(composer);
+  }
+}
+
+class $$RecordProgrammeRowsTableTableManager
+    extends
+        RootTableManager<
+          _$LetterHealthDatabase,
+          $RecordProgrammeRowsTable,
+          RecordProgrammeRow,
+          $$RecordProgrammeRowsTableFilterComposer,
+          $$RecordProgrammeRowsTableOrderingComposer,
+          $$RecordProgrammeRowsTableAnnotationComposer,
+          $$RecordProgrammeRowsTableCreateCompanionBuilder,
+          $$RecordProgrammeRowsTableUpdateCompanionBuilder,
+          (RecordProgrammeRow, $$RecordProgrammeRowsTableReferences),
+          RecordProgrammeRow,
+          PrefetchHooks Function({
+            bool recordProgrammeConfigRowsRefs,
+            bool recordProgrammePauseRowsRefs,
+          })
+        > {
+  $$RecordProgrammeRowsTableTableManager(
+    _$LetterHealthDatabase db,
+    $RecordProgrammeRowsTable table,
+  ) : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$RecordProgrammeRowsTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$RecordProgrammeRowsTableOrderingComposer(
+                $db: db,
+                $table: table,
+              ),
+          createComputedFieldComposer: () =>
+              $$RecordProgrammeRowsTableAnnotationComposer(
+                $db: db,
+                $table: table,
+              ),
+          updateCompanionCallback:
+              ({
+                Value<String> id = const Value.absent(),
+                Value<int> startDay = const Value.absent(),
+                Value<int?> endDay = const Value.absent(),
+                Value<int?> currentSlot = const Value.absent(),
+                Value<int> createdAtMillis = const Value.absent(),
+                Value<int> updatedAtMillis = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => RecordProgrammeRowsCompanion(
+                id: id,
+                startDay: startDay,
+                endDay: endDay,
+                currentSlot: currentSlot,
+                createdAtMillis: createdAtMillis,
+                updatedAtMillis: updatedAtMillis,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required String id,
+                required int startDay,
+                Value<int?> endDay = const Value.absent(),
+                Value<int?> currentSlot = const Value.absent(),
+                required int createdAtMillis,
+                required int updatedAtMillis,
+                Value<int> rowid = const Value.absent(),
+              }) => RecordProgrammeRowsCompanion.insert(
+                id: id,
+                startDay: startDay,
+                endDay: endDay,
+                currentSlot: currentSlot,
+                createdAtMillis: createdAtMillis,
+                updatedAtMillis: updatedAtMillis,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map(
+                (e) => (
+                  e.readTable(table),
+                  $$RecordProgrammeRowsTableReferences(db, table, e),
+                ),
+              )
+              .toList(),
+          prefetchHooksCallback:
+              ({
+                recordProgrammeConfigRowsRefs = false,
+                recordProgrammePauseRowsRefs = false,
+              }) {
+                return PrefetchHooks(
+                  db: db,
+                  explicitlyWatchedTables: [
+                    if (recordProgrammeConfigRowsRefs)
+                      db.recordProgrammeConfigRows,
+                    if (recordProgrammePauseRowsRefs)
+                      db.recordProgrammePauseRows,
+                  ],
+                  addJoins: null,
+                  getPrefetchedDataCallback: (items) async {
+                    return [
+                      if (recordProgrammeConfigRowsRefs)
+                        await $_getPrefetchedData<
+                          RecordProgrammeRow,
+                          $RecordProgrammeRowsTable,
+                          RecordProgrammeConfigRow
+                        >(
+                          currentTable: table,
+                          referencedTable: $$RecordProgrammeRowsTableReferences
+                              ._recordProgrammeConfigRowsRefsTable(db),
+                          managerFromTypedResult: (p0) =>
+                              $$RecordProgrammeRowsTableReferences(
+                                db,
+                                table,
+                                p0,
+                              ).recordProgrammeConfigRowsRefs,
+                          referencedItemsForCurrentItem:
+                              (item, referencedItems) => referencedItems.where(
+                                (e) => e.programmeId == item.id,
+                              ),
+                          typedResults: items,
+                        ),
+                      if (recordProgrammePauseRowsRefs)
+                        await $_getPrefetchedData<
+                          RecordProgrammeRow,
+                          $RecordProgrammeRowsTable,
+                          RecordProgrammePauseRow
+                        >(
+                          currentTable: table,
+                          referencedTable: $$RecordProgrammeRowsTableReferences
+                              ._recordProgrammePauseRowsRefsTable(db),
+                          managerFromTypedResult: (p0) =>
+                              $$RecordProgrammeRowsTableReferences(
+                                db,
+                                table,
+                                p0,
+                              ).recordProgrammePauseRowsRefs,
+                          referencedItemsForCurrentItem:
+                              (item, referencedItems) => referencedItems.where(
+                                (e) => e.programmeId == item.id,
+                              ),
+                          typedResults: items,
+                        ),
+                    ];
+                  },
+                );
+              },
+        ),
+      );
+}
+
+typedef $$RecordProgrammeRowsTableProcessedTableManager =
+    ProcessedTableManager<
+      _$LetterHealthDatabase,
+      $RecordProgrammeRowsTable,
+      RecordProgrammeRow,
+      $$RecordProgrammeRowsTableFilterComposer,
+      $$RecordProgrammeRowsTableOrderingComposer,
+      $$RecordProgrammeRowsTableAnnotationComposer,
+      $$RecordProgrammeRowsTableCreateCompanionBuilder,
+      $$RecordProgrammeRowsTableUpdateCompanionBuilder,
+      (RecordProgrammeRow, $$RecordProgrammeRowsTableReferences),
+      RecordProgrammeRow,
+      PrefetchHooks Function({
+        bool recordProgrammeConfigRowsRefs,
+        bool recordProgrammePauseRowsRefs,
+      })
+    >;
+typedef $$RecordProgrammeConfigRowsTableCreateCompanionBuilder =
+    RecordProgrammeConfigRowsCompanion Function({
+      required String id,
+      required String programmeId,
+      required int versionNumber,
+      required int effectiveDay,
+      required String symptomIds,
+      required int vocabularyVersion,
+      Value<int> rowid,
+    });
+typedef $$RecordProgrammeConfigRowsTableUpdateCompanionBuilder =
+    RecordProgrammeConfigRowsCompanion Function({
+      Value<String> id,
+      Value<String> programmeId,
+      Value<int> versionNumber,
+      Value<int> effectiveDay,
+      Value<String> symptomIds,
+      Value<int> vocabularyVersion,
+      Value<int> rowid,
+    });
+
+final class $$RecordProgrammeConfigRowsTableReferences
+    extends
+        BaseReferences<
+          _$LetterHealthDatabase,
+          $RecordProgrammeConfigRowsTable,
+          RecordProgrammeConfigRow
+        > {
+  $$RecordProgrammeConfigRowsTableReferences(
+    super.$_db,
+    super.$_table,
+    super.$_typedResult,
+  );
+
+  static $RecordProgrammeRowsTable _programmeIdTable(
+    _$LetterHealthDatabase db,
+  ) => db.recordProgrammeRows.createAlias(
+    'record_programme_config_rows__programme_id__record_programme_rows__id',
+  );
+
+  $$RecordProgrammeRowsTableProcessedTableManager get programmeId {
+    final $_column = $_itemColumn<String>('programme_id')!;
+
+    final manager = $$RecordProgrammeRowsTableTableManager(
+      $_db,
+      $_db.recordProgrammeRows,
+    ).filter((f) => f.id.sqlEquals($_column));
+    final item = $_typedResult.readTableOrNull(_programmeIdTable($_db));
+    if (item == null) return manager;
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: [item]),
+    );
+  }
+}
+
+class $$RecordProgrammeConfigRowsTableFilterComposer
+    extends Composer<_$LetterHealthDatabase, $RecordProgrammeConfigRowsTable> {
+  $$RecordProgrammeConfigRowsTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get versionNumber => $composableBuilder(
+    column: $table.versionNumber,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get effectiveDay => $composableBuilder(
+    column: $table.effectiveDay,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get symptomIds => $composableBuilder(
+    column: $table.symptomIds,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get vocabularyVersion => $composableBuilder(
+    column: $table.vocabularyVersion,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  $$RecordProgrammeRowsTableFilterComposer get programmeId {
+    final $$RecordProgrammeRowsTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.programmeId,
+      referencedTable: $db.recordProgrammeRows,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$RecordProgrammeRowsTableFilterComposer(
+            $db: $db,
+            $table: $db.recordProgrammeRows,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $$RecordProgrammeConfigRowsTableOrderingComposer
+    extends Composer<_$LetterHealthDatabase, $RecordProgrammeConfigRowsTable> {
+  $$RecordProgrammeConfigRowsTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get versionNumber => $composableBuilder(
+    column: $table.versionNumber,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get effectiveDay => $composableBuilder(
+    column: $table.effectiveDay,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get symptomIds => $composableBuilder(
+    column: $table.symptomIds,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get vocabularyVersion => $composableBuilder(
+    column: $table.vocabularyVersion,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  $$RecordProgrammeRowsTableOrderingComposer get programmeId {
+    final $$RecordProgrammeRowsTableOrderingComposer composer =
+        $composerBuilder(
+          composer: this,
+          getCurrentColumn: (t) => t.programmeId,
+          referencedTable: $db.recordProgrammeRows,
+          getReferencedColumn: (t) => t.id,
+          builder:
+              (
+                joinBuilder, {
+                $addJoinBuilderToRootComposer,
+                $removeJoinBuilderFromRootComposer,
+              }) => $$RecordProgrammeRowsTableOrderingComposer(
+                $db: $db,
+                $table: $db.recordProgrammeRows,
+                $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+                joinBuilder: joinBuilder,
+                $removeJoinBuilderFromRootComposer:
+                    $removeJoinBuilderFromRootComposer,
+              ),
+        );
+    return composer;
+  }
+}
+
+class $$RecordProgrammeConfigRowsTableAnnotationComposer
+    extends Composer<_$LetterHealthDatabase, $RecordProgrammeConfigRowsTable> {
+  $$RecordProgrammeConfigRowsTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<int> get versionNumber => $composableBuilder(
+    column: $table.versionNumber,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get effectiveDay => $composableBuilder(
+    column: $table.effectiveDay,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get symptomIds => $composableBuilder(
+    column: $table.symptomIds,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get vocabularyVersion => $composableBuilder(
+    column: $table.vocabularyVersion,
+    builder: (column) => column,
+  );
+
+  $$RecordProgrammeRowsTableAnnotationComposer get programmeId {
+    final $$RecordProgrammeRowsTableAnnotationComposer composer =
+        $composerBuilder(
+          composer: this,
+          getCurrentColumn: (t) => t.programmeId,
+          referencedTable: $db.recordProgrammeRows,
+          getReferencedColumn: (t) => t.id,
+          builder:
+              (
+                joinBuilder, {
+                $addJoinBuilderToRootComposer,
+                $removeJoinBuilderFromRootComposer,
+              }) => $$RecordProgrammeRowsTableAnnotationComposer(
+                $db: $db,
+                $table: $db.recordProgrammeRows,
+                $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+                joinBuilder: joinBuilder,
+                $removeJoinBuilderFromRootComposer:
+                    $removeJoinBuilderFromRootComposer,
+              ),
+        );
+    return composer;
+  }
+}
+
+class $$RecordProgrammeConfigRowsTableTableManager
+    extends
+        RootTableManager<
+          _$LetterHealthDatabase,
+          $RecordProgrammeConfigRowsTable,
+          RecordProgrammeConfigRow,
+          $$RecordProgrammeConfigRowsTableFilterComposer,
+          $$RecordProgrammeConfigRowsTableOrderingComposer,
+          $$RecordProgrammeConfigRowsTableAnnotationComposer,
+          $$RecordProgrammeConfigRowsTableCreateCompanionBuilder,
+          $$RecordProgrammeConfigRowsTableUpdateCompanionBuilder,
+          (
+            RecordProgrammeConfigRow,
+            $$RecordProgrammeConfigRowsTableReferences,
+          ),
+          RecordProgrammeConfigRow,
+          PrefetchHooks Function({bool programmeId})
+        > {
+  $$RecordProgrammeConfigRowsTableTableManager(
+    _$LetterHealthDatabase db,
+    $RecordProgrammeConfigRowsTable table,
+  ) : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$RecordProgrammeConfigRowsTableFilterComposer(
+                $db: db,
+                $table: table,
+              ),
+          createOrderingComposer: () =>
+              $$RecordProgrammeConfigRowsTableOrderingComposer(
+                $db: db,
+                $table: table,
+              ),
+          createComputedFieldComposer: () =>
+              $$RecordProgrammeConfigRowsTableAnnotationComposer(
+                $db: db,
+                $table: table,
+              ),
+          updateCompanionCallback:
+              ({
+                Value<String> id = const Value.absent(),
+                Value<String> programmeId = const Value.absent(),
+                Value<int> versionNumber = const Value.absent(),
+                Value<int> effectiveDay = const Value.absent(),
+                Value<String> symptomIds = const Value.absent(),
+                Value<int> vocabularyVersion = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => RecordProgrammeConfigRowsCompanion(
+                id: id,
+                programmeId: programmeId,
+                versionNumber: versionNumber,
+                effectiveDay: effectiveDay,
+                symptomIds: symptomIds,
+                vocabularyVersion: vocabularyVersion,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required String id,
+                required String programmeId,
+                required int versionNumber,
+                required int effectiveDay,
+                required String symptomIds,
+                required int vocabularyVersion,
+                Value<int> rowid = const Value.absent(),
+              }) => RecordProgrammeConfigRowsCompanion.insert(
+                id: id,
+                programmeId: programmeId,
+                versionNumber: versionNumber,
+                effectiveDay: effectiveDay,
+                symptomIds: symptomIds,
+                vocabularyVersion: vocabularyVersion,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map(
+                (e) => (
+                  e.readTable(table),
+                  $$RecordProgrammeConfigRowsTableReferences(db, table, e),
+                ),
+              )
+              .toList(),
+          prefetchHooksCallback: ({programmeId = false}) {
+            return PrefetchHooks(
+              db: db,
+              explicitlyWatchedTables: [],
+              addJoins:
+                  <
+                    T extends TableManagerState<
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic
+                    >
+                  >(state) {
+                    if (programmeId) {
+                      state =
+                          state.withJoin(
+                                currentTable: table,
+                                currentColumn: table.programmeId,
+                                referencedTable:
+                                    $$RecordProgrammeConfigRowsTableReferences
+                                        ._programmeIdTable(db),
+                                referencedColumn:
+                                    $$RecordProgrammeConfigRowsTableReferences
+                                        ._programmeIdTable(db)
+                                        .id,
+                              )
+                              as T;
+                    }
+
+                    return state;
+                  },
+              getPrefetchedDataCallback: (items) async {
+                return [];
+              },
+            );
+          },
+        ),
+      );
+}
+
+typedef $$RecordProgrammeConfigRowsTableProcessedTableManager =
+    ProcessedTableManager<
+      _$LetterHealthDatabase,
+      $RecordProgrammeConfigRowsTable,
+      RecordProgrammeConfigRow,
+      $$RecordProgrammeConfigRowsTableFilterComposer,
+      $$RecordProgrammeConfigRowsTableOrderingComposer,
+      $$RecordProgrammeConfigRowsTableAnnotationComposer,
+      $$RecordProgrammeConfigRowsTableCreateCompanionBuilder,
+      $$RecordProgrammeConfigRowsTableUpdateCompanionBuilder,
+      (RecordProgrammeConfigRow, $$RecordProgrammeConfigRowsTableReferences),
+      RecordProgrammeConfigRow,
+      PrefetchHooks Function({bool programmeId})
+    >;
+typedef $$RecordProgrammePauseRowsTableCreateCompanionBuilder =
+    RecordProgrammePauseRowsCompanion Function({
+      required String id,
+      required String programmeId,
+      required int sequenceNumber,
+      required int startDay,
+      Value<int?> resumeDay,
+      Value<int> rowid,
+    });
+typedef $$RecordProgrammePauseRowsTableUpdateCompanionBuilder =
+    RecordProgrammePauseRowsCompanion Function({
+      Value<String> id,
+      Value<String> programmeId,
+      Value<int> sequenceNumber,
+      Value<int> startDay,
+      Value<int?> resumeDay,
+      Value<int> rowid,
+    });
+
+final class $$RecordProgrammePauseRowsTableReferences
+    extends
+        BaseReferences<
+          _$LetterHealthDatabase,
+          $RecordProgrammePauseRowsTable,
+          RecordProgrammePauseRow
+        > {
+  $$RecordProgrammePauseRowsTableReferences(
+    super.$_db,
+    super.$_table,
+    super.$_typedResult,
+  );
+
+  static $RecordProgrammeRowsTable _programmeIdTable(
+    _$LetterHealthDatabase db,
+  ) => db.recordProgrammeRows.createAlias(
+    'record_programme_pause_rows__programme_id__record_programme_rows__id',
+  );
+
+  $$RecordProgrammeRowsTableProcessedTableManager get programmeId {
+    final $_column = $_itemColumn<String>('programme_id')!;
+
+    final manager = $$RecordProgrammeRowsTableTableManager(
+      $_db,
+      $_db.recordProgrammeRows,
+    ).filter((f) => f.id.sqlEquals($_column));
+    final item = $_typedResult.readTableOrNull(_programmeIdTable($_db));
+    if (item == null) return manager;
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: [item]),
+    );
+  }
+}
+
+class $$RecordProgrammePauseRowsTableFilterComposer
+    extends Composer<_$LetterHealthDatabase, $RecordProgrammePauseRowsTable> {
+  $$RecordProgrammePauseRowsTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get sequenceNumber => $composableBuilder(
+    column: $table.sequenceNumber,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get startDay => $composableBuilder(
+    column: $table.startDay,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get resumeDay => $composableBuilder(
+    column: $table.resumeDay,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  $$RecordProgrammeRowsTableFilterComposer get programmeId {
+    final $$RecordProgrammeRowsTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.programmeId,
+      referencedTable: $db.recordProgrammeRows,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$RecordProgrammeRowsTableFilterComposer(
+            $db: $db,
+            $table: $db.recordProgrammeRows,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $$RecordProgrammePauseRowsTableOrderingComposer
+    extends Composer<_$LetterHealthDatabase, $RecordProgrammePauseRowsTable> {
+  $$RecordProgrammePauseRowsTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get sequenceNumber => $composableBuilder(
+    column: $table.sequenceNumber,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get startDay => $composableBuilder(
+    column: $table.startDay,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get resumeDay => $composableBuilder(
+    column: $table.resumeDay,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  $$RecordProgrammeRowsTableOrderingComposer get programmeId {
+    final $$RecordProgrammeRowsTableOrderingComposer composer =
+        $composerBuilder(
+          composer: this,
+          getCurrentColumn: (t) => t.programmeId,
+          referencedTable: $db.recordProgrammeRows,
+          getReferencedColumn: (t) => t.id,
+          builder:
+              (
+                joinBuilder, {
+                $addJoinBuilderToRootComposer,
+                $removeJoinBuilderFromRootComposer,
+              }) => $$RecordProgrammeRowsTableOrderingComposer(
+                $db: $db,
+                $table: $db.recordProgrammeRows,
+                $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+                joinBuilder: joinBuilder,
+                $removeJoinBuilderFromRootComposer:
+                    $removeJoinBuilderFromRootComposer,
+              ),
+        );
+    return composer;
+  }
+}
+
+class $$RecordProgrammePauseRowsTableAnnotationComposer
+    extends Composer<_$LetterHealthDatabase, $RecordProgrammePauseRowsTable> {
+  $$RecordProgrammePauseRowsTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<int> get sequenceNumber => $composableBuilder(
+    column: $table.sequenceNumber,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get startDay =>
+      $composableBuilder(column: $table.startDay, builder: (column) => column);
+
+  GeneratedColumn<int> get resumeDay =>
+      $composableBuilder(column: $table.resumeDay, builder: (column) => column);
+
+  $$RecordProgrammeRowsTableAnnotationComposer get programmeId {
+    final $$RecordProgrammeRowsTableAnnotationComposer composer =
+        $composerBuilder(
+          composer: this,
+          getCurrentColumn: (t) => t.programmeId,
+          referencedTable: $db.recordProgrammeRows,
+          getReferencedColumn: (t) => t.id,
+          builder:
+              (
+                joinBuilder, {
+                $addJoinBuilderToRootComposer,
+                $removeJoinBuilderFromRootComposer,
+              }) => $$RecordProgrammeRowsTableAnnotationComposer(
+                $db: $db,
+                $table: $db.recordProgrammeRows,
+                $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+                joinBuilder: joinBuilder,
+                $removeJoinBuilderFromRootComposer:
+                    $removeJoinBuilderFromRootComposer,
+              ),
+        );
+    return composer;
+  }
+}
+
+class $$RecordProgrammePauseRowsTableTableManager
+    extends
+        RootTableManager<
+          _$LetterHealthDatabase,
+          $RecordProgrammePauseRowsTable,
+          RecordProgrammePauseRow,
+          $$RecordProgrammePauseRowsTableFilterComposer,
+          $$RecordProgrammePauseRowsTableOrderingComposer,
+          $$RecordProgrammePauseRowsTableAnnotationComposer,
+          $$RecordProgrammePauseRowsTableCreateCompanionBuilder,
+          $$RecordProgrammePauseRowsTableUpdateCompanionBuilder,
+          (RecordProgrammePauseRow, $$RecordProgrammePauseRowsTableReferences),
+          RecordProgrammePauseRow,
+          PrefetchHooks Function({bool programmeId})
+        > {
+  $$RecordProgrammePauseRowsTableTableManager(
+    _$LetterHealthDatabase db,
+    $RecordProgrammePauseRowsTable table,
+  ) : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$RecordProgrammePauseRowsTableFilterComposer(
+                $db: db,
+                $table: table,
+              ),
+          createOrderingComposer: () =>
+              $$RecordProgrammePauseRowsTableOrderingComposer(
+                $db: db,
+                $table: table,
+              ),
+          createComputedFieldComposer: () =>
+              $$RecordProgrammePauseRowsTableAnnotationComposer(
+                $db: db,
+                $table: table,
+              ),
+          updateCompanionCallback:
+              ({
+                Value<String> id = const Value.absent(),
+                Value<String> programmeId = const Value.absent(),
+                Value<int> sequenceNumber = const Value.absent(),
+                Value<int> startDay = const Value.absent(),
+                Value<int?> resumeDay = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => RecordProgrammePauseRowsCompanion(
+                id: id,
+                programmeId: programmeId,
+                sequenceNumber: sequenceNumber,
+                startDay: startDay,
+                resumeDay: resumeDay,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required String id,
+                required String programmeId,
+                required int sequenceNumber,
+                required int startDay,
+                Value<int?> resumeDay = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => RecordProgrammePauseRowsCompanion.insert(
+                id: id,
+                programmeId: programmeId,
+                sequenceNumber: sequenceNumber,
+                startDay: startDay,
+                resumeDay: resumeDay,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map(
+                (e) => (
+                  e.readTable(table),
+                  $$RecordProgrammePauseRowsTableReferences(db, table, e),
+                ),
+              )
+              .toList(),
+          prefetchHooksCallback: ({programmeId = false}) {
+            return PrefetchHooks(
+              db: db,
+              explicitlyWatchedTables: [],
+              addJoins:
+                  <
+                    T extends TableManagerState<
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic
+                    >
+                  >(state) {
+                    if (programmeId) {
+                      state =
+                          state.withJoin(
+                                currentTable: table,
+                                currentColumn: table.programmeId,
+                                referencedTable:
+                                    $$RecordProgrammePauseRowsTableReferences
+                                        ._programmeIdTable(db),
+                                referencedColumn:
+                                    $$RecordProgrammePauseRowsTableReferences
+                                        ._programmeIdTable(db)
+                                        .id,
+                              )
+                              as T;
+                    }
+
+                    return state;
+                  },
+              getPrefetchedDataCallback: (items) async {
+                return [];
+              },
+            );
+          },
+        ),
+      );
+}
+
+typedef $$RecordProgrammePauseRowsTableProcessedTableManager =
+    ProcessedTableManager<
+      _$LetterHealthDatabase,
+      $RecordProgrammePauseRowsTable,
+      RecordProgrammePauseRow,
+      $$RecordProgrammePauseRowsTableFilterComposer,
+      $$RecordProgrammePauseRowsTableOrderingComposer,
+      $$RecordProgrammePauseRowsTableAnnotationComposer,
+      $$RecordProgrammePauseRowsTableCreateCompanionBuilder,
+      $$RecordProgrammePauseRowsTableUpdateCompanionBuilder,
+      (RecordProgrammePauseRow, $$RecordProgrammePauseRowsTableReferences),
+      RecordProgrammePauseRow,
+      PrefetchHooks Function({bool programmeId})
+    >;
 
 class $LetterHealthDatabaseManager {
   final _$LetterHealthDatabase _db;
@@ -9871,5 +33649,60 @@ class $LetterHealthDatabaseManager {
       $$ComfortReminderPreferenceRowsTableTableManager(
         _db,
         _db.comfortReminderPreferenceRows,
+      );
+  $$RecordHubImpactRowsTableTableManager get recordHubImpactRows =>
+      $$RecordHubImpactRowsTableTableManager(_db, _db.recordHubImpactRows);
+  $$RecordHubBleedingRowsTableTableManager get recordHubBleedingRows =>
+      $$RecordHubBleedingRowsTableTableManager(_db, _db.recordHubBleedingRows);
+  $$RecordHubSleepRowsTableTableManager get recordHubSleepRows =>
+      $$RecordHubSleepRowsTableTableManager(_db, _db.recordHubSleepRows);
+  $$RecordHubAppetiteRowsTableTableManager get recordHubAppetiteRows =>
+      $$RecordHubAppetiteRowsTableTableManager(_db, _db.recordHubAppetiteRows);
+  $$RecordHubActivityRowsTableTableManager get recordHubActivityRows =>
+      $$RecordHubActivityRowsTableTableManager(_db, _db.recordHubActivityRows);
+  $$RecordHubEventRowsTableTableManager get recordHubEventRows =>
+      $$RecordHubEventRowsTableTableManager(_db, _db.recordHubEventRows);
+  $$RecordHubTemperatureRowsTableTableManager get recordHubTemperatureRows =>
+      $$RecordHubTemperatureRowsTableTableManager(
+        _db,
+        _db.recordHubTemperatureRows,
+      );
+  $$RecordHubPinRowsTableTableManager get recordHubPinRows =>
+      $$RecordHubPinRowsTableTableManager(_db, _db.recordHubPinRows);
+  $$RecordProductEpisodeRowsTableTableManager get recordProductEpisodeRows =>
+      $$RecordProductEpisodeRowsTableTableManager(
+        _db,
+        _db.recordProductEpisodeRows,
+      );
+  $$RecordProductVersionRowsTableTableManager get recordProductVersionRows =>
+      $$RecordProductVersionRowsTableTableManager(
+        _db,
+        _db.recordProductVersionRows,
+      );
+  $$RecordProductUseRowsTableTableManager get recordProductUseRows =>
+      $$RecordProductUseRowsTableTableManager(_db, _db.recordProductUseRows);
+  $$RecordTriedActionRowsTableTableManager get recordTriedActionRows =>
+      $$RecordTriedActionRowsTableTableManager(_db, _db.recordTriedActionRows);
+  $$RecordTriedActionItemRowsTableTableManager get recordTriedActionItemRows =>
+      $$RecordTriedActionItemRowsTableTableManager(
+        _db,
+        _db.recordTriedActionItemRows,
+      );
+  $$RecordActionCheckbackRowsTableTableManager get recordActionCheckbackRows =>
+      $$RecordActionCheckbackRowsTableTableManager(
+        _db,
+        _db.recordActionCheckbackRows,
+      );
+  $$RecordProgrammeRowsTableTableManager get recordProgrammeRows =>
+      $$RecordProgrammeRowsTableTableManager(_db, _db.recordProgrammeRows);
+  $$RecordProgrammeConfigRowsTableTableManager get recordProgrammeConfigRows =>
+      $$RecordProgrammeConfigRowsTableTableManager(
+        _db,
+        _db.recordProgrammeConfigRows,
+      );
+  $$RecordProgrammePauseRowsTableTableManager get recordProgrammePauseRows =>
+      $$RecordProgrammePauseRowsTableTableManager(
+        _db,
+        _db.recordProgrammePauseRows,
       );
 }

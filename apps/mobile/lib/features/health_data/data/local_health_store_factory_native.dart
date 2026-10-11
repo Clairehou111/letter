@@ -10,6 +10,9 @@ import 'package:path/path.dart' as path;
 import 'package:path_provider/path_provider.dart';
 
 import '../../care/data/drift_care_memory_repository.dart';
+import '../../record_hub/data/drift_record_hub_repository.dart';
+import '../../record_hub/data/drift_record_interventions_repository.dart';
+import '../../record_hub/data/drift_record_programme_repository.dart';
 import '../../capture/data/drift_capture_note_store.dart';
 import '../../check_in/data/drift_moment_check_in_repository.dart';
 import '../../comfort_kit/data/drift_comfort_kit_repository.dart';
@@ -44,12 +47,13 @@ LocalHealthStore createDefaultLocalHealthStore() {
 LocalHealthStore createNativeLocalHealthStoreForDatabase({
   required File databaseFile,
   required Future<String> Function() loadKey,
+  DateTime Function()? clock,
 }) {
   final executor = LazyDatabase(() async {
     final key = await loadKey();
     return _openEncryptedDatabase(databaseFile, key);
   });
-  return _buildLocalHealthStore(executor);
+  return _buildLocalHealthStore(executor, clock: clock);
 }
 
 QueryExecutor _openEncryptedDatabase(File databaseFile, String key) {
@@ -73,29 +77,49 @@ QueryExecutor _openEncryptedDatabase(File databaseFile, String key) {
   );
 }
 
-LocalHealthStore _buildLocalHealthStore(QueryExecutor executor) {
+LocalHealthStore _buildLocalHealthStore(
+  QueryExecutor executor, {
+  DateTime Function()? clock,
+}) {
   final database = LetterHealthDatabase(executor);
   return LocalHealthStore(
-    periodRepository: DriftPeriodRepository(database, closeDatabase: false),
+    periodRepository: DriftPeriodRepository(
+      database,
+      closeDatabase: false,
+      clock: clock,
+    ),
     careMemoryRepository: DriftCareMemoryRepository(
       database,
       closeDatabase: false,
+      clock: clock,
     ),
     healthRecordRepository: DriftHealthRecordRepository(
       database,
       closeDatabase: false,
+      clock: clock,
     ),
-    captureNoteStore: DriftCaptureNoteStore(database, closeDatabase: false),
+    captureNoteStore: DriftCaptureNoteStore(
+      database,
+      closeDatabase: false,
+      clock: clock,
+    ),
     momentCheckInRepository: DriftMomentCheckInRepository(
       database,
       closeDatabase: false,
+      clock: clock,
     ),
     preparationRepository: DriftPreparationRepository(database),
     comfortKitRepository: DriftComfortKitRepository(database),
     comfortReminderPreferenceRepository:
         DriftComfortReminderPreferenceRepository(database),
     readTransaction: _DriftLocalHealthReadTransaction(database),
-    localBackupStore: DriftLocalBackupStore(database),
+    localBackupStore: DriftLocalBackupStore(database, clock: clock),
+    recordHubRepository: DriftRecordHubRepository(database, clock: clock),
+    interventionsRepository: DriftRecordInterventionsRepository(
+      database,
+      clock: clock,
+    ),
+    programmeRepository: DriftRecordProgrammeRepository(database, clock: clock),
     closeStore: database.close,
   );
 }

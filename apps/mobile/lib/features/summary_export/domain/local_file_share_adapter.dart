@@ -33,17 +33,24 @@ final class LocalPdfFile extends LocalExportFile {
 enum LocalFileShareStatus { shared, savedOnly, unavailable, failed }
 
 final class LocalFileShareResult {
-  const LocalFileShareResult._(this.status, {this.savedPath});
+  const LocalFileShareResult._(this.status, {this.savedPath, this.message});
 
   const LocalFileShareResult.shared({String? savedPath})
     : this._(LocalFileShareStatus.shared, savedPath: savedPath);
-  const LocalFileShareResult.savedOnly({required String savedPath})
-    : this._(LocalFileShareStatus.savedOnly, savedPath: savedPath);
+  const LocalFileShareResult.savedOnly({
+    required String savedPath,
+    String? message,
+  }) : this._(
+         LocalFileShareStatus.savedOnly,
+         savedPath: savedPath,
+         message: message,
+       );
   const LocalFileShareResult.unavailable()
     : this._(LocalFileShareStatus.unavailable);
   const LocalFileShareResult.failed() : this._(LocalFileShareStatus.failed);
 
   final LocalFileShareStatus status;
+  final String? message;
 
   /// On desktop platforms, the absolute path where the file was saved.
   final String? savedPath;
@@ -68,40 +75,41 @@ final class UnavailableLocalFileShareAdapter implements LocalFileShareAdapter {
 final class SystemLocalFileShareAdapter implements LocalFileShareAdapter {
   const SystemLocalFileShareAdapter({
     this.localStore = const LetterLocalExportStore(),
+    this.nativeShare,
   });
 
   final LetterLocalExportStore localStore;
 
+  /// Tests can exercise the same durable-save/native-handoff order locally.
+  final Future<ShareResult> Function(ShareParams)? nativeShare;
+
   @override
   Future<LocalFileShareResult> share(LocalExportFile file) async {
-    final isMobile = Platform.isAndroid || Platform.isIOS;
+    final isMobile =
+        Platform.isAndroid || Platform.isIOS || nativeShare != null;
     final isDesktop =
         Platform.isMacOS || Platform.isWindows || Platform.isLinux;
     if (!isMobile && !isDesktop) {
       return const LocalFileShareResult.unavailable();
     }
-    String? savedPath;
+    final String savedPath;
     try {
       savedPath = await localStore.save(
         fileName: file.fileName,
         bytes: file.bytes,
       );
-      if (isMobile) {
-        return shareSavedFileWithSystem(
-          savedPath: savedPath,
-          mimeType: file.mimeType,
-          resultTimeout: await _isIOSAppOnMac()
-              ? const Duration(seconds: 15)
-              : null,
-        );
-      }
-      return LocalFileShareResult.savedOnly(savedPath: savedPath);
     } on Object {
-      if (savedPath != null) {
-        return LocalFileShareResult.savedOnly(savedPath: savedPath);
-      }
       return const LocalFileShareResult.failed();
     }
+    if (!isMobile) return LocalFileShareResult.savedOnly(savedPath: savedPath);
+    return shareSavedFileWithSystem(
+      savedPath: savedPath,
+      mimeType: file.mimeType,
+      share: nativeShare,
+      resultTimeout: await _isIOSAppOnMac()
+          ? const Duration(seconds: 15)
+          : null,
+    );
   }
 }
 
@@ -133,11 +141,27 @@ Future<LocalFileShareResult> shareSavedFileWithSystem({
     final result = await (resultTimeout == null
         ? sharing
         : sharing.timeout(resultTimeout));
-    return result.status == ShareResultStatus.success
-        ? LocalFileShareResult.shared(savedPath: savedPath)
-        : LocalFileShareResult.savedOnly(savedPath: savedPath);
+    return switch (result.status) {
+      ShareResultStatus.success => LocalFileShareResult.shared(
+        savedPath: savedPath,
+      ),
+      ShareResultStatus.dismissed => LocalFileShareResult.savedOnly(
+        savedPath: savedPath,
+        message:
+            'A copy is saved in your Letter folder. The share sheet was dismissed.',
+      ),
+      ShareResultStatus.unavailable => LocalFileShareResult.savedOnly(
+        savedPath: savedPath,
+        message:
+            'A copy is saved in your Letter folder. This device could not confirm the share action.',
+      ),
+    };
   } on Object {
-    return LocalFileShareResult.savedOnly(savedPath: savedPath);
+    return LocalFileShareResult.savedOnly(
+      savedPath: savedPath,
+      message:
+          'A copy is saved in your Letter folder. The share action could not be confirmed.',
+    );
   }
 }
 

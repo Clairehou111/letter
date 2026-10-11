@@ -158,6 +158,8 @@ void main() {
     );
     expect(confirm.onTap, isNull);
 
+    await tester.ensureVisible(find.byKey(const Key('severity-extreme')));
+    await tester.pumpAndSettle();
     await tester.tap(find.byKey(const Key('severity-extreme')));
     await tester.pump();
     await tester.tap(find.byKey(const Key('confirm-symptom-intensity')));
@@ -186,6 +188,8 @@ void main() {
 
     await ensureSymptomVisible(tester, 'cramps');
     await tester.tap(find.byKey(const Key('symptom-cramps')));
+    await tester.pumpAndSettle();
+    await tester.ensureVisible(find.byKey(const Key('severity-extreme')));
     await tester.pumpAndSettle();
     await tester.tap(find.byKey(const Key('severity-extreme')));
     await tester.pump();

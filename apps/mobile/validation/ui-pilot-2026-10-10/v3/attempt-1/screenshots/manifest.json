@@ -1,0 +1,258 @@
+{
+  "fixture": "entirely synthetic",
+  "sourceBaseline": "Build17 cf12e70",
+  "reviewDevice": "review7A",
+  "expectedScreenshotCount": 28,
+  "productionFingerprint": "264dc4e5d3fb92e7788d545d523546b44dc6c68d14a0f588b0d41ebb13fbafbb",
+  "plannedStates": [
+    "1x-today-default",
+    "1x-moment-pressed",
+    "1x-moment-all12",
+    "1x-moment-saved",
+    "1x-record-default",
+    "1x-symptom-origin-reveal",
+    "1x-record-symptom-focused",
+    "1x-record-degree-pressed",
+    "1x-record-zero-saved",
+    "1x-record-stage-90",
+    "1x-record-pane-selected",
+    "1x-record-daily-life",
+    "1x-record-products",
+    "1x-record-notes",
+    "1x-record-note-saved",
+    "1x-sleep-shortcut-editor",
+    "1x-activity-editor-preview",
+    "1x-appetite-editor-preview",
+    "1x-event-editor-preview",
+    "1x-temperature-wheel-preview",
+    "1x-temperature-exact-preview",
+    "1x-medication-editor-preview",
+    "1x-supplement-editor-preview",
+    "1x-birth-control-editor-preview",
+    "1x-tried-action-editor-preview",
+    "1x-checkback-editor-preview",
+    "1x-period-range-band-preview",
+    "1x-period-range-ongoing-preview"
+  ],
+  "childPreviewCancellationVerified": false,
+  "revision": "Record V3 shared component and Stage",
+  "motionSamples": [
+    {
+      "direction": "forward",
+      "face": 1,
+      "requestedElapsedMilliseconds": 90,
+      "observedIncomingOpacity": 0.8958124313503504,
+      "observedIntermediate": true
+    },
+    {
+      "direction": "forward",
+      "face": 1,
+      "requestedElapsedMilliseconds": 160,
+      "observedIncomingOpacity": 1.0,
+      "observedIntermediate": false
+    }
+  ],
+  "childPreviewRoute": "Actual typed editor pushed from Record with isolated repository and selected date; cancel/discard only",
+  "motionEvidence": {
+    "file": "ios-record-pane-interactions.mov",
+    "device": "7A533533-EA45-4735-AC28-10FA095A65FF",
+    "source": "xcrun simctl io recordVideo during actual native fixture taps",
+    "scope": "Record Symptoms, Daily life, Products, Notes and real local save",
+    "verified": true,
+    "startedAt": "2026-10-10T11:04:44.551915Z",
+    "stoppedAt": "2026-10-10T11:05:23.595700Z",
+    "wallDurationMilliseconds": 39043,
+    "exitCode": 0
+  },
+  "durableReopenVerified": false,
+  "previewCancellationVerified": false,
+  "databaseSchemaVersion": null,
+  "expectedDatabaseSchemaVersion": 18,
+  "canvasArgb": 4280160804,
+  "platform": "ios",
+  "capture": "native integration_test captureScreenshot via host driver",
+  "renderExceptionCount": 0,
+  "nativeScreenshotCount": 20,
+  "images": [
+    {
+      "file": "ios-1x-today-default.png",
+      "pixelWidth": 1206,
+      "pixelHeight": 2622,
+      "textScale": 1.0,
+      "devicePixelRatio": 3.0,
+      "logicalWidth": 402.0,
+      "logicalHeight": 874.0
+    },
+    {
+      "file": "ios-1x-moment-pressed.png",
+      "pixelWidth": 1206,
+      "pixelHeight": 2622,
+      "textScale": 1.0,
+      "devicePixelRatio": 3.0,
+      "logicalWidth": 402.0,
+      "logicalHeight": 874.0
+    },
+    {
+      "file": "ios-1x-moment-all12.png",
+      "pixelWidth": 1206,
+      "pixelHeight": 2622,
+      "textScale": 1.0,
+      "devicePixelRatio": 3.0,
+      "logicalWidth": 402.0,
+      "logicalHeight": 874.0
+    },
+    {
+      "file": "ios-1x-moment-saved.png",
+      "pixelWidth": 1206,
+      "pixelHeight": 2622,
+      "textScale": 1.0,
+      "devicePixelRatio": 3.0,
+      "logicalWidth": 402.0,
+      "logicalHeight": 874.0
+    },
+    {
+      "file": "ios-1x-record-default.png",
+      "pixelWidth": 1206,
+      "pixelHeight": 2622,
+      "textScale": 1.0,
+      "devicePixelRatio": 3.0,
+      "logicalWidth": 402.0,
+      "logicalHeight": 874.0
+    },
+    {
+      "file": "ios-1x-symptom-origin-reveal.png",
+      "pixelWidth": 1206,
+      "pixelHeight": 2622,
+      "textScale": 1.0,
+      "devicePixelRatio": 3.0,
+      "logicalWidth": 402.0,
+      "logicalHeight": 874.0
+    },
+    {
+      "file": "ios-1x-record-symptom-focused.png",
+      "pixelWidth": 1206,
+      "pixelHeight": 2622,
+      "textScale": 1.0,
+      "devicePixelRatio": 3.0,
+      "logicalWidth": 402.0,
+      "logicalHeight": 874.0
+    },
+    {
+      "file": "ios-1x-record-degree-pressed.png",
+      "pixelWidth": 1206,
+      "pixelHeight": 2622,
+      "textScale": 1.0,
+      "devicePixelRatio": 3.0,
+      "logicalWidth": 402.0,
+      "logicalHeight": 874.0
+    },
+    {
+      "file": "ios-1x-record-zero-saved.png",
+      "pixelWidth": 1206,
+      "pixelHeight": 2622,
+      "textScale": 1.0,
+      "devicePixelRatio": 3.0,
+      "logicalWidth": 402.0,
+      "logicalHeight": 874.0
+    },
+    {
+      "file": "ios-1x-record-stage-90.png",
+      "pixelWidth": 1206,
+      "pixelHeight": 2622,
+      "textScale": 1.0,
+      "devicePixelRatio": 3.0,
+      "logicalWidth": 402.0,
+      "logicalHeight": 874.0
+    },
+    {
+      "file": "ios-1x-record-pane-selected.png",
+      "pixelWidth": 1206,
+      "pixelHeight": 2622,
+      "textScale": 1.0,
+      "devicePixelRatio": 3.0,
+      "logicalWidth": 402.0,
+      "logicalHeight": 874.0
+    },
+    {
+      "file": "ios-1x-record-daily-life.png",
+      "pixelWidth": 1206,
+      "pixelHeight": 2622,
+      "textScale": 1.0,
+      "devicePixelRatio": 3.0,
+      "logicalWidth": 402.0,
+      "logicalHeight": 874.0
+    },
+    {
+      "file": "ios-1x-record-products.png",
+      "pixelWidth": 1206,
+      "pixelHeight": 2622,
+      "textScale": 1.0,
+      "devicePixelRatio": 3.0,
+      "logicalWidth": 402.0,
+      "logicalHeight": 874.0
+    },
+    {
+      "file": "ios-1x-record-notes.png",
+      "pixelWidth": 1206,
+      "pixelHeight": 2622,
+      "textScale": 1.0,
+      "devicePixelRatio": 3.0,
+      "logicalWidth": 402.0,
+      "logicalHeight": 874.0
+    },
+    {
+      "file": "ios-1x-record-note-saved.png",
+      "pixelWidth": 1206,
+      "pixelHeight": 2622,
+      "textScale": 1.0,
+      "devicePixelRatio": 3.0,
+      "logicalWidth": 402.0,
+      "logicalHeight": 874.0
+    },
+    {
+      "file": "ios-1x-sleep-shortcut-editor.png",
+      "pixelWidth": 1206,
+      "pixelHeight": 2622,
+      "textScale": 1.0,
+      "devicePixelRatio": 3.0,
+      "logicalWidth": 402.0,
+      "logicalHeight": 874.0
+    },
+    {
+      "file": "ios-1x-activity-editor-preview.png",
+      "pixelWidth": 1206,
+      "pixelHeight": 2622,
+      "textScale": 1.0,
+      "devicePixelRatio": 3.0,
+      "logicalWidth": 402.0,
+      "logicalHeight": 874.0
+    },
+    {
+      "file": "ios-1x-appetite-editor-preview.png",
+      "pixelWidth": 1206,
+      "pixelHeight": 2622,
+      "textScale": 1.0,
+      "devicePixelRatio": 3.0,
+      "logicalWidth": 402.0,
+      "logicalHeight": 874.0
+    },
+    {
+      "file": "ios-1x-event-editor-preview.png",
+      "pixelWidth": 1206,
+      "pixelHeight": 2622,
+      "textScale": 1.0,
+      "devicePixelRatio": 3.0,
+      "logicalWidth": 402.0,
+      "logicalHeight": 874.0
+    },
+    {
+      "file": "ios-1x-temperature-wheel-preview.png",
+      "pixelWidth": 1206,
+      "pixelHeight": 2622,
+      "textScale": 1.0,
+      "devicePixelRatio": 3.0,
+      "logicalWidth": 402.0,
+      "logicalHeight": 874.0
+    }
+  ]
+}

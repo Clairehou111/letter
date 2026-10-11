@@ -83,12 +83,32 @@ enum SymptomSeverity {
   mild('Mild', 2),
   moderate('Moderate', 3),
   severe('Severe', 4),
-  extreme('Extreme', 5);
+  extreme('Extreme', 5),
+  notPresent('Not present', 0);
 
   const SymptomSeverity(this.label, this.score);
 
   final String label;
   final int score;
+
+  static const orderedDegrees = [
+    notPresent,
+    minimal,
+    mild,
+    moderate,
+    severe,
+    extreme,
+  ];
+
+  static SymptomSeverity fromScore(int score) => switch (score) {
+    0 => notPresent,
+    1 => minimal,
+    2 => mild,
+    3 => moderate,
+    4 => severe,
+    5 => extreme,
+    _ => throw const FormatException('Unsupported symptom degree.'),
+  };
 }
 
 enum FunctionalImpact {
@@ -105,12 +125,19 @@ enum FunctionalImpact {
 
 enum HealthRecordProvenance {
   sameDay('Same day', 'same_day'),
-  laterRecall('Later recall', 'later_recall');
+  laterRecall('Later recall', 'later_recall'),
+  timingUnknown('Timing unknown', 'timing_unknown');
 
   const HealthRecordProvenance(this.label, this.storageKey);
 
   final String label;
   final String storageKey;
+
+  static HealthRecordProvenance fromStorageKey(String? key) => switch (key) {
+    'same_day' => sameDay,
+    'later_recall' => laterRecall,
+    _ => timingUnknown,
+  };
 }
 
 final class HealthRecordDraft {
@@ -141,6 +168,11 @@ final class HealthRecord {
     required this.provenance,
     required this.userConfirmed,
     required this.vocabularyVersion,
+    this.originalProvenance,
+    this.writeZoneOffsetMinutes,
+    this.writeZoneName,
+    this.updatedZoneOffsetMinutes,
+    this.updatedZoneName,
   });
 
   final String id;
@@ -153,10 +185,28 @@ final class HealthRecord {
   final HealthRecordProvenance provenance;
   final bool userConfirmed;
   final int vocabularyVersion;
+  final HealthRecordProvenance? originalProvenance;
+  final int? writeZoneOffsetMinutes;
+  final String? writeZoneName;
+  final int? updatedZoneOffsetMinutes;
+  final String? updatedZoneName;
+
+  HealthRecordProvenance get effectiveOriginalProvenance =>
+      originalProvenance ?? provenance;
+
+  bool hasSameValue(HealthRecordDraft draft) =>
+      symptom == draft.symptom &&
+      severity == draft.severity &&
+      experiencedDate == draft.experiencedDate &&
+      functionalImpacts.length == draft.functionalImpacts.length &&
+      functionalImpacts.containsAll(draft.functionalImpacts);
 
   HealthRecord copyWith({
     required HealthRecordDraft draft,
     DateTime? updatedAt,
+    HealthRecordProvenance? activeProvenance,
+    int? updatedZoneOffsetMinutes,
+    String? updatedZoneName,
   }) {
     return HealthRecord(
       id: id,
@@ -166,9 +216,15 @@ final class HealthRecord {
       experiencedDate: draft.experiencedDate,
       recordedAt: recordedAt,
       updatedAt: updatedAt ?? this.updatedAt,
-      provenance: draft.provenance,
+      provenance: activeProvenance ?? draft.provenance,
       userConfirmed: userConfirmed,
       vocabularyVersion: vocabularyVersion,
+      originalProvenance: effectiveOriginalProvenance,
+      writeZoneOffsetMinutes: writeZoneOffsetMinutes,
+      writeZoneName: writeZoneName,
+      updatedZoneOffsetMinutes:
+          updatedZoneOffsetMinutes ?? this.updatedZoneOffsetMinutes,
+      updatedZoneName: updatedZoneName ?? this.updatedZoneName,
     );
   }
 }
@@ -183,7 +239,14 @@ HealthRecordDraft validateHealthRecordDraft(HealthRecordDraft draft) {
   );
 }
 
-enum HealthRecordFailure { notFound, duplicateForDay, storageUnavailable }
+enum HealthRecordFailure {
+  notFound,
+  duplicateForDay,
+  storageUnavailable,
+  futureDate,
+  dateCollision,
+  undoConflict,
+}
 
 final class HealthRecordException implements Exception {
   const HealthRecordException(this.failure);
@@ -197,6 +260,11 @@ final class HealthRecordException implements Exception {
       'That symptom is already recorded for this day. Edit or delete the existing entry first.',
     HealthRecordFailure.storageUnavailable =>
       'Letter Within could not update your private health record. Try again.',
+    HealthRecordFailure.futureDate => 'Choose a date on or before today.',
+    HealthRecordFailure.dateCollision =>
+      'This symptom already has a record on that date. Open that record to make a correction.',
+    HealthRecordFailure.undoConflict =>
+      'This record changed again. The earlier change can no longer be undone.',
   };
 
   @override

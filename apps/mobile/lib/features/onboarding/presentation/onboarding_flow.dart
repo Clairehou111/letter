@@ -11,9 +11,10 @@ typedef CompleteOnboarding = Future<void> Function(OnboardingProfile profile);
 /// the same Quiet Dusk language as Today: a plum canvas, Georgia lockup,
 /// ember progress track, and one ember primary action.
 class OnboardingFlow extends StatefulWidget {
-  const OnboardingFlow({required this.onComplete, super.key});
+  const OnboardingFlow({required this.onComplete, this.onOpenPatternRecord, super.key});
 
   final CompleteOnboarding onComplete;
+  final Future<void> Function(BuildContext context)? onOpenPatternRecord;
 
   @override
   State<OnboardingFlow> createState() => _OnboardingFlowState();
@@ -146,6 +147,7 @@ class _OnboardingFlowState extends State<OnboardingFlow> {
                           0 => const _PromiseStep(),
                           1 => const _PrivacyStep(),
                           _ => _GoalsStep(
+                            onOpenPatternRecord: widget.onOpenPatternRecord == null ? null : () => widget.onOpenPatternRecord!(context),
                             selectedGoals: _selectedGoals,
                             onToggle: _toggleGoal,
                           ),
@@ -531,10 +533,11 @@ class _PrivacyFact extends StatelessWidget {
 }
 
 class _GoalsStep extends StatelessWidget {
-  const _GoalsStep({required this.selectedGoals, required this.onToggle});
+  const _GoalsStep({required this.selectedGoals, required this.onToggle, this.onOpenPatternRecord});
 
   final Set<OnboardingGoal> selectedGoals;
   final ValueChanged<OnboardingGoal> onToggle;
+  final VoidCallback? onOpenPatternRecord;
 
   @override
   Widget build(BuildContext context) {
@@ -559,6 +562,13 @@ class _GoalsStep extends StatelessWidget {
             onTap: () => onToggle(goal),
           ),
           const SizedBox(height: 12),
+        ],
+        if (onOpenPatternRecord != null) ...[
+          Text('For optional PMS/PMDD evidence recording, choose a small fixed set of symptoms plus daily impact. Ordinary tracking stays available.',
+            style: ExperienceType.bodySmall(ExperienceColors.inkSoft)),
+          TextButton.icon(key: const Key('onboarding-pattern-record'),
+            onPressed: onOpenPatternRecord,
+            icon: const Icon(Icons.fact_check_outlined), label: const Text('Optional Pattern Record')),
         ],
       ],
     );

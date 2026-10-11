@@ -28,9 +28,14 @@ abstract final class TwinMatrixSummaryAdapter {
               cycleStartDate: row.cycleStartDate,
               daysBeforeMenses: row.daysBeforeMenses,
             ),
-            provenance: row.provenance == SummaryRecordProvenance.sameDay
-                ? HealthRecordProvenance.sameDay
-                : HealthRecordProvenance.laterRecall,
+            provenance: switch (row.provenance) {
+              SummaryRecordProvenance.sameDay => HealthRecordProvenance.sameDay,
+              SummaryRecordProvenance.laterRecall =>
+                HealthRecordProvenance.laterRecall,
+              SummaryRecordProvenance.timingUnknown ||
+              SummaryRecordProvenance.factualCareEvent =>
+                HealthRecordProvenance.timingUnknown,
+            },
             userConfirmed: true,
             functionalImpacts: row.functionalImpacts,
           ),

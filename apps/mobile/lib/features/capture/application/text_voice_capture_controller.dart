@@ -1,3 +1,4 @@
+import '../../cycle/domain/local_date.dart';
 import 'package:flutter/foundation.dart';
 
 import '../domain/capture_models.dart';
@@ -173,11 +174,13 @@ final class TextVoiceCaptureController extends ChangeNotifier {
     final source = _state.transcriptText.trim().isNotEmpty
         ? CaptureSource.voiceTranscript
         : CaptureSource.typed;
+    final recordedAt = _clock();
     final note = CaptureNote(
       id: _idGenerator(),
       text: text,
       source: source,
-      createdAt: _clock().toUtc(),
+      createdAt: recordedAt.toUtc(),
+      experiencedDate: LocalDate.fromDateTime(recordedAt.toLocal()),
     );
     _setState(_state.copyWith(status: CaptureStatus.saving, clearError: true));
     try {

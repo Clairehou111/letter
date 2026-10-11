@@ -140,7 +140,13 @@ final class InMemoryCareMemoryRepository implements CareMemoryRepository {
       if (byPeriod != null) return byPeriod;
     }
     return _cycleReflections
-        .where((item) => item.cycleStartDay == cycleStartDay)
+        .where(
+          (item) =>
+              item.cycleStartDay == cycleStartDay &&
+              (startingPeriodId == null ||
+                  item.startingPeriodId == null ||
+                  item.startingPeriodId == startingPeriodId),
+        )
         .firstOrNull;
   }
 
@@ -159,8 +165,16 @@ final class InMemoryCareMemoryRepository implements CareMemoryRepository {
           );
     if (existingIndex == -1) {
       existingIndex = _cycleReflections.indexWhere(
-        (item) => item.cycleStartDay == cycleStartDay,
+        (item) =>
+            item.cycleStartDay == cycleStartDay &&
+            (startingPeriodId == null ||
+                item.startingPeriodId == null ||
+                item.startingPeriodId == startingPeriodId),
       );
+    }
+    if (existingIndex == -1 &&
+        _cycleReflections.any((item) => item.cycleStartDay == cycleStartDay)) {
+      throw const CareMemoryException(CareMemoryFailure.storageUnavailable);
     }
     final existing = existingIndex == -1
         ? null
@@ -168,7 +182,7 @@ final class InMemoryCareMemoryRepository implements CareMemoryRepository {
     final reflection = CycleReflection(
       id: existing?.id ?? _idGenerator(),
       startingPeriodId: startingPeriodId ?? existing?.startingPeriodId,
-      cycleStartDay: cycleStartDay,
+      cycleStartDay: existing?.cycleStartDay ?? cycleStartDay,
       observation: valid.observation,
       need: valid.need,
       whatHelped: valid.whatHelped,

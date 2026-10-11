@@ -1,0 +1,47 @@
+{
+  "fixtureRevision": 3,
+  "sourceBaseline": "cf12e70 Build17 + Record Hub working-tree integration",
+  "deviceUDID": "7A533533-EA45-4735-AC28-10FA095A65FF",
+  "device": "isolated iPhone 17 Pro simulator",
+  "runtime": "iOS 26.5",
+  "syntheticOnly": true,
+  "liveE45Touched": false,
+  "sourceFiles": {
+    "integration_test/record_hub_ui_expert_review_test.dart": "b1eace7eabda10015977753243a79a3f0f72fb7056241c0c81f0f331333cfbb9",
+    "test_driver/record_hub_ui_review_driver.dart": "3c162f87eb039bc7924f2e2bb55b8bfb7440d9a42132e1f461d122511dea374a",
+    "lib/experience/theme/experience_foundation.dart": "237ab827d028ef11ce4f6fb1a8734b25d94b92da4b303558b564ad10e5915010",
+    "lib/experience/letter_experience_shell.dart": "3fc3e2b2335102f378ee4d338107b5adc85b7201ebb8cb30e004087498aa9441",
+    "lib/experience/today/today_experience_visual_baseline.dart": "827dd2f15434524ff94fae421f5952c2bb91b00a0e5952b1ff342183863d0c68",
+    "lib/features/record_hub/presentation/record_hub_screen.dart": "879d22abbe08fd1433aaf4fe0186c0fbf012e756398d29a709ad11ed6a55b6a6",
+    "lib/experience/cycle/cycle_experience.dart": "d7ccf5a1c08737a2e7c19595a10b105decf2839ff6a0a422b71213be761109f9",
+    "lib/experience/reports/reports_experience.dart": "f3d4309d733c1b2a1b8a2cd2c8e4f2136e910fbb00b952d13583c365341ef5dc"
+  },
+  "motionVideo": {
+    "file": "native-interaction-review.mp4",
+    "bytes": 61938855,
+    "limitations": "The 346-second original includes substantial Simulator Home/build/launch overhead. Sampled frames verify route presence, not every interaction transition, response latency, animation timing, or physical haptic feel. The original is not accepted as complete interaction evidence.",
+    "verification": "Limited and not accepted as complete interaction evidence",
+    "durationSeconds": 346.068333,
+    "observedCoverage": "Dense decoded samples verify native app route presence around 130–189 seconds: Record calendar (140s), degree/impact (145s), note Save state (150s), Sleep (155s), existing period editor (160s), Care checkback (170s), Settings (180s), Reports (185s). Earlier sparse 30-second sampling missed these short route sections.",
+    "reviewedTimecodesSeconds": [
+      115,
+      130,
+      135,
+      140,
+      145,
+      150,
+      155,
+      160,
+      165,
+      170,
+      175,
+      180,
+      185,
+      190
+    ],
+    "sampleManifest": "motion-qa/samples.json"
+  },
+  "nativeDriverOutcome": "PASS",
+  "renderExceptions": 0,
+  "screenshotManifest": "screenshots/manifest.json"
+}

@@ -277,10 +277,7 @@ final class _SpectrumChartState extends State<SpectrumChart>
 
   SourcePanelEntry _entryFor(SourceRecord record) {
     final day = _relativeDayOf(record);
-    final severity = SymptomSeverity.values.firstWhere(
-      (value) => value.score == record.rating,
-      orElse: () => SymptomSeverity.moderate,
-    );
+    final severity = SymptomSeverity.fromScore(record.rating);
     return SourcePanelEntry(
       title: record.symptomLabel,
       certainty: ExperienceCertainty.observed,
@@ -683,7 +680,7 @@ final class _LimitedEvidenceLine extends StatelessWidget {
 }
 
 // ---------------------------------------------------------------------------
-// Legend — texture key plus the five-degree severity scale reminder.
+// Legend — texture key plus the 0–5 severity scale reminder.
 // ---------------------------------------------------------------------------
 
 final class _ChartLegend extends StatelessWidget {
@@ -698,7 +695,7 @@ final class _ChartLegend extends StatelessWidget {
       label:
           'How to read this chart: solid teal bars are typical recorded '
           'levels. Empty dotted cells are missing days, never zero. Levels '
-          'use the five-degree severity scale.',
+          'use the 0–5 severity scale.',
       child: Wrap(
         spacing: ExperienceSpacing.sm,
         runSpacing: ExperienceSpacing.xs,

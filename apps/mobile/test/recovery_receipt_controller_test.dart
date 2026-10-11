@@ -57,13 +57,16 @@ void main() {
     'saves only confirmed primary and explicitly selected physical signals',
     () async {
       final care = sampleCareRecord();
+      final savedAt = DateTime.utc(2026, 7, 28, 12);
+      var nextId = 0;
       final health = InMemoryHealthRecordRepository(
-        idGenerator: () => 'health-${DateTime.now().microsecondsSinceEpoch}',
+        clock: () => savedAt,
+        idGenerator: () => 'health-${nextId++}',
       );
       final controller = buildController(
         careRecord: care,
         healthRepository: health,
-        now: () => DateTime.utc(2026, 7, 28, 12),
+        now: () => savedAt,
       );
 
       final result = await controller.save(
@@ -103,6 +106,7 @@ void main() {
         expect(record.userConfirmed, isTrue);
         expect(record.functionalImpacts, {FunctionalImpact.workOrSchool});
         expect(record.provenance, HealthRecordProvenance.sameDay);
+        expect(record.recordedAt, savedAt);
       }
     },
   );
@@ -113,11 +117,12 @@ void main() {
       final care = sampleCareRecord(
         occurredAt: DateTime.utc(2026, 7, 27, 23, 30),
       );
-      final health = InMemoryHealthRecordRepository();
+      final savedAt = DateTime.utc(2026, 7, 28, 15);
+      final health = InMemoryHealthRecordRepository(clock: () => savedAt);
       final controller = buildController(
         careRecord: care,
         healthRepository: health,
-        now: () => DateTime.utc(2026, 7, 28, 15),
+        now: () => savedAt,
       );
 
       final result = await controller.save(
@@ -133,6 +138,7 @@ void main() {
         (await health.getAll()).single.provenance,
         HealthRecordProvenance.laterRecall,
       );
+      expect((await health.getAll()).single.recordedAt, savedAt);
     },
   );
 

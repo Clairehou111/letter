@@ -21,12 +21,23 @@ void main() {
     },
   );
 
-  test('routine severity vocabulary exposes five present-symptom anchors', () {
-    expect(SymptomSeverity.values, hasLength(5));
-    expect(SymptomSeverity.minimal.score, 1);
-    expect(SymptomSeverity.extreme.score, 5);
-    expect(SymptomSeverity.moderate.label, 'Moderate');
-  });
+  test(
+    'severity preserves five anchors and explicitly maps observed absence',
+    () {
+      expect(SymptomSeverity.values, hasLength(6));
+      expect(SymptomSeverity.notPresent.score, 0);
+      expect(SymptomSeverity.notPresent.label, 'Not present');
+      expect(SymptomSeverity.minimal.index, 0);
+      for (var score = 0; score <= 5; score++) {
+        expect(SymptomSeverity.fromScore(score).score, score);
+      }
+      expect(() => SymptomSeverity.fromScore(-1), throwsFormatException);
+      expect(() => SymptomSeverity.fromScore(6), throwsFormatException);
+      expect(SymptomSeverity.minimal.score, 1);
+      expect(SymptomSeverity.extreme.score, 5);
+      expect(SymptomSeverity.moderate.label, 'Moderate');
+    },
+  );
 
   test('validates the shared five-level symptom record', () {
     final draft = HealthRecordDraft(

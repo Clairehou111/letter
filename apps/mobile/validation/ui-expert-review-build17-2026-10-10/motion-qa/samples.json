@@ -1,0 +1,37 @@
+{
+  "source": "../native-interaction-review.mp4",
+  "timecodesSeconds": [
+    115,
+    130,
+    135,
+    140,
+    145,
+    150,
+    155,
+    160,
+    165,
+    170,
+    175,
+    180,
+    185,
+    190
+  ],
+  "capture": "Decoded original simulator recording; source MP4 preserved unmodified",
+  "observations": {
+    "115": "Simulator Home",
+    "130": "App launch splash",
+    "135": "Today loading skeleton and Moment chips",
+    "140": "Record with September 2026 calendar",
+    "145": "Record degree picker and Daily impact",
+    "150": "Record private-note Save pressed state",
+    "155": "Sleep editor",
+    "160": "Cycle existing period start/end editor, ongoing toggle off",
+    "165": "Today transient reset and Care navigation tap marker",
+    "170": "Care completed optional checkback",
+    "175": "Black fixture reset frame",
+    "180": "Settings/You",
+    "185": "Reports selected-source list",
+    "190": "Simulator Home"
+  },
+  "limitations": "The 346-second original includes substantial Simulator Home/build/launch overhead. Sampled frames verify route presence, not every interaction transition, response latency, animation timing, or physical haptic feel. The original is not accepted as complete interaction evidence."
+}

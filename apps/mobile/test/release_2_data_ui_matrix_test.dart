@@ -58,6 +58,7 @@ void main() {
       );
       await tester.pumpAndSettle();
       expect(find.byType(TodayExperienceVisual), findsOneWidget);
+      await _expandPrivateNote(tester);
       await _reveal(
         tester,
         find.byKey(const ValueKey<String>('quick-note-add')),
@@ -191,6 +192,7 @@ void main() {
       );
       await tester.pumpAndSettle();
 
+      await _expandPrivateNote(tester);
       final add = find.byKey(const ValueKey<String>('quick-note-add'));
       await tester.scrollUntilVisible(
         add,
@@ -665,13 +667,32 @@ Future<void> _pumpReports(WidgetTester tester, _Harness harness) async {
     ),
   );
   await tester.pumpAndSettle();
+  final clinical = find.widgetWithText(ChoiceChip, 'Clinical pattern report');
+  await tester.ensureVisible(clinical);
+  await tester.tap(clinical);
+  await tester.pumpAndSettle();
 }
 
 Future<void> _reveal(WidgetTester tester, Finder finder) async {
-  await tester.scrollUntilVisible(
+  for (var attempt = 0; attempt < 50; attempt++) {
+    if (finder.evaluate().isNotEmpty) {
+      await tester.ensureVisible(finder.first);
+      await tester.pumpAndSettle();
+      return;
+    }
+    await tester.drag(_verticalScrollable(), const Offset(0, -300));
+    await tester.pumpAndSettle();
+  }
+  expect(
     finder,
-    300,
-    scrollable: _verticalScrollable(),
+    findsWidgets,
+    reason: 'Expected report content remains reachable by scrolling.',
   );
+}
+
+Future<void> _expandPrivateNote(WidgetTester tester) async {
+  final section = find.byKey(const Key('today-note-expansion'));
+  await _reveal(tester, section);
+  await tester.tap(section);
   await tester.pumpAndSettle();
 }

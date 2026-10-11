@@ -13,11 +13,10 @@ import '../theme/experience_foundation.dart';
 /// Design-authority rules enforced here:
 ///  * Flow has exactly four degrees matching [BleedingFlow]; spotting is
 ///    visually and verbally a flow degree, never a period trigger.
-///  * Severity renders exactly the five present degrees of
-///    [SymptomSeverity] — there is no "not at all" option; deselection is
-///    absence and is handled by the caller, not by a sixth glyph.
+///  * Severity renders explicit observed absence plus the five present
+///    degrees of [SymptomSeverity]. Withdrawal leaves no observation.
 ///  * Pain is recorded as pain symptoms (ObservationRecordingKind.pain)
-///    with the same five named [SymptomSeverity] degrees, composed in one
+///    with the same named 0–5 [SymptomSeverity] degrees, composed in one
 ///    card ([PainEntryCard]). There is no numeric pain score.
 ///  * Every glyph carries label + degree semantics and is distinguishable
 ///    by shape, fill level, count, or pattern — never by color alone
@@ -36,8 +35,15 @@ abstract final class DegreeGraphics {
   /// a period start or extend trigger.
   static const List<BleedingFlow> flowDegrees = BleedingFlow.values;
 
-  /// Exactly five present degrees. No "not at all" exists in this system.
-  static const List<SymptomSeverity> severityDegrees = SymptomSeverity.values;
+  /// Display order is independent of enum indexes used by legacy callers.
+  static const List<SymptomSeverity> severityDegrees = <SymptomSeverity>[
+    SymptomSeverity.notPresent,
+    SymptomSeverity.minimal,
+    SymptomSeverity.mild,
+    SymptomSeverity.moderate,
+    SymptomSeverity.severe,
+    SymptomSeverity.extreme,
+  ];
 
   static const List<CareOutcome> outcomes = CareOutcome.values;
 
@@ -167,7 +173,7 @@ abstract final class DegreeGraphics {
     );
   }
 
-  /// The pain question as one severity-based card: the same five named
+  /// The pain question as one severity-based card: the same six named
   /// [SymptomSeverity] degrees as every other observation.
   static Widget painEntry({
     Key? key,
@@ -726,9 +732,8 @@ final class _BleedingSwatchPainter extends CustomPainter {
 }
 
 // ---------------------------------------------------------------------------
-// Severity — five-notch ascending bar glyph, exactly the five present
-// degrees of SymptomSeverity. Distinguishable by count and weight, always
-// paired with the word. There is no "not at all" degree.
+// Severity — five-notch ascending bars. Zero has no filled notches and
+// an explicit Not present label; missing observations have no glyph.
 // ---------------------------------------------------------------------------
 
 class SeverityGlyph extends StatelessWidget {
@@ -755,7 +760,9 @@ class SeverityGlyph extends StatelessWidget {
       child: CustomPaint(
         painter: _SeverityBarsPainter(
           score: severity.score,
-          filled: DegreeGraphics.severityRamp[severity.score - 1],
+          filled: severity == SymptomSeverity.notPresent
+              ? ExperienceColors.inkSoft
+              : DegreeGraphics.severityRamp[severity.score - 1],
           empty: careWorld
               ? ExperienceColors.careGlassBorder
               : ExperienceColors.hairline,
@@ -836,13 +843,13 @@ final class _SeverityBarsPainter extends CustomPainter {
 
 // ---------------------------------------------------------------------------
 // Pain — pain is recorded as pain symptoms (ObservationRecordingKind.pain)
-// using the same five named SymptomSeverity degrees. This card composes the
+// using the same named 0–5 SymptomSeverity degrees. This card composes the
 // shared severity glyphs so the pain question reads as one question, never
 // a numeric score.
 // ---------------------------------------------------------------------------
 
-/// The pain question as one card: the five shared severity degrees, chosen
-/// or left unrecorded. Absence is simply not recording a degree.
+/// The pain question as one card. Zero records observed absence; a cleared
+/// entry leaves pain unrecorded.
 class PainEntryCard extends StatelessWidget {
   const PainEntryCard({
     super.key,
@@ -856,8 +863,7 @@ class PainEntryCard extends StatelessWidget {
   final SymptomSeverity? severity;
   final ValueChanged<SymptomSeverity>? onSeverityChanged;
 
-  /// Clears the chosen degree at once — the honest "no pain to record"
-  /// exit.
+  /// Withdraws the chosen observation, including an explicit zero.
   final VoidCallback? onCleared;
   final bool careWorld;
   final bool enabled;
@@ -885,8 +891,8 @@ class PainEntryCard extends StatelessWidget {
     return Semantics(
       container: true,
       label:
-          'Pain entry. One question: how strong it feels, in five degrees '
-          'from Minimal to Extreme. Leaving it unrecorded means no pain.',
+          'Pain entry. Choose Not present or a degree from Minimal to Extreme. '
+          'Leaving it unrecorded means no observation.',
       child: Container(
         width: double.infinity,
         decoration: decoration,
@@ -898,7 +904,7 @@ class PainEntryCard extends StatelessWidget {
             const SizedBox(height: ExperienceSpacing.xs),
             Text(
               'Choose the closest degree, or leave it unrecorded. '
-              'Choosing the same degree again removes it.',
+              'Not present records zero. Choosing the same degree again removes it.',
               style: ExperienceType.caption(inkSoft),
             ),
             const SizedBox(height: ExperienceSpacing.sm),

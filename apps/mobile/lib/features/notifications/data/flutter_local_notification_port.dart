@@ -164,8 +164,8 @@ final class FlutterLocalNotificationPort
       notificationDetails: const NotificationDetails(
         android: AndroidNotificationDetails(
           _channelId,
-          'Cycle check-in',
-          channelDescription: 'A private reminder to update Cycle.',
+          'Private reminder',
+          channelDescription: 'A private reminder from Letter Within.',
           playSound: false,
           enableVibration: false,
           channelShowBadge: false,

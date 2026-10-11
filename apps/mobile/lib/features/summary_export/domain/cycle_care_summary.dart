@@ -7,7 +7,8 @@ import '../../health_records/domain/health_record.dart';
 enum SummaryRecordProvenance {
   sameDay('Same day'),
   laterRecall('Later recall'),
-  factualCareEvent('Factual Care event');
+  factualCareEvent('Factual Care event'),
+  timingUnknown('Timing unknown');
 
   const SummaryRecordProvenance(this.label);
 
@@ -358,9 +359,14 @@ CycleAndCareSummary buildCycleAndCareSummary({
               symptom: record.symptom,
               severity: record.severity,
               functionalImpacts: Set.unmodifiable(record.functionalImpacts),
-              provenance: record.provenance == HealthRecordProvenance.sameDay
-                  ? SummaryRecordProvenance.sameDay
-                  : SummaryRecordProvenance.laterRecall,
+              provenance: switch (record.provenance) {
+                HealthRecordProvenance.sameDay =>
+                  SummaryRecordProvenance.sameDay,
+                HealthRecordProvenance.laterRecall =>
+                  SummaryRecordProvenance.laterRecall,
+                HealthRecordProvenance.timingUnknown =>
+                  SummaryRecordProvenance.timingUnknown,
+              },
               sourceLabel: 'User-confirmed health record · local only',
             ),
           )

@@ -21,14 +21,16 @@ void main() {
     InMemoryCaptureNoteStore? notes,
     void Function()? onChanged,
     Future<String?> Function()? loadRememberedHelpLine,
+    DateTime Function()? now,
   }) {
     return RepositoryTodayVisualPort(
       periodRepository: periods,
       checkInRepository: moods,
       healthRecordRepository: symptoms,
-      captureNoteStore: notes ?? InMemoryCaptureNoteStore(),
+      captureNoteStore:
+          notes ?? InMemoryCaptureNoteStore(clock: now ?? () => timestamp),
       today: () => today,
-      now: () => timestamp,
+      now: now ?? () => timestamp,
       onCycleDataChanged: onChanged ?? () {},
       onOpenCare: () {},
       loadRememberedHelpLine: loadRememberedHelpLine,
@@ -144,19 +146,32 @@ void main() {
       expect((await port.load()).flowRecord?.flow, BleedingFlow.light);
 
       final period = (await periods.getAll()).single;
-      // This is the same date-edit mutation Cycle performs. Flow outside the
-      // revised range is removed by the period repository and Today reloads it.
-      await periods.update(
-        period.id,
+      final originalFlow = (await periods.getAllFlowDays()).single;
+      // Cycle reviews this change before detaching flow from the period.
+      // The bleeding source remains independent after Today reloads.
+      final preview = await periods.previewWrite(
         const PeriodDraft(
           startDate: LocalDate(2026, 8, 13),
           endDate: LocalDate(2026, 8, 14),
         ),
         today: today,
+        editingId: period.id,
       );
+      expect(preview.requiresConfirmation, isTrue);
+      expect(preview.detachedBleedingCount, 1);
+      expect((await port.load()).flowRecord?.flow, BleedingFlow.light);
+      await periods.confirmWrite(preview, today: today);
       final afterCycleEdit = await port.load();
       expect(afterCycleEdit.flowRecord, isNull);
       expect(afterCycleEdit.canRecordFlow, isFalse);
+      expect(await periods.getAllFlowDays(), isEmpty);
+      final retained = periods.independentBleedingFacts.single;
+      expect(retained.value.periodId, isNull);
+      expect(retained.value.experiencedDate, today);
+      expect(retained.value.flow, BleedingFlow.light);
+      expect(retained.metadata.id, '${period.id}:${today.epochDay}');
+      expect(retained.metadata.recordedAt, originalFlow.createdAt);
+      expect(retained.metadata.updatedAt, originalFlow.updatedAt);
     },
   );
 
@@ -189,12 +204,14 @@ void main() {
   test(
     'Quick notes keep local history and support edit, Kit opt-in, and delete',
     () async {
-      final notes = InMemoryCaptureNoteStore();
+      var writeClock = timestamp;
+      final notes = InMemoryCaptureNoteStore(clock: () => writeClock);
       final port = buildPort(
         periods: InMemoryPeriodRepository(clock: () => timestamp),
         moods: InMemoryMomentCheckInRepository(clock: () => timestamp),
         symptoms: InMemoryHealthRecordRepository(clock: () => timestamp),
         notes: notes,
+        now: () => writeClock,
       );
 
       var snapshot = await port.saveQuickNote('Bring the soft blanket.');
@@ -202,6 +219,7 @@ void main() {
       expect(snapshot.quickNotes.single.keepInComfortKit, isFalse);
 
       final noteId = snapshot.quickNotes.single.id;
+      writeClock = timestamp.add(const Duration(minutes: 5));
       snapshot = await port.updateQuickNote(
         noteId,
         text: 'Bring the warm blanket.',
@@ -209,7 +227,14 @@ void main() {
       );
       expect(snapshot.quickNotes.single.text, 'Bring the warm blanket.');
       expect(snapshot.quickNotes.single.keepInComfortKit, isTrue);
-      expect(snapshot.quickNotes.single.updatedAt, timestamp.toUtc());
+      expect(snapshot.quickNotes.single.id, noteId);
+      expect(snapshot.quickNotes.single.createdAt, timestamp.toUtc());
+      expect(snapshot.quickNotes.single.updatedAt, writeClock.toUtc());
+      expect(snapshot.quickNotes.single.experiencedDate, today);
+      expect(
+        snapshot.quickNotes.single.provenance,
+        HealthRecordProvenance.sameDay,
+      );
 
       snapshot = await port.deleteQuickNote(noteId);
       expect(snapshot.quickNotes, isEmpty);

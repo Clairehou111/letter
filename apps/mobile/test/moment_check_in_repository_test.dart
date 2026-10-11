@@ -7,7 +7,7 @@ void main() {
   test('creates, orders, and deletes timestamped moment check-ins', () async {
     var nextId = 0;
     final repository = InMemoryMomentCheckInRepository(
-      clock: () => DateTime.utc(2026, 7, 31, 9),
+      clock: () => DateTime.utc(2026, 7, 31, 11),
       idGenerator: () => 'check-in-${nextId++}',
     );
 
@@ -25,7 +25,7 @@ void main() {
       MomentCheckInState.low,
       MomentCheckInState.steady,
     ]);
-    expect(records.first.createdAt, DateTime.utc(2026, 7, 31, 9));
+    expect(records.first.createdAt, DateTime.utc(2026, 7, 31, 11));
 
     await repository.delete(latest.id);
     expect((await repository.getAll()).single.state, MomentCheckInState.steady);

@@ -24,6 +24,7 @@ class TwinMatrixViewModel {
     this.observedRelativeDays = 0,
     this.sameDayObservations = 0,
     this.laterRecallObservations = 0,
+    this.timingUnknownObservations = 0,
     this.qualitativeCheckIns = const [],
     this.careOutcomes = const [],
   });
@@ -45,9 +46,10 @@ class TwinMatrixViewModel {
   final int observedRelativeDays;
   final int sameDayObservations;
   final int laterRecallObservations;
+  final int timingUnknownObservations;
 
   /// Difficult Today check-ins are qualitative companion evidence. They are
-  /// deliberately excluded from the 1–5 symptom averages above.
+  /// deliberately excluded from the 0–5 symptom averages above.
   final List<TwinMatrixCheckInMarker> qualitativeCheckIns;
 
   /// Saved Care check-backs are outcome evidence. They share the timing axes
@@ -190,6 +192,12 @@ class TwinMatrixViewModel {
                 observation.provenance == HealthRecordProvenance.laterRecall,
           )
           .length,
+      timingUnknownObservations: eligible
+          .where(
+            (observation) =>
+                observation.provenance == HealthRecordProvenance.timingUnknown,
+          )
+          .length,
       qualitativeCheckIns: List.unmodifiable(qualitativeCheckIns),
       careOutcomes: List.unmodifiable(careOutcomes),
     );
@@ -296,7 +304,8 @@ class TwinMatrixViewModel {
           '$blankRelativeDays are blank because no eligible observation was '
           'recorded.',
       'Provenance: $sameDayObservations same-day and '
-          '$laterRecallObservations later-recall records.',
+          '$laterRecallObservations later-recall records'
+          '${timingUnknownObservations == 0 ? '.' : ', $timingUnknownObservations timing-unknown records.'}',
       if (qualitativeCheckIns.isNotEmpty)
         '${qualitativeCheckIns.length} difficult Today '
             '${qualitativeCheckIns.length == 1 ? 'check-in is' : 'check-ins are'} '

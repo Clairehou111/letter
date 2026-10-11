@@ -360,17 +360,6 @@ class _YouExperienceState extends State<YouExperience> {
         ),
         divider,
         _ToggleRow(
-          title: 'Gentle cycle check-ins',
-          description: _privacy.cycleCheckInEnabled
-              ? 'On — one private reminder if the estimated period window '
-                    'passes without a new period.'
-              : 'Off — no check-in nudges.',
-          value: _privacy.cycleCheckInEnabled,
-          onChanged: (value) =>
-              _savePrivacy(_privacy.copyWith(cycleCheckInEnabled: value)),
-        ),
-        divider,
-        _ToggleRow(
           key: const Key('analytics-consent-toggle'),
           title: 'Help improve Letter Within',
           description: analyticsOn
@@ -433,12 +422,14 @@ class _YouExperienceState extends State<YouExperience> {
     }
 
     final reminder = snapshot.reminder;
+    final reminderTime =
+        '${reminder.hour.toString().padLeft(2, '0')}:${reminder.minute.toString().padLeft(2, '0')}';
     final canConfigure = snapshot.canConfigureReminder;
     final canToggle = !_comfortSaving && widget.saveComfortReminder != null;
     final description = reminder.enabled
         ? canConfigure
               ? 'On — '
-                    '${comfortReminderLeadLabel(reminder.leadDays)} at 09:00 '
+                    '${comfortReminderLeadLabel(reminder.leadDays)} at $reminderTime '
                     'local time. System notification settings control delivery.'
               : 'On — no reminder is scheduled yet. One will be scheduled '
                     'when your local estimate is reliable enough and '
@@ -478,7 +469,7 @@ class _YouExperienceState extends State<YouExperience> {
             key: const Key('comfort-reminder-timing'),
             title: 'Timing',
             description:
-                '${comfortReminderLeadLabel(reminder.leadDays)} · 09:00 local',
+                '${comfortReminderLeadLabel(reminder.leadDays)} · $reminderTime local',
             onTap: _comfortSaving ? null : _chooseComfortTiming,
           ),
         ],

@@ -42,6 +42,9 @@ enum LetterCapability {
   prepareSurface,
   personalPatterns,
   longitudinalComparisons,
+
+  /// Clinical PDF and longer/custom factual PDFs. Raw source CSV and the
+  /// recent three-calendar-month factual Visit PDF are free outside this gate.
   clinicianReports,
 }
 

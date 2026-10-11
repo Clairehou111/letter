@@ -215,7 +215,7 @@ abstract final class ExperiencePaper {
 
 abstract final class ExperienceSeverityRamp {
   /// Lowest representable severity score.
-  static const int minScore = 1;
+  static const int minScore = 0;
 
   /// Highest representable severity score.
   static const int maxScore = 5;
@@ -229,11 +229,11 @@ abstract final class ExperienceSeverityRamp {
     ExperienceColors.accentGravity, // 5
   ];
 
-  /// Resolves the ramp color for a 1–5 severity [score]. Out-of-range values
+  /// Resolves zero separately from the existing 1–5 palette. Out-of-range values
   /// clamp to the nearest step so callers never render an unintended hue.
   static Color forScore(int score) {
     final clamped = score.clamp(minScore, maxScore);
-    return steps[clamped - 1];
+    return clamped == 0 ? ExperienceColors.inkSoft : steps[clamped - 1];
   }
 
   /// Resolves the ramp color for an optional severity score, or `null` when

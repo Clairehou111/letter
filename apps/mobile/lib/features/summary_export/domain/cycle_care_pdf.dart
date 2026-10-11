@@ -63,7 +63,8 @@ Future<LocalPdfFile> buildCycleAndCarePdf({
           '${matrix.observedRelativeDays} of 28 relative days observed - '
           '${matrix.blankRelativeDays} blank - '
           '${matrix.sameDayObservations} same-day - '
-          '${matrix.laterRecallObservations} later recall',
+          '${matrix.laterRecallObservations} later recall'
+          '${matrix.timingUnknownObservations == 0 ? '' : ' - ${matrix.timingUnknownObservations} timing unknown'}',
           style: mutedStyle,
         ),
         pw.SizedBox(height: 10),
@@ -80,7 +81,7 @@ Future<LocalPdfFile> buildCycleAndCarePdf({
         _matrixTable(matrix),
         pw.SizedBox(height: 5),
         pw.Text(
-          'Blank cells mean no observation. Ratings use the recorded 1-5 scale. '
+          'Blank cells mean no observation. Ratings use the recorded 0-5 scale. '
           'Populated cells average observations within each cycle first, then '
           'average across cycles. The optional CSV contains source records only; derived matrix cells appear only in this PDF.',
           style: mutedStyle,
@@ -93,7 +94,7 @@ Future<LocalPdfFile> buildCycleAndCarePdf({
           pw.SizedBox(height: 4),
           pw.Text(
             'These are qualitative check-ins. They share the timing context, '
-            'but do not change 1-5 symptom ratings or matrix averages.',
+            'but do not change 0-5 symptom ratings or matrix averages.',
             style: mutedStyle,
           ),
         ],
@@ -104,7 +105,7 @@ Future<LocalPdfFile> buildCycleAndCarePdf({
           _careTable(summary, bodyStyle),
           pw.SizedBox(height: 4),
           pw.Text(
-            'Care outcomes share the timing context but do not change 1-5 '
+            'Care outcomes share the timing context but do not change 0-5 '
             'symptom ratings or matrix averages.',
             style: mutedStyle,
           ),
@@ -190,7 +191,7 @@ pw.Widget _patternEvidence(
           'Offsets ${window.candidate.offsetStart} to '
           '${window.candidate.offsetEnd}; average lift '
           '${(window.candidate.averageLift * 100).toStringAsFixed(0)}%; '
-          'algorithm v${window.algorithmVersion}.',
+          'algorithm ${window.sourceAlgorithmId} (v${window.algorithmVersion}).',
           style: mutedStyle,
         ),
       ],

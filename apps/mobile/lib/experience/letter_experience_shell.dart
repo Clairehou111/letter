@@ -1,10 +1,23 @@
 import 'dart:async';
 
 import 'package:flutter/foundation.dart';
+import '../features/record_hub/domain/record_hub_repository.dart';
+import '../features/record_hub/domain/record_interventions.dart';
+import '../features/record_hub/domain/record_programme.dart';
+import '../features/record_hub/domain/record_session.dart';
+import '../features/record_hub/presentation/record_hub_screen.dart';
+import '../features/record_hub/presentation/record_entry_section.dart';
+import '../features/record_hub/presentation/record_programme_screen.dart';
+import '../features/record_hub/presentation/record_preparation_screen.dart'
+    show preparationSelectionFingerprint;
+import '../features/record_hub/presentation/moment_source_history_screen.dart';
+
 import 'package:flutter/material.dart';
+import 'package:flutter/semantics.dart';
 
 import '../features/care/domain/care_memory_repository.dart';
 import '../features/capture/domain/capture_models.dart';
+import '../features/capture/presentation/capture_note_history_screen.dart';
 import '../features/check_in/domain/moment_check_in_repository.dart';
 import '../features/comfort_kit/domain/comfort_kit_repository.dart';
 import '../features/comfort_kit/application/comfort_experience_controller.dart';
@@ -16,6 +29,7 @@ import '../features/cycle/domain/period_repository.dart';
 import '../features/entitlement/domain/entitlement.dart';
 import '../features/entitlement/domain/entitlement_repository.dart';
 import '../features/health_records/domain/health_record_repository.dart';
+import '../features/health_records/domain/health_record.dart';
 import '../features/health_data/domain/local_health_read_transaction.dart';
 import '../features/insights/presentation/gravity_horizon_view_model.dart';
 import '../features/insights/presentation/spectrum_log_view_model.dart';
@@ -46,8 +60,8 @@ enum LetterDestination { today, cycle, care, patterns }
 /// Public integration boundary for the approved Letter Within Experience
 /// System — Quiet Dusk: one ember in one plum sky.
 ///
-/// The shell owns exactly four persistent destinations — **Today, Cycle,
-/// Care, and Patterns** — plus the orchestration between them:
+/// The shell owns four persistent destinations — Today, Cycle, Care and
+/// Patterns — plus independent Record and Settings routes:
 ///
 ///  * **Routing.** Settings (the former You content: account, protection &
 ///    preferences including the screen-cover toggle, backup & restore, Plus
@@ -137,6 +151,9 @@ class LetterExperienceShell extends StatefulWidget {
     this.navigationRequest,
     this.hasPlusPreviewAccess = false,
     this.onCareUsed,
+    this.recordHubRepository,
+    this.interventionsRepository,
+    this.programmeRepository,
     this.now,
     this.readTransaction = const PassthroughLocalHealthReadTransaction(),
   });
@@ -153,6 +170,9 @@ class LetterExperienceShell extends StatefulWidget {
   final EntitlementRepository entitlementRepository;
   final ReportExperiencePort reportPort;
   final BackupExperiencePort? backupPort;
+  final RecordHubRepository? recordHubRepository;
+  final RecordInterventionsRepository? interventionsRepository;
+  final RecordProgrammeRepository? programmeRepository;
   final YouExperiencePort youPort;
   final Future<void> Function()? onConnectAccount;
   final ValueListenable<LetterDestination?>? navigationRequest;
@@ -177,11 +197,35 @@ class _LetterExperienceShellState extends State<LetterExperienceShell>
   static const int _careIndex = 2;
   static const int _patternsIndex = 3;
 
-  /// The tab bar's fixed content height. Declared once here and applied to
-  /// the [NavigationBar] itself, so the reserve subtracted from every dusk
-  /// viewport always matches the bar's real footprint — content can never
-  /// slide beneath an under-measured chrome area.
-  static const double _tabBarContentHeight = 80;
+  Size _navigationLabelSize(String label) {
+    final painter = TextPainter(
+      text: TextSpan(
+        text: label,
+        style: Theme.of(context).textTheme.labelMedium,
+      ),
+      textDirection: Directionality.of(context),
+      textScaler: MediaQuery.textScalerOf(context),
+    )..layout();
+    final size = painter.size;
+    painter.dispose();
+    return size;
+  }
+
+  bool get _wideNavigationLabels =>
+      ['Today', 'Cycle', 'Record', 'Care', 'Patterns'].any(
+        (label) =>
+            _navigationLabelSize(label).width + 8 >
+            (MediaQuery.sizeOf(context).width -
+                    MediaQuery.viewPaddingOf(context).horizontal) /
+                5,
+      );
+  double get _tabBarActionHeight {
+    final height = _navigationLabelSize('Patterns').height + 48;
+    return height < 80 ? 80 : height;
+  }
+
+  double get _tabBarContentHeight =>
+      _tabBarActionHeight * (_wideNavigationLabels ? 2 : 1);
 
   /// The soft-ember selected-tab pill, composited over the bar's surface
   /// color. emberSoft at 55% alpha over [ExperienceColors.surface]
@@ -219,13 +263,17 @@ class _LetterExperienceShellState extends State<LetterExperienceShell>
   SpectrumLogViewModel? _spectrum;
   PersonalPatternAnalysis _analysis = PersonalPatternAnalysis.empty;
   PreparationLoopKind? _loopKind;
+  RecordProgramme? _programme;
 
   late EntitlementState _entitlement;
   StreamSubscription<EntitlementState>? _entitlementSubscription;
   late final RecoveryReceiptController _recoveryReceiptController;
 
   bool _screenCoverActive = false;
+  bool _recordRouteOpen = false;
   Route<void>? _settingsRoute;
+  Timer? _midnightTimer;
+  LocalDate? _displayDay;
 
   DateTime _now() => widget.now?.call() ?? DateTime.now();
 
@@ -253,6 +301,8 @@ class _LetterExperienceShellState extends State<LetterExperienceShell>
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _handleNavigationRequest();
     });
+    _displayDay = LocalDate.fromDateTime(_now().toLocal());
+    _scheduleMidnightRefresh();
     _loadDerived();
   }
 
@@ -272,6 +322,7 @@ class _LetterExperienceShellState extends State<LetterExperienceShell>
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
     widget.navigationRequest?.removeListener(_handleNavigationRequest);
+    _midnightTimer?.cancel();
     _entitlementSubscription?.cancel();
     super.dispose();
   }
@@ -298,6 +349,8 @@ class _LetterExperienceShellState extends State<LetterExperienceShell>
         setState(() => _screenCoverActive = true);
       }
     } else if (state == AppLifecycleState.resumed) {
+      _refreshLocalDay();
+      _scheduleMidnightRefresh();
       if (_screenCoverActive && mounted) {
         setState(() => _screenCoverActive = false);
       }
@@ -314,8 +367,120 @@ class _LetterExperienceShellState extends State<LetterExperienceShell>
   // the memory gate, never fabricated copy.
   // -------------------------------------------------------------------------
 
+  void _scheduleMidnightRefresh() {
+    _midnightTimer?.cancel();
+    final now = _now().toLocal();
+    final next = DateTime(now.year, now.month, now.day + 1);
+    _midnightTimer = Timer(next.difference(now), () {
+      if (!mounted) return;
+      _refreshLocalDay();
+      _scheduleMidnightRefresh();
+    });
+  }
+
+  void _refreshLocalDay() {
+    final day = LocalDate.fromDateTime(_now().toLocal());
+    if (!mounted || day == _displayDay) return;
+    setState(() {
+      _displayDay = day;
+      _todayReadRevision++;
+      _cycleReadRevision++;
+      _patternsReadRevision++;
+    });
+    unawaited(_loadDerived(quiet: true));
+    unawaited(widget.onCycleDataChanged().catchError((Object _) {}));
+  }
+
+  Future<void> _openRecord({
+    LocalDate? date,
+    RecordOrigin? origin,
+    SymptomType? symptom,
+    RecordEntrySection? section,
+    bool returnAfterSymptomEdit = false,
+  }) async {
+    if (_recordRouteOpen || !mounted) return;
+    _recordRouteOpen = true;
+    final recordOrigin = origin ?? RecordOrigin.values[_index];
+    try {
+      await Navigator.of(context).push<void>(
+        MaterialPageRoute(
+          builder: (context) => Theme(
+            data: ExperienceFoundation.lightTheme(),
+            child: RecordHubScreen(
+              healthRecordRepository: widget.healthRecordRepository,
+              captureNoteStore: widget.captureNoteStore,
+              recordHubRepository: widget.recordHubRepository,
+              interventionsRepository: widget.interventionsRepository,
+              periodRepository: widget.periodRepository,
+              initialDate: date ?? LocalDate.fromDateTime(_now().toLocal()),
+              origin: recordOrigin,
+              initialSymptom: symptom,
+              initialSection: section,
+              returnAfterSymptomEdit: returnAfterSymptomEdit,
+              clock: _now,
+              onChanged: _handleCycleDataChanged,
+            ),
+          ),
+        ),
+      );
+    } finally {
+      _recordRouteOpen = false;
+    }
+  }
+
+  Future<void> _openProgramme() async {
+    final repository = widget.programmeRepository;
+    final facts = widget.recordHubRepository;
+    if (repository == null || facts == null) {
+      return;
+    }
+    await Navigator.of(context).push<void>(
+      MaterialPageRoute(
+        builder: (context) => Theme(
+          data: ExperienceFoundation.lightTheme(),
+          child: RecordProgrammeScreen(
+            programmeRepository: repository,
+            healthRecordRepository: widget.healthRecordRepository,
+            recordHubRepository: facts,
+            periodRepository: widget.periodRepository,
+            clock: _now,
+            onChanged: _handleCycleDataChanged,
+            onOpenRecord: (date, symptom) =>
+                _openRecord(date: date, symptom: symptom),
+          ),
+        ),
+      ),
+    );
+    if (mounted) await _loadDerived(quiet: true);
+  }
+
+  Widget _programmeEntrance(Widget child, {required bool continuationOnly}) {
+    if (widget.programmeRepository == null ||
+        widget.recordHubRepository == null ||
+        (continuationOnly && _programme == null)) {
+      return child;
+    }
+    return Column(
+      children: [
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 20),
+          child: TextButton.icon(
+            key: const Key('pattern-record-entrance'),
+            onPressed: _openProgramme,
+            icon: const Icon(Icons.fact_check_outlined),
+            label: Text(
+              _programme == null
+                  ? 'Optional Pattern Record'
+                  : 'Continue Pattern Record',
+            ),
+          ),
+        ),
+        Expanded(child: child),
+      ],
+    );
+  }
+
   Future<void> _loadDerived({bool quiet = false}) async {
-    final generation = ++_derivedLoadGeneration;
     if (!quiet || (_derivedError != null && _gravity == null)) {
       if (mounted) {
         setState(() {
@@ -323,78 +488,117 @@ class _LetterExperienceShellState extends State<LetterExperienceShell>
         });
       }
     }
+    final generation = ++_derivedLoadGeneration;
     try {
-      final today = LocalDate.fromDateTime(_now().toLocal());
-      final records = CyclePredictionEngine.recordsThrough(
-        await widget.periodRepository.getAll(),
-        today,
-      );
-      final ordered = List<PeriodRecord>.of(records)
-        ..sort((a, b) => b.startDate.compareTo(a.startDate));
+      await widget.readTransaction.run(() async {
+        final today = LocalDate.fromDateTime(_now().toLocal());
+        final records = CyclePredictionEngine.recordsThrough(
+          await widget.periodRepository.getAll(),
+          today,
+        );
+        final ordered = List<PeriodRecord>.of(records)
+          ..sort((a, b) => b.startDate.compareTo(a.startDate));
 
-      TodayCycleRingModel? ring;
-      try {
-        ring = TodayCycleRingModel.fromRecords(records: ordered, today: today);
-      } on TodayCycleRingException {
-        // insufficientHistory is an honest state, handled by the
-        // destinations themselves (empty orbit / ring forming).
-        ring = null;
-      }
+        TodayCycleRingModel? ring;
+        try {
+          ring = TodayCycleRingModel.fromRecords(
+            records: ordered,
+            today: today,
+          );
+        } on TodayCycleRingException {
+          // insufficientHistory is an honest state, handled by the
+          // destinations themselves (empty orbit / ring forming).
+          ring = null;
+        }
 
-      final healthRecords = await widget.healthRecordRepository.getAll();
-      final careRecords = await widget.careMemoryRepository.getRecords();
-      final careReflections = await widget.careMemoryRepository
-          .getReflections();
+        final programmes =
+            await widget.programmeRepository?.getAll() ?? <RecordProgramme>[];
+        final programme = programmes
+            .where((programme) => !programme.isEnded)
+            .firstOrNull;
+        final moments = await widget.momentCheckInRepository.getAll();
+        final healthRecords = await widget.healthRecordRepository.getAll();
+        final careRecords = await widget.careMemoryRepository.getRecords();
+        final careReflections = await widget.careMemoryRepository
+            .getReflections();
 
-      // One factual snapshot from all four repositories — the single
-      // source Spectrum and the pattern engine analyze. Nothing here is
-      // synthesized; missing inputs stay missing.
-      final snapshot = PatternSourceSnapshot(
-        healthRecords: healthRecords,
-        careRecords: careRecords,
-        careReflections: careReflections,
-        periods: ordered,
-      ).through(today);
+        // One factual snapshot from all four repositories — the single
+        // source Spectrum and the pattern engine analyze. Nothing here is
+        // synthesized; missing inputs stay missing.
+        final snapshot = PatternSourceSnapshot(
+          healthRecords: healthRecords,
+          momentCheckIns: moments,
+          careRecords: careRecords,
+          careReflections: careReflections,
+          periods: ordered,
+        ).through(today);
 
-      PreparationLoopKind? loopKind;
-      try {
-        final plan = await widget.preparationRepository.getActivePlan();
-        loopKind = plan == null
-            ? null
-            : switch (plan.status) {
-                PreparationPlanStatus.current => PreparationLoopKind.saved,
-                PreparationPlanStatus.privateReference =>
-                  PreparationLoopKind.privateReference,
-              };
-      } catch (_) {
-        // An unreadable plan never blocks the record; the gate falls back
-        // to raw evidence counts.
-        loopKind = null;
-      }
+        PreparationLoopKind? loopKind;
+        try {
+          final plan = await widget.preparationRepository.getActivePlan();
+          loopKind = plan == null
+              ? null
+              : switch (plan.status) {
+                  PreparationPlanStatus.current => PreparationLoopKind.saved,
+                  PreparationPlanStatus.privateReference =>
+                    PreparationLoopKind.privateReference,
+                };
+          if (plan != null &&
+              plan.evidenceFingerprint.startsWith(
+                'native-preparation-selection-v2:',
+              ) &&
+              plan.status == PreparationPlanStatus.current) {
+            final selected = careRecords
+                .where((record) => plan.sourceRecordIds.contains(record.id))
+                .toList();
+            final fingerprint = await preparationSelectionFingerprint(
+              selected,
+              plan.noteText,
+            );
+            final notePresent =
+                plan.noteText == null ||
+                careReflections.any(
+                  (reflection) =>
+                      plan.sourceRecordIds.contains(reflection.careRecordId) &&
+                      reflection.futureSelfNote == plan.noteText,
+                );
+            if (selected.length != plan.sourceRecordIds.length ||
+                !notePresent ||
+                fingerprint != plan.evidenceFingerprint) {
+              loopKind = PreparationLoopKind.stale;
+            }
+          }
+        } catch (_) {
+          // An unreadable plan never blocks the record; the gate falls back
+          // to raw evidence counts.
+          loopKind = null;
+        }
 
-      final gravity = _buildGravity(ordered, today);
-      final spectrum = _buildSpectrum(snapshot);
-      final analysis = _buildAnalysis(snapshot);
+        final gravity = _buildGravity(ordered, today);
+        final spectrum = _buildSpectrum(snapshot);
+        final analysis = _buildAnalysis(snapshot);
 
-      if (!mounted || generation != _derivedLoadGeneration) return;
-      setState(() {
-        _ringModel = ring;
-        if (gravity != null) _gravity = gravity;
-        if (spectrum != null) _spectrum = spectrum;
-        _analysis = analysis;
-        _loopKind = loopKind;
-        _derivedError = _gravity == null || _spectrum == null
-            ? _derivedError
-            : null;
-      });
-
-      if (_gravity == null || _spectrum == null) {
+        if (!mounted || generation != _derivedLoadGeneration) return;
         setState(() {
-          _derivedError =
-              'Patterns could not read your records right now. '
-              'Nothing is lost — your entries are safe on this device.';
+          _programme = programme;
+          _ringModel = ring;
+          if (gravity != null) _gravity = gravity;
+          if (spectrum != null) _spectrum = spectrum;
+          _analysis = analysis;
+          _loopKind = loopKind;
+          _derivedError = _gravity == null || _spectrum == null
+              ? _derivedError
+              : null;
         });
-      }
+
+        if (_gravity == null || _spectrum == null) {
+          setState(() {
+            _derivedError =
+                'Patterns could not read your records right now. '
+                'Nothing is lost — your entries are safe on this device.';
+          });
+        }
+      });
     } catch (_) {
       if (!mounted || generation != _derivedLoadGeneration) return;
       setState(() {
@@ -633,6 +837,32 @@ class _LetterExperienceShellState extends State<LetterExperienceShell>
                 _SettingsBackSlot(
                   onBack: () => Navigator.of(routeContext).maybePop(),
                 ),
+                TextButton.icon(
+                  key: const Key('moment-history-entrance'),
+                  icon: const Icon(Icons.history),
+                  label: const Text('Moment history'),
+                  onPressed: () => Navigator.of(routeContext).push<void>(
+                    MaterialPageRoute(
+                      builder: (_) => MomentSourceHistoryScreen(
+                        repository: widget.momentCheckInRepository,
+                        onChanged: _handleCycleDataChanged,
+                      ),
+                    ),
+                  ),
+                ),
+                TextButton.icon(
+                  key: const Key('quick-note-history-entrance'),
+                  icon: const Icon(Icons.notes_outlined),
+                  label: const Text('Quick note history'),
+                  onPressed: () => Navigator.of(routeContext).push<void>(
+                    MaterialPageRoute(
+                      builder: (_) => CaptureNoteHistoryScreen(
+                        repository: widget.captureNoteStore,
+                        onChanged: _handleCycleDataChanged,
+                      ),
+                    ),
+                  ),
+                ),
                 Expanded(child: _buildYou()),
               ],
             ),
@@ -679,7 +909,7 @@ class _LetterExperienceShellState extends State<LetterExperienceShell>
           children: <Widget>[
             _worldLayer(
               _todayIndex,
-              _wrapDusk(_buildToday(), chromeReserve),
+              _wrapDusk(_buildToday(), chromeReserve, todayHeader: true),
               crossing,
             ),
             _worldLayer(
@@ -755,7 +985,11 @@ class _LetterExperienceShellState extends State<LetterExperienceShell>
   /// slot at the shell level, so the affordance can never overlap
   /// destination titles, dates, or controls, and it crossfades with its
   /// destination layer like the rest of the chrome.
-  Widget _wrapDusk(Widget child, double chromeReserve) {
+  Widget _wrapDusk(
+    Widget child,
+    double chromeReserve, {
+    bool todayHeader = false,
+  }) {
     return Padding(
       padding: EdgeInsets.only(bottom: chromeReserve),
       child: ColoredBox(
@@ -764,7 +998,16 @@ class _LetterExperienceShellState extends State<LetterExperienceShell>
           bottom: false,
           child: Column(
             children: <Widget>[
-              _SettingsGearSlot(onOpenSettings: _openSettings),
+              _SettingsGearSlot(
+                onOpenSettings: _openSettings,
+                leading: todayHeader
+                    ? _TodayMasthead(
+                        date:
+                            _displayDay ??
+                            LocalDate.fromDateTime(_now().toLocal()),
+                      )
+                    : null,
+              ),
               Expanded(child: child),
             ],
           ),
@@ -804,45 +1047,157 @@ class _LetterExperienceShellState extends State<LetterExperienceShell>
                 top: false,
                 child: SizedBox(
                   height: _tabBarContentHeight,
-                  child: NavigationBar(
-                    height: _tabBarContentHeight,
-                    backgroundColor: ExperienceColors.surface,
-                    surfaceTintColor: Colors.transparent,
-                    elevation: 0,
-                    // The soft-ember pill marks "you are here" at a measured
-                    // ≈3.5:1 against the bar (≥3.0:1 large-graphic floor);
-                    // labels carry selection semantically.
-                    indicatorColor: _selectedTabIndicatorColor,
-                    selectedIndex: _index,
-                    onDestinationSelected: _selectDestination,
-                    destinations: const <Widget>[
-                      NavigationDestination(
-                        icon: Icon(Icons.water_drop_outlined),
-                        selectedIcon: Icon(Icons.water_drop, size: 20),
-                        label: 'Today',
-                      ),
-                      NavigationDestination(
-                        icon: Icon(Icons.radio_button_unchecked),
-                        selectedIcon: Icon(
-                          Icons.radio_button_checked,
-                          size: 20,
-                        ),
-                        label: 'Cycle',
-                      ),
-                      NavigationDestination(
-                        icon: Icon(Icons.favorite_border),
-                        selectedIcon: Icon(Icons.favorite, size: 20),
-                        label: 'Care',
-                      ),
-                      NavigationDestination(
-                        icon: Icon(Icons.bar_chart),
-                        selectedIcon: Icon(Icons.bar_chart, size: 20),
-                        label: 'Patterns',
-                      ),
-                    ],
-                  ),
+                  child: _navigationContents(),
                 ),
               ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _navigationContents() {
+    if (_wideNavigationLabels) {
+      return Row(
+        children: [
+          Expanded(
+            child: Column(
+              children: [
+                _tabAction(
+                  _todayIndex,
+                  'Today',
+                  Icons.water_drop_outlined,
+                  Icons.water_drop,
+                ),
+                _tabAction(
+                  _cycleIndex,
+                  'Cycle',
+                  Icons.radio_button_unchecked,
+                  Icons.radio_button_checked,
+                ),
+              ],
+            ),
+          ),
+          SizedBox(
+            width: _navigationLabelSize('Record').width + 16,
+            child: _recordAction(),
+          ),
+          Expanded(
+            child: Column(
+              children: [
+                _tabAction(
+                  _careIndex,
+                  'Care',
+                  Icons.favorite_border,
+                  Icons.favorite,
+                ),
+                _tabAction(
+                  _patternsIndex,
+                  'Patterns',
+                  Icons.bar_chart,
+                  Icons.bar_chart,
+                ),
+              ],
+            ),
+          ),
+        ],
+      );
+    }
+    return Row(
+      children: [
+        _tabAction(
+          _todayIndex,
+          'Today',
+          Icons.water_drop_outlined,
+          Icons.water_drop,
+        ),
+        _tabAction(
+          _cycleIndex,
+          'Cycle',
+          Icons.radio_button_unchecked,
+          Icons.radio_button_checked,
+        ),
+        Expanded(child: _recordAction()),
+        _tabAction(_careIndex, 'Care', Icons.favorite_border, Icons.favorite),
+        _tabAction(
+          _patternsIndex,
+          'Patterns',
+          Icons.bar_chart,
+          Icons.bar_chart,
+        ),
+      ],
+    );
+  }
+
+  Widget _recordAction() => Semantics(
+    button: true,
+    label: 'Record today or another date',
+    sortKey: const OrdinalSortKey(2),
+    child: InkWell(
+      onTap: () => _openRecord(),
+      child: SizedBox(
+        height: _tabBarContentHeight,
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Icon(Icons.add_circle_outline, size: 30),
+            const SizedBox(height: 4),
+            Text(
+              'Record',
+              softWrap: false,
+              style: Theme.of(context).textTheme.labelMedium,
+            ),
+          ],
+        ),
+      ),
+    ),
+  );
+
+  Widget _tabAction(
+    int index,
+    String label,
+    IconData icon,
+    IconData selectedIcon,
+  ) {
+    final selected = _index == index;
+    return Expanded(
+      child: Semantics(
+        selected: selected,
+        button: true,
+        sortKey: OrdinalSortKey(index < 2 ? index.toDouble() : index + 1.0),
+        label: label,
+        child: InkWell(
+          onTap: () => _selectDestination(index),
+          child: SizedBox(
+            height: _tabBarActionHeight,
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 4,
+                  ),
+                  decoration: BoxDecoration(
+                    color: selected
+                        ? _selectedTabIndicatorColor
+                        : Colors.transparent,
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: Icon(selected ? selectedIcon : icon),
+                ),
+                const SizedBox(height: 4),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 4),
+                  child: Text(
+                    label,
+                    softWrap: false,
+                    textAlign: TextAlign.center,
+                    style: Theme.of(context).textTheme.labelMedium,
+                  ),
+                ),
+              ],
             ),
           ),
         ),
@@ -857,11 +1212,29 @@ class _LetterExperienceShellState extends State<LetterExperienceShell>
   Widget _buildToday() {
     return TodayExperience(
       key: const ValueKey<String>('destination-today'),
+      showHeader: false,
       periodRepository: widget.periodRepository,
       checkInRepository: widget.momentCheckInRepository,
       healthRecordRepository: widget.healthRecordRepository,
       captureNoteStore: widget.captureNoteStore,
       comfortExperienceController: widget.comfortExperienceController,
+      recordHubRepository: widget.recordHubRepository,
+      programmeContent: _programme == null
+          ? null
+          : TextButton.icon(
+              key: const Key('pattern-record-entrance'),
+              onPressed: _openProgramme,
+              icon: const Icon(Icons.fact_check_outlined),
+              label: const Text('Continue Pattern Record'),
+            ),
+      onOpenRecord: () => _openRecord(origin: RecordOrigin.today),
+      onOpenRecordSection: (section) =>
+          _openRecord(origin: RecordOrigin.today, section: section),
+      onOpenSymptom: (symptom) => _openRecord(
+        origin: RecordOrigin.today,
+        symptom: symptom,
+        returnAfterSymptomEdit: true,
+      ),
       today: () => LocalDate.fromDateTime(_now().toLocal()),
       now: widget.now,
       loadSupportActionPatterns: () async => _analysis.supportActions,
@@ -889,7 +1262,9 @@ class _LetterExperienceShellState extends State<LetterExperienceShell>
       onCycleDataChanged: _handleCycleDataChanged,
       ringModel: _ringModel,
       revision: _recordRevision + _cycleReadRevision,
-      now: widget.now?.call(),
+      now: _now(),
+      onOpenRecord: (date) =>
+          _openRecord(date: date, origin: RecordOrigin.cycle),
     );
   }
 
@@ -897,6 +1272,8 @@ class _LetterExperienceShellState extends State<LetterExperienceShell>
     return CareExperience(
       key: const ValueKey<String>('destination-care'),
       careMemoryRepository: widget.careMemoryRepository,
+      interventionsRepository: widget.interventionsRepository,
+      onRecordChanged: _handleCycleDataChanged,
       // The optional post-Care symptom receipt writes through the same health
       // record repository used by Today, Cycle, Patterns, and reports.
       saveReceipt: _recoveryReceiptController.save,
@@ -931,20 +1308,27 @@ class _LetterExperienceShellState extends State<LetterExperienceShell>
     // Patterns has its own factual aggregation contract.  Recreate the
     // route when this destination is selected so the local database is read
     // afresh rather than displaying a cached cross-tab snapshot.
-    return PersonalPatternsRoute(
-      key: ValueKey<String>('destination-patterns-$_patternsReadRevision'),
-      showBack: false,
-      source: RepositoryPatternSource(
-        healthRecords: widget.healthRecordRepository,
-        careMemory: widget.careMemoryRepository,
-        periods: widget.periodRepository,
-        momentCheckIns: widget.momentCheckInRepository,
+    return _programmeEntrance(
+      PersonalPatternsRoute(
+        key: ValueKey<String>('destination-patterns-$_patternsReadRevision'),
+        showBack: false,
+        onOpenRecord: (date, symptom) => _openRecord(
+          date: date,
+          symptom: symptom,
+          origin: RecordOrigin.patterns,
+        ),
+        source: RepositoryPatternSource(
+          healthRecords: widget.healthRecordRepository,
+          careMemory: widget.careMemoryRepository,
+          periods: widget.periodRepository,
+          momentCheckIns: widget.momentCheckInRepository,
+          now: _now,
+          readTransaction: widget.readTransaction,
+        ),
+        preparationRepository: widget.preparationRepository,
         now: _now,
-        readTransaction: widget.readTransaction,
       ),
-      preparationRepository: widget.preparationRepository,
-      now: _now,
-      onOpenCycle: () => _selectDestination(_cycleIndex),
+      continuationOnly: false,
     );
   }
 
@@ -986,34 +1370,113 @@ class _LetterExperienceShellState extends State<LetterExperienceShell>
 // ---------------------------------------------------------------------------
 
 class _SettingsGearSlot extends StatelessWidget {
-  const _SettingsGearSlot({required this.onOpenSettings});
+  const _SettingsGearSlot({required this.onOpenSettings, this.leading});
 
   final VoidCallback onOpenSettings;
+  final Widget? leading;
 
   @override
   Widget build(BuildContext context) {
-    return SizedBox(
-      height: ExperienceSpacing.minTouchTarget,
-      child: Align(
-        alignment: Alignment.centerRight,
-        child: Padding(
-          padding: const EdgeInsets.only(
-            right: ExperienceSpacing.screenMargin - 12,
-          ),
-          child: IconButton(
-            onPressed: onOpenSettings,
-            icon: const Icon(Icons.settings_outlined),
-            color: ExperienceColors.inkSoft,
-            tooltip: 'Settings',
-            constraints: const BoxConstraints(
-              minWidth: ExperienceSpacing.minTouchTarget,
-              minHeight: ExperienceSpacing.minTouchTarget,
+    return ConstrainedBox(
+      constraints: const BoxConstraints(
+        minHeight: ExperienceSpacing.minTouchTarget,
+      ),
+      child: Padding(
+        padding: EdgeInsets.only(
+          left: leading == null ? 0 : 22,
+          right: ExperienceSpacing.screenMargin - 12,
+          top: leading == null ? 0 : 4,
+          bottom: leading == null ? 0 : 8,
+        ),
+        child: Row(
+          children: [
+            if (leading != null) Expanded(child: leading!) else const Spacer(),
+            const SizedBox(width: 12),
+            IconButton(
+              onPressed: onOpenSettings,
+              icon: const Icon(Icons.settings_outlined),
+              color: ExperienceColors.inkSoft,
+              tooltip: 'Settings',
+              constraints: const BoxConstraints(
+                minWidth: ExperienceSpacing.minTouchTarget,
+                minHeight: ExperienceSpacing.minTouchTarget,
+              ),
+              padding: EdgeInsets.zero,
+              visualDensity: VisualDensity.compact,
             ),
-            padding: EdgeInsets.zero,
-            visualDensity: VisualDensity.compact,
-          ),
+          ],
         ),
       ),
+    );
+  }
+}
+
+class _TodayMasthead extends StatelessWidget {
+  const _TodayMasthead({required this.date});
+
+  final LocalDate date;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    const weekdays = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+    const months = [
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'May',
+      'Jun',
+      'Jul',
+      'Aug',
+      'Sep',
+      'Oct',
+      'Nov',
+      'Dec',
+    ];
+    final dateLabel =
+        '${weekdays[date.asLocalDateTime.weekday - 1]}, '
+        '${months[date.month - 1]} ${date.day}';
+    return Column(
+      key: const Key('today-shell-header'),
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Letter Within',
+          style: theme.textTheme.bodySmall?.copyWith(fontSize: 12),
+        ),
+        const SizedBox(height: 4),
+        LayoutBuilder(
+          builder: (context, constraints) {
+            final title = Text(
+              'Today',
+              style: theme.textTheme.bodyLarge?.copyWith(
+                fontSize: 25,
+                height: 1.12,
+                fontWeight: FontWeight.w700,
+                color: theme.colorScheme.onSurface,
+              ),
+            );
+            final day = Text(
+              dateLabel,
+              style: theme.textTheme.bodySmall?.copyWith(fontSize: 13),
+            );
+            if (constraints.maxWidth < 260 ||
+                MediaQuery.textScalerOf(context).scale(1) > 1.5) {
+              return Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [title, const SizedBox(height: 4), day],
+              );
+            }
+            return Row(
+              children: [
+                Expanded(child: title),
+                day,
+              ],
+            );
+          },
+        ),
+      ],
     );
   }
 }

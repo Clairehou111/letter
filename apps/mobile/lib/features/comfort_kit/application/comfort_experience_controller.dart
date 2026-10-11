@@ -39,6 +39,7 @@ final class ComfortExperienceController {
     required this.kitRepository,
     required this.reminderRepository,
     this.onReminderChanged,
+    this.loadWindow,
     this.now,
   });
 
@@ -48,6 +49,11 @@ final class ComfortExperienceController {
   final ComfortKitRepository kitRepository;
   final ComfortReminderPreferenceRepository reminderRepository;
   final Future<void> Function()? onReminderChanged;
+
+  /// Optional production projection from the current Record Hub evidence.
+  /// Its nullable result is authoritative: no reliable window means silence.
+  /// Kit composition and reminder preferences keep their established stores.
+  final Future<ComfortWindowPrediction?> Function()? loadWindow;
   final DateTime Function()? now;
 
   DateTime _now() => now?.call() ?? DateTime.now();
@@ -58,11 +64,14 @@ final class ComfortExperienceController {
     final periodPrediction = CyclePredictionEngine.calculate(
       CyclePredictionEngine.recordsThrough(source.periods, today),
     );
-    final window = const ComfortWindowEngine().calculate(
-      source: source,
-      periodPrediction: periodPrediction,
-      today: today,
-    );
+    final windowLoader = loadWindow;
+    final window = windowLoader != null
+        ? await windowLoader()
+        : const ComfortWindowEngine().calculate(
+            source: source,
+            periodPrediction: periodPrediction,
+            today: today,
+          );
     final analysis = const PersonalPatternEngine().analyze(source);
     final values = await Future.wait<Object>([
       careMemory.getCycleReflections(),
@@ -84,8 +93,12 @@ final class ComfortExperienceController {
       windowState: ComfortKitWindowState.resolve(
         kit: kit,
         today: today,
-        forecastStart: window?.forecastStart,
-        forecastEnd: window?.forecastEnd,
+        forecastStart: window?.canOfferReminder == true
+            ? window?.forecastStart
+            : null,
+        forecastEnd: window?.canOfferReminder == true
+            ? window?.forecastEnd
+            : null,
       ),
       reminder: values[3] as ComfortReminderPreference,
     );

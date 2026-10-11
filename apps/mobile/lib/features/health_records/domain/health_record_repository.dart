@@ -7,7 +7,11 @@ abstract interface class HealthRecordRepository {
 
   Future<HealthRecord> update(String id, HealthRecordDraft draft);
 
-  Future<void> delete(String id);
+  Future<void> delete(String id, {HealthRecord? expectedCurrent});
+
+  /// Restores an exact source only if the change has not been superseded.
+  /// A null expectedCurrent requires the symptom/day to be absent.
+  Future<HealthRecord> restore(HealthRecord record, {HealthRecord? expectedCurrent});
 
   Future<void> close();
 }

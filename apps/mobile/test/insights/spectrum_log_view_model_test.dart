@@ -9,6 +9,40 @@ import 'package:letter_mobile/features/insights/presentation/hormonal_spectrum_s
 import 'package:letter_mobile/features/patterns/domain/pattern_source.dart';
 
 void main() {
+  testWidgets(
+    'zero trend stays observed and its missing neighbor stays blank',
+    (tester) async {
+      final data = SpectrumLogAdapter.fromSource(
+        PatternSourceSnapshot(
+          healthRecords: [
+            _record(
+              id: 'zero',
+              symptom: SymptomType.cramps,
+              date: const LocalDate(2026, 8, 10),
+              severity: SymptomSeverity.notPresent,
+              updatedAt: DateTime.utc(2026, 8, 10, 12),
+            ),
+          ],
+          periods: [_period('august', const LocalDate(2026, 8, 20))],
+        ),
+      );
+      expect(data.daysFor(SymptomKey.physical)[-10], 0);
+      expect(data.daysFor(SymptomKey.physical)[-9], isNull);
+      expect(data.trendsFor(SymptomKey.physical).single.typical, 0);
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: LetterTheme.light,
+          home: Scaffold(
+            body: SingleChildScrollView(child: SpectrumLog(data: data)),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+      expect(find.text('Not present'), findsOneWidget);
+      expect(tester.takeException(), isNull);
+    },
+  );
+
   test('adapts confirmed records to local d-14..d-1 columns', () {
     final snapshot = PatternSourceSnapshot(
       healthRecords: [

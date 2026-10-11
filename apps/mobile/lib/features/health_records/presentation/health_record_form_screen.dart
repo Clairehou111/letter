@@ -1,3 +1,4 @@
+import '../../../experience/degree/degree_graphics.dart';
 import 'dart:async';
 
 import 'package:flutter/material.dart';
@@ -1484,7 +1485,7 @@ class _SymptomIntensitySheetState extends State<_SymptomIntensitySheet> {
                 style: ExperienceType.bodySmall(ExperienceColors.inkSoft),
               ),
               const SizedBox(height: ExperienceSpacing.sm),
-              for (final severity in SymptomSeverity.values)
+              for (final severity in DegreeGraphics.severityDegrees)
                 Padding(
                   padding: const EdgeInsets.only(
                     bottom: ExperienceSpacing.unit,
@@ -1658,6 +1659,7 @@ class _SeverityDots extends StatelessWidget {
 }
 
 String _crampDescription(SymptomSeverity severity) => switch (severity) {
+  SymptomSeverity.notPresent => 'Observed without cramps.',
   SymptomSeverity.minimal => 'Present, but easy to overlook.',
   SymptomSeverity.mild => 'Noticeable without taking over.',
   SymptomSeverity.moderate => 'Keeps drawing some attention.',
@@ -1700,7 +1702,7 @@ class _CrampPainter extends CustomPainter {
     );
     canvas.drawRRect(torso, body);
     canvas.drawRRect(torso, line..color = color.withValues(alpha: .42));
-    final rings = ((level + 1) / 2).ceil();
+    final rings = level == 0 ? 0 : ((level + 1) / 2).ceil();
     for (var index = 0; index < rings; index++) {
       final width = size.width * (.15 + index * .12);
       canvas.drawArc(

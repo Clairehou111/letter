@@ -142,7 +142,7 @@ void main() {
     expect(edited.id, reflection.id);
     expect(afterDateEdit.id, reflection.id);
     expect(afterDateEdit.startingPeriodId, 'period-stable');
-    expect(afterDateEdit.cycleStartDay, 20663);
+    expect(afterDateEdit.cycleStartDay, 20662);
     expect(afterDateEdit.whatHelped, 'A quieter evening.');
     expect((await repository.getCycleReflections()), hasLength(1));
 

@@ -1,4 +1,12 @@
 import 'dart:async';
+import '../features/record_hub/domain/record_hub_repository.dart';
+import '../features/record_hub/domain/record_interventions.dart';
+import '../features/record_hub/domain/record_programme.dart';
+import '../features/record_hub/domain/comfort_window.dart';
+import '../features/record_hub/domain/comfort_window_projection.dart';
+import '../features/record_hub/domain/record_hub_facts.dart';
+import '../features/record_hub/presentation/record_programme_screen.dart';
+import '../features/record_hub/presentation/record_hub_screen.dart';
 
 import 'package:flutter/material.dart';
 
@@ -74,6 +82,9 @@ class LetterApp extends StatefulWidget {
     this.notificationPort,
     this.comfortNotificationPort,
     this.now,
+    this.recordHubRepository,
+    this.interventionsRepository,
+    this.programmeRepository,
   });
 
   final OnboardingRepository? onboardingRepository;
@@ -97,6 +108,9 @@ class LetterApp extends StatefulWidget {
   final LocalNotificationPort? notificationPort;
   final ComfortNotificationPort? comfortNotificationPort;
   final DateTime Function()? now;
+  final RecordHubRepository? recordHubRepository;
+  final RecordInterventionsRepository? interventionsRepository;
+  final RecordProgrammeRepository? programmeRepository;
 
   @override
   State<LetterApp> createState() => _LetterAppState();
@@ -134,7 +148,6 @@ class _LetterAppState extends State<LetterApp> with WidgetsBindingObserver {
   late final PrivacyPreferencesRepository _privacyPreferencesRepository;
   late final LocalNotificationPort _notificationPort;
   late final ComfortNotificationPort _comfortNotificationPort;
-  late final CycleCheckInScheduler _cycleCheckInScheduler;
   late final ComfortWindowScheduler _comfortWindowScheduler;
   late final ComfortExperienceController _comfortExperienceController;
   final ValueNotifier<LetterDestination?> _navigationRequest =
@@ -144,6 +157,9 @@ class _LetterAppState extends State<LetterApp> with WidgetsBindingObserver {
   final _NotificationNavigationObserver _navigationObserver =
       _NotificationNavigationObserver();
   LocalHealthStore? _ownedHealthStore;
+  RecordHubRepository? _recordHubRepository;
+  RecordInterventionsRepository? _interventionsRepository;
+  RecordProgrammeRepository? _programmeRepository;
   LocalBackupStore? _localBackupStore;
   late final LocalHealthReadTransaction _healthReadTransaction;
   late final RepositoryPatternSource _patternSource;
@@ -203,6 +219,12 @@ class _LetterAppState extends State<LetterApp> with WidgetsBindingObserver {
         widget.comfortReminderPreferenceRepository == null) {
       final healthStore = createDefaultLocalHealthStore();
       _ownedHealthStore = healthStore;
+      _recordHubRepository =
+          widget.recordHubRepository ?? healthStore.recordHubRepository;
+      _interventionsRepository =
+          widget.interventionsRepository ?? healthStore.interventionsRepository;
+      _programmeRepository =
+          widget.programmeRepository ?? healthStore.programmeRepository;
       _localBackupStore = healthStore.localBackupStore;
       _basePeriodRepository = healthStore.periodRepository;
       _careMemoryRepository = healthStore.careMemoryRepository;
@@ -236,6 +258,9 @@ class _LetterAppState extends State<LetterApp> with WidgetsBindingObserver {
           InMemoryComfortReminderPreferenceRepository();
       _healthReadTransaction = const PassthroughLocalHealthReadTransaction();
     }
+    _recordHubRepository ??= widget.recordHubRepository;
+    _interventionsRepository ??= widget.interventionsRepository;
+    _programmeRepository ??= widget.programmeRepository;
     final useProductionAdapters =
         widget.onboardingRepository == null && widget.periodRepository == null;
     _plusPreviewController = PlusPreviewController(
@@ -259,12 +284,6 @@ class _LetterAppState extends State<LetterApp> with WidgetsBindingObserver {
         (_notificationPort is ComfortNotificationPort
             ? _notificationPort as ComfortNotificationPort
             : const DisabledLocalNotificationPort());
-    _cycleCheckInScheduler = CycleCheckInScheduler(
-      _basePeriodRepository,
-      _privacyPreferencesRepository,
-      _notificationPort,
-      now: widget.now,
-    );
     _patternSource = RepositoryPatternSource(
       healthRecords: _healthRecordRepository,
       careMemory: _careMemoryRepository,
@@ -278,6 +297,9 @@ class _LetterAppState extends State<LetterApp> with WidgetsBindingObserver {
       _patternSource,
       _comfortReminderPreferenceRepository,
       _comfortNotificationPort,
+      loadWindow: _recordHubRepository == null
+          ? null
+          : () async => projectComfortWindow(await _loadComfortWindow()),
       now: widget.now,
     );
     _comfortExperienceController = ComfortExperienceController(
@@ -287,11 +309,14 @@ class _LetterAppState extends State<LetterApp> with WidgetsBindingObserver {
       kitRepository: _comfortKitRepository,
       reminderRepository: _comfortReminderPreferenceRepository,
       onReminderChanged: () => _reconcileComfortWindow(requestPermission: true),
+      loadWindow: _recordHubRepository == null
+          ? null
+          : () async => projectComfortWindow(await _loadComfortWindow()),
       now: widget.now,
     );
     _periodRepository = NotifyingPeriodRepository(
       _basePeriodRepository,
-      () => _reconcileCycleCheckIn(requestPermission: true),
+      () => _reconcileCycleCheckIn(requestPermission: false),
     );
     _load();
   }
@@ -380,6 +405,34 @@ class _LetterAppState extends State<LetterApp> with WidgetsBindingObserver {
     }
   }
 
+  Future<void> _openOnboardingProgramme(BuildContext routeContext) async {
+    await Navigator.of(routeContext).push<void>(
+      MaterialPageRoute(
+        builder: (context) => RecordProgrammeScreen(
+          programmeRepository: _programmeRepository!,
+          healthRecordRepository: _healthRecordRepository,
+          recordHubRepository: _recordHubRepository!,
+          periodRepository: _periodRepository,
+          clock: widget.now,
+          onOpenRecord: (date, symptom) => Navigator.of(context).push<void>(
+            MaterialPageRoute(
+              builder: (_) => RecordHubScreen(
+                healthRecordRepository: _healthRecordRepository,
+                captureNoteStore: _captureNoteStore,
+                recordHubRepository: _recordHubRepository,
+                interventionsRepository: _interventionsRepository,
+                periodRepository: _periodRepository,
+                initialDate: date,
+                initialSymptom: symptom,
+                clock: widget.now,
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
   Future<void> _completeOnboarding(OnboardingProfile profile) async {
     await _repository.save(profile);
     if (!mounted) {
@@ -388,7 +441,7 @@ class _LetterAppState extends State<LetterApp> with WidgetsBindingObserver {
     setState(() => _profile = profile);
     _rootContentRevision.value += 1;
     await _trackOperationally(const OnboardingCompletedEvent());
-    await _reconcileCycleCheckIn(requestPermission: true);
+    await _reconcileCycleCheckIn(requestPermission: false);
   }
 
   void _handleNotificationTap(String payload) {
@@ -423,18 +476,34 @@ class _LetterAppState extends State<LetterApp> with WidgetsBindingObserver {
     _navigationRequest.value = destination;
   }
 
-  Future<void> _reconcileCycleCheckIn({required bool requestPermission}) async {
-    try {
-      await _cycleCheckInScheduler.reconcile(
-        requestPermission: requestPermission,
-      );
-      final preferences = await _privacyPreferencesRepository.load();
-      if (!mounted) return;
-      setState(() {
-        _privacyPreferences = preferences;
+  Future<ComfortWindowResult?> _loadComfortWindow() =>
+      _healthReadTransaction.run(() async {
+        if (_recordHubRepository == null || _programmeRepository == null) {
+          return null;
+        }
+        final facts = await _recordHubRepository!.getAllFacts();
+        return const ComfortWindowEngine().analyze(
+          periods: await _basePeriodRepository.getAll(),
+          symptoms: await _healthRecordRepository.getAll(),
+          impacts: facts
+              .map((fact) => fact.impact)
+              .whereType<DailyImpactRecord>(),
+          moments: await _momentCheckInRepository.getAll(),
+          programmes: await _programmeRepository!.getAll(),
+          today: LocalDate.fromDateTime(
+            (widget.now ?? DateTime.now)().toLocal(),
+          ),
+        );
       });
+
+  Future<void> _reconcileCycleCheckIn({required bool requestPermission}) async {
+    // The former cycle reminder slot is retired. Preserve tap routing for old
+    // deliveries, but only the Build17 Comfort preference controls new reminders.
+    try {
+      await _notificationPort.cancelCycleCheckIn();
+      await _reconcileComfortWindow(requestPermission: false);
     } on Object {
-      // Cycle records remain available even when optional reminders fail.
+      // Optional notifications never block local records.
     }
   }
 
@@ -452,8 +521,7 @@ class _LetterAppState extends State<LetterApp> with WidgetsBindingObserver {
 
   Future<void> _reconcileLocalPredictions() async {
     await Future.wait<void>([
-      _reconcileCycleCheckIn(requestPermission: true),
-      _reconcileComfortWindow(requestPermission: false),
+      _reconcileCycleCheckIn(requestPermission: false),
       _refreshPlusPreview(),
     ]);
   }
@@ -589,9 +657,18 @@ class _LetterAppState extends State<LetterApp> with WidgetsBindingObserver {
     } else if (_loadFailed) {
       content = _OnboardingLoadErrorScreen(onRetry: _load);
     } else if (_profile == null) {
-      content = OnboardingFlow(onComplete: _completeOnboarding);
+      content = OnboardingFlow(
+        onComplete: _completeOnboarding,
+        onOpenPatternRecord:
+            _programmeRepository == null || _recordHubRepository == null
+            ? null
+            : _openOnboardingProgramme,
+      );
     } else {
       content = LetterExperienceShell(
+        recordHubRepository: _recordHubRepository,
+        interventionsRepository: _interventionsRepository,
+        programmeRepository: _programmeRepository,
         periodRepository: _periodRepository,
         careMemoryRepository: _careMemoryRepository,
         healthRecordRepository: _healthRecordRepository,
@@ -612,6 +689,9 @@ class _LetterAppState extends State<LetterApp> with WidgetsBindingObserver {
           momentCheckInRepository: _momentCheckInRepository,
           captureNoteStore: _captureNoteStore,
           entitlementRepository: _entitlementRepository,
+          recordHubRepository: _recordHubRepository,
+          recordInterventionsRepository: _interventionsRepository,
+          hasPlus: () => _entitlementRepository.current.hasPremiumAccess,
           readTransaction: _healthReadTransaction,
           now: widget.now,
         ),
@@ -625,6 +705,7 @@ class _LetterAppState extends State<LetterApp> with WidgetsBindingObserver {
           authService: _authService,
           readPrivacy: () => _privacyPreferences,
           persistPrivacy: _updatePrivacyPreferences,
+          reminderStatus: () => _comfortWindowScheduler.status,
         ),
         onConnectAccount: _connectAccountAfterDeletion,
         onCycleDataChanged: _reconcileLocalPredictions,
@@ -680,12 +761,18 @@ final class _NotificationNavigationObserver extends NavigatorObserver {
   }
 }
 
-final class _LetterYouExperiencePort implements YouExperiencePort {
+final class _LetterYouExperiencePort
+    implements YouExperiencePort, ComfortReminderStatusPort {
   const _LetterYouExperiencePort({
     required this.authService,
     required this.readPrivacy,
     required this.persistPrivacy,
+    required this.reminderStatus,
   });
+
+  final String Function() reminderStatus;
+  @override
+  String get comfortReminderStatus => reminderStatus();
 
   final AuthService authService;
   final PrivacyPreferences Function() readPrivacy;

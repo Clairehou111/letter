@@ -1,4 +1,7 @@
 import '../../care/domain/care_memory_repository.dart';
+import '../../record_hub/domain/record_hub_repository.dart';
+import '../../record_hub/domain/record_interventions.dart';
+import '../../record_hub/domain/record_programme.dart';
 import '../../capture/domain/capture_models.dart';
 import '../../check_in/domain/moment_check_in_repository.dart';
 import '../../comfort_kit/domain/comfort_kit_repository.dart';
@@ -21,6 +24,9 @@ final class LocalHealthStore {
     required this.comfortReminderPreferenceRepository,
     required this.readTransaction,
     this.localBackupStore,
+    this.recordHubRepository,
+    this.interventionsRepository,
+    this.programmeRepository,
     required this.closeStore,
   });
 
@@ -34,6 +40,9 @@ final class LocalHealthStore {
   final ComfortReminderPreferenceRepository comfortReminderPreferenceRepository;
   final LocalHealthReadTransaction readTransaction;
   final LocalBackupStore? localBackupStore;
+  final RecordHubRepository? recordHubRepository;
+  final RecordInterventionsRepository? interventionsRepository;
+  final RecordProgrammeRepository? programmeRepository;
   final Future<void> Function() closeStore;
 
   Future<void> close() => closeStore();

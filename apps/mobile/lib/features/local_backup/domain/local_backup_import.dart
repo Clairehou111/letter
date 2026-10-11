@@ -17,11 +17,12 @@ LocalBackupImportPlan planLocalBackupImport({
 }) {
   validateLocalBackupReferentialIntegrity(incoming);
   final incomingByName = {
-    for (final collection in incoming.collections) collection.name: collection,
+    for (final collection in incoming.collections)
+      collection.name: _upgradeMomentCollection(collection),
   };
   final destinationByName = {
     for (final collection in destination.collections)
-      collection.name: collection,
+      collection.name: _upgradeMomentCollection(collection),
   };
   final names = {...incomingByName.keys, ...destinationByName.keys}.toList()
     ..sort();
@@ -50,6 +51,60 @@ LocalBackupImportPlan planLocalBackupImport({
       createdAt: incoming.createdAt,
       collections: result,
     ),
+  );
+}
+
+// Legacy Moment timestamps remain readable, but provide no trustworthy
+// calendar-day/prospective evidence. Upcast only this collection for merging.
+LocalBackupCollection _upgradeMomentCollection(
+  LocalBackupCollection collection,
+) {
+  if (collection.name != 'moment_check_ins' || collection.schemaVersion >= 3) {
+    return collection;
+  }
+  if (collection.schemaVersion != 1 && collection.schemaVersion != 2) {
+    return collection;
+  }
+  final fields = {
+    'state',
+    'occurredAtMillis',
+    'createdAtMillis',
+    if (collection.schemaVersion == 2) ...{
+      'experiencedDay',
+      'provenance',
+      'writeZoneOffsetMinutes',
+      'writeZoneName',
+    },
+  };
+  return LocalBackupCollection(
+    name: collection.name,
+    schemaVersion: 3,
+    records: collection.records.map((record) {
+      if (record.data.length != fields.length ||
+          !record.data.keys.every(fields.contains)) {
+        throw const LocalBackupException(LocalBackupFailure.malformedPayload);
+      }
+      final data = collection.schemaVersion == 1
+          ? <String, Object?>{
+              ...record.data,
+              'experiencedDay': null,
+              'provenance': null,
+              'writeZoneOffsetMinutes': null,
+              'writeZoneName': null,
+            }
+          : record.data;
+      return LocalBackupRecord(
+        id: record.id,
+        updatedAt: record.updatedAt,
+        data: {
+          ...data,
+          'updatedAtMillis': data['createdAtMillis'],
+          'originalProvenance': data['provenance'],
+          'updatedZoneOffsetMinutes': data['writeZoneOffsetMinutes'],
+          'updatedZoneName': data['writeZoneName'],
+        },
+      );
+    }),
   );
 }
 

@@ -156,7 +156,7 @@ class TwinMatrixPainter extends CustomPainter {
     drawPhaseLabel('days before period', labelWidth + halfWidth / 2);
     drawPhaseLabel('cycle days', labelWidth + halfWidth + halfWidth / 2);
     final scale = TextPainter(
-      text: TextSpan(text: 'scale 1–5', style: subStyle),
+      text: TextSpan(text: 'scale 0–5', style: subStyle),
       textDirection: TextDirection.ltr,
     )..layout();
     scale.paint(canvas, Offset(labelWidth - scale.width - 6, labelY));
@@ -281,7 +281,8 @@ class TwinMatrixPainter extends CustomPainter {
     final coverage = TextPainter(
       text: TextSpan(
         text:
-            '${viewModel.observedRelativeDays}/28 relative days observed · ${viewModel.blankRelativeDays} blank · ${viewModel.sameDayObservations} same-day · ${viewModel.laterRecallObservations} later recall',
+            '${viewModel.observedRelativeDays}/28 relative days observed · ${viewModel.blankRelativeDays} blank · ${viewModel.sameDayObservations} same-day · ${viewModel.laterRecallObservations} later recall'
+            '${viewModel.timingUnknownObservations == 0 ? '' : ' · ${viewModel.timingUnknownObservations} timing unknown'}',
         style: metaStyle,
       ),
       textDirection: TextDirection.ltr,
@@ -318,7 +319,7 @@ class TwinMatrixPainter extends CustomPainter {
     final first = TextPainter(
       text: const TextSpan(
         text:
-            'bars = cycle-balanced average on the recorded 1–5 scale; blank = no observation.',
+            'bars = cycle-balanced average on the recorded 0–5 scale; blank = no observation.',
         style: style,
       ),
       textDirection: TextDirection.ltr,
@@ -327,7 +328,8 @@ class TwinMatrixPainter extends CustomPainter {
     final second = TextPainter(
       text: TextSpan(
         text:
-            'Provenance: ${viewModel.sameDayObservations} same-day, ${viewModel.laterRecallObservations} later recall. Local records; not a diagnosis.',
+            'Provenance: ${viewModel.sameDayObservations} same-day, ${viewModel.laterRecallObservations} later recall'
+            '${viewModel.timingUnknownObservations == 0 ? '' : ', ${viewModel.timingUnknownObservations} timing unknown'}. Local records; not a diagnosis.',
         style: style,
       ),
       textDirection: TextDirection.ltr,
@@ -553,6 +555,8 @@ class _TwinCellButton extends StatelessWidget {
           decoration: BoxDecoration(
             color: severity == null
                 ? Colors.transparent
+                : severity == 0
+                ? const Color(0xFFF8F7F4)
                 : Color.lerp(
                     const Color(0xFFE8E4DF),
                     const Color(0xFF176D67),
@@ -635,8 +639,15 @@ class _TwinCellButton extends StatelessWidget {
 }
 
 String _twinSeverityLabel(double value) {
-  const labels = ['Minimal', 'Mild', 'Moderate', 'Severe', 'Extreme'];
-  if (value == value.roundToDouble()) return labels[value.round() - 1];
-  return '${labels[value.floor().clamp(1, 5) - 1]}–'
-      '${labels[value.ceil().clamp(1, 5) - 1]}';
+  const labels = [
+    'Not present',
+    'Minimal',
+    'Mild',
+    'Moderate',
+    'Severe',
+    'Extreme',
+  ];
+  if (value == value.roundToDouble()) return labels[value.round()];
+  return '${labels[value.floor().clamp(0, 5)]}–'
+      '${labels[value.ceil().clamp(0, 5)]}';
 }

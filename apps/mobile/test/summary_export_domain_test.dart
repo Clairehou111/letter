@@ -93,6 +93,53 @@ SummaryExportInput summaryExportInput() {
 }
 
 void main() {
+  test('explicit zero and unknown timing survive summary, matrix and CSV', () {
+    final summary = buildCycleAndCareSummary(
+      input: SummaryExportInput(
+        periodDays: const [SummaryPeriodDay(LocalDate(2026, 7, 1))],
+        predictions: const [],
+        checkIns: const [],
+        careRecords: const [],
+        notes: const [],
+        healthRecords: [
+          HealthRecord(
+            id: 'zero-unknown',
+            symptom: SymptomType.cramps,
+            severity: SymptomSeverity.notPresent,
+            functionalImpacts: const {},
+            experiencedDate: const LocalDate(2026, 7, 3),
+            recordedAt: DateTime.utc(2026, 7, 4),
+            updatedAt: DateTime.utc(2026, 7, 4),
+            provenance: HealthRecordProvenance.timingUnknown,
+            userConfirmed: true,
+            vocabularyVersion: healthRecordVocabularyVersion,
+          ),
+        ],
+      ),
+      range: const SummaryDateRange(
+        start: LocalDate(2026, 7, 1),
+        end: LocalDate(2026, 7, 10),
+      ),
+      selectedNoteIds: const {},
+    );
+    expect(summary.healthRows.single.severity, SymptomSeverity.notPresent);
+    expect(
+      summary.healthRows.single.provenance,
+      SummaryRecordProvenance.timingUnknown,
+    );
+    final model = TwinMatrixSummaryAdapter.fromSummary(
+      summary: summary,
+      exportTimestamp: '2026-07-11',
+    );
+    expect(model.sameDayObservations, 0);
+    expect(model.laterRecallObservations, 0);
+    expect(model.timingUnknownObservations, 1);
+    expect(model.clusters.last.cycleCells[2].severity, 0);
+    final csv = utf8.decode(buildCycleAndCareCsv(summary).bytes);
+    expect(csv, contains('0/5'));
+    expect(csv, contains('Timing unknown'));
+  });
+
   const range = SummaryDateRange(
     start: LocalDate(2026, 7, 1),
     end: LocalDate(2026, 7, 31),

@@ -55,16 +55,28 @@ final class TapNotificationPort implements LocalNotificationPort {
   }) async {}
 }
 
+Finder _tab(int index, {bool skipOffstage = true}) => find.byWidgetPredicate(
+  (widget) =>
+      widget is Semantics &&
+      widget.properties.label == ['Today', 'Cycle', 'Care', 'Patterns'][index],
+  skipOffstage: skipOffstage,
+);
+
+Finder get _recordAction => find.byWidgetPredicate(
+  (widget) =>
+      widget is Semantics &&
+      widget.properties.label == 'Record today or another date',
+);
+
 Future<void> pumpUntilTabSelected(
   WidgetTester tester,
   int selectedIndex,
 ) async {
   for (var index = 0; index < 50; index += 1) {
     await tester.pump(const Duration(milliseconds: 100));
-    final navigationBar = find.byType(NavigationBar);
-    if (navigationBar.evaluate().isNotEmpty &&
-        tester.widget<NavigationBar>(navigationBar).selectedIndex ==
-            selectedIndex) {
+    final tab = _tab(selectedIndex);
+    if (tab.evaluate().isNotEmpty &&
+        tester.widget<Semantics>(tab).properties.selected == true) {
       return;
     }
   }
@@ -85,29 +97,29 @@ void main() {
     );
     // The loaded Today surface intentionally keeps a quiet ambient animation
     // alive, so advancing a bounded frame is the correct readiness contract.
-    await pumpUntilFound(tester, find.byType(NavigationBar));
+    await pumpUntilFound(tester, _tab(0));
 
-    final destinations = tester
-        .widget<NavigationBar>(find.byType(NavigationBar))
-        .destinations
-        .cast<NavigationDestination>();
-    for (final destination in destinations) {
-      expect((destination.selectedIcon! as Icon).size, 20);
+    for (var index = 0; index < 4; index++) {
+      final tab = _tab(index);
+      expect(tab, findsOneWidget);
+      expect(tester.widget<Semantics>(tab).properties.button, isTrue);
+      expect(tester.widget<Semantics>(tab).properties.selected, index == 0);
+      final icon = find.descendant(of: tab, matching: find.byType(Icon));
+      expect(icon, findsOneWidget);
+      expect(tester.getSize(icon).width, greaterThanOrEqualTo(20));
+      expect(tester.getSize(icon).height, greaterThanOrEqualTo(20));
     }
+    expect(_recordAction, findsOneWidget);
+    expect(tester.widget<Semantics>(_recordAction).properties.button, isTrue);
+    expect(tester.widget<Semantics>(_recordAction).properties.selected, isNull);
 
     notifications.onTap?.call('letter:cycle-check-in');
-    await tester.pump();
-    expect(
-      tester.widget<NavigationBar>(find.byType(NavigationBar)).selectedIndex,
-      1,
-    );
+    await pumpUntilTabSelected(tester, 1);
+    expect(tester.widget<Semantics>(_tab(1)).properties.selected, isTrue);
 
     notifications.onTap?.call('letter:comfort-window');
-    await tester.pump();
-    expect(
-      tester.widget<NavigationBar>(find.byType(NavigationBar)).selectedIndex,
-      2,
-    );
+    await pumpUntilTabSelected(tester, 2);
+    expect(tester.widget<Semantics>(_tab(2)).properties.selected, isTrue);
   });
 
   testWidgets(
@@ -121,7 +133,7 @@ void main() {
           notificationPort: notifications,
         ),
       );
-      await pumpUntilFound(tester, find.byType(NavigationBar));
+      await pumpUntilFound(tester, _tab(0));
 
       await tester.tap(find.byTooltip('Settings').first);
       await pumpUntilFound(tester, find.byTooltip('Back'));
@@ -139,10 +151,7 @@ void main() {
 
       expect(find.widgetWithText(AppBar, 'Reports'), findsNothing);
       expect(find.text('Clinician reports'), findsNothing);
-      expect(
-        tester.widget<NavigationBar>(find.byType(NavigationBar)).selectedIndex,
-        1,
-      );
+      expect(tester.widget<Semantics>(_tab(1)).properties.selected, isTrue);
     },
   );
 
@@ -157,11 +166,11 @@ void main() {
           notificationPort: notifications,
         ),
       );
-      await pumpUntilFound(tester, find.byType(NavigationBar));
+      await pumpUntilFound(tester, _tab(0));
 
       unawaited(
         showModalBottomSheet<void>(
-          context: tester.element(find.byType(NavigationBar)),
+          context: tester.element(_tab(0)),
           builder: (_) => const Text('Open test sheet'),
         ),
       );
@@ -171,10 +180,7 @@ void main() {
       await pumpUntilTabSelected(tester, 2);
 
       expect(find.text('Open test sheet'), findsNothing);
-      expect(
-        tester.widget<NavigationBar>(find.byType(NavigationBar)).selectedIndex,
-        2,
-      );
+      expect(tester.widget<Semantics>(_tab(2)).properties.selected, isTrue);
     },
   );
 
@@ -189,10 +195,10 @@ void main() {
         notificationPort: notifications,
       ),
     );
-    await pumpUntilFound(tester, find.byType(NavigationBar));
+    await pumpUntilFound(tester, _tab(0));
 
     unawaited(
-      Navigator.of(tester.element(find.byType(NavigationBar))).push<void>(
+      Navigator.of(tester.element(_tab(0))).push<void>(
         MaterialPageRoute<void>(
           builder: (_) => const PopScope(
             canPop: false,
@@ -210,11 +216,10 @@ void main() {
     expect(find.text('Unsaved draft'), findsOneWidget);
     expect(
       tester
-          .widget<NavigationBar>(
-            find.byType(NavigationBar, skipOffstage: false),
-          )
-          .selectedIndex,
-      0,
+          .widget<Semantics>(_tab(0, skipOffstage: false))
+          .properties
+          .selected,
+      isTrue,
     );
   });
 
@@ -227,7 +232,7 @@ void main() {
         periodRepository: InMemoryPeriodRepository(),
       ),
     );
-    await pumpUntilFound(tester, find.byType(NavigationBar));
+    await pumpUntilFound(tester, _tab(0));
 
     await tester.tap(find.byTooltip('Settings').first);
     await pumpUntilFound(tester, find.byTooltip('Back'));
@@ -238,11 +243,11 @@ void main() {
     tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
     await tester.pump();
     await tester.tap(find.byTooltip('Back'));
-    await pumpUntilFound(tester, find.byType(NavigationBar));
+    await pumpUntilFound(tester, _tab(0));
 
     unawaited(
       showModalBottomSheet<void>(
-        context: tester.element(find.byType(NavigationBar)),
+        context: tester.element(_tab(0)),
         builder: (_) => const Text('Sensitive modal content'),
       ),
     );

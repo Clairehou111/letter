@@ -393,7 +393,7 @@ List<_HarderRecord> _harderRecordsInCompletedCycles(
 ) {
   final records =
       <_HarderRecord>[
-        for (final symptom in data.symptoms)
+        for (final symptom in data.symptoms.where((source) => source.severity.score > 0))
           if (cycleIndexFor(data, symptom.date.epochDay) != null)
             _HarderRecord.symptom(symptom),
         for (final mood in data.moods)
@@ -411,7 +411,7 @@ List<_HarderRecord> _harderRecordsForCategory(
   PatternsSymptomCategory category,
 ) {
   final records = <_HarderRecord>[
-    for (final symptom in data.symptoms)
+    for (final symptom in data.symptoms.where((source) => source.severity.score > 0))
       if (symptom.category == category) _HarderRecord.symptom(symptom),
     for (final mood in data.moods)
       if (mood.harderCategory == category) _HarderRecord.mood(mood),

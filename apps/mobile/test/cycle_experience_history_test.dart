@@ -4,6 +4,7 @@ import 'package:letter_mobile/experience/cycle/cycle_action_panel.dart';
 import 'package:letter_mobile/experience/cycle/cycle_experience.dart';
 import 'package:letter_mobile/experience/records/observation_picker.dart';
 import 'package:letter_mobile/features/care/data/in_memory_care_memory_repository.dart';
+import 'package:letter_mobile/features/care/domain/care_memory.dart';
 import 'package:letter_mobile/features/cycle/data/in_memory_period_repository.dart';
 import 'package:letter_mobile/features/cycle/domain/bleeding_flow.dart';
 import 'package:letter_mobile/features/cycle/domain/local_date.dart';
@@ -238,18 +239,23 @@ void main() {
     );
     await tester.pumpAndSettle();
 
+    await tester.tap(find.byKey(const Key('observation-browse-symptoms')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.widgetWithText(ExpansionTile, 'Digestion'));
+    await tester.pumpAndSettle();
     final constipation = find.text('Constipation');
     await tester.scrollUntilVisible(
       constipation,
       300,
-      scrollable: find.byType(Scrollable).first,
+      scrollable: find.byType(Scrollable).last,
     );
     await tester.tap(constipation);
     await tester.pumpAndSettle();
 
-    expect(find.text('How strong is it'), findsOneWidget);
+    expect(find.byKey(const Key('observation-current-degree')), findsOneWidget);
+    expect(find.text('Constipation'), findsOneWidget);
     expect(
-      find.bySemanticsLabel('Constipation, Severity: Mild, 2 of 5'),
+      find.bySemanticsLabel(RegExp('Constipation, Severity: Mild, 2 of 5')),
       findsOneWidget,
     );
   });
@@ -263,7 +269,20 @@ void main() {
       _period('june', 6, 1),
       _period('july', 7, 1),
     ];
-    final careMemoryRepository = InMemoryCareMemoryRepository();
+    final source = CycleReflection(
+      id: 'original-june-reflection',
+      startingPeriodId: periods.first.id,
+      cycleStartDay: const LocalDate(2026, 5, 30).epochDay,
+      observation: 'Original observation',
+      need: ReflectionNeed.boundaries,
+      whatHelped: 'Original help',
+      futureSelfNote: 'Original future note',
+      createdAt: DateTime.utc(2026, 6, 1),
+      updatedAt: DateTime.utc(2026, 6, 2),
+    );
+    final careMemoryRepository = InMemoryCareMemoryRepository(
+      cycleReflections: [source],
+    );
 
     await tester.pumpWidget(
       MaterialApp(
@@ -286,6 +305,7 @@ void main() {
       400,
       scrollable: detailScroll,
     );
+    expect(find.text('Original cycle date: 2026-05-30'), findsOneWidget);
     final futureField = find.byWidgetPredicate(
       (widget) =>
           widget is TextField &&
@@ -302,13 +322,15 @@ void main() {
     await tester.scrollUntilVisible(saveButton, 200, scrollable: detailScroll);
     await tester.tap(saveButton);
     await tester.pumpAndSettle();
-    expect(
-      await careMemoryRepository.getCycleReflection(
-        periods.first.startDate.epochDay,
-        startingPeriodId: periods.first.id,
-      ),
-      isNotNull,
-    );
+    final saved = (await careMemoryRepository.getCycleReflections()).single;
+    expect(saved.id, source.id);
+    expect(saved.cycleStartDay, source.cycleStartDay);
+    expect(saved.startingPeriodId, source.startingPeriodId);
+    expect(saved.createdAt, source.createdAt);
+    expect(saved.need, ReflectionNeed.boundaries);
+    expect(saved.observation, source.observation);
+    expect(saved.whatHelped, source.whatHelped);
+    expect(saved.futureSelfNote, 'Hard days will pass.');
     expect(find.text('Saved'), findsOneWidget);
 
     await tester.enterText(futureField, 'Hard days pass, one at a time.');
@@ -374,10 +396,14 @@ void main() {
     await tester.pumpAndSettle();
     await tester.tap(find.text('Cramps').first);
     await tester.pumpAndSettle();
-    final mildDegree = find.bySemanticsLabel('Cramps, Severity: Mild, 2 of 5');
+    final mildDegree = find.byKey(const Key('observation-degree-2'));
     await tester.ensureVisible(mildDegree);
     await tester.pumpAndSettle();
     await tester.tap(mildDegree);
+    await tester.pumpAndSettle();
+    final closeSymptom = find.byKey(const Key('observation-close-symptom'));
+    await tester.ensureVisible(closeSymptom);
+    await tester.tap(closeSymptom);
     await tester.pumpAndSettle();
     expect(find.text('On record for this day'), findsOneWidget);
     expect(
@@ -402,6 +428,9 @@ void main() {
       FunctionalImpact.workOrSchool,
     });
 
+    await tester.ensureVisible(find.text('Cramps').first);
+    await tester.tap(find.text('Cramps').first);
+    await tester.pumpAndSettle();
     await tester.ensureVisible(mildDegree);
     await tester.pumpAndSettle();
     await tester.tap(mildDegree);
@@ -411,6 +440,9 @@ void main() {
 
     await tester.ensureVisible(mildDegree);
     await tester.tap(mildDegree);
+    await tester.pumpAndSettle();
+    await tester.ensureVisible(closeSymptom);
+    await tester.tap(closeSymptom);
     await tester.pumpAndSettle();
     expect(find.text('On record for this day'), findsOneWidget);
     expect(find.byTooltip('Edit daily impact for Cramps'), findsOneWidget);
@@ -477,6 +509,8 @@ void main() {
     );
     await tester.pumpAndSettle();
 
+    await tester.ensureVisible(find.text('Fill in days').first);
+    await tester.pumpAndSettle();
     await tester.tap(find.text('Fill in days').first);
     await tester.pumpAndSettle();
     await tester.tap(find.text('7/15/2026').last);
@@ -652,6 +686,8 @@ void main() {
 
     final allPeriods = find.text('View all 7 periods');
     expect(allPeriods, findsOneWidget);
+    await tester.ensureVisible(allPeriods);
+    await tester.pumpAndSettle();
     await tester.tap(allPeriods);
     await tester.pumpAndSettle();
 

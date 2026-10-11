@@ -5,6 +5,10 @@ import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:letter_mobile/experience/today/today_experience_visual_baseline.dart';
+import 'package:letter_mobile/experience/components/interaction_controls.dart';
+import 'package:letter_mobile/experience/theme/experience_foundation.dart';
+import 'package:letter_mobile/features/record_hub/presentation/record_entry_section.dart';
+import 'package:letter_mobile/features/record_hub/domain/record_hub_facts.dart';
 import 'package:letter_mobile/experience/today/today_visual_port.dart';
 import 'package:letter_mobile/features/capture/domain/capture_models.dart';
 import 'package:letter_mobile/features/check_in/data/in_memory_moment_check_in_repository.dart';
@@ -226,7 +230,9 @@ void main() {
           .getBoxesForSelection(
             const TextSelection(baseOffset: 0, extentOffset: 13),
           ),
-      hasLength(1),
+      hasLength(2),
+      reason:
+          'The secondary brand line may wrap between its two intact words at maximum text scale.',
     );
 
     final hero = find.text('A quiet beginning');
@@ -338,8 +344,12 @@ void main() {
     );
     await tester.pumpAndSettle();
 
+    await _openMoment(tester);
     final goodChip = find
-        .ancestor(of: find.text('Good'), matching: find.byType(GestureDetector))
+        .ancestor(
+          of: find.text('Good'),
+          matching: find.byType(InteractionSurface),
+        )
         .first;
     final size = tester.getSize(goodChip);
     expect(size.width, greaterThanOrEqualTo(48));
@@ -347,30 +357,49 @@ void main() {
   });
 
   testWidgets(
-    'Today keeps the first mood choice calm and moves extras to More',
+    'one Moment card opens all twelve accessible feelings without a More split',
     (tester) async {
+      final semantics = tester.ensureSemantics();
       await tester.pumpWidget(
-        MaterialApp(home: TodayExperienceVisual(port: _emptyPort())),
+        MaterialApp(
+          theme: ExperienceFoundation.lightTheme(),
+          home: TodayExperienceVisual(port: _emptyPort()),
+        ),
       );
       await tester.pumpAndSettle();
-
-      final more = find.text('More');
-      await tester.scrollUntilVisible(
-        more,
-        240,
-        scrollable: find.byType(Scrollable).first,
-      );
-      expect(find.text('Good'), findsOneWidget);
-      expect(find.text('Anxious'), findsOneWidget);
-      expect(find.text('Energized'), findsNothing);
-      expect(find.text('Tender'), findsNothing);
-
-      await tester.tap(more);
-      await tester.pumpAndSettle();
-      expect(find.text('Energized'), findsOneWidget);
-      expect(find.text('Tender'), findsOneWidget);
-      expect(find.text('Overwhelmed'), findsOneWidget);
-      expect(find.text('Exhausted'), findsOneWidget);
+      expect(find.byKey(const Key('today-moment-card')), findsOneWidget);
+      expect(find.text('More'), findsNothing);
+      expect(find.text('Good'), findsNothing);
+      await _openMoment(tester);
+      for (final state in MomentCheckInState.values) {
+        expect(find.text(state.label), findsOneWidget);
+        expect(find.bySemanticsLabel(state.label), findsWidgets);
+        expect(
+          tester
+              .getSemantics(find.bySemanticsLabel(state.label).first)
+              .getSemanticsData()
+              .hasAction(SemanticsAction.tap),
+          isTrue,
+        );
+      }
+      for (final feeling in MomentCheckInState.values) {
+        final surface = tester.widget<InteractionSurface>(
+          find
+              .ancestor(
+                of: find.text(feeling.label),
+                matching: find.byType(InteractionSurface),
+              )
+              .first,
+        );
+        expect(
+          surface.color,
+          Theme.of(
+            tester.element(find.text(feeling.label)),
+          ).colorScheme.surfaceContainerHighest,
+        );
+      }
+      expect(find.text('More'), findsNothing);
+      semantics.dispose();
     },
   );
 
@@ -393,6 +422,7 @@ void main() {
       );
       await tester.pumpAndSettle();
       tester.takeAnnouncements();
+      await _openMoment(tester);
       final good = find.text('Good');
       await tester.scrollUntilVisible(
         good,
@@ -445,6 +475,7 @@ void main() {
     );
     await tester.pumpAndSettle();
 
+    await _openMoment(tester);
     final irritable = find.text('Irritable');
     await tester.scrollUntilVisible(
       irritable,
@@ -489,6 +520,7 @@ void main() {
       );
       await tester.pumpAndSettle();
 
+      await _openMoment(tester);
       final irritable = find.text('Irritable');
       await tester.scrollUntilVisible(
         irritable,
@@ -531,6 +563,7 @@ void main() {
     );
     await tester.pumpAndSettle();
 
+    await _openMoment(tester);
     final irritable = find.text('Irritable');
     await tester.scrollUntilVisible(
       irritable,
@@ -752,10 +785,12 @@ void main() {
     );
     await tester.pumpAndSettle();
 
+    await _openMoment(tester);
     await tester.tap(find.text('Good').first);
     await tester.pumpAndSettle();
     expect((await moods.getAll()).single.state, MomentCheckInState.good);
 
+    await _expandBody(tester);
     final light = find.text('Light').first;
     await tester.scrollUntilVisible(
       light,
@@ -786,7 +821,7 @@ void main() {
     await tester.pumpAndSettle();
     await tester.tap(find.text('Cramps').last);
     await tester.pumpAndSettle();
-    await tester.tap(find.text('Moderate').last);
+    await tester.tap(find.byKey(const Key('today-degree-3')));
     await tester.pumpAndSettle();
 
     final records = await symptoms.getAll();
@@ -820,7 +855,8 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    expect(find.textContaining('No notes yet'), findsOneWidget);
+    expect(find.text('A few words for yourself'), findsOneWidget);
+    await _expandNote(tester);
     final writeNote = find.text('Write a line for future you');
     await tester.scrollUntilVisible(
       writeNote,
@@ -834,8 +870,8 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(await notes.getAll(), hasLength(1));
-    expect(find.textContaining('No notes yet'), findsNothing);
-    expect(find.textContaining('Your note is here'), findsOneWidget);
+    expect(find.text('1 note saved today'), findsOneWidget);
+    expect(find.text('A quiet factual note.'), findsOneWidget);
   });
 
   testWidgets('Quick note UI edits stable rows, updates Kit, and deletes', (
@@ -862,6 +898,7 @@ void main() {
     );
     await tester.pumpAndSettle();
 
+    await _expandNote(tester);
     final add = find.byKey(const ValueKey<String>('quick-note-add'));
     await tester.scrollUntilVisible(
       add,
@@ -958,6 +995,339 @@ void main() {
     );
   });
 
+  testWidgets(
+    'named shortcuts use exact saved summaries and open their matching Record section',
+    (tester) async {
+      tester.view.physicalSize = const Size(402, 874);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.reset);
+      final base = await _emptyPort().load();
+      final stamp = DateTime.utc(2026, 8, 15, 12);
+      final opened = <RecordEntrySection>[];
+      final openedSymptoms = <SymptomType>[];
+      final snapshot = TodayVisualSnapshot(
+        today: base.today,
+        containingPeriod: null,
+        openPeriod: null,
+        flowRecord: null,
+        mood: null,
+        symptoms: [
+          HealthRecord(
+            id: 'synthetic-zero',
+            vocabularyVersion: healthRecordVocabularyVersion,
+            symptom: SymptomType.cramps,
+            severity: SymptomSeverity.notPresent,
+            functionalImpacts: const {},
+            experiencedDate: base.today,
+            recordedAt: stamp,
+            updatedAt: stamp,
+            provenance: HealthRecordProvenance.sameDay,
+            userConfirmed: true,
+          ),
+          HealthRecord(
+            id: 'synthetic-anxiety',
+            vocabularyVersion: healthRecordVocabularyVersion,
+            symptom: SymptomType.anxiety,
+            severity: SymptomSeverity.moderate,
+            functionalImpacts: const {},
+            experiencedDate: base.today,
+            recordedAt: stamp,
+            updatedAt: stamp,
+            provenance: HealthRecordProvenance.sameDay,
+            userConfirmed: true,
+          ),
+        ],
+        note: 'Synthetic private thought.',
+        pins: SymptomPins([
+          SymptomType.anxiety,
+          SymptomType.cramps,
+          SymptomType.headache,
+        ]),
+        sleep: RecordHubFact(
+          metadata: RecordFactMetadata(
+            id: 'synthetic-sleep',
+            experiencedDate: base.today,
+            recordedAt: stamp,
+            updatedAt: stamp,
+            originalProvenance: HealthRecordProvenance.sameDay,
+            provenance: HealthRecordProvenance.sameDay,
+          ),
+          value: SleepDraft(
+            experiencedDate: base.today,
+            duration: RecordedDuration.exact(450),
+            quality: SleepQuality.restful,
+          ),
+        ),
+        cycleContext: base.cycleContext,
+      );
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: ExperienceFoundation.lightTheme(),
+          home: TodayExperienceVisual(
+            port: _LoadOnlyPort(() async => snapshot),
+            onOpenRecordSection: opened.add,
+            onOpenSymptom: openedSymptoms.add,
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+      final pinSurfaces = tester
+          .widgetList<InteractionSurface>(
+            find.byWidgetPredicate(
+              (widget) =>
+                  widget is InteractionSurface &&
+                  widget.key.toString().contains('today-pinned-'),
+            ),
+          )
+          .toList();
+      expect(pinSurfaces.map((surface) => surface.key), [
+        const Key('today-pinned-anxiety'),
+        const Key('today-pinned-cramps'),
+        const Key('today-pinned-headache'),
+      ]);
+      expect(pinSurfaces.map((surface) => surface.selected), [
+        true,
+        true,
+        false,
+      ]);
+      expect(
+        find.descendant(
+          of: find.byKey(const Key('today-pinned-cramps')),
+          matching: find.text('Not present'),
+        ),
+        findsOneWidget,
+      );
+      expect(
+        find.descendant(
+          of: find.byKey(const Key('today-pinned-headache')),
+          matching: find.text('Not recorded'),
+        ),
+        findsOneWidget,
+      );
+      expect(find.text('450 min · Restful'), findsOneWidget);
+      expect(find.text('Synthetic private thought.'), findsOneWidget);
+      for (final label in ['Bleeding', 'Sleep', 'Private note']) {
+        await tester.ensureVisible(find.text(label));
+        await tester.tap(find.text(label));
+        await tester.pump();
+      }
+      expect(opened, [
+        RecordEntrySection.bleeding,
+        RecordEntrySection.sleep,
+        RecordEntrySection.note,
+      ]);
+      for (final symptom in snapshot.pins!.symptoms) {
+        pinSurfaces[snapshot.pins!.symptoms.indexOf(symptom)].onTap!();
+      }
+      expect(openedSymptoms, snapshot.pins!.symptoms);
+      expect(tester.takeException(), isNull);
+    },
+  );
+
+  testWidgets(
+    'unset pins show curated quick symptoms without claiming user preferences',
+    (tester) async {
+      final opened = <SymptomType>[];
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: ExperienceFoundation.lightTheme(),
+          home: TodayExperienceVisual(
+            port: _emptyPort(),
+            onOpenRecord: () {},
+            onOpenSymptom: opened.add,
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+      expect(find.text('Quick symptoms'), findsOneWidget);
+      expect(find.text('Pinned by you'), findsNothing);
+      final shortcuts = tester
+          .widgetList<InteractionSurface>(
+            find.byWidgetPredicate(
+              (widget) =>
+                  widget is InteractionSurface &&
+                  widget.key.toString().contains('today-pinned-'),
+            ),
+          )
+          .toList();
+      expect(shortcuts, hasLength(3));
+      expect(shortcuts.every((shortcut) => !shortcut.selected), isTrue);
+      expect(opened, isEmpty);
+      shortcuts.first.onTap!();
+      expect(opened, hasLength(1));
+      expect(tester.takeException(), isNull);
+    },
+  );
+
+  testWidgets(
+    'all four pinned shortcuts remain readable and operable at large text',
+    (tester) async {
+      tester.view.physicalSize = const Size(320, 800);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.reset);
+      final base = await _emptyPort().load();
+      final pins = SymptomPins([
+        SymptomType.anhedonia,
+        SymptomType.sleepDifficulty,
+        SymptomType.anxiety,
+        SymptomType.cramps,
+      ]);
+      final selected = <SymptomType>[];
+      final snapshot = TodayVisualSnapshot(
+        today: base.today,
+        containingPeriod: null,
+        openPeriod: null,
+        flowRecord: null,
+        mood: null,
+        symptoms: const [],
+        note: null,
+        pins: pins,
+        cycleContext: base.cycleContext,
+      );
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: ExperienceFoundation.lightTheme(),
+          builder: (context, child) => MediaQuery(
+            data: MediaQuery.of(
+              context,
+            ).copyWith(textScaler: const TextScaler.linear(2)),
+            child: child!,
+          ),
+          home: TodayExperienceVisual(
+            port: _LoadOnlyPort(() async => snapshot),
+            onOpenRecordSection: (_) {},
+            onOpenSymptom: selected.add,
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+      for (final symptom in pins.symptoms) {
+        final shortcut = find.byKey(Key('today-pinned-${symptom.name}'));
+        await tester.ensureVisible(shortcut);
+        expect(tester.getSize(shortcut).height, greaterThanOrEqualTo(44));
+        await tester.tap(shortcut);
+        await tester.pump();
+        expect(tester.takeException(), isNull);
+      }
+      expect(selected, pins.symptoms);
+    },
+  );
+
+  testWidgets(
+    'a host header replaces Today masthead without hiding its actions',
+    (tester) async {
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: ExperienceFoundation.lightTheme(),
+          home: Column(
+            children: [
+              const Text('Today'),
+              Expanded(
+                child: TodayExperienceVisual(
+                  port: _emptyPort(),
+                  showHeader: false,
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+      expect(find.text('Today'), findsOneWidget);
+      expect(find.text('Letter Within'), findsNothing);
+      expect(find.byKey(const Key('today-moment-card')), findsOneWidget);
+      await _openMoment(tester);
+      await tester.tap(find.text('Calm'));
+      await tester.pumpAndSettle();
+      expect(find.text('Moment saved · tap to edit'), findsOneWidget);
+      expect(tester.takeException(), isNull);
+    },
+  );
+
+  testWidgets(
+    'failed Moment remains selected in its sheet and can retry durably',
+    (tester) async {
+      final base = _emptyPort();
+      var writes = 0;
+      final port = _DeferredMoodPort(base, (state) async {
+        writes++;
+        if (writes == 1) throw StateError('Synthetic write failure');
+        return base.saveMood(state);
+      });
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: ExperienceFoundation.lightTheme(),
+          home: TodayExperienceVisual(port: port),
+        ),
+      );
+      await tester.pumpAndSettle();
+      await _openMoment(tester);
+      await tester.tap(find.text('Calm'));
+      await tester.pumpAndSettle();
+      expect(
+        find.text('Your feeling could not be saved. Try again.'),
+        findsOneWidget,
+      );
+      final calm = tester.widget<InteractionSurface>(
+        find
+            .ancestor(
+              of: find.text('Calm'),
+              matching: find.byType(InteractionSurface),
+            )
+            .first,
+      );
+      expect(calm.selected, isTrue);
+      expect(find.text('Moment saved · tap to edit'), findsNothing);
+      await tester.tap(find.text('Calm'));
+      await tester.pumpAndSettle();
+      expect(writes, 2);
+      expect((await base.load()).mood, MomentCheckInState.calm);
+      expect(find.text('Moment saved · tap to edit'), findsOneWidget);
+      expect(
+        find.text('Your feeling could not be saved. Try again.'),
+        findsNothing,
+      );
+    },
+  );
+
+  testWidgets(
+    'all feelings remain reachable at compact large text with Reduce Motion',
+    (tester) async {
+      final semantics = tester.ensureSemantics();
+      tester.view.physicalSize = const Size(320, 568);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.reset);
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: ExperienceFoundation.lightTheme(),
+          home: MediaQuery(
+            data: const MediaQueryData(
+              size: Size(320, 568),
+              textScaler: TextScaler.linear(2),
+              disableAnimations: true,
+            ),
+            child: TodayExperienceVisual(port: _emptyPort()),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+      await _openMoment(tester);
+      for (final feeling in MomentCheckInState.values) {
+        final word = find.text(feeling.label);
+        await tester.scrollUntilVisible(
+          word,
+          120,
+          scrollable: find.byType(Scrollable).last,
+        );
+        expect(word.hitTestable(), findsOneWidget);
+        expect(find.bySemanticsLabel(feeling.label), findsWidgets);
+      }
+      expect(tester.takeException(), isNull);
+      expect(tester.binding.transientCallbackCount, 0);
+      semantics.dispose();
+    },
+  );
+
   testWidgets('ending a same-day period never offers an overlapping start', (
     tester,
   ) async {
@@ -992,7 +1362,9 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('Period day 1'), findsOneWidget);
     expect(find.text('Started Aug 15'), findsOneWidget);
-    await tester.tap(find.text('End period'));
+    final endButton = find.widgetWithText(TextButton, 'End period');
+    expect(tester.getSize(endButton).height, greaterThanOrEqualTo(48));
+    await tester.tap(endButton);
     await tester.pumpAndSettle();
     await tester.tap(find.text('End period').last);
     await tester.pumpAndSettle();
@@ -1001,4 +1373,27 @@ void main() {
     expect(find.text('Start period'), findsNothing);
     expect((await periods.getAll()).single.endDate, today);
   });
+}
+
+Future<void> _openMoment(WidgetTester tester) async {
+  final card = find.byKey(const Key('today-moment-card'));
+  await tester.ensureVisible(card);
+  await tester.tap(card);
+  await tester.pumpAndSettle();
+}
+
+Future<void> _expandBody(WidgetTester tester) async {
+  final title = find.byKey(const Key('today-body-expansion'));
+  await tester.ensureVisible(title);
+  await tester.tap(find.descendant(of: title, matching: find.text('Body')));
+  await tester.pumpAndSettle();
+}
+
+Future<void> _expandNote(WidgetTester tester) async {
+  final title = find.byKey(const Key('today-note-expansion'));
+  await tester.ensureVisible(title);
+  await tester.tap(
+    find.descendant(of: title, matching: find.text('Private note')),
+  );
+  await tester.pumpAndSettle();
 }

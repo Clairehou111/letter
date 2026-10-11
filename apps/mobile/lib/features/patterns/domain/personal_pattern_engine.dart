@@ -36,7 +36,7 @@ final class PersonalPatternEngine {
         latestDaily[key] = record;
       }
     }
-    final confirmed = latestDaily.values;
+    final confirmed = latestDaily.values.where((record) => record.severity.score > 0);
     final grouped = <SymptomType, List<HealthRecord>>{};
     for (final record in confirmed) {
       grouped.putIfAbsent(record.symptom, () => []).add(record);

@@ -1,3 +1,5 @@
+import 'dart:math';
+
 import 'local_date.dart';
 import 'period_record.dart';
 import 'period_repository.dart';
@@ -93,4 +95,66 @@ PeriodDraft mergeAdjacentPeriodDraft(
   }
 
   return PeriodDraft(startDate: start, endDate: remainsOpen ? null : end);
+}
+
+/// Source snapshots remain private to the repository. Tokens never contain
+/// health data and cannot authorize a changed draft or stale source state.
+final class PeriodReviewStore {
+  final Map<String, ({PeriodWritePreview preview, String snapshot})> _pending =
+      {};
+
+  PeriodWritePreview preview({
+    required PeriodDraft draft,
+    required LocalDate today,
+    required List<PeriodRecord> existing,
+    required String snapshot,
+    String? editingId,
+    int detachedBleedingCount = 0,
+    int detachedReflectionCount = 0,
+  }) {
+    if (editingId != null &&
+        !existing.any((record) => record.id == editingId)) {
+      throw const PeriodWriteException(PeriodWriteFailure.notFound);
+    }
+    validatePeriodDraft(
+      draft: draft,
+      today: today,
+      existing: existing,
+      editingId: editingId,
+    );
+    final random = Random.secure();
+    final token = List.generate(
+      32,
+      (_) => random.nextInt(16).toRadixString(16),
+    ).join();
+    final preview = PeriodWritePreview(
+      reviewToken: token,
+      draft: draft,
+      editingId: editingId,
+      detachedBleedingCount: detachedBleedingCount,
+      detachedReflectionCount: detachedReflectionCount,
+      adjacentPeriods: adjacentPeriodsForDraft(
+        draft: draft,
+        today: today,
+        existing: existing,
+        editingId: editingId,
+      ),
+    );
+    if (_pending.length >= 32) _pending.remove(_pending.keys.first);
+    _pending[token] = (preview: preview, snapshot: snapshot);
+    return preview;
+  }
+
+  PeriodWritePreview validate(PeriodWritePreview preview, String snapshot) {
+    final stored = _pending[preview.reviewToken];
+    if (stored == null ||
+        !identical(stored.preview, preview) ||
+        stored.snapshot != snapshot) {
+      throw const PeriodWriteException(PeriodWriteFailure.staleConfirmation);
+    }
+    return stored.preview;
+  }
+
+  void consume(PeriodWritePreview preview) =>
+      _pending.remove(preview.reviewToken);
 }

@@ -5,54 +5,21 @@ import '../../features/cycle/domain/local_date.dart';
 import '../../features/entitlement/domain/entitlement.dart';
 import '../../features/entitlement/presentation/entitlement_scope.dart';
 import '../../features/summary_export/domain/cycle_care_summary.dart';
+import '../../features/summary_export/domain/record_report_selection.dart';
 import '../../features/summary_export/presentation/twin_matrix_summary_adapter.dart';
 import '../experience_release_ports.dart';
 import '../plus/plus_experience.dart';
 import '../theme/experience_foundation.dart';
 
-/// Reports route: the ledger. A deliberately-entered route hosting the real
-/// limited free recent-three-month preview — tiered by completed-cycle count — with honest range
-/// handling, fixed disclosures, honest missingness, opt-in note selection,
-/// the factual boundary with two equal-weight actions, and entitlement-gated
-/// paid Visit Summary / raw CSV / Clinical Pattern Report export through
-/// [ReportExperiencePort] only.
+/// Reports reviews saved sources before the native file handoff. Production
+/// ports expose explicit category/field consent through the derived interface;
+/// older ports retain their incumbent clinical preview contract.
 ///
-/// This surface never builds files, chooses paths, or infers data. The port
-/// owns loading and the native file handoff; the domain owns the summary
-/// composition. Presentation owns the range, the cycle-tier derivation, the
-/// note selection, the calm four-outcome receipt feedback, post-export
-/// continuity, and post-purchase continuation.
-///
-/// Layout: a centered reading column (max 480) carries every text section so
-/// the report keeps a calm measure on tablets; the two-cycle timelines and
-/// the Twin Matrix use a wider data column (max 720) so their day geometry
-/// stays readable on wide screens. Compact phones are the default case.
-///
-/// Cycle tiers (presentation-side arithmetic over the loaded input): a
-/// completed cycle is the span between two consecutive recorded period
-/// starts; the current open span is not counted. Zero completed cycles shows
-/// a single calm card; one shows the plain preview sections with a literal
-/// "cannot show recurrence" line; two shows two real cycle timelines aligned
-/// to bleeding start with no trend claim; three or more renders the full
-/// Twin Matrix for Last 3 months. Gaps are never filled.
-///
-/// Range honesty: Last 3 months is the default and the only free preset.
-/// Range ends are always clamped to the shell-provided current date — an
-/// estimated future window never appears as a report's end date — and the
-/// "All records" start derives from the earliest actual record. The printed
-/// range is exactly the range handed to the preview and to the export port.
-/// Upper presets stay visible and tappable in the range ledger but are
-/// Plus-gated: tapping one without access opens the commitment sheet instead
-/// of switching. Gated rows are marked, never disabled, so the path stays
-/// explained.
-///
-/// Gating: only the limited recent-three-month factual preview is free.
-/// A no-card Preview may demonstrate in-app Plus interpretation inside that
-/// range, but longer/custom ranges and every generated file require paid
-/// `clinicianReports` entitlement. After a lapse previously generated files
-/// remain untouched. The clinical matrix is never rendered without Plus depth.
-/// Contextual Plus acquisition is never shown or opened within 24 hours of
-/// the latest Care record; existing paid access remains usable.
+/// Every production range preview and source CSV is free. The recent three
+/// calendar-month factual Visit PDF is free; longer/custom or Clinical PDFs
+/// check Plus only at generation. Saved files survive a lapse. The surface
+/// builds no files and never infers missing dates, zeros or bucket midpoints.
+/// Contextual Plus acquisition stays absent within 24 hours of a Care event.
 class ReportsExperience extends StatefulWidget {
   const ReportsExperience({
     super.key,
@@ -73,8 +40,8 @@ class ReportsExperience extends StatefulWidget {
   /// by the shell when Reports opens. This is only the initial value: Reports
   /// maintains local access state so a successful commitment continues the
   /// original intent without rebuilding the route. When false, the preview
-  /// stays fully readable and the export action is replaced by the honest,
-  /// non-pressuring boundary.
+  /// stays readable. Only longer/custom factual PDFs and Clinical PDFs need it;
+  /// source CSV and the recent factual Visit PDF remain free.
   final bool canUseClinicianReports;
 
   /// Compatibility fallback route to the Plus surface, used when
@@ -128,9 +95,15 @@ final class _ReportBounds {
 
 class _ReportsExperienceState extends State<ReportsExperience> {
   SummaryExportInput? _input;
+  RecordReportSnapshot? _recordSnapshot;
+  RecordReportKind _reportKind = RecordReportKind.visitSummary;
+  final Set<RecordReportCategory> _categories = RecordReportCategory.values
+      .where((c) => !c.sensitive)
+      .toSet();
+  final Map<RecordReportCategory, Set<String>> _recordFields = {};
   Object? _loadError;
 
-  /// Last 3 months is the default and the only free range.
+  /// Default factual PDF scope. Every production range preview stays free.
   _RangePreset _preset = _RangePreset.lastThreeMonths;
   SummaryDateRange? _customRange;
 
@@ -213,7 +186,8 @@ class _ReportsExperienceState extends State<ReportsExperience> {
   void didChangeDependencies() {
     super.didChangeDependencies();
     final hasPaidRangeAccess = _hasPaidRangeAccess;
-    if (_lastHasPaidRangeAccess == true &&
+    if (widget.port is! SelectableReportExperiencePort &&
+        _lastHasPaidRangeAccess == true &&
         !hasPaidRangeAccess &&
         _preset != _RangePreset.lastThreeMonths) {
       _preset = _RangePreset.lastThreeMonths;
@@ -229,9 +203,16 @@ class _ReportsExperienceState extends State<ReportsExperience> {
       _receipt = null;
     });
     try {
-      final input = await widget.port.load();
+      final port = widget.port;
+      final snapshot = port is SelectableReportExperiencePort
+          ? await port.loadRecordSources()
+          : null;
+      final input = snapshot?.summaryInput ?? await port.load();
       if (!mounted) return;
-      setState(() => _input = input);
+      setState(() {
+        _input = input;
+        _recordSnapshot = snapshot;
+      });
     } catch (error) {
       if (!mounted) return;
       setState(() => _loadError = error);
@@ -261,13 +242,21 @@ class _ReportsExperienceState extends State<ReportsExperience> {
       consider(record.experiencedDate);
     }
     for (final checkIn in input.checkIns) {
-      consider(LocalDate.fromDateTime(checkIn.occurredAt.toLocal()));
+      final date = checkIn.experiencedDate;
+      if (date != null) consider(date);
     }
     for (final record in input.careRecords) {
-      consider(LocalDate.fromDateTime(record.occurredAt.toLocal()));
+      // Only legacy ports use their historical event-date convention.
+      // Production source rows keep absent frozen date evidence unknown.
+      if (_recordSnapshot == null) {
+        consider(LocalDate.fromDateTime(record.occurredAt.toLocal()));
+      }
     }
     for (final note in input.notes) {
       consider(note.date);
+    }
+    for (final source in _recordSnapshot?.sources ?? <RecordReportSource>[]) {
+      if (source.date != null) consider(source.date!);
     }
     final start = earliest ?? today;
     return _ReportBounds(
@@ -291,25 +280,38 @@ class _ReportsExperienceState extends State<ReportsExperience> {
   /// Trust rule: contextual Plus acquisition is never shown or opened within
   /// 24 hours of the latest Care record. Existing paid access stays usable.
   bool _careAdjacent(SummaryExportInput input) {
-    if (input.careRecords.isEmpty) return false;
-    var latest = input.careRecords.first.occurredAt;
+    DateTime? latest;
     for (final record in input.careRecords) {
-      if (record.occurredAt.isAfter(latest)) latest = record.occurredAt;
+      if (latest == null || record.occurredAt.isAfter(latest)) {
+        latest = record.occurredAt;
+      }
     }
-    return latest.isAfter(_currentTime().subtract(const Duration(hours: 24)));
+    for (final source in _recordSnapshot?.sources ?? <RecordReportSource>[]) {
+      if (source.category != RecordReportCategory.careActions ||
+          source.fields['source'] != 'inAppCare') {
+        continue;
+      }
+      final completion = DateTime.tryParse(
+        source.fields['completion_occurred_at_utc'] ?? '',
+      );
+      if (completion != null &&
+          (latest == null || completion.isAfter(latest))) {
+        latest = completion;
+      }
+    }
+    return latest != null &&
+        latest.isAfter(_currentTime().subtract(const Duration(hours: 24)));
   }
 
   SummaryDateRange _everything(_ReportBounds bounds) {
     return SummaryDateRange(start: bounds.start, end: bounds.end);
   }
 
-  SummaryDateRange _recentRange(_ReportBounds bounds, int days) {
+  SummaryDateRange _recentRange(_ReportBounds bounds, int months) {
     // The preset window intersected with today: it can begin before any
     // record exists (the missingness list then says exactly what is blank)
     // but it never ends past the current date.
-    final start = LocalDate.fromDateTime(
-      _currentTime().toLocal().subtract(Duration(days: days)),
-    );
+    final start = recordReportMonthsBefore(_today(), months);
     return SummaryDateRange(start: start, end: bounds.end);
   }
 
@@ -325,9 +327,9 @@ class _ReportsExperienceState extends State<ReportsExperience> {
 
   SummaryDateRange _resolveRange(_ReportBounds bounds) {
     return switch (_preset) {
-      _RangePreset.lastThreeMonths => _recentRange(bounds, 92),
-      _RangePreset.lastSixMonths => _recentRange(bounds, 183),
-      _RangePreset.lastYear => _recentRange(bounds, 365),
+      _RangePreset.lastThreeMonths => _recentRange(bounds, 3),
+      _RangePreset.lastSixMonths => _recentRange(bounds, 6),
+      _RangePreset.lastYear => _recentRange(bounds, 12),
       _RangePreset.everything => _everything(bounds),
       _RangePreset.custom => _clampedCustom(bounds) ?? _everything(bounds),
     };
@@ -444,13 +446,27 @@ class _ReportsExperienceState extends State<ReportsExperience> {
     ReportExportFormat format,
   ) async {
     if (_exporting) return;
-    // Re-read the store-backed entitlement for every deliberate generation
-    // attempt. The Reports route may have stayed open through a lapse, and a
-    // no-card Preview must never authorize bytes on disk.
-    if (!await _refreshPaidFileAccess()) {
-      if (!mounted) return;
+    final sourcePort = widget.port;
+    final snapshot = _recordSnapshot;
+    final selected = snapshot == null
+        ? null
+        : projectRecordReport(snapshot, _recordSelection(range));
+    final needsPlus = selected != null
+        ? recordReportRequiresPlus(selected.selection, format, _today())
+        : true;
+    // Plus Preview demonstrates depth in-app; paid file authority is refreshed
+    // from the store for every deliberate extended/Clinical PDF attempt.
+    final hasPaidAccess = needsPlus
+        ? await _refreshPaidFileAccess()
+        : _hasPaidFileAccess;
+    if (!mounted) return;
+    if (needsPlus && !hasPaidAccess) {
+      final input = _input;
+      if (input == null || _careAdjacent(input)) return;
       await _openCommitment(
-        const PlusOutcomeContext.export(headline: 'Generate a report file'),
+        const PlusOutcomeContext.export(
+          headline: 'Export this extended or Clinical PDF',
+        ),
       );
       return;
     }
@@ -461,11 +477,18 @@ class _ReportsExperienceState extends State<ReportsExperience> {
       _ackLine = null;
     });
     try {
-      final receipt = await widget.port.export(
-        range: range,
-        selectedNoteIds: Set<String>.unmodifiable(_selectedNoteIds),
-        format: format,
-      );
+      final receipt =
+          sourcePort is SelectableReportExperiencePort && selected != null
+          ? await sourcePort.exportSelected(
+              preview: selected,
+              format: format,
+              hasPlus: hasPaidAccess,
+            )
+          : await widget.port.export(
+              range: range,
+              selectedNoteIds: Set<String>.unmodifiable(_selectedNoteIds),
+              format: format,
+            );
       if (!mounted) return;
       String? ack;
       if (receipt.outcome == ExperienceFileOutcome.shared ||
@@ -480,7 +503,7 @@ class _ReportsExperienceState extends State<ReportsExperience> {
         _ackLine = ack;
         if (receipt.outcome == ExperienceFileOutcome.shared ||
             receipt.outcome == ExperienceFileOutcome.savedOnly) {
-          _lastSuccessAt = DateTime.now();
+          _lastSuccessAt = _currentTime();
           _lastSuccessOutcome = receipt.outcome;
         }
       });
@@ -548,6 +571,7 @@ class _ReportsExperienceState extends State<ReportsExperience> {
   }
 
   Widget _buildLoaded(BuildContext context, SummaryExportInput input) {
+    if (_recordSnapshot != null) return _buildSourceReports(context, input);
     final bounds = _boundsOf(input);
     // One resolved range feeds the printed label, the preview, and the
     // export port call — the printed range always matches the export.
@@ -830,6 +854,400 @@ class _ReportsExperienceState extends State<ReportsExperience> {
         ],
         const SizedBox(height: ExperienceSpacing.sm),
         _framed(SavedRhythmAckLine(line: _ackLine)),
+      ],
+    );
+  }
+
+  RecordReportSelection _recordSelection(SummaryDateRange range) =>
+      RecordReportSelection(
+        range: range,
+        kind: _reportKind,
+        customRange: _preset == _RangePreset.custom,
+        allRecords:
+            _preset == _RangePreset.everything &&
+            _reportKind == RecordReportKind.visitSummary,
+        categories: _reportKind == RecordReportKind.clinicalPattern
+            ? _categories.intersection(recordReportClinicalCategories)
+            : _categories,
+        fields: _reportKind == RecordReportKind.clinicalPattern
+            ? const {}
+            : _recordFields,
+        selectedNoteIds: _selectedNoteIds,
+      );
+
+  Widget _buildSourceReports(BuildContext context, SummaryExportInput input) {
+    final snapshot = _recordSnapshot!;
+    final bounds = _boundsOf(input);
+    final range = _resolveRange(bounds);
+    final selection = _recordSelection(range);
+    final preview = projectRecordReport(snapshot, selection);
+    final paidPdf = recordReportRequiresPlus(
+      selection,
+      ReportExportFormat.pdf,
+      _today(),
+    );
+    final careAdjacent = _careAdjacent(input);
+    final noteSources = snapshot.sources
+        .where(
+          (s) =>
+              s.consentId != null &&
+              selection.categories.contains(s.category) &&
+              (s.requiredCategory == null ||
+                  _categories.contains(s.requiredCategory)) &&
+              (_reportKind != RecordReportKind.clinicalPattern ||
+                  (s.sourceType == 'capture_note' && s.date != null)) &&
+              (s.date == null || range.contains(s.date!)),
+        )
+        .toList();
+    String title(String key) => key
+        .split('_')
+        .map((p) => p.isEmpty ? p : '${p[0].toUpperCase()}${p.substring(1)}')
+        .join(' ');
+    Widget line(String value) => Padding(
+      padding: const EdgeInsets.only(bottom: 8),
+      child: Text(
+        value,
+        style: ExperienceType.bodySmall(ExperienceColors.inkSoft),
+      ),
+    );
+    final children = <Widget>[
+      Text(
+        'A plain summary of what you recorded.',
+        style: ExperienceType.title(ExperienceColors.ink),
+      ),
+      const SizedBox(height: ExperienceSpacing.xs),
+      line(
+        'Choose the dates, categories and exact fields to include. Nothing here is a diagnosis.',
+      ),
+      if (_lastSuccessAt != null)
+        _ContinuityLine(
+          lastSuccessAt: _lastSuccessAt!,
+          outcome: _lastSuccessOutcome ?? ExperienceFileOutcome.savedOnly,
+          onBackToRecords: _backToRecords,
+        ),
+      const SizedBox(height: ExperienceSpacing.md),
+      _RangeSection(
+        preset: _preset,
+        customRange: _customRange,
+        rangeLabel: selection.allRecords
+            ? 'All saved source dates · frozen dates retained'
+            : range.label,
+        gated: (_) => false,
+        onSelect: (preset) async {
+          if (_exporting) return;
+          if (preset == _RangePreset.custom) {
+            await _pickCustomRange(bounds);
+            return;
+          }
+          await ExperienceHaptics.pick();
+          if (mounted) {
+            setState(() {
+              _preset = preset;
+              _receipt = null;
+            });
+          }
+        },
+      ),
+      const SizedBox(height: ExperienceSpacing.md),
+      Wrap(
+        spacing: 8,
+        runSpacing: 8,
+        children: [
+          for (final kind in RecordReportKind.values)
+            ChoiceChip(
+              label: Text(
+                kind == RecordReportKind.visitSummary
+                    ? 'Factual Visit Summary'
+                    : 'Clinical pattern report',
+              ),
+              selected: _reportKind == kind,
+              onSelected: _exporting
+                  ? null
+                  : (_) => setState(() {
+                      _reportKind = kind;
+                      _receipt = null;
+                    }),
+            ),
+        ],
+      ),
+      const SizedBox(height: ExperienceSpacing.md),
+      line(
+        'Source CSV is free for every range, including All records. The recent three-calendar-month factual Visit Summary PDF is free. Longer or custom Visit PDFs and Clinical PDFs need Plus. Previews stay readable. Files already saved stay available after Plus ends.',
+      ),
+      if (_reportKind == RecordReportKind.clinicalPattern)
+        line(
+          'The Clinical PDF uses the existing cycle and symptom comparison. Newly recorded context, products, BBT and reflection fields belong in the factual Visit Summary or source CSV. Choose that report to share those sources.',
+        ),
+      Text(
+        'What to include',
+        style: ExperienceType.headline(ExperienceColors.ink),
+      ),
+      line(
+        'Sensitive categories start off. Notes and reflections also need individual selection. No drafts, audio, forecast dates or programme form answers are exported.',
+      ),
+      for (final category in RecordReportCategory.values.where(
+        (c) =>
+            _reportKind != RecordReportKind.clinicalPattern ||
+            recordReportClinicalCategories.contains(c),
+      ))
+        ExpansionTile(
+          tilePadding: EdgeInsets.zero,
+          title: CheckboxListTile(
+            contentPadding: EdgeInsets.zero,
+            controlAffinity: ListTileControlAffinity.leading,
+            title: Text(category.label),
+            subtitle: category.sensitive
+                ? const Text('Optional · starts off')
+                : null,
+            value: _categories.contains(category),
+            onChanged: _exporting
+                ? null
+                : (value) => setState(() {
+                    if (value == true) {
+                      _categories.add(category);
+                    } else {
+                      _categories.remove(category);
+                    }
+                    _receipt = null;
+                  }),
+          ),
+          subtitle: Text(
+            '${snapshot.sources.where((s) => s.category == category).length} saved source entries · choose fields',
+          ),
+          children: [
+            for (final field in recordReportFields(category).toList()..sort())
+              CheckboxListTile(
+                dense: true,
+                title: Text(title(field)),
+                value: selection.fieldsFor(category).contains(field),
+                onChanged:
+                    _exporting ||
+                        _reportKind == RecordReportKind.clinicalPattern
+                    ? null
+                    : (value) => setState(() {
+                        final fields = _recordFields.putIfAbsent(
+                          category,
+                          () => recordReportFields(category).toSet(),
+                        );
+                        if (value == true) {
+                          fields.add(field);
+                        } else {
+                          fields.remove(field);
+                        }
+                        _receipt = null;
+                      }),
+              ),
+          ],
+        ),
+      if (noteSources.isNotEmpty) ...[
+        const SizedBox(height: ExperienceSpacing.md),
+        Text(
+          'Choose individual notes and reflections',
+          style: ExperienceType.headline(ExperienceColors.ink),
+        ),
+        line(
+          'An undated source stays labeled Date unknown. Selecting it explicitly adds it to this export without guessing a date.',
+        ),
+        for (final note in noteSources)
+          CheckboxListTile(
+            contentPadding: EdgeInsets.zero,
+            value: _selectedNoteIds.contains(note.consentId),
+            title: Text(
+              '${note.date ?? 'Date unknown'} · ${note.category.label}',
+            ),
+            subtitle: Text(
+              note.fields.entries
+                  .where((e) => !recordReportMetadataFields.contains(e.key))
+                  .map((e) => '${title(e.key)}: ${e.value}')
+                  .join('\n'),
+              maxLines: 4,
+              overflow: TextOverflow.ellipsis,
+            ),
+            onChanged: _exporting
+                ? null
+                : (value) => setState(() {
+                    if (value == true) {
+                      _selectedNoteIds.add(note.consentId!);
+                    } else {
+                      _selectedNoteIds.remove(note.consentId!);
+                    }
+                    _receipt = null;
+                  }),
+          ),
+      ],
+      const SizedBox(height: ExperienceSpacing.lg),
+      Text(
+        'Preview · ${preview.rows.length} source entries',
+        style: ExperienceType.headline(ExperienceColors.ink),
+      ),
+      line(
+        '${selection.allRecords ? 'All saved source dates, including frozen dates ahead of today after travel and unknown dates.' : range.label}. Source category, type, ID and experienced date are always included. The selected fields below are the exact source fields in CSV and the factual Visit PDF. Episode and version rows describe a schedule; a use row records actual use. Overlapping schedules retain their original start dates. Missing observations stay blank.',
+      ),
+      if (preview.rows.isEmpty)
+        line(
+          'No selected source entries in this scope. You can still export the empty scope.',
+        ),
+      for (final row in preview.rows)
+        ExpansionTile(
+          tilePadding: EdgeInsets.zero,
+          title: Text('${row.date ?? 'Date unknown'} · ${row.category.label}'),
+          subtitle: Text('${title(row.sourceType)} · ${row.id}'),
+          children: [
+            for (final field in row.fields.keys.toList()..sort())
+              Align(
+                alignment: Alignment.centerLeft,
+                child: Padding(
+                  padding: const EdgeInsets.only(bottom: 8),
+                  child: Text(
+                    '${title(field)}: ${row.fields[field]}',
+                    style: ExperienceType.bodySmall(ExperienceColors.inkSoft),
+                  ),
+                ),
+              ),
+          ],
+        ),
+      if (_reportKind == RecordReportKind.clinicalPattern) ...[
+        const SizedBox(height: ExperienceSpacing.md),
+        _clinicalPreview(snapshot, preview),
+      ],
+      const SizedBox(height: ExperienceSpacing.lg),
+      line(
+        'Export saves a copy in your Letter folder on this device, then opens the native share sheet. You choose its destination.',
+      ),
+      FilledButton.icon(
+        onPressed:
+            _exporting || (paidPdf && !_hasPaidFileAccess && careAdjacent)
+            ? null
+            : () => _export(range, ReportExportFormat.pdf),
+        icon: const Icon(Icons.picture_as_pdf_outlined),
+        label: Text(
+          paidPdf && !_hasPaidFileAccess
+              ? 'PDF · Letter Within Plus'
+              : 'Export PDF',
+        ),
+      ),
+      const SizedBox(height: ExperienceSpacing.unit),
+      OutlinedButton.icon(
+        onPressed: _exporting
+            ? null
+            : () => _export(range, ReportExportFormat.csv),
+        icon: const Icon(Icons.table_chart_outlined),
+        label: const Text('Export CSV · Free'),
+      ),
+      if (_exporting)
+        const Padding(
+          padding: EdgeInsets.all(16),
+          child: Center(
+            child: EmberLoadingIndicator(
+              semanticLabel: 'Preparing your report',
+            ),
+          ),
+        ),
+      if (_receipt != null)
+        _ReceiptCard(
+          receipt: _receipt!,
+          onRetry: _receipt!.outcome == ExperienceFileOutcome.failed
+              ? () => _export(
+                  range,
+                  _lastAttemptedFormat ?? ReportExportFormat.csv,
+                )
+              : null,
+        ),
+      TextButton(
+        onPressed: _exporting ? null : _load,
+        child: const Text('Refresh source preview'),
+      ),
+      SavedRhythmAckLine(line: _ackLine),
+    ];
+    return ListView(
+      padding: const EdgeInsets.fromLTRB(
+        ExperienceSpacing.screenMargin,
+        8,
+        ExperienceSpacing.screenMargin,
+        ExperienceSpacing.scrollBottomPadding,
+      ),
+      children: children,
+    );
+  }
+
+  Widget _clinicalPreview(
+    RecordReportSnapshot snapshot,
+    RecordReportPreview preview,
+  ) {
+    final input = recordReportClinicalInput(snapshot, preview);
+    final summary = buildCycleAndCareSummary(
+      input: input,
+      range: preview.selection.range,
+      selectedNoteIds: input.notes.map((n) => n.id).toSet(),
+    );
+    final evidence = SummaryCycleEvidence.fromPeriodDays(input.periodDays);
+    final range = preview.selection.range;
+    final spans = evidence.completedCycles
+        .where(
+          (cycle) =>
+              !cycle.start.isBefore(range.start) &&
+              !cycle.end.isAfter(range.end),
+        )
+        .toList(growable: false);
+    final hasInRangeFacts =
+        summary.periodDays.isNotEmpty ||
+        summary.predictions.isNotEmpty ||
+        summary.healthRows.isNotEmpty ||
+        summary.checkInRows.isNotEmpty ||
+        summary.careRows.isNotEmpty;
+    final missingness = summary.missingness
+        .where((line) => line != 'No user-selected notes included.')
+        .toList(growable: false);
+    // Keep Build17's clinical tier components and its in-app Plus-depth gate.
+    // Literal fully completed spans inside the reviewed range determine the
+    // tier; an overlapping partial span cannot imply recurrence.
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        if (spans.isEmpty)
+          _NoCyclesCard(
+            recordedDays: _recordedDays(input),
+            hasCompletedCyclesOutsideRange: evidence.completedCycleCount > 0,
+            onOpenCycle: widget.onOpenCycle,
+          )
+        else if (spans.length == 1) ...[
+          _PreviewSections(summary: summary),
+          Semantics(
+            container: true,
+            child: Text(
+              'One cycle cannot show recurrence.',
+              style: ExperienceType.bodySmall(ExperienceColors.inkSoft),
+            ),
+          ),
+        ] else if (spans.length == 2) ...[
+          _TwoCycleComparison(spans: spans, summary: summary),
+          const SizedBox(height: ExperienceSpacing.unit),
+          Semantics(
+            container: true,
+            child: Text(
+              'A third completed cycle in this range enables comparison.',
+              textAlign: TextAlign.center,
+              style: ExperienceType.caption(ExperienceColors.inkFaint),
+            ),
+          ),
+        ] else if (_hasPlusDepthAccess) ...[
+          const _CertaintyLegend(),
+          const SizedBox(height: ExperienceSpacing.sm),
+          _TwinMatrixSection(
+            viewModel: TwinMatrixSummaryAdapter.fromSummary(
+              summary: summary,
+              exportTimestamp: summaryDateTimeLabel(_currentTime()),
+            ),
+          ),
+        ],
+        if (spans.isNotEmpty && missingness.isNotEmpty) ...[
+          const SizedBox(height: ExperienceSpacing.md),
+          _MissingnessCard(missingness: missingness),
+        ],
+        if (spans.length >= 2 || (spans.isEmpty && hasInRangeFacts)) ...[
+          const SizedBox(height: ExperienceSpacing.md),
+          _PreviewSections(summary: summary),
+        ],
       ],
     );
   }
@@ -2940,7 +3358,8 @@ class _ReceiptCard extends StatelessWidget {
         Icons.folder_outlined,
         ExperienceColors.accentGravity,
         'Saved to your Letter folder.',
-        'The file is saved on this device.',
+        receipt.message ??
+            'The file is saved on this device. You control any further sharing.',
       ),
       ExperienceFileOutcome.cancelled => (
         Icons.close,

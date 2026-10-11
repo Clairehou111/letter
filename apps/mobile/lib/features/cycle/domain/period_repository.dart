@@ -12,6 +12,8 @@ enum PeriodWriteFailure {
   flowDateInFuture,
   flowDateOutsidePeriod,
   flowRequiredForColor,
+  confirmationRequired,
+  staleConfirmation,
   storageUnavailable,
 }
 
@@ -38,6 +40,10 @@ final class PeriodWriteException implements Exception {
       'Bleeding flow must be recorded within this period.',
     PeriodWriteFailure.flowRequiredForColor =>
       'Choose a flow before adding its color.',
+    PeriodWriteFailure.confirmationRequired =>
+      'Review and confirm this period change before saving.',
+    PeriodWriteFailure.staleConfirmation =>
+      'Your cycle records changed. Review the merge again before saving.',
     PeriodWriteFailure.storageUnavailable =>
       'Letter Within could not open private cycle storage. Try again.',
   };
@@ -79,4 +85,44 @@ abstract interface class PeriodRepository {
   Future<void> clearFlow(String periodId, LocalDate date);
 
   Future<void> close();
+}
+
+/// Optional capability: existing read/write adapters and test doubles retain
+/// the base interface, while durable repositories require explicit merge review.
+abstract interface class ConfirmablePeriodRepository
+    implements PeriodRepository {
+  Future<PeriodWritePreview> previewWrite(
+    PeriodDraft draft, {
+    required LocalDate today,
+    String? editingId,
+  });
+
+  Future<PeriodRecord> confirmWrite(
+    PeriodWritePreview preview, {
+    required LocalDate today,
+  });
+}
+
+/// The opaque token is bound to the repository's source snapshot. Confirmation
+/// writes its cached draft only after re-reading those sources atomically.
+final class PeriodWritePreview {
+  PeriodWritePreview({
+    required this.reviewToken,
+    required this.draft,
+    required this.editingId,
+    required Iterable<PeriodRecord> adjacentPeriods,
+    this.detachedBleedingCount = 0,
+    this.detachedReflectionCount = 0,
+  }) : adjacentPeriods = List.unmodifiable(adjacentPeriods);
+
+  final String reviewToken;
+  final PeriodDraft draft;
+  final String? editingId;
+  final List<PeriodRecord> adjacentPeriods;
+  final int detachedBleedingCount;
+  final int detachedReflectionCount;
+  bool get requiresConfirmation =>
+      adjacentPeriods.isNotEmpty ||
+      detachedBleedingCount > 0 ||
+      detachedReflectionCount > 0;
 }

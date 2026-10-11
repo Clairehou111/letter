@@ -33,10 +33,15 @@ final class SecurePrivacyPreferencesRepository
 abstract final class PrivacyPreferencesCodec {
   static String encode(PrivacyPreferences preferences) => jsonEncode({
     'version': PrivacyPreferences.schemaVersion,
+    'app_lock': preferences.appLockEnabled,
     'screen_cover': preferences.screenCoverEnabled,
     'cycle_check_in': preferences.cycleCheckInEnabled,
     'notification_permission_requested':
         preferences.notificationPermissionRequested,
+    'comfort_window_reminder': preferences.comfortWindowReminderEnabled,
+    'comfort_window_lead_days': preferences.comfortWindowReminderLeadDays,
+    'comfort_window_invitation_dismissed':
+        preferences.comfortWindowInvitationDismissed,
     'analytics_consent': _encodeConsent(preferences.analyticsConsent),
     'care_companion_name': preferences.careCompanionName,
   });
@@ -50,21 +55,36 @@ abstract final class PrivacyPreferencesCodec {
     if (version != 1 &&
         version != 2 &&
         version != 3 &&
+        version != 4 &&
         version != PrivacyPreferences.schemaVersion) {
       throw const FormatException('Unsupported privacy preferences');
     }
+    final hasReminderTiming =
+        version >= 4 && value.containsKey('comfort_window_lead_days');
+    final lead = value['comfort_window_lead_days'];
+    if ((hasReminderTiming || version == 5) &&
+        (lead is! int || lead < 0 || lead > 2)) {
+      throw const FormatException('Unsupported reminder timing');
+    }
     return PrivacyPreferences(
-      screenCoverEnabled:
-          version == 3 || version == PrivacyPreferences.schemaVersion
+      appLockEnabled: value['app_lock'] == true,
+      screenCoverEnabled: (version >= 3)
           ? value['screen_cover'] != false
           : true,
       cycleCheckInEnabled: value['cycle_check_in'] != false,
+      // A legacy default-on check-in is never consent for this new reminder.
+      comfortWindowReminderEnabled:
+          hasReminderTiming && value['comfort_window_reminder'] == true,
+      comfortWindowReminderLeadDays: hasReminderTiming ? lead as int : 2,
+      comfortWindowInvitationDismissed:
+          hasReminderTiming &&
+          value['comfort_window_invitation_dismissed'] == true,
       notificationPermissionRequested:
           value['notification_permission_requested'] == true,
       analyticsConsent: version == 1
           ? AnalyticsConsent.notSet
           : _decodeConsent(value['analytics_consent']),
-      careCompanionName: version == PrivacyPreferences.schemaVersion
+      careCompanionName: version >= 4
           ? PrivacyPreferences.normalizeCareCompanionName(
               value['care_companion_name'] is String
                   ? value['care_companion_name'] as String

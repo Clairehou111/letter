@@ -68,6 +68,8 @@ final class ComfortWindowPrediction {
     required this.forecastStart,
     required this.forecastEnd,
     required this.periodPrediction,
+    this.sourceAlgorithmId = 'comfort-window-v1',
+    this.sourceEvidence = const {},
   });
 
   final int algorithmVersion;
@@ -75,6 +77,8 @@ final class ComfortWindowPrediction {
   final LocalDate forecastStart;
   final LocalDate forecastEnd;
   final CyclePrediction periodPrediction;
+  final String sourceAlgorithmId;
+  final Map<String, Object?> sourceEvidence;
 
   ComfortWindowConfidence get confidence => candidate.confidence;
   List<String> get sourceCycleIds =>
@@ -84,6 +88,7 @@ final class ComfortWindowPrediction {
 
   bool get canOfferReminder =>
       confidence == ComfortWindowConfidence.clearer &&
+      !periodPrediction.isEarlyEstimate &&
       periodPrediction.confidence != PredictionConfidence.low &&
       !periodPrediction.hasWideVariation &&
       forecastSpanDays <= 10;

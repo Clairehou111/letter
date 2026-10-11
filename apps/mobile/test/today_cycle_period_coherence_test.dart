@@ -196,7 +196,7 @@ void main() {
   );
 
   test(
-    'editing a cycle range removes out-of-range flow seen by Today',
+    'confirmed cycle range edit detaches flow from Today and retains its source',
     () async {
       final period = _period(
         'editable',
@@ -204,7 +204,7 @@ void main() {
         duration: 6,
       );
       final periods = _periods(seed: [period]);
-      await periods.setFlow(
+      final originalFlow = await periods.setFlow(
         period.id,
         _today,
         BleedingFlow.heavy,
@@ -214,18 +214,29 @@ void main() {
       final port = _port(periods);
       expect((await port.load()).flowRecord!.flow, BleedingFlow.heavy);
 
-      await periods.update(
-        period.id,
+      final preview = await periods.previewWrite(
         const PeriodDraft(
           startDate: LocalDate(2026, 8, 10),
           endDate: LocalDate(2026, 8, 14),
         ),
         today: _today,
+        editingId: period.id,
       );
+      expect(preview.requiresConfirmation, isTrue);
+      expect(preview.detachedBleedingCount, 1);
+      expect((await port.load()).flowRecord!.flow, BleedingFlow.heavy);
+      await periods.confirmWrite(preview, today: _today);
       final afterEdit = await port.load();
       expect(afterEdit.containingPeriod, isNull);
       expect(afterEdit.flowRecord, isNull);
       expect(await periods.getAllFlowDays(), isEmpty);
+      final retained = periods.independentBleedingFacts.single;
+      expect(retained.value.periodId, isNull);
+      expect(retained.value.experiencedDate, _today);
+      expect(retained.value.flow, BleedingFlow.heavy);
+      expect(retained.metadata.id, '${period.id}:${_today.epochDay}');
+      expect(retained.metadata.recordedAt, originalFlow.createdAt);
+      expect(retained.metadata.updatedAt, originalFlow.updatedAt);
     },
   );
 }

@@ -1,4 +1,9 @@
+import 'dart:convert';
 import 'dart:math';
+
+import '../../health_records/domain/health_record.dart';
+import '../../care/domain/care_memory.dart';
+import '../../record_hub/domain/record_hub_facts.dart';
 
 import '../domain/bleeding_flow.dart';
 import '../domain/local_date.dart';
@@ -6,18 +11,31 @@ import '../domain/period_record.dart';
 import '../domain/period_repository.dart';
 import '../domain/period_validation.dart';
 
-final class InMemoryPeriodRepository implements PeriodRepository {
+final class InMemoryPeriodRepository implements ConfirmablePeriodRepository {
   InMemoryPeriodRepository({
     Iterable<PeriodRecord> seed = const [],
     DateTime Function()? clock,
     String Function()? idGenerator,
+    this.cycleReflectionSourceReader,
   }) : _records = [...seed],
        _flowDays = [],
        _clock = clock ?? DateTime.now,
        _idGenerator = idGenerator ?? _randomId;
 
+  /// Optional source adapter for memory fixtures that retain Care letters in
+  /// a separate repository. Their content participates in optimistic review.
+  final Iterable<CycleReflection> Function()? cycleReflectionSourceReader;
   final List<PeriodRecord> _records;
   final List<BleedingDayRecord> _flowDays;
+  final Map<int, BleedingFactRecord> _independentBleeding = {};
+  final Map<int, String> _flowSourceIds = {};
+  final PeriodReviewStore _reviews = PeriodReviewStore();
+
+  /// Promoted facts retain original metadata and remain readable after their
+  /// period is shortened or deleted. Test fixtures may project these into Hub.
+  List<BleedingFactRecord> get independentBleedingFacts =>
+      List.unmodifiable(_independentBleeding.values);
+
   final DateTime Function() _clock;
   final String Function() _idGenerator;
 
@@ -28,9 +46,13 @@ final class InMemoryPeriodRepository implements PeriodRepository {
   }
 
   @override
-  Future<PeriodRecord> create(
+  Future<PeriodRecord> create(PeriodDraft draft, {required LocalDate today}) =>
+      _create(draft, today: today);
+
+  Future<PeriodRecord> _create(
     PeriodDraft draft, {
     required LocalDate today,
+    bool confirmed = false,
   }) async {
     validatePeriodDraft(draft: draft, today: today, existing: _records);
     final adjacent = adjacentPeriodsForDraft(
@@ -40,6 +62,11 @@ final class InMemoryPeriodRepository implements PeriodRepository {
     );
     final now = _clock().toUtc();
     if (adjacent.isNotEmpty) {
+      if (!confirmed) {
+        throw const PeriodWriteException(
+          PeriodWriteFailure.confirmationRequired,
+        );
+      }
       final mergedDraft = mergeAdjacentPeriodDraft(draft, adjacent);
       final survivor = _earliestPeriod(adjacent);
       return _replaceMergedPeriod(
@@ -47,6 +74,7 @@ final class InMemoryPeriodRepository implements PeriodRepository {
         absorbed: adjacent.where((record) => record.id != survivor.id),
         draft: mergedDraft,
         updatedAt: now,
+        today: today,
       );
     }
     final record = PeriodRecord(
@@ -65,6 +93,13 @@ final class InMemoryPeriodRepository implements PeriodRepository {
     String id,
     PeriodDraft draft, {
     required LocalDate today,
+  }) => _update(id, draft, today: today);
+
+  Future<PeriodRecord> _update(
+    String id,
+    PeriodDraft draft, {
+    required LocalDate today,
+    bool confirmed = false,
   }) async {
     final index = _records.indexWhere((record) => record.id == id);
     if (index == -1) {
@@ -82,8 +117,18 @@ final class InMemoryPeriodRepository implements PeriodRepository {
       existing: _records,
       editingId: id,
     );
+    final consequence = _retentionConsequences(draft, today, id);
+    if (!confirmed &&
+        (consequence.bleeding > 0 || consequence.reflections > 0)) {
+      throw const PeriodWriteException(PeriodWriteFailure.confirmationRequired);
+    }
     final previous = _records[index];
     if (adjacent.isNotEmpty) {
+      if (!confirmed) {
+        throw const PeriodWriteException(
+          PeriodWriteFailure.confirmationRequired,
+        );
+      }
       final mergedDraft = mergeAdjacentPeriodDraft(draft, adjacent);
       final candidates = <PeriodRecord>[previous, ...adjacent];
       final survivor = _earliestPeriod(candidates, editedId: id, draft: draft);
@@ -92,6 +137,7 @@ final class InMemoryPeriodRepository implements PeriodRepository {
         absorbed: candidates.where((record) => record.id != survivor.id),
         draft: mergedDraft,
         updatedAt: _clock().toUtc(),
+        today: today,
       );
     }
     final updated = PeriodRecord(
@@ -102,13 +148,7 @@ final class InMemoryPeriodRepository implements PeriodRepository {
       updatedAt: _clock().toUtc(),
     );
     _records[index] = updated;
-    final upperBound = draft.endDate ?? today;
-    _flowDays.removeWhere(
-      (flow) =>
-          flow.periodId == id &&
-          (flow.date.isBefore(draft.startDate) ||
-              flow.date.isAfter(upperBound)),
-    );
+    _preserveOutsideRange(id, draft, today);
     return updated;
   }
 
@@ -117,6 +157,7 @@ final class InMemoryPeriodRepository implements PeriodRepository {
     required Iterable<PeriodRecord> absorbed,
     required PeriodDraft draft,
     required DateTime updatedAt,
+    required LocalDate today,
   }) {
     final absorbedIds = absorbed.map((record) => record.id).toSet();
     final merged = PeriodRecord(
@@ -142,7 +183,175 @@ final class InMemoryPeriodRepository implements PeriodRepository {
         updatedAt: flow.updatedAt,
       );
     }
+    _preserveOutsideRange(survivor.id, draft, today);
     return merged;
+  }
+
+  @override
+  Future<PeriodWritePreview> previewWrite(
+    PeriodDraft draft, {
+    required LocalDate today,
+    String? editingId,
+  }) async {
+    final consequence = _retentionConsequences(draft, today, editingId);
+    return _reviews.preview(
+      draft: draft,
+      today: today,
+      editingId: editingId,
+      existing: _records,
+      snapshot: _sourceSnapshot(),
+      detachedBleedingCount: consequence.bleeding,
+      detachedReflectionCount: consequence.reflections,
+    );
+  }
+
+  ({int bleeding, int reflections}) _retentionConsequences(
+    PeriodDraft draft,
+    LocalDate today,
+    String? editingId,
+  ) {
+    final adjacent = adjacentPeriodsForDraft(
+      draft: draft,
+      today: today,
+      existing: _records,
+      editingId: editingId,
+    );
+    final affected = <PeriodRecord>[
+      if (editingId != null)
+        ..._records.where((period) => period.id == editingId),
+      ...adjacent,
+    ];
+    if (affected.isEmpty) return (bleeding: 0, reflections: 0);
+    final ids = affected.map((period) => period.id).toSet();
+    final survivor = _earliestPeriod(
+      affected,
+      editedId: editingId,
+      draft: draft,
+    );
+    final finalRange = mergeAdjacentPeriodDraft(draft, adjacent);
+    bool outside(int day) =>
+        day < finalRange.startDate.epochDay ||
+        day > (finalRange.endDate ?? today).epochDay;
+    return (
+      bleeding: _flowDays
+          .where(
+            (flow) =>
+                ids.contains(flow.periodId) && outside(flow.date.epochDay),
+          )
+          .length,
+      reflections:
+          (cycleReflectionSourceReader?.call() ?? const <CycleReflection>[])
+              .where(
+                (reflection) =>
+                    ids.contains(reflection.startingPeriodId) &&
+                    (reflection.startingPeriodId != survivor.id ||
+                        outside(reflection.cycleStartDay)),
+              )
+              .length,
+    );
+  }
+
+  @override
+  Future<PeriodRecord> confirmWrite(
+    PeriodWritePreview preview, {
+    required LocalDate today,
+  }) async {
+    final reviewed = _reviews.validate(preview, _sourceSnapshot());
+    final saved = reviewed.editingId == null
+        ? await _create(reviewed.draft, today: today, confirmed: true)
+        : await _update(
+            reviewed.editingId!,
+            reviewed.draft,
+            today: today,
+            confirmed: true,
+          );
+    _reviews.consume(preview);
+    return saved;
+  }
+
+  String _sourceSnapshot() {
+    final records = [..._records]..sort((a, b) => a.id.compareTo(b.id));
+    final flows = [..._flowDays]
+      ..sort((a, b) {
+        final id = a.periodId.compareTo(b.periodId);
+        return id != 0 ? id : a.date.compareTo(b.date);
+      });
+    final letters =
+        (cycleReflectionSourceReader?.call() ?? const <CycleReflection>[])
+            .toList()
+          ..sort((a, b) => a.id.compareTo(b.id));
+    return jsonEncode([
+      for (final record in records)
+        [
+          record.id,
+          record.startDate.epochDay,
+          record.endDate?.epochDay,
+          record.createdAt.microsecondsSinceEpoch,
+          record.updatedAt.microsecondsSinceEpoch,
+        ],
+      for (final flow in flows)
+        [
+          flow.periodId,
+          flow.date.epochDay,
+          flow.flow.name,
+          flow.color?.name,
+          flow.createdAt.microsecondsSinceEpoch,
+          flow.updatedAt.microsecondsSinceEpoch,
+        ],
+      for (final fact in independentBleedingFacts)
+        [fact.metadata.id, fact.metadata.updatedAt.microsecondsSinceEpoch],
+      for (final reflection in letters)
+        [
+          reflection.id,
+          reflection.startingPeriodId,
+          reflection.cycleStartDay,
+          reflection.observation,
+          reflection.need?.name,
+          reflection.whatHelped,
+          reflection.futureSelfNote,
+          reflection.createdAt.microsecondsSinceEpoch,
+          reflection.updatedAt.microsecondsSinceEpoch,
+        ],
+    ]);
+  }
+
+  void _preserveOutsideRange(String id, PeriodDraft draft, LocalDate today) {
+    _preserveFlows(
+      _flowDays
+          .where(
+            (flow) =>
+                flow.periodId == id &&
+                (flow.date.isBefore(draft.startDate) ||
+                    flow.date.isAfter(draft.endDate ?? today)),
+          )
+          .toList(),
+    );
+  }
+
+  void _preserveFlows(List<BleedingDayRecord> sources) {
+    for (final source in sources) {
+      _independentBleeding.putIfAbsent(
+        source.date.epochDay,
+        () => BleedingFactRecord(
+          metadata: RecordFactMetadata(
+            id:
+                _flowSourceIds[source.date.epochDay] ??
+                '${source.periodId}:${source.date.epochDay}',
+            experiencedDate: source.date,
+            recordedAt: source.createdAt,
+            updatedAt: source.updatedAt,
+            originalProvenance: HealthRecordProvenance.timingUnknown,
+            provenance: HealthRecordProvenance.timingUnknown,
+          ),
+          value: BleedingFactDraft(
+            experiencedDate: source.date,
+            flow: source.flow,
+            color: source.color,
+          ),
+        ),
+      );
+      _flowDays.remove(source);
+    }
   }
 
   PeriodRecord _earliestPeriod(
@@ -173,7 +382,7 @@ final class InMemoryPeriodRepository implements PeriodRepository {
       throw const PeriodWriteException(PeriodWriteFailure.notFound);
     }
     _records.removeAt(index);
-    _flowDays.removeWhere((flow) => flow.periodId == id);
+    _preserveFlows(_flowDays.where((flow) => flow.periodId == id).toList());
   }
 
   @override
@@ -194,19 +403,25 @@ final class InMemoryPeriodRepository implements PeriodRepository {
     required LocalDate today,
   }) async {
     final period = _periodForFlow(periodId, date: date, today: today);
+    _flowSourceIds.putIfAbsent(
+      date.epochDay,
+      () => '$periodId:${date.epochDay}',
+    );
     final now = _clock().toUtc();
     final index = _flowDays.indexWhere(
       (record) => record.periodId == period.id && record.date == date,
     );
     final previous = index == -1 ? null : _flowDays[index];
+    final promoted = _independentBleeding[date.epochDay];
     final updated = BleedingDayRecord(
       periodId: period.id,
       date: date,
       flow: flow,
-      color: previous?.color,
-      createdAt: previous?.createdAt ?? now,
+      color: previous?.color ?? promoted?.value.color,
+      createdAt: previous?.createdAt ?? promoted?.metadata.recordedAt ?? now,
       updatedAt: now,
     );
+    _independentBleeding.remove(date.epochDay);
     if (index == -1) {
       _flowDays.add(updated);
     } else {
@@ -258,6 +473,11 @@ final class InMemoryPeriodRepository implements PeriodRepository {
 
   @override
   Future<void> clearFlow(String periodId, LocalDate date) async {
+    if (_flowDays.any(
+      (record) => record.periodId == periodId && record.date == date,
+    )) {
+      _flowSourceIds.remove(date.epochDay);
+    }
     _flowDays.removeWhere(
       (record) => record.periodId == periodId && record.date == date,
     );

@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import '../../features/cycle/presentation/period_write_review.dart';
+import '../../features/cycle/presentation/period_range_editor.dart';
+import '../../features/cycle/presentation/cycle_reflection_history.dart';
 
 import '../../features/care/domain/care_memory.dart';
 import '../../features/care/domain/care_memory_repository.dart';
@@ -16,6 +19,7 @@ import '../../features/today/today_cycle_ring_model.dart';
 import '../degree/degree_graphics.dart';
 import 'cycle_estimate_copy.dart';
 import '../records/observation_picker.dart';
+import '../../features/record_hub/presentation/record_calendar.dart';
 import '../source/source_panel.dart';
 import '../theme/experience_foundation.dart';
 import 'cycle_action_panel.dart';
@@ -62,6 +66,7 @@ final class CycleExperience extends StatefulWidget {
     this.ringModel,
     this.revision = 0,
     this.now,
+    this.onOpenRecord,
   });
 
   final PeriodRepository periodRepository;
@@ -82,6 +87,7 @@ final class CycleExperience extends StatefulWidget {
   final int revision;
 
   final DateTime? now;
+  final Future<void> Function(LocalDate date)? onOpenRecord;
 
   @override
   State<CycleExperience> createState() => _CycleExperienceState();
@@ -246,10 +252,16 @@ class _CycleExperienceState extends State<CycleExperience> {
         _openPeriodDates(existing: existing);
         return;
       }
-      await widget.periodRepository.create(
-        PeriodDraft(startDate: _today),
-        today: _today,
-      );
+      if (!mounted) return;
+      if (await writePeriodWithReview(
+            context: context,
+            repository: widget.periodRepository,
+            draft: PeriodDraft(startDate: _today),
+            today: _today,
+          ) ==
+          null) {
+        return;
+      }
       final line = await SavedRhythm.acknowledge(SavedRhythmKind.record);
       if (!mounted) return;
       setState(() {
@@ -276,11 +288,16 @@ class _CycleExperienceState extends State<CycleExperience> {
     final end = LocalDate.fromDateTime(picked);
     setState(() => _actionError = null);
     try {
-      await widget.periodRepository.update(
-        period.id,
-        PeriodDraft(startDate: period.startDate, endDate: end),
-        today: _today,
-      );
+      if (await writePeriodWithReview(
+            context: context,
+            repository: widget.periodRepository,
+            editingId: period.id,
+            draft: PeriodDraft(startDate: period.startDate, endDate: end),
+            today: _today,
+          ) ==
+          null) {
+        return;
+      }
       final line = await SavedRhythm.acknowledge(SavedRhythmKind.record);
       if (!mounted) return;
       setState(() {
@@ -305,6 +322,7 @@ class _CycleExperienceState extends State<CycleExperience> {
         today: _today,
         now: widget.now,
         existingPeriod: existingPeriod,
+        onOpenRecord: widget.onOpenRecord,
         onDataChanged: _dataChanged,
       ),
     );
@@ -335,6 +353,12 @@ class _CycleExperienceState extends State<CycleExperience> {
         today: _today,
         now: widget.now,
         onDataChanged: _dataChanged,
+        onChooseDay: widget.onOpenRecord == null
+            ? null
+            : () => _chooseRecordDate(
+                first: cycle.period.startDate,
+                last: cycle.period.startDate.addDays(cycle.cycleLengthDays - 1),
+              ),
         onEditDates: () {
           Navigator.of(context).pop();
           _openPeriodDates(existing: cycle.period);
@@ -344,7 +368,7 @@ class _CycleExperienceState extends State<CycleExperience> {
           _openBackfill(existingPeriod: cycle.period);
         },
         onOpenDay: (date) {
-          Navigator.of(context).pop();
+          if (widget.onOpenRecord == null) Navigator.of(context).pop();
           _openDayEditor(date);
         },
       ),
@@ -371,6 +395,9 @@ class _CycleExperienceState extends State<CycleExperience> {
         today: _today,
         now: widget.now,
         onDataChanged: _dataChanged,
+        onChooseDay: widget.onOpenRecord == null
+            ? null
+            : () => _chooseRecordDate(first: period.startDate, last: _today),
         onEditDates: () {
           Navigator.of(context).pop();
           _openPeriodDates(existing: period);
@@ -380,7 +407,7 @@ class _CycleExperienceState extends State<CycleExperience> {
           _openBackfill(existingPeriod: period);
         },
         onOpenDay: (date) {
-          Navigator.of(context).pop();
+          if (widget.onOpenRecord == null) Navigator.of(context).pop();
           _openDayEditor(date);
         },
       ),
@@ -420,7 +447,30 @@ class _CycleExperienceState extends State<CycleExperience> {
     return null;
   }
 
+  Future<void> _chooseRecordDate({LocalDate? first, LocalDate? last}) async {
+    if (widget.onOpenRecord == null) return;
+    final eligibleLast = last != null && last.isBefore(_today) ? last : _today;
+    final initial = first ?? eligibleLast;
+    final saved = (await widget.healthRecordRepository.getAll())
+        .map((record) => record.experiencedDate)
+        .toSet();
+    if (!mounted) return;
+    final date = await showRecordCalendar(
+      context: context,
+      selectedDate: initial,
+      today: _today,
+      savedDates: saved,
+      firstDate: first,
+      lastDate: eligibleLast,
+    );
+    if (date != null && mounted) await widget.onOpenRecord!(date);
+  }
+
   void _openDayEditor(LocalDate date) {
+    if (widget.onOpenRecord != null) {
+      widget.onOpenRecord!(date);
+      return;
+    }
     showExperienceSheet<void>(
       context,
       child: _DayEditorSheet(
@@ -552,6 +602,12 @@ class _CycleExperienceState extends State<CycleExperience> {
       ),
       children: <Widget>[
         _buildHeader(),
+        if (widget.onOpenRecord != null)
+          TextButton.icon(
+            onPressed: _chooseRecordDate,
+            icon: const Icon(Icons.calendar_month_outlined),
+            label: const Text('Record any day'),
+          ),
         const SizedBox(height: ExperienceSpacing.md),
         Center(child: _buildRing(ringModel)),
         if (ringModel != null) _buildEstimateLine(ringModel),
@@ -586,6 +642,12 @@ class _CycleExperienceState extends State<CycleExperience> {
             label: Text('View all ${_periods.length} periods'),
           ),
         ],
+        CycleReflectionHistory(
+          repository: widget.careMemoryRepository,
+          completedPeriods: completed.map((cycle) => cycle.period).toList(),
+          revision: _loadGeneration,
+          onChanged: _dataChanged,
+        ),
         if (lastClosed != null) ...<Widget>[
           const SizedBox(height: ExperienceSpacing.lg),
           const _SectionHeader(title: 'Bleeding flow, last period'),
@@ -2008,6 +2070,7 @@ class _BackfillSheet extends StatefulWidget {
     required this.today,
     required this.onDataChanged,
     this.existingPeriod,
+    this.onOpenRecord,
     this.now,
   });
 
@@ -2016,6 +2079,7 @@ class _BackfillSheet extends StatefulWidget {
   final LocalDate today;
   final VoidCallback onDataChanged;
   final PeriodRecord? existingPeriod;
+  final Future<void> Function(LocalDate date)? onOpenRecord;
   final DateTime? now;
 
   @override
@@ -2118,10 +2182,16 @@ class _BackfillSheetState extends State<_BackfillSheet> {
       _createError = null;
     });
     try {
-      final period = await widget.periodRepository.create(
-        PeriodDraft(startDate: start, endDate: end),
+      final period = await writePeriodWithReview(
+        context: context,
+        repository: widget.periodRepository,
+        draft: PeriodDraft(startDate: start, endDate: end),
         today: widget.today,
       );
+      if (period == null) {
+        if (mounted) setState(() => _busy = false);
+        return;
+      }
       if (!mounted) return;
       setState(() {
         _period = period;
@@ -2556,6 +2626,12 @@ class _BackfillSheetState extends State<_BackfillSheet> {
                       ),
                     if (error != null) _InlineErrorLine(message: error),
                     const SizedBox(height: ExperienceSpacing.xs * 2),
+                    if (widget.onOpenRecord != null)
+                      OutlinedButton.icon(
+                        onPressed: () => widget.onOpenRecord!(date),
+                        icon: const Icon(Icons.edit_calendar_outlined),
+                        label: const Text('Complete record for this day'),
+                      ),
                     OutlinedButton.icon(
                       onPressed: () {
                         ObservationPicker.show(
@@ -2640,35 +2716,8 @@ class _PeriodDatesSheetState extends State<_PeriodDatesSheet> {
     super.initState();
     _start = widget.existing?.startDate;
     _end = widget.existing?.endDate;
-    _stillBleeding = widget.existing?.endDate == null;
-  }
-
-  Future<void> _pick({required bool start}) async {
-    final now = widget.now ?? DateTime.now();
-    final current = start ? _start : _end;
-    final initial = current == null
-        ? now
-        : DateTime.fromMillisecondsSinceEpoch(
-            0,
-            isUtc: true,
-          ).add(Duration(days: current.epochDay));
-    final picked = await showDatePicker(
-      context: context,
-      initialDate: initial.isAfter(now) ? now : initial,
-      firstDate: DateTime(now.year - 3),
-      lastDate: DateTime(now.year, now.month, now.day),
-      helpText: start ? 'Period start' : 'Period end',
-    );
-    if (picked == null || !mounted) return;
-    setState(() {
-      if (start) {
-        _start = LocalDate.fromDateTime(picked);
-      } else {
-        _end = LocalDate.fromDateTime(picked);
-        _stillBleeding = false;
-      }
-      _errorLine = null;
-    });
+    _stillBleeding =
+        widget.existing != null && widget.existing?.endDate == null;
   }
 
   Future<void> _save() async {
@@ -2684,14 +2733,16 @@ class _PeriodDatesSheetState extends State<_PeriodDatesSheet> {
         endDate: _stillBleeding ? null : _end,
       );
       final existing = widget.existing;
-      if (existing == null) {
-        await widget.periodRepository.create(draft, today: widget.today);
-      } else {
-        await widget.periodRepository.update(
-          existing.id,
-          draft,
-          today: widget.today,
-        );
+      final saved = await writePeriodWithReview(
+        context: context,
+        repository: widget.periodRepository,
+        draft: draft,
+        editingId: existing?.id,
+        today: widget.today,
+      );
+      if (saved == null) {
+        if (mounted) setState(() => _busy = false);
+        return;
       }
       await SavedRhythm.acknowledge(SavedRhythmKind.record);
       widget.onDataChanged();
@@ -2769,84 +2820,52 @@ class _PeriodDatesSheetState extends State<_PeriodDatesSheet> {
               style: ExperienceType.headline(ExperienceColors.ink),
             ),
           ),
-          if (widget.existing != null) ...<Widget>[
-            const SizedBox(height: ExperienceSpacing.xs),
-            Text(
-              'Changing these dates changes which days count as bleeding. '
-              'Symptoms, check-ins, and notes stay on their original dates; '
-              'they are never silently deleted.',
-              style: ExperienceType.caption(ExperienceColors.inkSoft),
-            ),
-          ],
           const SizedBox(height: ExperienceSpacing.md),
-          Row(
-            children: <Widget>[
-              Expanded(
-                child: OutlinedButton(
-                  onPressed: _busy ? null : () => _pick(start: true),
-                  style: OutlinedButton.styleFrom(
-                    foregroundColor: ExperienceColors.ink,
-                    minimumSize: const Size(0, ExperienceSpacing.degreeTarget),
-                    side: const BorderSide(color: ExperienceColors.hairline),
-                    shape: const RoundedRectangleBorder(
-                      borderRadius: ExperienceRadius.chipRadius,
-                    ),
-                  ),
-                  child: Text(
-                    _start == null ? 'Start' : summaryDateLabel(_start!),
-                    style: ExperienceType.label(ExperienceColors.ink),
-                  ),
-                ),
-              ),
-              const SizedBox(width: ExperienceSpacing.xs * 2),
-              Expanded(
-                child: OutlinedButton(
-                  onPressed: _busy || _stillBleeding
-                      ? null
-                      : () => _pick(start: false),
-                  style: OutlinedButton.styleFrom(
-                    foregroundColor: ExperienceColors.ink,
-                    minimumSize: const Size(0, ExperienceSpacing.degreeTarget),
-                    side: const BorderSide(color: ExperienceColors.hairline),
-                    shape: const RoundedRectangleBorder(
-                      borderRadius: ExperienceRadius.chipRadius,
-                    ),
-                  ),
-                  child: Text(
-                    _stillBleeding
-                        ? 'Still bleeding'
-                        : _end == null
-                        ? 'End'
-                        : summaryDateLabel(_end!),
-                    style: ExperienceType.label(ExperienceColors.ink),
-                  ),
-                ),
-              ),
-            ],
+          PeriodRangeEditor(
+            today: widget.today,
+            initialStartDate: _start,
+            initialEndDate: _end,
+            initialOngoing: _stillBleeding,
+            enabled: !_busy,
+            onChanged: (range) => setState(() {
+              _start = range.startDate;
+              _end = range.endDate;
+              _stillBleeding = range.ongoing;
+              _errorLine = null;
+            }),
           ),
-          const SizedBox(height: ExperienceSpacing.xs * 2),
-          Semantics(
-            toggled: _stillBleeding,
-            label: 'This period is still bleeding, no end date yet',
-            child: SwitchListTile(
-              contentPadding: EdgeInsets.zero,
-              title: Text(
-                'Still bleeding',
-                style: ExperienceType.body(ExperienceColors.ink),
-              ),
-              value: _stillBleeding,
-              onChanged: _busy
-                  ? null
-                  : (value) => setState(() => _stillBleeding = value),
+          if (widget.existing != null)
+            ExpansionTile(
+              tilePadding: EdgeInsets.zero,
+              title: const Text('What happens when dates change'),
+              children: [
+                Padding(
+                  padding: const EdgeInsets.only(bottom: ExperienceSpacing.sm),
+                  child: Text(
+                    'Changing these dates changes which days count as bleeding. '
+                    'Symptoms, check-ins, and notes stay on their original dates; '
+                    'they are never silently deleted.',
+                    style: ExperienceType.caption(ExperienceColors.inkSoft),
+                  ),
+                ),
+              ],
             ),
-          ),
           if (_errorLine != null) _InlineErrorLine(message: _errorLine!),
           const SizedBox(height: ExperienceSpacing.sm),
           Row(
             children: <Widget>[
               Expanded(
                 child: FilledButton(
-                  onPressed: _start != null && !_busy ? _save : null,
+                  onPressed:
+                      !_busy &&
+                          _start != null &&
+                          !_start!.isAfter(widget.today) &&
+                          (_stillBleeding ||
+                              _end != null &&
+                                  !_end!.isBefore(_start!) &&
+                                  !_end!.isAfter(widget.today))
+                      ? _save
+                      : null,
                   style: FilledButton.styleFrom(
                     backgroundColor: ExperienceColors.ember,
                     foregroundColor: Colors.white,
@@ -2903,6 +2922,7 @@ class _CycleDetailSheet extends StatefulWidget {
     required this.onFillDays,
     required this.onOpenDay,
     this.isCurrentCycle = false,
+    this.onChooseDay,
     this.currentCycleDay,
     this.bleedingState,
     this.now,
@@ -2919,6 +2939,7 @@ class _CycleDetailSheet extends StatefulWidget {
   final VoidCallback onFillDays;
   final ValueChanged<LocalDate> onOpenDay;
   final bool isCurrentCycle;
+  final VoidCallback? onChooseDay;
   final int? currentCycleDay;
   final BleedingState? bleedingState;
   final DateTime? now;
@@ -2985,6 +3006,7 @@ class _CycleDetailSheetState extends State<_CycleDetailSheet> {
 
   CycleReflectionDraft get _reflectionDraft => CycleReflectionDraft(
     observation: _normalized(_hardController.text),
+    need: _existingReflection?.need,
     whatHelped: _normalized(_helpedController.text),
     futureSelfNote: _normalized(_futureController.text),
   );
@@ -2992,6 +3014,7 @@ class _CycleDetailSheetState extends State<_CycleDetailSheet> {
   bool get _reflectionHasContent {
     final draft = _reflectionDraft;
     return draft.observation != null ||
+        draft.need != null ||
         draft.whatHelped != null ||
         draft.futureSelfNote != null;
   }
@@ -3021,9 +3044,12 @@ class _CycleDetailSheetState extends State<_CycleDetailSheet> {
     try {
       final draft = validateCycleReflection(_reflectionDraft);
       final saved = await widget.careMemoryRepository.saveCycleReflection(
-        widget.cycle.period.startDate.epochDay,
+        _existingReflection?.cycleStartDay ??
+            widget.cycle.period.startDate.epochDay,
         draft,
-        startingPeriodId: widget.cycle.period.id,
+        startingPeriodId: _existingReflection == null
+            ? widget.cycle.period.id
+            : _existingReflection!.startingPeriodId,
       );
       final line = await SavedRhythm.acknowledge(SavedRhythmKind.reflection);
       if (!mounted) return;
@@ -3165,6 +3191,11 @@ class _CycleDetailSheetState extends State<_CycleDetailSheet> {
             spacing: ExperienceSpacing.xs * 2,
             runSpacing: ExperienceSpacing.xs * 2,
             children: <Widget>[
+              if (widget.onChooseDay != null)
+                OutlinedButton(
+                  onPressed: widget.onChooseDay,
+                  child: const Text('Choose any day in this cycle'),
+                ),
               OutlinedButton(
                 onPressed: widget.onEditDates,
                 style: OutlinedButton.styleFrom(
@@ -3279,6 +3310,23 @@ class _CycleDetailSheetState extends State<_CycleDetailSheet> {
                 ),
               )
             else ...<Widget>[
+              if (_existingReflection != null &&
+                  _existingReflection!.cycleStartDay !=
+                      widget.cycle.period.startDate.epochDay) ...<Widget>[
+                Text(
+                  'Original cycle date: '
+                  '${LocalDate.fromEpochDay(_existingReflection!.cycleStartDay)}',
+                  style: ExperienceType.caption(ExperienceColors.inkSoft),
+                ),
+                const SizedBox(height: ExperienceSpacing.sm),
+              ],
+              if (_existingReflection?.need case final need?) ...<Widget>[
+                Text(
+                  'What I needed: ${cycleReflectionNeedLabel(need)}',
+                  style: ExperienceType.bodySmall(ExperienceColors.ink),
+                ),
+                const SizedBox(height: ExperienceSpacing.sm),
+              ],
               _ReflectionField(
                 controller: _hardController,
                 label: 'What was hard',

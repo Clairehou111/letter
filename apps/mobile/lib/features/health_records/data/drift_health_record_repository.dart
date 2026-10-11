@@ -7,6 +7,7 @@ import '../../cycle/data/letter_health_database.dart';
 import '../../cycle/domain/local_date.dart';
 import '../domain/health_record.dart';
 import '../domain/health_record_repository.dart';
+import '../domain/health_record_write_policy.dart';
 
 final class DriftHealthRecordRepository implements HealthRecordRepository {
   DriftHealthRecordRepository(
@@ -35,78 +36,124 @@ final class DriftHealthRecordRepository implements HealthRecordRepository {
   }
 
   @override
-  Future<HealthRecord> create(HealthRecordDraft draft) {
-    final valid = validateHealthRecordDraft(draft);
-    return _guardStorage(() async {
-      final now = _clock().toUtc();
-      final existingQuery = _database.select(_database.healthRecordRows)
+  Future<HealthRecord> create(HealthRecordDraft draft) => _guardStorage(
+    () => _database.transaction(() async {
+      final valid = validateHealthRecordDraft(draft);
+      final query = _database.select(_database.healthRecordRows)
         ..where(
           (row) =>
               row.symptom.equals(valid.symptom.name) &
               row.experiencedDay.equals(valid.experiencedDate.epochDay),
-        )
-        ..orderBy([(row) => OrderingTerm.desc(row.updatedAtMillis)])
-        ..limit(1);
-      final existingRow = await existingQuery.getSingleOrNull();
-      if (existingRow != null) {
-        final updated = _fromRow(
-          existingRow,
-        ).copyWith(draft: valid, updatedAt: now);
-        await (_database.update(_database.healthRecordRows)
-              ..where((row) => row.id.equals(updated.id)))
-            .write(_toUpdateCompanion(updated));
-        return updated;
-      }
-      final record = _fromDraft(
-        id: _idGenerator(),
+        );
+      final existing = await query.getSingleOrNull();
+      final previous = existing == null ? null : _fromRow(existing);
+      final record = buildHealthRecord(
+        id: previous?.id ?? _idGenerator(),
         draft: valid,
-        recordedAt: now,
-        updatedAt: now,
+        localNow: _clock().toLocal(),
+        previous: previous,
       );
+      if (identical(record, previous)) return record;
+      if (previous == null) {
+        await _database
+            .into(_database.healthRecordRows)
+            .insert(_toCompanion(record));
+      } else {
+        await (_database.update(_database.healthRecordRows)
+              ..where((row) => row.id.equals(record.id)))
+            .write(_toUpdateCompanion(record));
+      }
+      return record;
+    }),
+  );
+
+  @override
+  Future<HealthRecord> update(
+    String id,
+    HealthRecordDraft draft,
+  ) => _guardStorage(
+    () => _database.transaction(() async {
+      final valid = validateHealthRecordDraft(draft);
+      final previous = await _findRecord(id);
+      final conflict =
+          await (_database.select(_database.healthRecordRows)..where(
+                (row) =>
+                    row.symptom.equals(valid.symptom.name) &
+                    row.experiencedDay.equals(valid.experiencedDate.epochDay) &
+                    row.id.equals(id).not(),
+              ))
+              .getSingleOrNull();
+      if (conflict != null) {
+        throw const HealthRecordException(HealthRecordFailure.dateCollision);
+      }
+      final updated = buildHealthRecord(
+        id: id,
+        draft: valid,
+        localNow: _clock().toLocal(),
+        previous: previous,
+      );
+      if (!identical(updated, previous)) {
+        await (_database.update(_database.healthRecordRows)
+              ..where((row) => row.id.equals(id)))
+            .write(_toUpdateCompanion(updated));
+      }
+      return updated;
+    }),
+  );
+
+  @override
+  Future<HealthRecord> restore(
+    HealthRecord record, {
+    HealthRecord? expectedCurrent,
+  }) => _guardStorage(
+    () => _database.transaction(() async {
+      final rows =
+          await (_database.select(_database.healthRecordRows)..where(
+                (row) =>
+                    row.id.equals(record.id) |
+                    (row.symptom.equals(record.symptom.name) &
+                        row.experiencedDay.equals(
+                          record.experiencedDate.epochDay,
+                        )),
+              ))
+              .get();
+      if (expectedCurrent == null
+          ? rows.isNotEmpty
+          : rows.length != 1 ||
+                !sameHealthRecordVersion(
+                  _fromRow(rows.single),
+                  expectedCurrent,
+                )) {
+        throw const HealthRecordException(HealthRecordFailure.undoConflict);
+      }
+      if (expectedCurrent != null) {
+        await (_database.delete(
+          _database.healthRecordRows,
+        )..where((row) => row.id.equals(expectedCurrent.id))).go();
+      }
       await _database
           .into(_database.healthRecordRows)
           .insert(_toCompanion(record));
       return record;
-    });
-  }
+    }),
+  );
 
   @override
-  Future<HealthRecord> update(String id, HealthRecordDraft draft) {
-    final valid = validateHealthRecordDraft(draft);
-    return _guardStorage(() async {
-      final previous = await _findRecord(id);
-      final duplicate =
-          await (_database.select(_database.healthRecordRows)..where(
-                (row) =>
-                    row.id.equals(id).not() &
-                    row.symptom.equals(valid.symptom.name) &
-                    row.experiencedDay.equals(valid.experiencedDate.epochDay),
-              ))
-              .getSingleOrNull();
-      if (duplicate != null) {
-        throw const HealthRecordException(HealthRecordFailure.duplicateForDay);
-      }
-      final updated = previous.copyWith(
-        draft: valid,
-        updatedAt: _clock().toUtc(),
-      );
-      await (_database.update(
-        _database.healthRecordRows,
-      )..where((row) => row.id.equals(id))).write(_toUpdateCompanion(updated));
-      return updated;
-    });
-  }
-
-  @override
-  Future<void> delete(String id) {
-    return _guardStorage(() async {
-      final deleted = await (_database.delete(
-        _database.healthRecordRows,
-      )..where((row) => row.id.equals(id))).go();
-      if (deleted == 0) {
-        throw const HealthRecordException(HealthRecordFailure.notFound);
-      }
-    });
+  Future<void> delete(String id, {HealthRecord? expectedCurrent}) {
+    return _guardStorage(
+      () => _database.transaction(() async {
+        if (expectedCurrent != null &&
+            !sameHealthRecordVersion(await _findRecord(id), expectedCurrent)) {
+          throw const HealthRecordException(HealthRecordFailure.undoConflict);
+        }
+        final deleted = await (_database.delete(
+          _database.healthRecordRows,
+        )..where((row) => row.id.equals(id))).go();
+        if (deleted == 0) {
+          throw const HealthRecordException(HealthRecordFailure.notFound);
+        }
+      }),
+    );
   }
 
   @override
@@ -141,7 +188,7 @@ final class DriftHealthRecordRepository implements HealthRecordRepository {
       return HealthRecord(
         id: row.id,
         symptom: SymptomType.values.byName(row.symptom),
-        severity: SymptomSeverity.values[row.severity - 1],
+        severity: SymptomSeverity.fromScore(row.severity),
         functionalImpacts: _decodeSet<FunctionalImpact>(
           row.functionalImpactsJson,
           FunctionalImpact.values.byName,
@@ -150,32 +197,19 @@ final class DriftHealthRecordRepository implements HealthRecordRepository {
         recordedAt: _date(row.recordedAtMillis),
         updatedAt: _date(row.updatedAtMillis),
         provenance: _provenance(row.provenance),
+        originalProvenance: _provenance(
+          row.originalProvenance ?? row.provenance,
+        ),
+        writeZoneOffsetMinutes: row.writeZoneOffsetMinutes,
+        writeZoneName: row.writeZoneName,
+        updatedZoneOffsetMinutes: row.updatedZoneOffsetMinutes,
+        updatedZoneName: row.updatedZoneName,
         userConfirmed: row.userConfirmed,
         vocabularyVersion: row.vocabularyVersion,
       );
     } on Object {
       throw const HealthRecordException(HealthRecordFailure.storageUnavailable);
     }
-  }
-
-  static HealthRecord _fromDraft({
-    required String id,
-    required HealthRecordDraft draft,
-    required DateTime recordedAt,
-    required DateTime updatedAt,
-  }) {
-    return HealthRecord(
-      id: id,
-      symptom: draft.symptom,
-      severity: draft.severity,
-      functionalImpacts: Set.unmodifiable(draft.functionalImpacts),
-      experiencedDate: draft.experiencedDate,
-      recordedAt: recordedAt,
-      updatedAt: updatedAt,
-      provenance: draft.provenance,
-      userConfirmed: true,
-      vocabularyVersion: healthRecordVocabularyVersion,
-    );
   }
 
   static HealthRecordRowsCompanion _toCompanion(HealthRecord record) {
@@ -190,6 +224,11 @@ final class DriftHealthRecordRepository implements HealthRecordRepository {
       recordedAtMillis: record.recordedAt.millisecondsSinceEpoch,
       updatedAtMillis: record.updatedAt.millisecondsSinceEpoch,
       provenance: record.provenance.storageKey,
+      originalProvenance: Value(record.effectiveOriginalProvenance.storageKey),
+      writeZoneOffsetMinutes: Value(record.writeZoneOffsetMinutes),
+      writeZoneName: Value(record.writeZoneName),
+      updatedZoneOffsetMinutes: Value(record.updatedZoneOffsetMinutes),
+      updatedZoneName: Value(record.updatedZoneName),
       userConfirmed: record.userConfirmed,
       vocabularyVersion: record.vocabularyVersion,
     );
@@ -207,6 +246,11 @@ final class DriftHealthRecordRepository implements HealthRecordRepository {
       experiencedDay: Value(record.experiencedDate.epochDay),
       updatedAtMillis: Value(record.updatedAt.millisecondsSinceEpoch),
       provenance: Value(record.provenance.storageKey),
+      originalProvenance: Value(record.effectiveOriginalProvenance.storageKey),
+      writeZoneOffsetMinutes: Value(record.writeZoneOffsetMinutes),
+      writeZoneName: Value(record.writeZoneName),
+      updatedZoneOffsetMinutes: Value(record.updatedZoneOffsetMinutes),
+      updatedZoneName: Value(record.updatedZoneName),
     );
   }
 
@@ -226,9 +270,7 @@ final class DriftHealthRecordRepository implements HealthRecordRepository {
   }
 
   static HealthRecordProvenance _provenance(String value) {
-    return HealthRecordProvenance.values.firstWhere(
-      (entry) => entry.storageKey == value,
-    );
+    return HealthRecordProvenance.fromStorageKey(value);
   }
 
   static DateTime _date(int millis) {

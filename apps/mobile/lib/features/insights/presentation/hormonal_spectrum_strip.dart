@@ -5,6 +5,7 @@ import '../../cycle/domain/local_date.dart';
 import 'spectrum_log_view_model.dart';
 
 const List<Color> _spectrumSeverityRamp = [
+  LetterColors.muted,
   Color(0xFF6E7BA8),
   Color(0xFFA97E92),
   Color(0xFFC06F7F),
@@ -13,6 +14,7 @@ const List<Color> _spectrumSeverityRamp = [
 ];
 
 const Map<int, String> _spectrumSeverityLabels = {
+  0: 'Not present',
   1: 'Minimal',
   2: 'Mild',
   3: 'Moderate',
@@ -257,7 +259,7 @@ class _SeverityLegend extends StatelessWidget {
       spacing: 10,
       runSpacing: 6,
       children: [
-        for (var level = 1; level <= 5; level += 1)
+        for (var level = 0; level <= 5; level += 1)
           Row(
             mainAxisSize: MainAxisSize.min,
             children: [
@@ -265,7 +267,7 @@ class _SeverityLegend extends StatelessWidget {
                 width: 8,
                 height: 8,
                 decoration: BoxDecoration(
-                  color: _spectrumSeverityRamp[level - 1],
+                  color: _spectrumSeverityRamp[level],
                   borderRadius: BorderRadius.circular(2),
                 ),
               ),
@@ -382,7 +384,7 @@ class _SpectrumColumnPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     double yFor(double severity) =>
-        size.height - 10 - ((severity - 1) / 4) * (size.height - 20);
+        size.height - 10 - (severity / 5) * (size.height - 20);
 
     final typical = summary.typical!;
     final bar = RRect.fromRectAndRadius(
@@ -391,7 +393,7 @@ class _SpectrumColumnPainter extends CustomPainter {
     );
     canvas.drawRRect(
       bar,
-      Paint()..color = _spectrumSeverityRamp[typical.round().clamp(1, 5) - 1],
+      Paint()..color = _spectrumSeverityRamp[typical.round().clamp(0, 5)],
     );
 
     if (summary.minimum == summary.maximum) return;
@@ -629,8 +631,8 @@ class _TrendPainter extends CustomPainter {
     final dot = Paint()
       ..color = LetterColors.teal
       ..style = PaintingStyle.fill;
-    for (var level = 1; level <= 5; level += 1) {
-      final y = size.height - ((level - 1) / 4) * size.height;
+    for (var level = 0; level <= 5; level += 1) {
+      final y = size.height - (level / 5) * size.height;
       canvas.drawLine(Offset(0, y), Offset(size.width, y), guide);
     }
     if (points.isEmpty) return;
@@ -639,7 +641,7 @@ class _TrendPainter extends CustomPainter {
       final x = points.length == 1
           ? size.width / 2
           : index / (points.length - 1) * size.width;
-      final y = size.height - ((points[index].typical - 1) / 4) * size.height;
+      final y = size.height - (points[index].typical / 5) * size.height;
       final position = Offset(x, y);
       index == 0 ? path.moveTo(x, y) : path.lineTo(x, y);
       canvas.drawCircle(position, 4, dot);
@@ -656,8 +658,8 @@ String _severityLabel(double value) {
   if (value == value.roundToDouble()) {
     return _spectrumSeverityLabels[value.round()]!;
   }
-  final lower = value.floor().clamp(1, 5);
-  final upper = value.ceil().clamp(1, 5);
+  final lower = value.floor().clamp(0, 5);
+  final upper = value.ceil().clamp(0, 5);
   return '${_spectrumSeverityLabels[lower]}–${_spectrumSeverityLabels[upper]}';
 }
 

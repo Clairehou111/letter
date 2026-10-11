@@ -126,7 +126,7 @@ void main() {
           isA<HealthRecordException>().having(
             (error) => error.failure,
             'failure',
-            HealthRecordFailure.duplicateForDay,
+            HealthRecordFailure.dateCollision,
           ),
         ),
       );

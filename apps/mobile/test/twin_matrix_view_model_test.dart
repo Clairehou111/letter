@@ -22,7 +22,7 @@ TwinMatrixObservation _observation({
     recordId: id,
     experiencedDate: date,
     symptom: symptom,
-    severity: SymptomSeverity.values[severity - 1],
+    severity: SymptomSeverity.fromScore(severity),
     daysBeforeMenses: daysBeforeMenses,
     cycleDay: cycleDay,
     cycleKey: cycleKey,
@@ -36,6 +36,34 @@ TwinMatrixCluster _cluster(TwinMatrixViewModel model, String label) =>
     model.clusters.singleWhere((cluster) => cluster.label == label);
 
 void main() {
+  test('zero remains observed and unknown timing stays separate', () {
+    final model = TwinMatrixViewModel.fromObservations(
+      observations: [
+        _observation(
+          id: 'zero-unknown',
+          symptom: SymptomType.cramps,
+          severity: 0,
+          date: const LocalDate(2026, 7, 10),
+          cycleKey: 'cycle-a',
+          daysBeforeMenses: -3,
+          cycleDay: null,
+          provenance: HealthRecordProvenance.timingUnknown,
+          functionalImpacts: const {},
+        ),
+      ],
+      cycleLabel: 'Synthetic cycle',
+      exportTimestamp: '2026-08-01',
+    );
+    final physical = _cluster(model, 'physical symptoms');
+    expect(physical.beforePeriodCells[11].severity, 0);
+    expect(physical.beforePeriodCells[11].observationCount, 1);
+    expect(physical.beforePeriodCells[10].severity, isNull);
+    expect(model.sameDayObservations, 0);
+    expect(model.laterRecallObservations, 0);
+    expect(model.timingUnknownObservations, 1);
+    expect(model.accessibilitySummary, contains('1 timing-unknown records'));
+  });
+
   test('empty and unconfirmed-only input stays entirely blank', () {
     final model = TwinMatrixViewModel.fromObservations(
       observations: [

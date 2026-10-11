@@ -670,7 +670,8 @@ class _TwinEvidenceLine extends StatelessWidget {
         '${vm.totalObservations} confirmed records map to these windows '
         'across ${vm.cyclesCovered} $cyclesNoun. '
         '${vm.sameDayObservations} recorded same-day, '
-        '${vm.laterRecallObservations} later recall. '
+        '${vm.laterRecallObservations} later recall'
+        '${vm.timingUnknownObservations == 0 ? '. ' : ', ${vm.timingUnknownObservations} timing unknown. '}'
         '${vm.blankRelativeDays} of ${vm.totalDays} day columns are blank. '
         'Blank means missing, never zero.';
 
@@ -702,6 +703,11 @@ class _TwinEvidenceLine extends StatelessWidget {
                   word(' same-day · '),
                   num(vm.laterRecallObservations),
                   word(' later recall'),
+                  if (vm.timingUnknownObservations > 0) ...<InlineSpan>[
+                    word(' · '),
+                    num(vm.timingUnknownObservations),
+                    word(' timing unknown'),
+                  ],
                 ],
               ),
             ),

@@ -870,13 +870,19 @@ void main() {
         ),
       );
       await tester.pumpAndSettle();
+      expect(
+        find.bySemanticsLabel(RegExp('Day 32; usual cycle about 28 days')),
+        findsOneWidget,
+      );
+      await tester.scrollUntilVisible(
+        find.textContaining('9/24/2026 – 10/2/2026'),
+        180,
+        scrollable: find.byType(Scrollable).first,
+      );
+      await tester.pumpAndSettle();
       expect(find.textContaining('9/24/2026 – 10/2/2026'), findsOneWidget);
       expect(
         find.textContaining('limited history · estimate window is current'),
-        findsOneWidget,
-      );
-      expect(
-        find.bySemanticsLabel(RegExp('Day 32; usual cycle about 28 days')),
         findsOneWidget,
       );
       expect(

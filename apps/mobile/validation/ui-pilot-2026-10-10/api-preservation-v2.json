@@ -1,0 +1,20 @@
+{
+  "baselineFileCount": 230,
+  "currentFileCount": 233,
+  "changed": [
+    "lib/experience/components/interaction_controls.dart",
+    "lib/experience/cycle/cycle_experience.dart",
+    "lib/experience/letter_experience_shell.dart",
+    "lib/experience/records/observation_picker.dart",
+    "lib/experience/today/today_experience.dart",
+    "lib/experience/today/today_experience_visual_baseline.dart",
+    "lib/experience/today/today_visual_port.dart",
+    "lib/features/cycle/presentation/period_range_editor.dart",
+    "lib/features/record_hub/presentation/record_calendar.dart",
+    "lib/features/record_hub/presentation/record_context_editor.dart",
+    "lib/features/record_hub/presentation/record_entry_section.dart",
+    "lib/features/record_hub/presentation/record_hub_screen.dart"
+  ],
+  "protectedChanged": [],
+  "productionSnapshotSha256": "f9278116bcb1eecad626878ab5fe32188dce489bc7340ef7a87828f93ca5146f"
+}

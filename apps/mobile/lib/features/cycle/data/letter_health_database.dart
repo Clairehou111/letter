@@ -1,4 +1,7 @@
 import 'package:drift/drift.dart';
+import '../../record_hub/data/record_hub_tables.dart';
+import '../../record_hub/data/record_interventions_tables.dart';
+import '../../record_hub/data/record_programme_tables.dart';
 
 part 'letter_health_database.g.dart';
 
@@ -88,6 +91,11 @@ class HealthRecordRows extends Table {
   IntColumn get recordedAtMillis => integer()();
   IntColumn get updatedAtMillis => integer()();
   TextColumn get provenance => text()();
+  TextColumn get originalProvenance => text().nullable()();
+  IntColumn get writeZoneOffsetMinutes => integer().nullable()();
+  TextColumn get writeZoneName => text().nullable()();
+  IntColumn get updatedZoneOffsetMinutes => integer().nullable()();
+  TextColumn get updatedZoneName => text().nullable()();
   BoolColumn get userConfirmed => boolean()();
   IntColumn get vocabularyVersion => integer()();
 
@@ -111,6 +119,13 @@ class CaptureNoteRows extends Table {
   BoolColumn get keepInComfortKit =>
       boolean().withDefault(const Constant(false))();
 
+  /// Unknown legacy experienced dates remain undated; never infer from UTC.
+  IntColumn get experiencedDay => integer().nullable()();
+  TextColumn get provenance => text().nullable()();
+  TextColumn get originalProvenance => text().nullable()();
+  IntColumn get writeZoneOffsetMinutes => integer().nullable()();
+  TextColumn get writeZoneName => text().nullable()();
+
   @override
   Set<Column<Object>> get primaryKey => {id};
 }
@@ -123,6 +138,14 @@ class MomentCheckInRows extends Table {
   TextColumn get state => text()();
   IntColumn get occurredAtMillis => integer()();
   IntColumn get createdAtMillis => integer()();
+  IntColumn get experiencedDay => integer().nullable()();
+  TextColumn get provenance => text().nullable()();
+  IntColumn get writeZoneOffsetMinutes => integer().nullable()();
+  TextColumn get writeZoneName => text().nullable()();
+  IntColumn get updatedAtMillis => integer().nullable()();
+  TextColumn get originalProvenance => text().nullable()();
+  IntColumn get updatedZoneOffsetMinutes => integer().nullable()();
+  TextColumn get updatedZoneName => text().nullable()();
 
   @override
   Set<Column<Object>> get primaryKey => {id};
@@ -198,17 +221,34 @@ class ComfortReminderPreferenceRows extends Table {
     PreparationDismissalRows,
     ComfortKitOverrideRows,
     ComfortReminderPreferenceRows,
+    RecordHubImpactRows,
+    RecordHubBleedingRows,
+    RecordHubSleepRows,
+    RecordHubAppetiteRows,
+    RecordHubActivityRows,
+    RecordHubEventRows,
+    RecordHubTemperatureRows,
+    RecordHubPinRows,
+    RecordProductEpisodeRows,
+    RecordProductVersionRows,
+    RecordProductUseRows,
+    RecordTriedActionRows,
+    RecordTriedActionItemRows,
+    RecordActionCheckbackRows,
+    RecordProgrammeRows,
+    RecordProgrammeConfigRows,
+    RecordProgrammePauseRows,
   ],
 )
 class LetterHealthDatabase extends _$LetterHealthDatabase {
   LetterHealthDatabase(super.executor);
 
-  /// Repairs legacy or imported period rows so every continuous run has one
-  /// stable database record. Repository writes enforce the same invariant.
-  Future<void> normalizeContinuousPeriods() => _mergeContinuousPeriodRows();
+  /// Kept for legacy import adapters. Imported ranges retain their source IDs;
+  /// adjacent ranges require user review through ConfirmablePeriodRepository.
+  Future<void> normalizeContinuousPeriods() async {}
 
   @override
-  int get schemaVersion => 12;
+  int get schemaVersion => 18;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -220,14 +260,100 @@ class LetterHealthDatabase extends _$LetterHealthDatabase {
       ''');
     },
     onUpgrade: (migrator, from, to) async {
-      await _upgradeLegacySchema(migrator);
+      await _upgradeLegacySchema(
+        migrator,
+        rebuildHealthRecords: from < 11,
+        associateLegacyCycleReflections: from < 11,
+      );
+      await _upgradeRecordHubSchema(migrator);
     },
     beforeOpen: (_) async {
       await customStatement('PRAGMA foreign_keys = ON');
     },
   );
 
-  Future<void> _upgradeLegacySchema(Migrator migrator) async {
+  Future<void> _upgradeRecordHubSchema(Migrator migrator) async {
+    for (final table in <TableInfo<Table, Object?>>[
+      recordHubImpactRows,
+      recordHubBleedingRows,
+      recordHubSleepRows,
+      recordHubAppetiteRows,
+      recordHubActivityRows,
+      recordHubEventRows,
+      recordHubTemperatureRows,
+      recordHubPinRows,
+      recordProductEpisodeRows,
+      recordProductVersionRows,
+      recordProductUseRows,
+      recordTriedActionRows,
+      recordTriedActionItemRows,
+      recordActionCheckbackRows,
+      recordProgrammeRows,
+      recordProgrammeConfigRows,
+      recordProgrammePauseRows,
+    ]) {
+      if (!await _tableExists(table.actualTableName)) {
+        await migrator.createTable(table);
+      }
+    }
+    for (final column in [
+      recordTriedActionRows.completionOccurredAtMillis,
+      recordTriedActionRows.completionUtcOffsetMinutes,
+    ]) {
+      if (!await _columnExists('record_tried_action_rows', column.$name)) {
+        await migrator.addColumn(recordTriedActionRows, column);
+      }
+    }
+    for (final column in [
+      healthRecordRows.originalProvenance,
+      healthRecordRows.writeZoneOffsetMinutes,
+      healthRecordRows.writeZoneName,
+      healthRecordRows.updatedZoneOffsetMinutes,
+      healthRecordRows.updatedZoneName,
+    ]) {
+      if (!await _columnExists('health_record_rows', column.$name)) {
+        await migrator.addColumn(healthRecordRows, column);
+      }
+    }
+    await customStatement(
+      'UPDATE health_record_rows SET original_provenance = provenance WHERE original_provenance IS NULL',
+    );
+    for (final column in [
+      momentCheckInRows.experiencedDay,
+      momentCheckInRows.provenance,
+      momentCheckInRows.writeZoneOffsetMinutes,
+      momentCheckInRows.writeZoneName,
+      momentCheckInRows.updatedAtMillis,
+      momentCheckInRows.originalProvenance,
+      momentCheckInRows.updatedZoneOffsetMinutes,
+      momentCheckInRows.updatedZoneName,
+    ]) {
+      if (!await _columnExists('moment_check_in_rows', column.$name)) {
+        await migrator.addColumn(momentCheckInRows, column);
+      }
+    }
+    for (final column in [
+      captureNoteRows.experiencedDay,
+      captureNoteRows.updatedAtMillis,
+      captureNoteRows.provenance,
+      captureNoteRows.originalProvenance,
+      captureNoteRows.writeZoneOffsetMinutes,
+      captureNoteRows.writeZoneName,
+    ]) {
+      if (!await _columnExists('capture_note_rows', column.$name)) {
+        await migrator.addColumn(captureNoteRows, column);
+      }
+    }
+    await customStatement(
+      'UPDATE capture_note_rows SET updated_at_millis = created_at_millis WHERE updated_at_millis IS NULL OR updated_at_millis = 0',
+    );
+  }
+
+  Future<void> _upgradeLegacySchema(
+    Migrator migrator, {
+    required bool rebuildHealthRecords,
+    required bool associateLegacyCycleReflections,
+  }) async {
     if (!await _tableExists('period_rows')) {
       await migrator.createTable(periodRows);
     }
@@ -255,7 +381,7 @@ class LetterHealthDatabase extends _$LetterHealthDatabase {
     }
     if (!await _tableExists('health_record_rows')) {
       await migrator.createTable(healthRecordRows);
-    } else {
+    } else if (rebuildHealthRecords) {
       await _rebuildHealthRecordsWithoutDataLoss(migrator);
     }
     if (!await _tableExists('capture_note_rows')) {
@@ -295,8 +421,10 @@ class LetterHealthDatabase extends _$LetterHealthDatabase {
       await migrator.createTable(comfortReminderPreferenceRows);
     }
 
-    await _mergeContinuousPeriodRows();
-    await customStatement('''
+    // Migration cannot obtain merge consent. Keep saved ranges and attached
+    // source identities intact until the user reviews a runtime period edit.
+    if (associateLegacyCycleReflections) {
+      await customStatement('''
       UPDATE cycle_reflection_rows
       SET starting_period_id = (
         SELECT period_rows.id
@@ -307,6 +435,7 @@ class LetterHealthDatabase extends _$LetterHealthDatabase {
       )
       WHERE starting_period_id IS NULL
     ''');
+    }
     await customStatement('''
       CREATE UNIQUE INDEX IF NOT EXISTS cycle_reflection_starting_period_id
       ON cycle_reflection_rows (starting_period_id)
@@ -358,98 +487,6 @@ class LetterHealthDatabase extends _$LetterHealthDatabase {
       )
     ''');
     await customStatement('DROP TABLE $legacyTable');
-  }
-
-  Future<void> _mergeContinuousPeriodRows() async {
-    final rows =
-        await (select(periodRows)..orderBy([
-              (row) => OrderingTerm.asc(row.startDay),
-              (row) => OrderingTerm.desc(row.updatedAtMillis),
-              (row) => OrderingTerm.asc(row.id),
-            ]))
-            .get();
-    if (rows.length < 2) return;
-
-    final groups = <List<PeriodRow>>[];
-    var current = <PeriodRow>[rows.first];
-    var coveredThrough = rows.first.endDay ?? rows.first.startDay;
-    for (final row in rows.skip(1)) {
-      if (row.startDay <= coveredThrough + 1) {
-        current.add(row);
-        final rowEnd = row.endDay ?? row.startDay;
-        if (rowEnd > coveredThrough) coveredThrough = rowEnd;
-      } else {
-        groups.add(current);
-        current = <PeriodRow>[row];
-        coveredThrough = row.endDay ?? row.startDay;
-      }
-    }
-    groups.add(current);
-
-    for (final group in groups.where((group) => group.length > 1)) {
-      final survivor = group.first;
-      final sourceIds = group.map((row) => row.id).toSet();
-      final mergedEnd = group.any((row) => row.endDay == null)
-          ? null
-          : group
-                .map((row) => row.endDay!)
-                .reduce((left, right) => left > right ? left : right);
-      final latestUpdate = group
-          .map((row) => row.updatedAtMillis)
-          .reduce((left, right) => left > right ? left : right);
-      final flows = await (select(
-        periodFlowRows,
-      )..where((row) => row.periodId.isIn(sourceIds))).get();
-      flows.sort((left, right) {
-        final byUpdated = left.updatedAtMillis.compareTo(right.updatedAtMillis);
-        return byUpdated != 0
-            ? byUpdated
-            : left.periodId.compareTo(right.periodId);
-      });
-      // The final item for a day is its newest deterministic winner. Include
-      // the survivor's own rows in the comparison: otherwise an older row
-      // from an absorbed period can replace newer flow/color evidence.
-      final newestFlowByDay = <int, PeriodFlowRow>{};
-      for (final flow in flows) {
-        newestFlowByDay[flow.day] = flow;
-      }
-      for (final flow in newestFlowByDay.values.where(
-        (row) => row.periodId != survivor.id,
-      )) {
-        await into(periodFlowRows).insert(
-          PeriodFlowRowsCompanion.insert(
-            periodId: survivor.id,
-            day: flow.day,
-            flow: flow.flow,
-            color: Value(flow.color),
-            createdAtMillis: flow.createdAtMillis,
-            updatedAtMillis: flow.updatedAtMillis,
-          ),
-          mode: InsertMode.insertOrReplace,
-        );
-      }
-      await (update(
-        periodRows,
-      )..where((row) => row.id.equals(survivor.id))).write(
-        PeriodRowsCompanion(
-          endDay: Value(mergedEnd),
-          updatedAtMillis: Value(latestUpdate),
-        ),
-      );
-      for (final absorbed in group.skip(1)) {
-        await (delete(
-          periodFlowRows,
-        )..where((row) => row.periodId.equals(absorbed.id))).go();
-        await (update(
-          cycleReflectionRows,
-        )..where((row) => row.startingPeriodId.equals(absorbed.id))).write(
-          const CycleReflectionRowsCompanion(startingPeriodId: Value(null)),
-        );
-        await (delete(
-          periodRows,
-        )..where((row) => row.id.equals(absorbed.id))).go();
-      }
-    }
   }
 
   Future<bool> _tableExists(String name) async {

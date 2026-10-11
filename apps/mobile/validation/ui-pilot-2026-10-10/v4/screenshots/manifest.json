@@ -1,0 +1,494 @@
+{
+  "fixture": "entirely synthetic",
+  "sourceBaseline": "Build17 cf12e70",
+  "reviewDevice": "review7A",
+  "expectedScreenshotCount": 43,
+  "productionFingerprint": "94d052fc6c892062e1c8e919bc357966bc4838572754cbebca8dead93cc4a6d3",
+  "plannedStates": [
+    "1x-today-default",
+    "1x-moment-pressed",
+    "1x-moment-all12",
+    "1x-moment-saved",
+    "1x-record-default",
+    "1x-symptom-origin-reveal",
+    "1x-record-symptom-focused",
+    "1x-record-degree-pressed",
+    "1x-record-zero-saved",
+    "1x-record-stage-90",
+    "1x-record-pane-selected",
+    "1x-record-daily-life",
+    "1x-record-products",
+    "1x-record-notes",
+    "1x-record-note-saved",
+    "1x-sleep-shortcut-editor",
+    "1x-activity-editor-preview",
+    "1x-appetite-editor-preview",
+    "1x-event-editor-preview",
+    "1x-temperature-wheel-preview",
+    "1x-temperature-exact-preview",
+    "1x-medication-editor-preview",
+    "1x-supplement-editor-preview",
+    "1x-birth-control-editor-preview",
+    "1x-tried-action-editor-preview",
+    "1x-checkback-editor-preview",
+    "1x-medication-manager",
+    "1x-medication-daily-and-additional",
+    "1x-medication-manage-actions",
+    "1x-medication-additional-use-preview",
+    "1x-medication-archived-snapshot",
+    "1x-supplement-manager",
+    "1x-supplement-daily-and-additional",
+    "1x-supplement-manage-actions",
+    "1x-supplement-additional-use-preview",
+    "1x-supplement-archived-snapshot",
+    "1x-birth-control-manager",
+    "1x-birth-control-daily-and-additional",
+    "1x-birth-control-manage-actions",
+    "1x-birth-control-additional-use-preview",
+    "1x-birth-control-archived-snapshot",
+    "1x-period-range-band-preview",
+    "1x-period-range-ongoing-preview"
+  ],
+  "childPreviewCancellationVerified": true,
+  "revision": "Record V4 product managers and exact-reading clarity",
+  "motionSamples": [
+    {
+      "direction": "forward",
+      "face": 1,
+      "requestedElapsedMilliseconds": 90,
+      "observedIncomingOpacity": 0.7476577758789062,
+      "observedIntermediate": true
+    },
+    {
+      "direction": "forward",
+      "face": 1,
+      "requestedElapsedMilliseconds": 160,
+      "observedIncomingOpacity": 1.0,
+      "observedIntermediate": false
+    }
+  ],
+  "childPreviewRoute": "Actual typed editor pushed from Record with isolated repository and selected date; cancel/discard only",
+  "motionEvidence": {
+    "file": "ios-record-pane-interactions.mov",
+    "device": "7A533533-EA45-4735-AC28-10FA095A65FF",
+    "source": "xcrun simctl io recordVideo during actual native fixture taps",
+    "scope": "Record Symptoms, Daily life, Products, Notes and real local save",
+    "verified": true,
+    "startedAt": "2026-10-10T12:26:22.239677Z",
+    "stoppedAt": "2026-10-10T12:27:01.479676Z",
+    "wallDurationMilliseconds": 39239,
+    "exitCode": 0
+  },
+  "productMotionEvidence": {
+    "file": "ios-product-manager-interactions.mov",
+    "device": "7A533533-EA45-4735-AC28-10FA095A65FF",
+    "source": "xcrun simctl io recordVideo during actual native fixture taps",
+    "scope": "Actual Medication manager expansion, actions, additional-use cancellation and archived source snapshots",
+    "verified": true,
+    "startedAt": "2026-10-10T12:29:05.917829Z",
+    "stoppedAt": "2026-10-10T12:29:51.211069Z",
+    "wallDurationMilliseconds": 45293,
+    "exitCode": 0
+  },
+  "productManagerCancellationVerified": true,
+  "productEpisodeCount": 12,
+  "productUseCount": 9,
+  "durableReopenVerified": true,
+  "previewCancellationVerified": true,
+  "databaseSchemaVersion": 18,
+  "expectedDatabaseSchemaVersion": 18,
+  "canvasArgb": 4280160804,
+  "platform": "ios",
+  "capture": "native integration_test captureScreenshot via host driver",
+  "renderExceptionCount": 0,
+  "nativeScreenshotCount": 43,
+  "images": [
+    {
+      "file": "ios-1x-today-default.png",
+      "pixelWidth": 1206,
+      "pixelHeight": 2622,
+      "textScale": 1.0,
+      "devicePixelRatio": 3.0,
+      "logicalWidth": 402.0,
+      "logicalHeight": 874.0
+    },
+    {
+      "file": "ios-1x-moment-pressed.png",
+      "pixelWidth": 1206,
+      "pixelHeight": 2622,
+      "textScale": 1.0,
+      "devicePixelRatio": 3.0,
+      "logicalWidth": 402.0,
+      "logicalHeight": 874.0
+    },
+    {
+      "file": "ios-1x-moment-all12.png",
+      "pixelWidth": 1206,
+      "pixelHeight": 2622,
+      "textScale": 1.0,
+      "devicePixelRatio": 3.0,
+      "logicalWidth": 402.0,
+      "logicalHeight": 874.0
+    },
+    {
+      "file": "ios-1x-moment-saved.png",
+      "pixelWidth": 1206,
+      "pixelHeight": 2622,
+      "textScale": 1.0,
+      "devicePixelRatio": 3.0,
+      "logicalWidth": 402.0,
+      "logicalHeight": 874.0
+    },
+    {
+      "file": "ios-1x-record-default.png",
+      "pixelWidth": 1206,
+      "pixelHeight": 2622,
+      "textScale": 1.0,
+      "devicePixelRatio": 3.0,
+      "logicalWidth": 402.0,
+      "logicalHeight": 874.0
+    },
+    {
+      "file": "ios-1x-symptom-origin-reveal.png",
+      "pixelWidth": 1206,
+      "pixelHeight": 2622,
+      "textScale": 1.0,
+      "devicePixelRatio": 3.0,
+      "logicalWidth": 402.0,
+      "logicalHeight": 874.0
+    },
+    {
+      "file": "ios-1x-record-symptom-focused.png",
+      "pixelWidth": 1206,
+      "pixelHeight": 2622,
+      "textScale": 1.0,
+      "devicePixelRatio": 3.0,
+      "logicalWidth": 402.0,
+      "logicalHeight": 874.0
+    },
+    {
+      "file": "ios-1x-record-degree-pressed.png",
+      "pixelWidth": 1206,
+      "pixelHeight": 2622,
+      "textScale": 1.0,
+      "devicePixelRatio": 3.0,
+      "logicalWidth": 402.0,
+      "logicalHeight": 874.0
+    },
+    {
+      "file": "ios-1x-record-zero-saved.png",
+      "pixelWidth": 1206,
+      "pixelHeight": 2622,
+      "textScale": 1.0,
+      "devicePixelRatio": 3.0,
+      "logicalWidth": 402.0,
+      "logicalHeight": 874.0
+    },
+    {
+      "file": "ios-1x-record-stage-90.png",
+      "pixelWidth": 1206,
+      "pixelHeight": 2622,
+      "textScale": 1.0,
+      "devicePixelRatio": 3.0,
+      "logicalWidth": 402.0,
+      "logicalHeight": 874.0
+    },
+    {
+      "file": "ios-1x-record-pane-selected.png",
+      "pixelWidth": 1206,
+      "pixelHeight": 2622,
+      "textScale": 1.0,
+      "devicePixelRatio": 3.0,
+      "logicalWidth": 402.0,
+      "logicalHeight": 874.0
+    },
+    {
+      "file": "ios-1x-record-daily-life.png",
+      "pixelWidth": 1206,
+      "pixelHeight": 2622,
+      "textScale": 1.0,
+      "devicePixelRatio": 3.0,
+      "logicalWidth": 402.0,
+      "logicalHeight": 874.0
+    },
+    {
+      "file": "ios-1x-record-products.png",
+      "pixelWidth": 1206,
+      "pixelHeight": 2622,
+      "textScale": 1.0,
+      "devicePixelRatio": 3.0,
+      "logicalWidth": 402.0,
+      "logicalHeight": 874.0
+    },
+    {
+      "file": "ios-1x-record-notes.png",
+      "pixelWidth": 1206,
+      "pixelHeight": 2622,
+      "textScale": 1.0,
+      "devicePixelRatio": 3.0,
+      "logicalWidth": 402.0,
+      "logicalHeight": 874.0
+    },
+    {
+      "file": "ios-1x-record-note-saved.png",
+      "pixelWidth": 1206,
+      "pixelHeight": 2622,
+      "textScale": 1.0,
+      "devicePixelRatio": 3.0,
+      "logicalWidth": 402.0,
+      "logicalHeight": 874.0
+    },
+    {
+      "file": "ios-1x-sleep-shortcut-editor.png",
+      "pixelWidth": 1206,
+      "pixelHeight": 2622,
+      "textScale": 1.0,
+      "devicePixelRatio": 3.0,
+      "logicalWidth": 402.0,
+      "logicalHeight": 874.0
+    },
+    {
+      "file": "ios-1x-activity-editor-preview.png",
+      "pixelWidth": 1206,
+      "pixelHeight": 2622,
+      "textScale": 1.0,
+      "devicePixelRatio": 3.0,
+      "logicalWidth": 402.0,
+      "logicalHeight": 874.0
+    },
+    {
+      "file": "ios-1x-appetite-editor-preview.png",
+      "pixelWidth": 1206,
+      "pixelHeight": 2622,
+      "textScale": 1.0,
+      "devicePixelRatio": 3.0,
+      "logicalWidth": 402.0,
+      "logicalHeight": 874.0
+    },
+    {
+      "file": "ios-1x-event-editor-preview.png",
+      "pixelWidth": 1206,
+      "pixelHeight": 2622,
+      "textScale": 1.0,
+      "devicePixelRatio": 3.0,
+      "logicalWidth": 402.0,
+      "logicalHeight": 874.0
+    },
+    {
+      "file": "ios-1x-temperature-wheel-preview.png",
+      "pixelWidth": 1206,
+      "pixelHeight": 2622,
+      "textScale": 1.0,
+      "devicePixelRatio": 3.0,
+      "logicalWidth": 402.0,
+      "logicalHeight": 874.0
+    },
+    {
+      "file": "ios-1x-temperature-exact-preview.png",
+      "pixelWidth": 1206,
+      "pixelHeight": 2622,
+      "textScale": 1.0,
+      "devicePixelRatio": 3.0,
+      "logicalWidth": 402.0,
+      "logicalHeight": 874.0
+    },
+    {
+      "file": "ios-1x-medication-editor-preview.png",
+      "pixelWidth": 1206,
+      "pixelHeight": 2622,
+      "textScale": 1.0,
+      "devicePixelRatio": 3.0,
+      "logicalWidth": 402.0,
+      "logicalHeight": 874.0
+    },
+    {
+      "file": "ios-1x-supplement-editor-preview.png",
+      "pixelWidth": 1206,
+      "pixelHeight": 2622,
+      "textScale": 1.0,
+      "devicePixelRatio": 3.0,
+      "logicalWidth": 402.0,
+      "logicalHeight": 874.0
+    },
+    {
+      "file": "ios-1x-birth-control-editor-preview.png",
+      "pixelWidth": 1206,
+      "pixelHeight": 2622,
+      "textScale": 1.0,
+      "devicePixelRatio": 3.0,
+      "logicalWidth": 402.0,
+      "logicalHeight": 874.0
+    },
+    {
+      "file": "ios-1x-tried-action-editor-preview.png",
+      "pixelWidth": 1206,
+      "pixelHeight": 2622,
+      "textScale": 1.0,
+      "devicePixelRatio": 3.0,
+      "logicalWidth": 402.0,
+      "logicalHeight": 874.0
+    },
+    {
+      "file": "ios-1x-checkback-editor-preview.png",
+      "pixelWidth": 1206,
+      "pixelHeight": 2622,
+      "textScale": 1.0,
+      "devicePixelRatio": 3.0,
+      "logicalWidth": 402.0,
+      "logicalHeight": 874.0
+    },
+    {
+      "file": "ios-1x-medication-manager.png",
+      "pixelWidth": 1206,
+      "pixelHeight": 2622,
+      "textScale": 1.0,
+      "devicePixelRatio": 3.0,
+      "logicalWidth": 402.0,
+      "logicalHeight": 874.0
+    },
+    {
+      "file": "ios-1x-medication-daily-and-additional.png",
+      "pixelWidth": 1206,
+      "pixelHeight": 2622,
+      "textScale": 1.0,
+      "devicePixelRatio": 3.0,
+      "logicalWidth": 402.0,
+      "logicalHeight": 874.0
+    },
+    {
+      "file": "ios-1x-medication-manage-actions.png",
+      "pixelWidth": 1206,
+      "pixelHeight": 2622,
+      "textScale": 1.0,
+      "devicePixelRatio": 3.0,
+      "logicalWidth": 402.0,
+      "logicalHeight": 874.0
+    },
+    {
+      "file": "ios-1x-medication-additional-use-preview.png",
+      "pixelWidth": 1206,
+      "pixelHeight": 2622,
+      "textScale": 1.0,
+      "devicePixelRatio": 3.0,
+      "logicalWidth": 402.0,
+      "logicalHeight": 874.0
+    },
+    {
+      "file": "ios-1x-medication-archived-snapshot.png",
+      "pixelWidth": 1206,
+      "pixelHeight": 2622,
+      "textScale": 1.0,
+      "devicePixelRatio": 3.0,
+      "logicalWidth": 402.0,
+      "logicalHeight": 874.0
+    },
+    {
+      "file": "ios-1x-supplement-manager.png",
+      "pixelWidth": 1206,
+      "pixelHeight": 2622,
+      "textScale": 1.0,
+      "devicePixelRatio": 3.0,
+      "logicalWidth": 402.0,
+      "logicalHeight": 874.0
+    },
+    {
+      "file": "ios-1x-supplement-daily-and-additional.png",
+      "pixelWidth": 1206,
+      "pixelHeight": 2622,
+      "textScale": 1.0,
+      "devicePixelRatio": 3.0,
+      "logicalWidth": 402.0,
+      "logicalHeight": 874.0
+    },
+    {
+      "file": "ios-1x-supplement-manage-actions.png",
+      "pixelWidth": 1206,
+      "pixelHeight": 2622,
+      "textScale": 1.0,
+      "devicePixelRatio": 3.0,
+      "logicalWidth": 402.0,
+      "logicalHeight": 874.0
+    },
+    {
+      "file": "ios-1x-supplement-additional-use-preview.png",
+      "pixelWidth": 1206,
+      "pixelHeight": 2622,
+      "textScale": 1.0,
+      "devicePixelRatio": 3.0,
+      "logicalWidth": 402.0,
+      "logicalHeight": 874.0
+    },
+    {
+      "file": "ios-1x-supplement-archived-snapshot.png",
+      "pixelWidth": 1206,
+      "pixelHeight": 2622,
+      "textScale": 1.0,
+      "devicePixelRatio": 3.0,
+      "logicalWidth": 402.0,
+      "logicalHeight": 874.0
+    },
+    {
+      "file": "ios-1x-birth-control-manager.png",
+      "pixelWidth": 1206,
+      "pixelHeight": 2622,
+      "textScale": 1.0,
+      "devicePixelRatio": 3.0,
+      "logicalWidth": 402.0,
+      "logicalHeight": 874.0
+    },
+    {
+      "file": "ios-1x-birth-control-daily-and-additional.png",
+      "pixelWidth": 1206,
+      "pixelHeight": 2622,
+      "textScale": 1.0,
+      "devicePixelRatio": 3.0,
+      "logicalWidth": 402.0,
+      "logicalHeight": 874.0
+    },
+    {
+      "file": "ios-1x-birth-control-manage-actions.png",
+      "pixelWidth": 1206,
+      "pixelHeight": 2622,
+      "textScale": 1.0,
+      "devicePixelRatio": 3.0,
+      "logicalWidth": 402.0,
+      "logicalHeight": 874.0
+    },
+    {
+      "file": "ios-1x-birth-control-additional-use-preview.png",
+      "pixelWidth": 1206,
+      "pixelHeight": 2622,
+      "textScale": 1.0,
+      "devicePixelRatio": 3.0,
+      "logicalWidth": 402.0,
+      "logicalHeight": 874.0
+    },
+    {
+      "file": "ios-1x-birth-control-archived-snapshot.png",
+      "pixelWidth": 1206,
+      "pixelHeight": 2622,
+      "textScale": 1.0,
+      "devicePixelRatio": 3.0,
+      "logicalWidth": 402.0,
+      "logicalHeight": 874.0
+    },
+    {
+      "file": "ios-1x-period-range-band-preview.png",
+      "pixelWidth": 1206,
+      "pixelHeight": 2622,
+      "textScale": 1.0,
+      "devicePixelRatio": 3.0,
+      "logicalWidth": 402.0,
+      "logicalHeight": 874.0
+    },
+    {
+      "file": "ios-1x-period-range-ongoing-preview.png",
+      "pixelWidth": 1206,
+      "pixelHeight": 2622,
+      "textScale": 1.0,
+      "devicePixelRatio": 3.0,
+      "logicalWidth": 402.0,
+      "logicalHeight": 874.0
+    }
+  ]
+}
