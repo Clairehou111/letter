@@ -68,7 +68,7 @@ Keep the published Build17 product/data/Kit/access/privacy baseline and Quiet Du
 - Named Medication, Supplement, What I tried and BBT entries remain visible/reachable; progressive detail must not hide them in Other.
 - Review evidence separates screenshot observation, source inference, proposed design and unverified performance/haptics.
 
-Review artifacts: `apps/mobile/validation/ui-expert-review-build17-2026-10-10/`. A separate normal-size simulator with isolated fictional encrypted sources protects the owner’s running preview.
+The superseded multi-round review artifact directory was removed from the active tree after its conclusions were summarized. Current design agents should use `apps/mobile/validation/kimi-current-reference/` for the curated normal-size baseline and `apps/mobile/validation/ui-pilot-2026-10-10/kimi-diagnosis-v6.md` for the current direction. Full historical evidence remains recoverable from Git. A separate normal-size simulator with isolated fictional encrypted sources protects the owner’s running preview.
 
 ### Today owner feedback
 

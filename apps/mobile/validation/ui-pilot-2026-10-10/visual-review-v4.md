@@ -6,7 +6,7 @@
 
 冻结 production fingerprint：`94d052fc6c892062e1c8e919bc357966bc4838572754cbebca8dead93cc4a6d3`。
 
-依据 `v4/screenshots/manifest.json`：43 / 43 PNG、402 × 874 logical、1206 × 2622 pixels、DPR 3、textScale 1.0、synthetic fixture、schema 18、render exceptions 0。child preview、product manager 与 period preview cancellation 及 durable reopen 均为 true；fixture 保存 12 个 use periods 与 9 个 dated uses。主代理报告 1041 full PASS / 1 optional SKIP、analyzer clean；本审阅不重复执行这些检查，也不以图片推断它们。
+冻结运行记录：43 / 43 PNG、402 × 874 logical、1206 × 2622 pixels、DPR 3、textScale 1.0、synthetic fixture、schema 18、render exceptions 0。child preview、product manager 与 period preview cancellation 及 durable reopen 均为 true；fixture 保存 12 个 use periods 与 9 个 dated uses。主代理报告 1041 full PASS / 1 optional SKIP、analyzer clean；本审阅不重复执行这些检查，也不以图片推断它们。为避免设计代理重复读取废弃批次，完整 manifest/图片/录像已从 active tree 移除，由 Git 历史保留；十张代表图在 `apps/mobile/validation/kimi-current-reference/`。
 
 对照最终 PNG 与 V3 已审阅文件的 SHA-256：18 张逐字节相同，沿用已做的实际图像观察；10 张变化图与 15 张新图全部逐张查看，覆盖当前 43 个状态。没有以旧版本截图／clip 替代新增状态。
 

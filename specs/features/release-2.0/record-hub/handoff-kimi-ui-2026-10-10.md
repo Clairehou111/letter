@@ -173,8 +173,7 @@ Kimi 可重新组织这些动作、历史与表单，让它更适合拇指和重
 - `motion-composition-v3.md`：用户否定“只拆子 Tab”后的动效 brief。
 - `product-composition-v4.md`：三个产品 family 的 manager/表单/动作语义。
 - `today-symptom-composition-v5.md`：独立 UI 专家对快捷记录和全屏症状的建议；是建议，不是用户最终批准的设计稿。
-- `verification-v3.md`、`verification-v4.md`、`verification-v5.md` 及 `visual-review-v3.md`、`visual-review-v4.md`：真实证据和限制。
-- `source-before.json`、`v4/source-after.json`、`v5/source-after.json` 与对应 API preservation：UI 前已整合的功能基线，不能与裸 Build17 diff 混淆。
+- `verification-v4.md`、`verification-v5.md` 及 `visual-review-v4.md`：保留的结果摘要和证据限制。V2/V3、失败 attempt、verbose reporters 与 generated hash inventories 已从 active tree 清理，必要时从 Git 历史读取。
 
 共享根目录旧入口 `research/belle-reviews-2026-10-05/start_flutter_record_hub_2026-10-09.md` 和 10-08 handoff 是历史。它们的分支、Build8/背景、没有 zero、数据缺口、Kimi 禁用等状态均不能直接作为当前事实。更早 Today/Care 2026-08-15 brief 的 daylight/五档/no Not at all 也不覆盖当前 Build17 与显式零合同。
 
@@ -211,7 +210,7 @@ Kimi 可重新组织这些动作、历史与表单，让它更适合拇指和重
 | V5 最后微调 | 完整测试后仅去掉一个不必要的 non-null `!`，行为不变；full-test summary 保留实际测试指纹 `a541b54...`，最后交接指纹为 `22fe6548...`。不是两个相互矛盾的 Build。 |
 | UI 数据边界 | UI 前整合基线230 files；当前237 files，UI合计17个 changed/new presentation files；V5 相对 V4 仅6个 presentation files，`protectedChanged: []`。此前功能实现本身有数据变更，不要声称整个 Git dirty tree 从未改 data。 |
 
-V4 成品 PNG/录像：`apps/mobile/validation/ui-pilot-2026-10-10/v4/screenshots/`。这是接手时可看的最新实际捕获，**它们不包含 V5 Today 快捷/全屏症状**。V5 的全测试 reporter 在 `v5/full-tests.json`，summary/source/API snapshots 同目录。
+视觉基线只保留十张正常尺寸代表图：`apps/mobile/validation/kimi-current-reference/`。它们来自 V4，**不包含 V5 Today 快捷/全屏症状，也不是 V6 像素目标**。V4/V5 测试结果只保留小型 summary；完整 reporter、旧截图批次和视频可从 Git 历史恢复，默认不要读取。
 
 V5 原生专项已准备，**没有执行**：
 
