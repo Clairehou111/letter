@@ -11,7 +11,8 @@
 | 共享工作区 | `/Users/clairehou/pyProjects/pms-research-agent` |
 | 正在开发的 Git 工作树 | `/Users/clairehou/pyProjects/pms-research-agent/.worktrees/record-hub-build17` |
 | Flutter 项目 / 命令 cwd | `/Users/clairehou/pyProjects/pms-research-agent/.worktrees/record-hub-build17/apps/mobile` |
-| 当前 branch | **`feat/record-hub-build17-2026-10-10`** |
+| 基础 branch（checkpoint 提交 `17bdc0f`，尚未 push） | **`feat/record-hub-build17-2026-10-10`** |
+| Kimi 开发 branch | **`feat/record-hub-kimi-ui-2026-10-11`** |
 | 已发布 Build17 基线（不是新 checkpoint HEAD） | `cf12e70791c14acb2735415b8c51b1ce6047fac2` |
 | 最新生产源码指纹 | `22fe6548ffde6378e4e327b1ce6576c77b9f0dc3eff5ae154cab72021eab7722` |
 | 提交状态 | 用户已明确批准提交并推送当前 checkpoint；此文档随实现提交，实际提交 hash 以 Git 为准；没有 merge/release 授权 |
@@ -240,7 +241,7 @@ flutter drive --no-pub -d 7A533533-EA45-4735-AC28-10FA095A65FF --target integrat
 
 ## 10. 可直接给 Kimi 的开工指令
 
-> 接手 `/Users/clairehou/pyProjects/pms-research-agent/.worktrees/record-hub-build17`，branch `feat/record-hub-build17-2026-10-10` 的当前完整实现（用户已授权提交并推送此 checkpoint，读取 Git 获取确切 HEAD）。先读 `specs/features/release-2.0/record-hub/handoff-kimi-ui-2026-10-10.md` 及其必读 specs、全录入页 inventory 和真实参考录像。用户现在明确让 Kimi 做 UI 优化，旧“不用 Kimi”规定已覆盖。以已发布 Build17 Quiet Dusk、Letter Within 组件和现有功能/data/API 为底，解决 Today/Record 像后台表单、卡片堆叠、交互生硬的问题，做有质量、空气感和自然即时反馈的消费者移动界面。常用 Bleeding/pinned 症状能从 Today 直接进入，Symptom 以全屏聚焦编辑；所有 Today+Record 子页风格一致，三类产品 manager 一起优化。可以批评并不采用不合适的建议/skills，不机械套网页或 GSAP。保留 zero/null、精确值、来源/版本、timing、草稿与返回语义；不要新增 letter archive / preparation-plan 重复入口或擅自诊断量表。先给整体诊断和一致方向，再落实原生可交互代码并做正常 iPhone 验证。当前 V5 已通过1055项回归但尚未原生捕获/热更新；不要拿 V4截图当新页面验收。保留用户模拟器数据，不 merge/release；后续修改的 commit/push 按届时用户指令执行。
+> 接手 `/Users/clairehou/pyProjects/pms-research-agent/.worktrees/record-hub-build17` 的 branch `feat/record-hub-kimi-ui-2026-10-11`（基于 `feat/record-hub-build17-2026-10-10` 的 checkpoint 提交 `17bdc0f`；以 Git 为确切真值）。先读 `specs/features/release-2.0/record-hub/handoff-kimi-ui-2026-10-10.md` 及其必读 specs、全录入页 inventory 和真实参考录像。用户现在明确让 Kimi 做 UI 优化，旧“不用 Kimi”规定已覆盖。以已发布 Build17 Quiet Dusk、Letter Within 组件和现有功能/data/API 为底，解决 Today/Record 像后台表单、卡片堆叠、交互生硬的问题，做有质量、空气感和自然即时反馈的消费者移动界面。常用 Bleeding/pinned 症状能从 Today 直接进入，Symptom 以全屏聚焦编辑；所有 Today+Record 子页风格一致，三类产品 manager 一起优化。可以批评并不采用不合适的建议/skills，不机械套网页或 GSAP。保留 zero/null、精确值、来源/版本、timing、草稿与返回语义；不要新增 letter archive / preparation-plan 重复入口或擅自诊断量表。先给整体诊断和一致方向，再落实原生可交互代码并做正常 iPhone 验证。当前 V5 已通过1055项回归但尚未原生捕获/热更新；不要拿 V4截图当新页面验收。保留用户模拟器数据，不 merge/release；后续修改的 commit/push 按届时用户指令执行。
 
 ## 11. 执行约束：把“高级/空气感”落成数值
 
@@ -303,7 +304,7 @@ flutter drive --no-pub -d 7A533533-EA45-4735-AC28-10FA095A65FF --target integrat
 
 ### 分支与提交
 
-- 默认在 `feat/record-hub-build17-2026-10-10` 上继续（不要另开分支造成交付分叉；如用户要求新分支再开）。不 rewrite history、不 force-push。
+- 在 `feat/record-hub-kimi-ui-2026-10-11`（基于 `feat/record-hub-build17-2026-10-10` 的 checkpoint 提交 `17bdc0f`）上开发。不 rewrite history、不 force-push。
 - 按逻辑单元小步提交，信息说明“改了什么 / 为什么”，便于逐块回退；不要把 UI、测试、无关清理混进一个巨型提交。
 - 不要 reset / clean、不要全仓库 add、不要覆盖其它 dirty 文件；不 merge / release，不上传真实健康资料。用户若要 push 会另行指示。
 
@@ -320,5 +321,5 @@ flutter drive --no-pub -d 7A533533-EA45-4735-AC28-10FA095A65FF --target integrat
 
 ### 环境
 
-- 本次 Kimi 通过 OpenCodex 以 `kimi/k3` 运行（`codex` CLI 已路由到 OpenCodex 代理，`127.0.0.1:10100`）。多屏大重构需要长上下文时可切 `k3[1m]`。
+- 本次 Kimi 通过 OpenCodex 以 `kimi/k3` 运行（`codex` CLI 已路由到 OpenCodex 代理，`127.0.0.1:10100`）。注意 `k3` 上下文为 **262k**；多屏大重构与长上下文需切 `k3[1m]`（**1049k**，或 `kimi-k3`）：在 Codex 会话里选模型，或 `opencodex provider selected kimi --set 'k3[1m]'`。
 - 用户 preview 模拟器 iPhone17Pro `E45EAC1A-381E-44B0-AE71-684E3C693581`（当前 V4，V5 未热更新，保留其数据）；隔离验证设备 `7A533533-EA45-4735-AC28-10FA095A65FF`。不要重置用户数据。
