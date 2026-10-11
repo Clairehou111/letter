@@ -10,6 +10,9 @@ coverage/
 # Local generated design and staging workspaces.
 apps/mobile/.ui-forge/
 apps/mobile/.tmp/
+
+# Large native review videos stay local; do not commit them.
+apps/mobile/validation/**/*.mp4
 .env
 .env.*
 !.env.example
