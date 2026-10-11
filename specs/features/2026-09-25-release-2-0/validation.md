@@ -200,9 +200,10 @@ recorded below.
   **Ready to Submit** and the existing Internal Testers group with two testers.
   This TestFlight status is not an App Review submission, and no physical-iPhone
   case has been executed in this handoff.
-- The ordered physical-device cases and evidence format are in
-  `physical-iphone-build-14-checklist.md`. No App Review submission, website
-  edit, production PostHog/RevenueCat change, or git push occurred.
+- The ordered physical-device checklist was not executed and was retired from
+  the active tree after Build 17 became the submitted review build. No App
+  Review submission, website edit, production PostHog/RevenueCat change, or
+  git push occurred during this Build 14 handoff.
 
 ## 2026-10-01 integration sign-off (local source only)
 

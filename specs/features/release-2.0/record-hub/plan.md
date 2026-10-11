@@ -1,6 +1,6 @@
 # Record Hub implementation plan
 
-Date: 2026-10-09; execution update: 2026-10-10. Batches 1–6 implementation and automated regression are complete: 730 tests passed, one optional animation-capture test skipped, analyzer clean. Native storage/capture evidence and independent release gates are tracked in `implementation-evidence-2026-10-09.md` and `validation.md`. Logical batches are not permission to ship separate partial releases.
+Date: 2026-10-09; Build17 recovery update: 2026-10-10. Batches 1–6 implementation and automated regression are complete on the Build17 baseline: 966 tests passed, one optional capture skipped, analyzer clean. Current native storage/capture evidence and independent release gates are tracked in `implementation-evidence-build17-2026-10-10.md` and `validation.md`. Logical batches are not permission to ship separate partial releases.
 
 ## Batch 0 — preparation and approval
 

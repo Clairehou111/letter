@@ -1,6 +1,6 @@
 # Record Hub acceptance and evidence
 
-Date: 2026-10-09; execution update: 2026-10-10. Implementation regression: 730 passed, one optional animation-capture test skipped; analyzer clean. Native encrypted storage and rendered synthetic captures have been run; exact device results/artifacts are in [implementation evidence](implementation-evidence-2026-10-09.md). A planned assertion is not evidence. Requirements approval and release approval are distinct.
+Date: 2026-10-09; Build17 recovery update: 2026-10-10. Implementation regression: 966 passed, one optional capture skipped; analyzer clean. Native encrypted storage and rendered synthetic captures were run; the durable result summary is in [Build17 implementation evidence](implementation-evidence-build17-2026-10-10.md). Generated logs and inventories were removed from the active tree after verification and remain in Git history. A planned assertion is not evidence. Requirements approval and release approval are distinct.
 
 ## Evidence already available
 

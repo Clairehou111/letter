@@ -33,7 +33,7 @@ Four destinations Today / Cycle / Care / Patterns plus a global `+ Record` actio
 | --- | --- | --- |
 | Product IA and latest prototype | Owner accepted direction | Conversation: “sure. seems good”, followed by “ok …完成…开发flutter前的工作” |
 | Development scope | Owner approved | New branch and native implementation; existing Letter Within components take precedence over conflicting prototype presentation |
-| Native requirements/data/validation package | Owner approved 2026-10-09 | Requirements/data/validation and P-03…P-06 approved in current session; hashes and exact instruction in [implementation evidence](implementation-evidence-2026-10-09.md) |
+| Native requirements/data/validation package | Owner approved 2026-10-09 | Requirements/data/validation and P-03…P-06 approval is retained; current recovery and verification are in [Build17 implementation evidence](implementation-evidence-build17-2026-10-10.md) |
 | HTML logical checks | Passed | 155 overlapping synthetic assertions, rechecked 2026-10-09; `validation.md` |
 | Rendered prototype / large text | Not verified | Prior local-file access was rejected; do not bypass that refusal |
 | Design/implementation agent | Owner changed direction | Latest instruction: “不需要让kimi设计了，codex+gpt完成即可”; Kimi and DeepSeek-only routing are superseded for this iteration |

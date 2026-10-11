@@ -30,9 +30,9 @@ on Build 15. Use synthetic local records and a disposable app
 account. Record device model, iOS version, TestFlight build number, tester and
 app-account aliases, local time, Pass/Fail/Blocked, and redacted evidence.
 
-Run D01–D12 in
-[`physical-iphone-build-14-checklist.md`](../../specs/features/2026-09-25-release-2-0/physical-iphone-build-14-checklist.md),
-substituting **Build 15** for Build 14 throughout. Add these Build 15 checks:
+Build 15 reused the earlier D01–D12 physical-device run order. The unexecuted
+Build 14 checklist was retired after Build 17 became the submitted review build.
+The Build 15-specific checks and observed results remain here as historical evidence:
 
 1. **B15-01 — Plus catalog on first load.** With a fresh account without Plus,
    open Plus immediately after sign-in, then after relaunch. Confirm monthly,

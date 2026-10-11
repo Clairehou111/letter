@@ -19,9 +19,9 @@ evidence for its tested commit and environment, not automatic release approval.
 Do not call 2.0 released or gate complete until its evidence is recorded here
 and the linked dated record identifies the tested build, reviewer, and result.
 
-2026-10-10 branch evidence:
-[`record-hub/implementation-evidence-2026-10-09.md`](record-hub/implementation-evidence-2026-10-09.md).
-This updates obsolete implementation-defect descriptions; it does not mark the
-release gates complete. The owner narrowed this iteration's screenshot scope
+2026-10-10 Build17 branch evidence:
+[`record-hub/implementation-evidence-build17-2026-10-10.md`](record-hub/implementation-evidence-build17-2026-10-10.md).
+This records implementation evidence; it does not mark the release gates
+complete. The owner narrowed this iteration's screenshot scope
 to a normal-size iPhone at default text, leaving broader control optimization
 and physical accessibility review for subsequent work.

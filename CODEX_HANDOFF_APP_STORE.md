@@ -194,10 +194,9 @@ The launch position is now fixed:
 - Patterns and a clinician report must appear in the App Store screenshot set.
 - `No AI` is a permanent product constraint, not a temporary campaign line.
 
-The six approved local App Store masters are documented in
-`artifacts/app-store/README.md` and recorded in
-`artifacts/app-store/manifest.json`. Final JPEGs are under
-`artifacts/app-store/iphone-69/final/` in this order:
+The six pre-Build17 App Store masters are preserved in Git history. Their binary
+files and manifests were removed from the active tree after Build 17 became the
+submitted review build. Their historical order was:
 
 1. Care for heavier days.
 2. Encrypted on-device records and no AI.
@@ -269,10 +268,9 @@ removed. The owner rejected the set because the Care and Patterns images were
 obsolete, the clinician report did not communicate populated data, and the
 strip looked coarse at storefront scale.
 
-An eight-frame replacement candidate was created from fresh current native
-iPhone 17 Pro Max captures. It is under
-`artifacts/app-store/iphone-69/candidate-v2/` and documented in
-`artifacts/app-store/SCREENSHOT_REDESIGN_BRIEF.md`. The replacement includes:
+An eight-frame replacement candidate was created from fresh native iPhone 17 Pro
+Max captures. It was never uploaded and its files were removed from the active
+tree after Build 17 submission; Git history preserves the pass. It included:
 
 - Current Care chooser and immersive low-energy scene.
 - Current encrypted Backup & restore controls as the on-device and no-AI
@@ -294,9 +292,8 @@ remains paused.
 
 Candidate v2 was superseded after the owner requested three distinct tracker
 proofs and identified that its outer rose/plum canvases did not match the real
-app. Candidate v3 is under
-`artifacts/app-store/iphone-69/candidate-v3/` and contains the full ten allowed
-screenshots:
+app. Candidate v3 was later replaced by the Build 17 review set. Its files were
+removed from the active tree and remain in Git history. It contained ten screens:
 
 1. Current Care chooser — `Cycle care for the days that feel heavier.`
 2. Backup & restore — `Encrypted on your device. No AI.`
@@ -312,17 +309,16 @@ screenshots:
 
 OpenRouter Claude Sonnet 5 reviewed four current native Care candidates:
 Heavy, Focus, Body, and Space. It selected Heavy because that scene most
-directly supports the fixed heavier-days promise. All four native options are
-preserved under candidate v3 `source/` for audit.
+directly supports the fixed heavier-days promise. The four native options remain
+available in Git history for audit.
 
 The v3 compositor now uses only product tokens. Daylight frames extend
 `#FBF7F3` with `#2A1626` ink and `#E4573D` ember. Care frames extend the real
 `#2E1A33` to `#170D1C` Care world with `#F7EEE6` type. No marketing-only rose
 or plum canvas remains.
 
-All ten v3 finals are 1290 x 2796 JPEGs with no alpha. Hashes, order, Claude
-decision, and approval gates are recorded in
-`artifacts/app-store/iphone-69/candidate-v3/manifest.json`. The owner approved
+All ten v3 finals were 1290 x 2796 JPEGs with no alpha. Their hashes, order,
+decision, and approval gates remain in Git history. The owner approved
 candidate v3 on 2026-09-24, and all ten files were uploaded and verified in
 manifest order that day. App Store Connect reports `10 of 10 Screenshots` for
 the 6.9-inch set and derives the 6.5-inch set from it. This does not authorize

@@ -39,8 +39,8 @@ change log and any outstanding approval/action as the final step.
 Repository context: /Users/clairehou/pyProjects/pms-research-agent/.worktrees/letter-main
 Read artifacts/app-store/APP_STORE_METADATA_DRAFT.md,
 artifacts/app-store/APP_PRIVACY_DRAFT.md, artifacts/app-store/README.md,
-validation/testflight-1.0.0-build-16/README.md, and
-specs/features/2026-09-25-release-2-0/physical-iphone-build-16-checklist.md.
+validation/testflight-1.0.0-build-16/README.md. The superseded Build 16
+action checklist was removed after Build 17 became the review candidate.
 Preserve unrelated untracked validation materials and .DS_Store; stage only
 reviewed files. Do not push or deploy.
 ```
