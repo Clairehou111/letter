@@ -34,7 +34,11 @@ void main() {
     await tester.pump(const Duration(milliseconds: 110));
     expect(
       tester.widget<AnimatedScale>(find.byType(AnimatedScale)).scale,
-      0.985,
+      0.97,
+    );
+    expect(
+      tester.widget<AnimatedOpacity>(find.byType(AnimatedOpacity)).opacity,
+      0.88,
     );
     expect(activations, 0);
     await gesture.cancel();

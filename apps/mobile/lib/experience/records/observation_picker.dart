@@ -474,83 +474,113 @@ class _ObservationPickerState extends State<ObservationPicker>
             },
             child: Scaffold(
               key: const Key('observation-fullscreen-editor'),
-              appBar: AppBar(
-                automaticallyImplyLeading: false,
-                title: const Text('Symptom'),
-                actions: [
-                  IconButton(
-                    key: const Key('observation-editor-close'),
-                    tooltip: 'Close symptom',
-                    constraints: const BoxConstraints(
-                      minWidth: 48,
-                      minHeight: 48,
-                    ),
-                    onPressed: _entryBusy ? null : _requestEditorClose,
-                    icon: const Icon(Icons.close),
-                  ),
-                ],
-              ),
               body: SafeArea(
-                top: false,
-                child: Align(
-                  alignment: Alignment.topCenter,
-                  child: ConstrainedBox(
-                    constraints: const BoxConstraints(maxWidth: 640),
-                    child: SingleChildScrollView(
-                      padding: const EdgeInsets.fromLTRB(20, 20, 20, 32),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(8, 4, 20, 0),
+                      child: Row(
                         children: [
-                          Text(
-                            MaterialLocalizations.of(context).formatFullDate(
-                              widget.experiencedDate.asLocalDateTime,
+                          IconButton(
+                            key: const Key('observation-editor-close'),
+                            tooltip: 'Close symptom',
+                            constraints: const BoxConstraints(
+                              minWidth: 48,
+                              minHeight: 48,
                             ),
-                            key: const Key('observation-editor-date'),
-                            style: Theme.of(context).textTheme.bodyMedium,
+                            onPressed: _entryBusy ? null : _requestEditorClose,
+                            icon: Icon(Icons.close_rounded, color: _inkSoft),
                           ),
-                          const SizedBox(height: 20),
-                          _buildActiveDetail(
-                            headingStyle: ExperienceType.title(_ink),
-                          ),
-                          if (record != null) ...[
-                            const SizedBox(height: 20),
-                            Text(
-                              record.functionalImpacts.isEmpty
-                                  ? 'Daily impact not marked'
-                                  : 'Daily impact: ${record.functionalImpacts.map((impact) => impact.label).join(', ')}',
-                              style: Theme.of(context).textTheme.bodyMedium,
+                          const SizedBox(width: 4),
+                          Expanded(
+                            child: Text(
+                              MaterialLocalizations.of(context).formatFullDate(
+                                widget.experiencedDate.asLocalDateTime,
+                              ),
+                              key: const Key('observation-editor-date'),
+                              style: ExperienceType.caption(_inkFaint),
                             ),
-                            if (widget.onEditImpacts != null)
-                              Align(
-                                alignment: Alignment.centerLeft,
-                                child: TextButton.icon(
-                                  key: const Key('observation-editor-impact'),
-                                  onPressed: _entryBusy
-                                      ? null
-                                      : () => _editImpacts(record),
-                                  icon: const Icon(Icons.edit_outlined),
-                                  label: const Text('Edit daily impact'),
-                                ),
-                              ),
-                            if (widget.onDelete != null)
-                              Align(
-                                alignment: Alignment.centerLeft,
-                                child: TextButton.icon(
-                                  key: const Key('observation-editor-remove'),
-                                  onPressed: _entryBusy
-                                      ? null
-                                      : () => _deselect(definition),
-                                  icon: const Icon(Icons.delete_outline),
-                                  label: const Text('Remove from this day'),
-                                ),
-                              ),
-                          ],
-                          if (widget.editorFooterBuilder != null)
-                            widget.editorFooterBuilder!(context),
+                          ),
                         ],
                       ),
                     ),
-                  ),
+                    Expanded(
+                      child: Align(
+                        alignment: Alignment.topCenter,
+                        child: ConstrainedBox(
+                          constraints: const BoxConstraints(maxWidth: 560),
+                          child: SingleChildScrollView(
+                            padding: const EdgeInsets.fromLTRB(24, 32, 24, 40),
+                            child: _EditorEntrance(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.stretch,
+                                children: [
+                                  _buildActiveDetail(
+                                    headingStyle: ExperienceType.title(_ink),
+                                    immersive: true,
+                                  ),
+                                  if (record != null) ...[
+                                    const SizedBox(height: 28),
+                                    Divider(
+                                      height: 1,
+                                      color: ExperienceColors.hairline
+                                          .withValues(alpha: .3),
+                                    ),
+                                    const SizedBox(height: 16),
+                                    Text(
+                                      record.functionalImpacts.isEmpty
+                                          ? 'Daily impact not marked'
+                                          : 'Daily impact: ${record.functionalImpacts.map((impact) => impact.label).join(', ')}',
+                                      style: ExperienceType.bodySmall(_inkSoft),
+                                    ),
+                                    if (widget.onEditImpacts != null)
+                                      Align(
+                                        alignment: Alignment.centerLeft,
+                                        child: TextButton.icon(
+                                          key: const Key(
+                                            'observation-editor-impact',
+                                          ),
+                                          onPressed: _entryBusy
+                                              ? null
+                                              : () => _editImpacts(record),
+                                          icon: const Icon(Icons.edit_outlined),
+                                          label: const Text(
+                                            'Edit daily impact',
+                                          ),
+                                        ),
+                                      ),
+                                    if (widget.onDelete != null)
+                                      Align(
+                                        alignment: Alignment.centerLeft,
+                                        child: TextButton.icon(
+                                          key: const Key(
+                                            'observation-editor-remove',
+                                          ),
+                                          onPressed: _entryBusy
+                                              ? null
+                                              : () => _deselect(definition),
+                                          icon: const Icon(
+                                            Icons.delete_outline,
+                                          ),
+                                          label: const Text(
+                                            'Remove from this day',
+                                          ),
+                                        ),
+                                      ),
+                                  ],
+                                  if (widget.editorFooterBuilder != null) ...[
+                                    const SizedBox(height: 8),
+                                    widget.editorFooterBuilder!(context),
+                                  ],
+                                ],
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
               ),
             ),
@@ -1223,6 +1253,7 @@ class _ObservationPickerState extends State<ObservationPicker>
     double headingReveal = 1,
     bool showHeading = true,
     TextStyle? headingStyle,
+    bool immersive = false,
   }) {
     final definition = _definitionFor(_activeId!);
     if (definition == null) return const SizedBox.shrink();
@@ -1233,6 +1264,7 @@ class _ObservationPickerState extends State<ObservationPicker>
         headingReveal: headingReveal,
         showHeading: showHeading,
         headingStyle: headingStyle,
+        immersive: immersive,
         careWorld: widget.careWorld,
         saving: _entryBusy,
         acknowledgment: _ackLine,
@@ -1457,11 +1489,13 @@ class _ObservationDetailCard extends StatelessWidget {
     this.headingReveal = 1,
     this.showHeading = true,
     this.headingStyle,
+    this.immersive = false,
   });
 
   final double headingReveal;
   final bool showHeading;
   final TextStyle? headingStyle;
+  final bool immersive;
   final String? acknowledgment;
   final String? error;
   final ObservationDefinition definition;
@@ -1505,7 +1539,10 @@ class _ObservationDetailCard extends StatelessWidget {
                     ).textTheme.titleMedium?.copyWith(color: ink),
               ),
             ),
-          if (showHeading) const SizedBox(height: ExperienceSpacing.xs),
+          if (showHeading)
+            SizedBox(
+              height: immersive ? ExperienceSpacing.sm : ExperienceSpacing.xs,
+            ),
           Text(
             'Tap a degree to record. Tap the saved degree again to remove.',
             style: ExperienceType.caption(inkSoft),
@@ -1518,6 +1555,7 @@ class _ObservationDetailCard extends StatelessWidget {
             ),
           ],
           const SizedBox(height: ExperienceSpacing.sm),
+          if (immersive) const SizedBox(height: ExperienceSpacing.sm),
           RecordOptionScale<SymptomSeverity>(
             options: [
               for (final degree in DegreeGraphics.severityDegrees)
@@ -1539,13 +1577,15 @@ class _ObservationDetailCard extends StatelessWidget {
             onSelected: saving ? null : onSeverityTapped,
             showCurrentLabel: false,
           ),
-          const SizedBox(height: ExperienceSpacing.xs * 2),
+          SizedBox(height: immersive ? 20 : ExperienceSpacing.xs * 2),
           Semantics(
             liveRegion: true,
             child: Text(
               severity?.label ?? 'Not recorded',
               key: const Key('observation-current-degree'),
-              style: ExperienceType.bodyStrong(ink),
+              style: immersive
+                  ? ExperienceType.headline(ink)
+                  : ExperienceType.bodyStrong(ink),
             ),
           ),
           if (saving)
@@ -1602,7 +1642,7 @@ class _ObservationDetailCard extends StatelessWidget {
                 ),
               ],
             ),
-          ] else ...<Widget>[
+          ] else if (!immersive) ...<Widget>[
             const SizedBox(height: ExperienceSpacing.xs * 2),
             Align(
               alignment: Alignment.centerRight,
@@ -1693,6 +1733,70 @@ class _MedicalBoundaryList extends StatelessWidget {
             ),
         ],
       ),
+    );
+  }
+}
+
+/// One-shot arrival for the full-screen symptom editor: the working block
+/// rises 16px and fades in over 300ms with easeOutCubic. Reduce Motion keeps
+/// a bare ≤150ms opacity fade with no travel. The animation runs once when
+/// the editor opens; later session updates (severity, acknowledgment) do not
+/// replay it.
+class _EditorEntrance extends StatefulWidget {
+  const _EditorEntrance({required this.child});
+
+  final Widget child;
+
+  @override
+  State<_EditorEntrance> createState() => _EditorEntranceState();
+}
+
+class _EditorEntranceState extends State<_EditorEntrance>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(vsync: this);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      final reduced = ExperienceMotion.reducedMotion(context);
+      _controller.duration = reduced
+          ? const Duration(milliseconds: 150)
+          : const Duration(milliseconds: 300);
+      _controller.forward();
+    });
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final reduced = ExperienceMotion.reducedMotion(context);
+    final animation = CurvedAnimation(
+      parent: _controller,
+      curve: Curves.easeOutCubic,
+    );
+    return AnimatedBuilder(
+      animation: animation,
+      child: widget.child,
+      builder: (context, child) {
+        final progress = animation.value;
+        return Opacity(
+          opacity: progress,
+          child: Transform.translate(
+            offset: reduced || progress >= 1
+                ? Offset.zero
+                : Offset(0, 16 * (1 - progress)),
+            child: child,
+          ),
+        );
+      },
     );
   }
 }

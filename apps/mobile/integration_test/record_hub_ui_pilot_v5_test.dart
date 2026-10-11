@@ -46,7 +46,7 @@ const _captureStates = [
 ];
 final _expectedFrames = _captureStates.length;
 const _productionFingerprint =
-    '22fe6548ffde6378e4e327b1ce6576c77b9f0dc3eff5ae154cab72021eab7722';
+    'de2e1ea5840808d9a5619b2916d67b86c8736bf1a8f6b6fc7e417139a7467eba';
 const _hostDriver = bool.fromEnvironment('NATIVE_VISUAL_HOST_DRIVER');
 var _renderExceptionCount = 0;
 int? _observedSchemaVersion;

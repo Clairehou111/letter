@@ -59,39 +59,49 @@ class _InteractionSurfaceState extends State<InteractionSurface> {
       onTap: widget.semanticLabel != null ? widget.onTap : null,
       selected: widget.selected ? true : null,
       child: AnimatedScale(
-        scale: _pressed && active && !reduce ? 0.985 : 1,
+        scale: _pressed && active && !reduce ? 0.97 : 1,
         duration: reduce
             ? Duration.zero
             : Duration(milliseconds: _pressed ? 80 : 120),
         curve: Curves.easeOutCubic,
-        child: AnimatedContainer(
-          duration: reduce ? Duration.zero : ExperienceMotion.chipSelect,
+        child: AnimatedOpacity(
+          opacity: _pressed && active ? 0.88 : 1,
+          duration: reduce
+              ? Duration.zero
+              : Duration(milliseconds: _pressed ? 80 : 120),
           curve: Curves.easeOutCubic,
-          decoration: BoxDecoration(
-            color: surface,
-            borderRadius: widget.borderRadius,
-            border: Border.all(color: border),
-          ),
-          child: Material(
-            type: MaterialType.transparency,
-            borderRadius: widget.borderRadius,
-            clipBehavior: Clip.antiAlias,
-            child: InkWell(
-              onTap: widget.onTap,
+          child: AnimatedContainer(
+            duration: reduce ? Duration.zero : ExperienceMotion.chipSelect,
+            curve: Curves.easeOutCubic,
+            decoration: BoxDecoration(
+              color: surface,
               borderRadius: widget.borderRadius,
-              onHighlightChanged: (value) {
-                if (_pressed != value) setState(() => _pressed = value);
-              },
-              onFocusChange: (value) {
-                if (_focused != value) setState(() => _focused = value);
-              },
-              splashColor: theme.colorScheme.primary.withValues(alpha: 0.08),
-              highlightColor: Colors.transparent,
-              focusColor: Colors.transparent,
-              hoverColor: theme.colorScheme.onSurface.withValues(alpha: 0.05),
-              child: ConstrainedBox(
-                constraints: const BoxConstraints(minHeight: 44, minWidth: 44),
-                child: Padding(padding: widget.padding, child: widget.child),
+              border: Border.all(color: border),
+            ),
+            child: Material(
+              type: MaterialType.transparency,
+              borderRadius: widget.borderRadius,
+              clipBehavior: Clip.antiAlias,
+              child: InkWell(
+                onTap: widget.onTap,
+                borderRadius: widget.borderRadius,
+                onHighlightChanged: (value) {
+                  if (_pressed != value) setState(() => _pressed = value);
+                },
+                onFocusChange: (value) {
+                  if (_focused != value) setState(() => _focused = value);
+                },
+                splashColor: theme.colorScheme.primary.withValues(alpha: 0.08),
+                highlightColor: Colors.transparent,
+                focusColor: Colors.transparent,
+                hoverColor: theme.colorScheme.onSurface.withValues(alpha: 0.05),
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(
+                    minHeight: 44,
+                    minWidth: 44,
+                  ),
+                  child: Padding(padding: widget.padding, child: widget.child),
+                ),
               ),
             ),
           ),

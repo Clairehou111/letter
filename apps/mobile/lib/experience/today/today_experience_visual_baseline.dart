@@ -259,7 +259,8 @@ class _SymptomGroup {
   final List<ObservationDefinition> symptoms;
 }
 
-class _TodayExperienceVisualState extends State<TodayExperienceVisual> {
+class _TodayExperienceVisualState extends State<TodayExperienceVisual>
+    with SingleTickerProviderStateMixin {
   // Cycle-context hero. Its day number and estimated date range are always
   // read from the shared prediction contract in [TodayVisualSnapshot].
   _CycleView _view = _CycleView.loading;
@@ -305,6 +306,11 @@ class _TodayExperienceVisualState extends State<TodayExperienceVisual> {
   // Acknowledgement toast.
   String? _ack;
   Timer? _ackTimer;
+
+  // One-shot arrival choreography: sections rise 16px and fade in with a
+  // 50ms stagger when Today first appears. Data reloads never replay it.
+  late final AnimationController _entrance = AnimationController(vsync: this);
+  bool _entrancePrepared = false;
 
   /// Moods that may want extra gentleness. Selecting one reveals — never
   /// forces — a route to Care.
@@ -380,6 +386,25 @@ class _TodayExperienceVisualState extends State<TodayExperienceVisual> {
   }
 
   @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (_entrancePrepared) return;
+    _entrancePrepared = true;
+
+    if (ExperienceMotion.reducedMotion(context)) {
+      // Reduced motion must settle synchronously. Besides avoiding movement,
+      // this leaves no post-frame callback alive while data is still loading.
+      _entrance.value = 1;
+      return;
+    }
+
+    _entrance.duration = const Duration(milliseconds: 600);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) _entrance.forward();
+    });
+  }
+
+  @override
   void didUpdateWidget(covariant TodayExperienceVisual oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.revision != widget.revision ||
@@ -412,6 +437,7 @@ class _TodayExperienceVisualState extends State<TodayExperienceVisual> {
   void dispose() {
     _ackTimer?.cancel();
     _noteController.dispose();
+    _entrance.dispose();
     super.dispose();
   }
 
@@ -1286,32 +1312,37 @@ class _TodayExperienceVisualState extends State<TodayExperienceVisual> {
     );
   }
 
-  Widget _buildPhone() => Column(
-    crossAxisAlignment: CrossAxisAlignment.start,
-    children: [
-      if (widget.showHeader) _buildHeader(),
-      _buildHero(),
-      const SizedBox(height: 16),
-      _buildMoodSection(),
-      const SizedBox(height: 12),
-      _buildQuickActions(),
-      _buildRememberedHelpLine(),
-      if (_showComfortWindow) ...[
-        const SizedBox(height: 18),
-        _buildComfortWindow(),
-      ],
-      if (widget.programmeContent != null) ...[
+  Widget _buildPhone() {
+    var section = 0;
+    Widget arrive(Widget child) =>
+        _Entrance(animation: _entrance, index: section++, child: child);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        if (widget.showHeader) arrive(_buildHeader()),
+        arrive(_buildHero()),
         const SizedBox(height: 16),
-        widget.programmeContent!,
+        arrive(_buildMoodSection()),
+        const SizedBox(height: 12),
+        arrive(_buildQuickActions()),
+        _buildRememberedHelpLine(),
+        if (_showComfortWindow) ...[
+          const SizedBox(height: 18),
+          arrive(_buildComfortWindow()),
+        ],
+        if (widget.programmeContent != null) ...[
+          const SizedBox(height: 16),
+          arrive(widget.programmeContent!),
+        ],
+        if (_showSupplementalPreparation) ...[
+          const SizedBox(height: 16),
+          arrive(widget.preparationContent!),
+        ],
+        const SizedBox(height: 24),
+        arrive(_buildFooter()),
       ],
-      if (_showSupplementalPreparation) ...[
-        const SizedBox(height: 16),
-        widget.preparationContent!,
-      ],
-      const SizedBox(height: 24),
-      _buildFooter(),
-    ],
-  );
+    );
+  }
 
   Widget _buildWide() => _buildPhone();
 
@@ -1390,6 +1421,18 @@ class _TodayExperienceVisualState extends State<TodayExperienceVisual> {
             style: _sans(16, weight: FontWeight.w700),
           ),
         ),
+        Text(
+          _pins.isEmpty ? 'Quick symptoms' : 'Pinned by you',
+          style: _sans(12.5, color: _inkSoft),
+        ),
+        const SizedBox(height: 8),
+        _buildPinnedQuickRecords(),
+        const SizedBox(height: 4),
+        Divider(
+          height: 1,
+          thickness: 1,
+          color: ExperienceColors.hairline.withValues(alpha: .18),
+        ),
         _quickRecordRow(
           key: const Key('today-bleeding-shortcut'),
           title: 'Bleeding',
@@ -1403,14 +1446,11 @@ class _TodayExperienceVisualState extends State<TodayExperienceVisual> {
               ? widget.onOpenRecordSection!(RecordEntrySection.bleeding)
               : widget.onOpenRecord?.call(),
         ),
-        const SizedBox(height: 14),
-        Text(
-          _pins.isEmpty ? 'Quick symptoms' : 'Pinned by you',
-          style: _sans(12.5, color: _inkSoft),
+        Divider(
+          height: 1,
+          thickness: 1,
+          color: ExperienceColors.hairline.withValues(alpha: .18),
         ),
-        const SizedBox(height: 8),
-        _buildPinnedQuickRecords(),
-        const SizedBox(height: 10),
         _quickRecordRow(
           title: 'Sleep',
           summary: _sleepSummary,
@@ -1419,43 +1459,21 @@ class _TodayExperienceVisualState extends State<TodayExperienceVisual> {
               ? widget.onOpenRecordSection!(RecordEntrySection.sleep)
               : widget.onOpenRecord?.call(),
         ),
-        const SizedBox(height: 6),
-        InteractionSurface(
+        Divider(
+          height: 1,
+          thickness: 1,
+          color: ExperienceColors.hairline.withValues(alpha: .18),
+        ),
+        _quickRecordRow(
+          title: 'Private note',
+          summary: _note ?? 'A few words for yourself',
+          icon: Icons.edit_note_rounded,
           semanticLabel:
               'Private note. ${_note == null ? 'Add a few words' : 'Edit your saved note'}',
-          padding: const EdgeInsets.all(16),
+          summaryMaxLines: 2,
           onTap: () => widget.onOpenRecordSection != null
               ? widget.onOpenRecordSection!(RecordEntrySection.note)
               : widget.onOpenRecord!(),
-          child: Row(
-            children: [
-              const Icon(Icons.edit_note_rounded, size: 23, color: _inkSoft),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Private note',
-                      style: _sans(15, weight: FontWeight.w700),
-                    ),
-                    const SizedBox(height: 3),
-                    Text(
-                      _note ?? 'A few words for yourself',
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                      style: _sans(12.5, color: _inkSoft),
-                    ),
-                  ],
-                ),
-              ),
-              const Icon(
-                Icons.chevron_right_rounded,
-                size: 18,
-                color: _inkSoft,
-              ),
-            ],
-          ),
         ),
         if (widget.onOpenRecord != null)
           Align(
@@ -1476,10 +1494,13 @@ class _TodayExperienceVisualState extends State<TodayExperienceVisual> {
     required String summary,
     required IconData icon,
     required VoidCallback onTap,
+    String? semanticLabel,
+    int summaryMaxLines = 1,
   }) => InteractionSurface(
     key: key,
-    semanticLabel: '$title. $summary',
-    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+    semanticLabel: semanticLabel ?? '$title. $summary',
+    color: Colors.transparent,
+    padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 12),
     onTap: onTap,
     child: Row(
       children: [
@@ -1491,7 +1512,12 @@ class _TodayExperienceVisualState extends State<TodayExperienceVisual> {
             children: [
               Text(title, style: _sans(15, weight: FontWeight.w700)),
               const SizedBox(height: 3),
-              Text(summary, style: _sans(12.5, color: _inkSoft)),
+              Text(
+                summary,
+                maxLines: summaryMaxLines,
+                overflow: TextOverflow.ellipsis,
+                style: _sans(12.5, color: _inkSoft),
+              ),
             ],
           ),
         ),
@@ -1712,7 +1738,11 @@ class _TodayExperienceVisualState extends State<TodayExperienceVisual> {
     onPressed: _startPeriodFromStrip,
     style: TextButton.styleFrom(
       foregroundColor: _emberBright,
+      side: BorderSide(color: _ember.withValues(alpha: 0.7)),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
       minimumSize: const Size(48, 48),
+      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
     ),
     child: Text('Start period', style: _sans(13, weight: FontWeight.w700)),
   );
@@ -3234,6 +3264,46 @@ class _SymptomBrowserSheetState extends State<_SymptomBrowserSheet> {
 // ---------------------------------------------------------------------------
 // Quick note history row — stable identity, explicit edit/delete controls
 // ---------------------------------------------------------------------------
+
+/// One-shot section arrival used by Today. The parent controller owns the
+/// whole sequence so reloads and local saves never replay it.
+class _Entrance extends StatelessWidget {
+  const _Entrance({
+    required this.animation,
+    required this.index,
+    required this.child,
+  });
+
+  final AnimationController animation;
+  final int index;
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    final reduced = ExperienceMotion.reducedMotion(context);
+    return AnimatedBuilder(
+      animation: animation,
+      child: child,
+      builder: (context, child) {
+        final progress = reduced
+            ? Curves.easeOut.transform(animation.value)
+            : Curves.easeOutCubic.transform(
+                Interval(
+                  (index * 50 / 600).clamp(0.0, 1.0),
+                  ((index * 50 + 300) / 600).clamp(0.0, 1.0),
+                ).transform(animation.value),
+              );
+        return Opacity(
+          opacity: progress,
+          child: Transform.translate(
+            offset: reduced ? Offset.zero : Offset(0, 16 * (1 - progress)),
+            child: child,
+          ),
+        );
+      },
+    );
+  }
+}
 
 class _QuickNoteRow extends StatelessWidget {
   const _QuickNoteRow({

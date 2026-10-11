@@ -183,7 +183,7 @@ void main() {
       final saved = (await fixture.health.getAll()).single;
       expect(saved.symptom, SymptomType.cramps);
       expect(saved.severity, SymptomSeverity.notPresent);
-      await tester.tap(find.byKey(const Key('observation-close-symptom')));
+      await tester.tap(find.byKey(const Key('observation-editor-close')));
       await _settle(tester);
       expect(find.byType(RecordHubScreen, skipOffstage: false), findsNothing);
       expect(
