@@ -1,6 +1,8 @@
 # Kimi UI 优化交接 — Letter Within / Build17
 
-日期：2026-10-10。交接对象：接下来负责 Flutter UI/交互优化的 Kimi。交接由 Codex 整理。
+日期：2026-10-10；当前状态更新：2026-10-11。交接对象：接下来负责 Flutter UI/交互优化的 Kimi。交接由 Codex 整理。
+
+**2026-10-11 当前真值：** `feat/record-hub-kimi-ui-2026-10-11` 已包含 V6 实现提交 `88ab032`；接手时仍以 `git rev-parse HEAD` 与 remote 为当前提交真值。V6 第一切片已经实现：Today Quick records 扁平化与到达编排、全屏症状编辑重构、全局按压反馈强化；完整结果与下一批顺序见 `apps/mobile/validation/ui-pilot-2026-10-10/kimi-diagnosis-v6.md`。不要重做这批。
 
 ## 1. 从哪里接手
 
@@ -11,11 +13,11 @@
 | 共享工作区 | `/Users/clairehou/pyProjects/pms-research-agent` |
 | 正在开发的 Git 工作树 | `/Users/clairehou/pyProjects/pms-research-agent/.worktrees/record-hub-build17` |
 | Flutter 项目 / 命令 cwd | `/Users/clairehou/pyProjects/pms-research-agent/.worktrees/record-hub-build17/apps/mobile` |
-| 基础 branch（checkpoint 提交 `17bdc0f`，尚未 push） | **`feat/record-hub-build17-2026-10-10`** |
-| Kimi 开发 branch | **`feat/record-hub-kimi-ui-2026-10-11`** |
+| 基础 branch（已推送 checkpoint `2c6de85`） | **`feat/record-hub-build17-2026-10-10`** |
+| Kimi 开发 branch / V6 实现提交 | **`feat/record-hub-kimi-ui-2026-10-11` / `88ab032`** |
 | 已发布 Build17 基线（不是新 checkpoint HEAD） | `cf12e70791c14acb2735415b8c51b1ce6047fac2` |
-| 最新生产源码指纹 | `22fe6548ffde6378e4e327b1ce6576c77b9f0dc3eff5ae154cab72021eab7722` |
-| 提交状态 | 用户已明确批准提交并推送当前 checkpoint；此文档随实现提交，实际提交 hash 以 Git 为准；没有 merge/release 授权 |
+| 最新生产源码指纹 | `de2e1ea5840808d9a5619b2916d67b86c8736bf1a8f6b6fc7e417139a7467eba` |
+| 提交状态 | 清理与 V6 第一切片已提交并推送；没有 merge/release 授权 |
 
 `product/letter` 中有较早的 Build8 工作及未提交内容，**不是这次 UI 优化的运行/修改目录**。此前背景色错误就是基线混用造成的。不要 reset/clean、覆盖其它 dirty 文件、全仓库 add 或换回旧工作树。当前 checkpoint 相对已发布 Build17 的 diff 包含此前 Record Hub 功能实现和后续 UI 修改，不能把它们都算成最后这一次 UI 的变更。
 
@@ -208,17 +210,18 @@ Kimi 可重新组织这些动作、历史与表单，让它更适合拇指和重
 | V4 | 完整 **1041 PASS / 1 optional SKIP / 0 failure**；whole analyzer clean；正常 iPhone **43/43** PNG + Record 39.18s / Products 44.66s 真录像；render exception0，取消/source preservation/reopen 验证通过，独立有限视觉复核无实质 blocker。不是用户审美最终接受。 |
 | V5 | 完整 **1055 PASS / 1 optional SKIP / 0 failure**，执行 exit0；新全屏/Record/navigation scoped67 PASS，Today scoped25 PASS（有重叠）；最后 whole analyzer 无问题（4.3秒）。尚无原生 captures、录像或视觉复核。 |
 | V5 最后微调 | 完整测试后仅去掉一个不必要的 non-null `!`，行为不变；full-test summary 保留实际测试指纹 `a541b54...`，最后交接指纹为 `22fe6548...`。不是两个相互矛盾的 Build。 |
+| V6 第一切片 | Today / symptom / press UI 已实现；定向64 PASS；完整 **1055 PASS / 1 optional SKIP / 0 failure**；whole analyzer clean。当前 fingerprint `de2e1ea...`。尚未做新原生截图/录像。 |
 | UI 数据边界 | UI 前整合基线230 files；当前237 files，UI合计17个 changed/new presentation files；V5 相对 V4 仅6个 presentation files，`protectedChanged: []`。此前功能实现本身有数据变更，不要声称整个 Git dirty tree 从未改 data。 |
 
 视觉基线只保留十张正常尺寸代表图：`apps/mobile/validation/kimi-current-reference/`。它们来自 V4，**不包含 V5 Today 快捷/全屏症状，也不是 V6 像素目标**。V4/V5 测试结果只保留小型 summary；完整 reporter、旧截图批次和视频可从 Git 历史恢复，默认不要读取。
 
-V5 原生专项已准备，**没有执行**：
+原生专项 fixture 文件名仍为 V5，但 fingerprint 已更新到当前 V6 第一切片；**尚未执行**：
 
 ```sh
 flutter drive --no-pub -d 7A533533-EA45-4735-AC28-10FA095A65FF --target integration_test/record_hub_ui_pilot_v5_test.dart --driver test_driver/record_hub_ui_pilot_v5_driver.dart --dart-define=NATIVE_VISUAL_HOST_DRIVER=true
 ```
 
-准备了9个状态和一段真实交互录像，包含 pin顺序/zero-vs-null、打开不写、移除/Undo/同 ID impact、Today准确返回、普通Record滚动保持、Bleeding展开与关闭不写、schema18/reopen。运行前比对源码指纹；改过UI后更新 fixture 指纹和截图期望。不要把未执行的脚本当成 PASS，也不要拿 V4 screenshot 验证 V5。
+准备了9个状态和一段真实交互录像，包含 pin顺序/zero-vs-null、打开不写、移除/Undo/同 ID impact、Today准确返回、普通Record滚动保持、Bleeding展开与关闭不写、schema18/reopen。运行前比对源码指纹；改过UI后更新 fixture 指纹和截图期望。不要把未执行的脚本当成 PASS，也不要拿 V4 screenshot 验证当前 V6。
 
 模拟器：
 
@@ -240,7 +243,7 @@ flutter drive --no-pub -d 7A533533-EA45-4735-AC28-10FA095A65FF --target integrat
 
 ## 10. 可直接给 Kimi 的开工指令
 
-> 接手 `/Users/clairehou/pyProjects/pms-research-agent/.worktrees/record-hub-build17` 的 branch `feat/record-hub-kimi-ui-2026-10-11`（基于 `feat/record-hub-build17-2026-10-10` 的 checkpoint 提交 `17bdc0f`；以 Git 为确切真值）。先读 `specs/features/release-2.0/record-hub/handoff-kimi-ui-2026-10-10.md` 及其必读 specs、全录入页 inventory 和真实参考录像。用户现在明确让 Kimi 做 UI 优化，旧“不用 Kimi”规定已覆盖。以已发布 Build17 Quiet Dusk、Letter Within 组件和现有功能/data/API 为底，解决 Today/Record 像后台表单、卡片堆叠、交互生硬的问题，做有质量、空气感和自然即时反馈的消费者移动界面。常用 Bleeding/pinned 症状能从 Today 直接进入，Symptom 以全屏聚焦编辑；所有 Today+Record 子页风格一致，三类产品 manager 一起优化。可以批评并不采用不合适的建议/skills，不机械套网页或 GSAP。保留 zero/null、精确值、来源/版本、timing、草稿与返回语义；不要新增 letter archive / preparation-plan 重复入口或擅自诊断量表。先给整体诊断和一致方向，再落实原生可交互代码并做正常 iPhone 验证。当前 V5 已通过1055项回归但尚未原生捕获/热更新；不要拿 V4截图当新页面验收。保留用户模拟器数据，不 merge/release；后续修改的 commit/push 按届时用户指令执行。
+> 接手 `/Users/clairehou/pyProjects/pms-research-agent/.worktrees/record-hub-build17` 的 branch `feat/record-hub-kimi-ui-2026-10-11`；以 `git rev-parse HEAD` 与 remote 为确切真值。V6 UI 实现提交是 `88ab032`。先读本 handoff、必读 specs、全录入页 inventory、真实参考录像和 `kimi-diagnosis-v6.md`。V6 第一切片已经完成 Today Quick records 扁平化与到达编排、全屏症状编辑重构、全局按压反馈强化，不要重做。下一批从 Record stage/Record Symptoms 构图开始，再统一 Daily life 与三个产品 family。以 Build17 Quiet Dusk、Letter Within 组件和现有功能/data/API 为底，做有质量、空气感和自然即时反馈的消费者移动界面。可以批评并不采用不合适的建议/skills，不机械套网页或 GSAP。保留 zero/null、精确值、来源/版本、timing、草稿与返回语义；不要新增 letter archive / preparation-plan 重复入口或擅自诊断量表。当前 V6 第一切片已通过完整1055项回归但尚未原生捕获/热更新；不要拿 V4截图当新页面验收。保留用户模拟器数据，不 merge/release。
 
 ## 11. 执行约束：把“高级/空气感”落成数值
 
@@ -303,7 +306,7 @@ flutter drive --no-pub -d 7A533533-EA45-4735-AC28-10FA095A65FF --target integrat
 
 ### 分支与提交
 
-- 在 `feat/record-hub-kimi-ui-2026-10-11`（基于 `feat/record-hub-build17-2026-10-10` 的 checkpoint 提交 `17bdc0f`）上开发。不 rewrite history、不 force-push。
+- 在 `feat/record-hub-kimi-ui-2026-10-11`（已包含 V6 实现提交 `88ab032`）上继续开发。不 rewrite history、不 force-push。
 - 按逻辑单元小步提交，信息说明“改了什么 / 为什么”，便于逐块回退；不要把 UI、测试、无关清理混进一个巨型提交。
 - 不要 reset / clean、不要全仓库 add、不要覆盖其它 dirty 文件；不 merge / release，不上传真实健康资料。用户若要 push 会另行指示。
 
