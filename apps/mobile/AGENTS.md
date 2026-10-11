@@ -45,6 +45,37 @@ Follow the repository `AGENTS.md` and the active feature specification.
 - **DeepSeek V4 Pro**: Use exclusively for structural architecture, data mapping, local encrypted storage rules, state transition models, and writing widget/golden tests.
 - **Kimi K3**: Use exclusively for building UI presentation widgets, styling design tokens, platform-adaptive behaviors, and visual micro-interactions.
 
+## Kimi UI Autonomy
+
+Kimi owns UI work end-to-end with no document approvals. Decision points are
+rendered previews the user judges by eye. The authoritative task contract is
+`specs/features/release-2.0/record-hub/handoff-kimi-ui-2026-10-10.md` (§11
+execution constraints, §12 working agreement); keep this section in sync with it.
+
+- **Branch**: work on `feat/record-hub-kimi-ui-2026-10-11` (based on checkpoint
+  `17bdc0f`). Never rewrite history or force-push.
+- **Commits**: small, logical units with clear messages so any change can be
+  reverted; do not mix UI, tests, and unrelated cleanup in one commit. No
+  merge/release without explicit instruction.
+- **No approval gates**: do not ask whether to start. Only stop for changes to
+  persistence, clinical meaning, release scope, or new fields/behavior
+  contracts — raise those as separate product questions.
+- **Rhythm**: (1) write the diagnosis and one coherent direction to
+  `apps/mobile/validation/ui-pilot-2026-10-10/kimi-diagnosis-v6.md`; (2) build a
+  connected preview slice of the key path and show rendered screenshots/video;
+  the user reacts by eye (continue / change direction / redo); (3) roll out the
+  remaining screens; (4) self-audit: `dart format` → `flutter analyze` → focused
+  tests → key-state screenshots/video → check the handoff §11 delivery checklist.
+- **Execution constraints**: follow the duration ladder, spring parameters
+  (`SpringDescription(mass: 1, stiffness: 300–500, damping: 25–35)`), press
+  feedback (scale 0.97 + opacity 0.88, ~120ms), six interaction states, radius
+  ladder 4/8/12/16/24, hairline over heavy shadow, Reduce Motion ≤150ms, and the
+  anti-generic rules in handoff §11.
+- **Environment**: runs through OpenCodex as `kimi/k3[1m]` (1M context).
+- **Safety**: never read or upload `.env*`, credentials, signing material, or
+  real health data; synthetic data only in screenshots and tests. Do not reset
+  the user's simulator data.
+
 
 
 
